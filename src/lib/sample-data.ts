@@ -1,11 +1,13 @@
-import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought } from '@/types';
+import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem } from '@/types';
 import { AreasOfSupport } from '@/types';
 
 export const sampleJobApplications: JobApplication[] = [
-  { id: '1', companyName: 'Tech Solutions Inc.', jobTitle: 'Software Engineer', status: 'Applied', dateApplied: '2024-07-01', notes: 'Applied via company portal.' },
-  { id: '2', companyName: 'Innovate LLC', jobTitle: 'Frontend Developer', status: 'Interviewing', dateApplied: '2024-06-25', notes: 'First interview scheduled for 2024-07-10.' },
-  { id: '3', companyName: 'Data Corp', jobTitle: 'Data Analyst', status: 'Offer', dateApplied: '2024-06-15', notes: 'Received offer, considering.' },
-  { id: '4', companyName: 'Web Wizards', jobTitle: 'UX Designer', status: 'Rejected', dateApplied: '2024-06-20', notes: 'Did not proceed after initial screening.' },
+  { id: '1', companyName: 'Tech Solutions Inc.', jobTitle: 'Software Engineer', status: 'Applied', dateApplied: '2024-07-01', notes: 'Applied via company portal.', location: 'Remote' },
+  { id: '2', companyName: 'Innovate LLC', jobTitle: 'Frontend Developer', status: 'Interviewing', dateApplied: '2024-06-25', notes: 'First interview scheduled for 2024-07-10.', location: 'New York, NY' },
+  { id: '3', companyName: 'Data Corp', jobTitle: 'Data Analyst', status: 'Offer', dateApplied: '2024-06-15', notes: 'Received offer, considering.', location: 'San Francisco, CA' },
+  { id: '4', companyName: 'Web Wizards', jobTitle: 'UX Designer', status: 'Rejected', dateApplied: '2024-06-20', notes: 'Did not proceed after initial screening.', location: 'Austin, TX' },
+  { id: '5', companyName: 'CloudNetics', jobTitle: 'Cloud Engineer', status: 'Saved', dateApplied: '2024-07-05', notes: 'Interested, need to tailor resume.', location: 'Boston, MA' },
+  { id: '6', companyName: 'AI Future', jobTitle: 'Machine Learning Eng.', status: 'Saved', dateApplied: '2024-07-15', notes: 'From scan report, good match.', location: 'Seattle, WA' },
 ];
 
 export const sampleAlumni: AlumniProfile[] = [
@@ -182,6 +184,36 @@ export const sampleWalletBalance = {
         { id: 'txn2', date: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString(), description: 'Used for premium report', amount: -20, type: 'debit' as 'credit' | 'debit' },
     ]
 };
+
+export const sampleResumeScanHistory: ResumeScanHistoryItem[] = [
+  {
+    id: 'scan1',
+    resumeName: 'Software_Engineer_Resume_v2.pdf',
+    jobTitle: 'Senior Software Engineer',
+    companyName: 'Innovate LLC',
+    scanDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(), // 2 days ago
+    matchScore: 85,
+    reportUrl: '/my-resumes/resumeId123/analysis/reportXYZ',
+  },
+  {
+    id: 'scan2',
+    resumeName: 'Product_Manager_Profile.docx',
+    jobTitle: 'Product Lead',
+    companyName: 'FutureTech Corp',
+    scanDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(), // 5 days ago
+    matchScore: 72,
+    reportUrl: '/my-resumes/resumeId456/analysis/reportABC',
+  },
+  {
+    id: 'scan3',
+    resumeName: 'General_Tech_Resume.pdf',
+    jobTitle: 'Data Analyst',
+    companyName: 'Data Corp',
+    scanDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(), // 10 days ago
+    matchScore: 91,
+  },
+];
+
 
 // Graduation years for dropdown
 export const graduationYears = Array.from({ length: 26 }, (_, i) => (2025 - i).toString());

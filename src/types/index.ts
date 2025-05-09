@@ -73,16 +73,18 @@ export const SupportTypesSought = [
 ] as const;
 export type SupportTypeSought = typeof SupportTypesSought[number];
 
+export type JobApplicationStatus = 'Saved' | 'Applied' | 'Interviewing' | 'Offer' | 'Rejected';
 
 export interface JobApplication {
   id: string;
   companyName: string;
   jobTitle: string;
-  status: 'Applied' | 'Interviewing' | 'Offer' | 'Rejected' | 'Saved';
+  status: JobApplicationStatus;
   dateApplied: string;
   notes?: string;
   jobDescription?: string;
   resumeUsed?: string; // or a reference to a resume profile
+  location?: string; // Added based on new UI
 }
 
 export interface AlumniProfile {
@@ -228,3 +230,17 @@ export type Wallet = {
 // For booking appointment form
 export const PreferredTimeSlots = ["Morning (9AM-12PM)", "Afternoon (1PM-4PM)", "Evening (5PM-7PM)"] as const;
 export type PreferredTimeSlot = typeof PreferredTimeSlots[number];
+
+export interface ResumeScanHistoryItem {
+  id: string;
+  resumeName: string;
+  jobTitle: string;
+  companyName: string;
+  scanDate: string; // ISO string
+  matchScore?: number;
+  reportUrl?: string; // Link to analysis report if available
+}
+
+// Kanban column IDs for Job Tracker
+export type KanbanColumnId = 'Saved' | 'Applied' | 'Interview' | 'Offer';
+export const JOB_APPLICATION_STATUSES: JobApplicationStatus[] = ['Saved', 'Applied', 'Interviewing', 'Offer', 'Rejected'];
