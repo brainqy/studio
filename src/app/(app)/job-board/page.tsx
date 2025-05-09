@@ -1,4 +1,4 @@
-
+tsx
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -12,8 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { PlusCircle, Aperture, Briefcase, Users, MapPin, Building, CalendarDays, Search, Filter as FilterIcon } from "lucide-react";
-import { sampleJobOpenings, sampleAlumni } from "@/lib/sample-data";
+import { PlusCircle, Aperture, Briefcase, Users, MapPin, Building, CalendarDays, Search, Filter as FilterIcon, Edit3 } from "lucide-react";
+import { sampleJobOpenings, sampleAlumni, sampleUserProfile } from "@/lib/sample-data";
 import type { JobOpening } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { useForm, Controller } from "react-hook-form";
@@ -37,18 +37,19 @@ const JOB_TYPES: JobOpening['type'][] = ['Full-time', 'Part-time', 'Internship',
 export default function JobBoardPage() {
   const [openings, setOpenings] = useState<JobOpening[]>(sampleJobOpenings);
   const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
+  const [editingOpening, setEditingOpening] = useState<JobOpening | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedJobTypes, setSelectedJobTypes] = useState<Set<JobOpening['type']>>(new Set());
   const [selectedLocations, setSelectedLocations] = useState<Set<string>>(new Set());
   const [selectedCompanies, setSelectedCompanies] = useState<Set<string>>(new Set());
   
   const { toast } = useToast();
-  const { control, handleSubmit, reset, formState: { errors } } = useForm<JobOpeningFormData>({
+  const { control, handleSubmit, reset, setValue, formState: { errors } } = useForm<JobOpeningFormData>({
     resolver: zodResolver(jobOpeningSchema),
     defaultValues: { type: 'Full-time' }
   });
 
-  const currentAlumniUser = sampleAlumni[0]; 
+  const currentAlumniUser = sampleUserProfile; 
 
   const uniqueLocations = useMemo(() => {
     const locations = new Set(openings.map(op => op.location));
@@ -81,21 +82,38 @@ export default function JobBoardPage() {
   };
 
   const onPostSubmit = (data: JobOpeningFormData) => {
-    const newOpening: JobOpening = {
-      ...data,
-      id: String(Date.now()),
-      datePosted: new Date().toISOString().split('T')[0],
-      postedByAlumniId: currentAlumniUser.id,
-      alumniName: currentAlumniUser.name,
-    };
-    setOpenings(prev => [newOpening, ...prev]);
-    toast({ title: "Opportunity Posted", description: `${data.title} at ${data.company} has been posted.` });
+    if (editingOpening) {
+      setOpenings(prev => prev.map(op => op.id === editingOpening.id ? { ...op, ...data } : op));
+      toast({ title: "Opportunity Updated", description: `${data.title} at ${data.company} has been updated.` });
+    } else {
+      const newOpening: JobOpening = {
+        ...data,
+        id: String(Date.now()),
+        datePosted: new Date().toISOString().split('T')[0],
+        postedByAlumniId: currentAlumniUser.id,
+        alumniName: currentAlumniUser.name,
+      };
+      setOpenings(prev => [newOpening, ...prev]);
+      toast({ title: "Opportunity Posted", description: `${data.title} at ${data.company} has been posted.` });
+    }
     setIsPostDialogOpen(false);
     reset();
+    setEditingOpening(null);
   };
   
   const openNewPostDialog = () => {
+    setEditingOpening(null);
     reset({ title: '', company: '', location: '', description: '', type: 'Full-time' });
+    setIsPostDialogOpen(true);
+  };
+
+  const openEditPostDialog = (opening: JobOpening) => {
+    setEditingOpening(opening);
+    setValue('title', opening.title);
+    setValue('company', opening.company);
+    setValue('location', opening.location);
+    setValue('description', opening.description);
+    setValue('type', opening.type);
     setIsPostDialogOpen(true);
   };
 
@@ -188,10 +206,16 @@ export default function JobBoardPage() {
         </AccordionItem>
       </Accordion>
 
-      <Dialog open={isPostDialogOpen} onOpenChange={setIsPostDialogOpen}>
+      <Dialog open={isPostDialogOpen} onOpenChange={(isOpen) => {
+        setIsPostDialogOpen(isOpen);
+        if (!isOpen) {
+          reset();
+          setEditingOpening(null);
+        }
+      }}>
         <DialogContent className="sm:max-w-[525px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-2xl">Post New Opportunity</DialogTitle>
+            <DialogTitle className="text-2xl">{editingOpening ? "Edit" : "Post New"} Opportunity</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit(onPostSubmit)} className="space-y-4 py-4">
             <div>
@@ -215,7 +239,7 @@ export default function JobBoardPage() {
                 name="type"
                 control={control}
                 render={({ field }) => (
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
                     <SelectContent>
                       {JOB_TYPES.map(t => (
@@ -234,7 +258,7 @@ export default function JobBoardPage() {
             </div>
             <DialogFooter>
               <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
-              <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground">Post Opportunity</Button>
+              <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground">{editingOpening ? "Save Changes" : "Post Opportunity"}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -252,10 +276,11 @@ export default function JobBoardPage() {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredOpenings.map((opening) => {
             const postingAlumni = sampleAlumni.find(a => a.id === opening.postedByAlumniId);
+            const isOwnPosting = opening.postedByAlumniId === currentAlumniUser.id;
             return (
             <Card key={opening.id} className="shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col">
               <CardHeader>
-                <div className="flex items-center justify-between mb-2">
+                <div className="flex items-start justify-between mb-2">
                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
                       opening.type === 'Mentorship' ? 'bg-purple-100 text-purple-700' :
                       opening.type === 'Internship' ? 'bg-blue-100 text-blue-700' :
@@ -288,9 +313,16 @@ export default function JobBoardPage() {
                  <p className="text-xs text-muted-foreground flex items-center gap-1">
                     <CalendarDays className="h-3 w-3" /> Posted: {new Date(opening.datePosted).toLocaleDateString()}
                 </p>
-                <Button size="sm" variant="default" onClick={() => toast({title: "Apply (Mocked)", description: `You showed interest in ${opening.title}.`})}>
-                  {opening.type === 'Mentorship' ? 'Express Interest' : 'Apply Now'}
-                </Button>
+                <div className="flex space-x-2">
+                  {isOwnPosting && (
+                    <Button size="sm" variant="outline" onClick={() => openEditPostDialog(opening)}>
+                      <Edit3 className="h-4 w-4" />
+                    </Button>
+                  )}
+                  <Button size="sm" variant="default" onClick={() => toast({title: "Apply (Mocked)", description: `You showed interest in ${opening.title}.`})}>
+                    {opening.type === 'Mentorship' ? 'Express Interest' : 'Apply Now'}
+                  </Button>
+                </div>
               </CardFooter>
             </Card>
           );

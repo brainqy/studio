@@ -1,31 +1,39 @@
+tsx
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MapPin, Users, Search, Briefcase, GraduationCap, MessageSquare } from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { MapPin, Users, Search, Briefcase, GraduationCap, MessageSquare, Eye, CalendarPlus, Coins, Filter as FilterIcon } from "lucide-react";
 import { sampleAlumni } from "@/lib/sample-data";
 import type { AlumniProfile } from "@/types";
 import { APIProvider, Map, AdvancedMarker, Pin, InfoWindow } from '@vis.gl/react-google-maps';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
+import Link from 'next/link'; // Added for View Profile
 
 // IMPORTANT: Replace with your actual Google Maps API Key
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "YOUR_GOOGLE_MAPS_API_KEY_HERE"; 
-// For this to work with process.env, you'd need to expose it as NEXT_PUBLIC_ variable in .env.local
-// For now, it will use the hardcoded placeholder if not set.
 
 export default function AlumniConnectPage() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [searchCompany, setSearchCompany] = useState('');
-  const [searchSkills, setSearchSkills] = useState('');
   const [filteredAlumni, setFilteredAlumni] = useState<AlumniProfile[]>(sampleAlumni);
   const [selectedAlumnus, setSelectedAlumnus] = useState<AlumniProfile | null>(null);
   const { toast } = useToast();
+
+  const [selectedCompanies, setSelectedCompanies] = useState<Set<string>>(new Set());
+  const [selectedSkills, setSelectedSkills] = useState<Set<string>>(new Set());
+  const [selectedUniversities, setSelectedUniversities] = useState<Set<string>>(new Set());
+
+  const uniqueCompanies = useMemo(() => Array.from(new Set(sampleAlumni.map(a => a.company))).sort(), []);
+  const uniqueSkills = useMemo(() => Array.from(new Set(sampleAlumni.flatMap(a => a.skills))).sort(), []);
+  const uniqueUniversities = useMemo(() => Array.from(new Set(sampleAlumni.map(a => a.university))).sort(), []);
 
   useEffect(() => {
     let results = sampleAlumni;
@@ -35,22 +43,43 @@ export default function AlumniConnectPage() {
         alumni.currentJobTitle.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-    if (searchCompany) {
-      results = results.filter(alumni => alumni.company.toLowerCase().includes(searchCompany.toLowerCase()));
+    if (selectedCompanies.size > 0) {
+      results = results.filter(alumni => selectedCompanies.has(alumni.company));
     }
-    if (searchSkills) {
-      const skillsArray = searchSkills.toLowerCase().split(',').map(skill => skill.trim());
-      results = results.filter(alumni => 
-        skillsArray.some(skill => alumni.skills.join(', ').toLowerCase().includes(skill))
-      );
+    if (selectedSkills.size > 0) {
+      results = results.filter(alumni => alumni.skills.some(skill => selectedSkills.has(skill)));
+    }
+    if (selectedUniversities.size > 0) {
+      results = results.filter(alumni => selectedUniversities.has(alumni.university));
     }
     setFilteredAlumni(results);
-  }, [searchTerm, searchCompany, searchSkills]);
+  }, [searchTerm, selectedCompanies, selectedSkills, selectedUniversities]);
+
+  const handleFilterChange = (filterSet: Set<string>, item: string, setter: React.Dispatch<React.SetStateAction<Set<string>>>) => {
+    const newSet = new Set(filterSet);
+    if (newSet.has(item)) {
+      newSet.delete(item);
+    } else {
+      newSet.add(item);
+    }
+    setter(newSet);
+  };
 
   const handleSendMessage = (alumniName: string) => {
     toast({
       title: "Message Sent (Mock)",
       description: `Your message to ${alumniName} has been sent. This is a mocked feature.`,
+    });
+  };
+
+  const handleBookAppointment = (alumniName: string) => {
+    toast({
+      title: "Coins Deducted (Mock)",
+      description: "10 coins deducted from your wallet.",
+    });
+    toast({
+      title: "Appointment Booked (Mock)",
+      description: `Appointment with ${alumniName} booked. This is a mocked feature.`,
     });
   };
 
@@ -60,32 +89,88 @@ export default function AlumniConnectPage() {
         <h1 className="text-3xl font-bold tracking-tight text-foreground">Alumni Connect</h1>
       </div>
 
-      <Card className="shadow-lg">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Search className="h-6 w-6 text-primary"/>Search Alumni</CardTitle>
-          <CardDescription>Find alumni by name, company, job title, skills, or university.</CardDescription>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="space-y-1">
-            <Label htmlFor="search-term">Name or Job Title</Label>
-            <Input id="search-term" placeholder="e.g., Alice Wonderland or Product Manager" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="search-company">Company</Label>
-            <Input id="search-company" placeholder="e.g., Google" value={searchCompany} onChange={(e) => setSearchCompany(e.target.value)} />
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="search-skills">Skills (comma-separated)</Label>
-            <Input id="search-skills" placeholder="e.g., Python, Machine Learning" value={searchSkills} onChange={(e) => setSearchSkills(e.target.value)} />
-          </div>
-        </CardContent>
-      </Card>
+      <Accordion type="single" collapsible className="w-full bg-card shadow-lg rounded-lg">
+        <AccordionItem value="filters">
+          <AccordionTrigger className="px-6 py-4 hover:no-underline">
+            <div className="flex items-center gap-2 text-lg font-semibold">
+              <FilterIcon className="h-5 w-5" /> Filters
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="px-6 pb-6 border-t">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pt-4">
+              <div className="space-y-1">
+                <Label htmlFor="search-term">Name or Job Title</Label>
+                <Input id="search-term" placeholder="e.g., Alice Wonderland" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+              </div>
+              <div>
+                <h4 className="font-medium mb-2">Company</h4>
+                <ScrollArea className="h-40 pr-3">
+                  <div className="space-y-2">
+                    {uniqueCompanies.map(company => (
+                      <div key={company} className="flex items-center space-x-2">
+                        <Checkbox 
+                          id={`comp-${company}`} 
+                          checked={selectedCompanies.has(company)}
+                          onCheckedChange={() => handleFilterChange(selectedCompanies, company, setSelectedCompanies)}
+                        />
+                        <Label htmlFor={`comp-${company}`} className="font-normal">{company}</Label>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </div>
+              <div>
+                <h4 className="font-medium mb-2">Skills</h4>
+                <ScrollArea className="h-40 pr-3">
+                  <div className="space-y-2">
+                    {uniqueSkills.map(skill => (
+                      <div key={skill} className="flex items-center space-x-2">
+                        <Checkbox 
+                          id={`skill-${skill}`} 
+                          checked={selectedSkills.has(skill)}
+                          onCheckedChange={() => handleFilterChange(selectedSkills, skill, setSelectedSkills)}
+                        />
+                        <Label htmlFor={`skill-${skill}`} className="font-normal">{skill}</Label>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </div>
+              <div>
+                <h4 className="font-medium mb-2">University</h4>
+                <ScrollArea className="h-40 pr-3">
+                  <div className="space-y-2">
+                    {uniqueUniversities.map(uni => (
+                      <div key={uni} className="flex items-center space-x-2">
+                        <Checkbox 
+                          id={`uni-${uni}`} 
+                          checked={selectedUniversities.has(uni)}
+                          onCheckedChange={() => handleFilterChange(selectedUniversities, uni, setSelectedUniversities)}
+                        />
+                        <Label htmlFor={`uni-${uni}`} className="font-normal">{uni}</Label>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </div>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           <h2 className="text-2xl font-semibold">Search Results ({filteredAlumni.length})</h2>
           {filteredAlumni.length === 0 ? (
-            <p className="text-muted-foreground">No alumni found matching your criteria.</p>
+            <Card className="text-center py-12 shadow-md">
+                <CardHeader>
+                    <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                    <CardTitle className="text-2xl">No Alumni Found</CardTitle>
+                    <CardDescription>
+                    Try adjusting your search or filter criteria.
+                    </CardDescription>
+                </CardHeader>
+            </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {filteredAlumni.map(alumni => (
@@ -113,14 +198,25 @@ export default function AlumniConnectPage() {
                         {alumni.skills.length > 3 && <span className="px-2 py-0.5 text-xs bg-accent text-accent-foreground rounded-full">+{alumni.skills.length - 3} more</span>}
                       </div>
                     </div>
-                    <div className="flex justify-end space-x-2">
-                       <Button variant="outline" size="sm" onClick={() => setSelectedAlumnus(alumni)}>
-                        <MapPin className="mr-1 h-4 w-4" /> View on Map
+                    <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-2">
+                      <Button variant="outline" size="sm" onClick={() => setSelectedAlumnus(alumni)}>
+                        <MapPin className="mr-1 h-4 w-4" /> Map
                       </Button>
-                      <Button variant="default" size="sm" onClick={() => handleSendMessage(alumni.name)}>
+                       <Button variant="outline" size="sm" onClick={() => toast({ title: "View Profile (Mock)", description: `Viewing profile of ${alumni.name}. This feature is for demonstration.`})}>
+                        <Eye className="mr-1 h-4 w-4" /> View Profile
+                      </Button>
+                       <Button variant="default" size="sm" onClick={() => handleSendMessage(alumni.name)}>
                         <MessageSquare className="mr-1 h-4 w-4" /> Message
                       </Button>
                     </div>
+                    <Button 
+                        variant="default" 
+                        size="sm" 
+                        className="w-full mt-3 bg-primary hover:bg-primary/90"
+                        onClick={() => handleBookAppointment(alumni.name)}
+                      >
+                        <CalendarPlus className="mr-1 h-4 w-4" /> Book Appointment <Coins className="ml-1 mr-0.5 h-3 w-3" /> (10 Coins)
+                      </Button>
                   </CardContent>
                 </Card>
               ))}
@@ -155,8 +251,7 @@ export default function AlumniConnectPage() {
                       position={alumni.location}
                       onClick={() => setSelectedAlumnus(alumni)}
                     >
-                      <Pin // background={'#FF0000'}
-                       borderColor={'hsl(var(--primary))'} glyphColor={'hsl(var(--primary))'} />
+                      <Pin borderColor={'hsl(var(--primary))'} glyphColor={'hsl(var(--primary))'} />
                     </AdvancedMarker>
                   ))}
                   {selectedAlumnus && (

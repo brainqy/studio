@@ -1,3 +1,4 @@
+tsx
 "use client";
 
 import { useState } from "react";
@@ -7,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { PlusCircle, ShieldQuestion, Lightbulb, Send, CheckCircle, Zap } from "lucide-react";
+import { PlusCircle, ShieldQuestion, Lightbulb, Send, Edit3, CheckCircle, Zap } from "lucide-react";
 import { sampleFeatureRequests, sampleUserProfile } from "@/lib/sample-data";
 import type { FeatureRequest } from "@/types";
 import { useToast } from "@/hooks/use-toast";
@@ -26,25 +27,34 @@ type FeatureRequestFormData = z.infer<typeof featureRequestSchema>;
 export default function FeatureRequestsPage() {
   const [requests, setRequests] = useState<FeatureRequest[]>(sampleFeatureRequests);
   const [isSuggestDialogOpen, setIsSuggestDialogOpen] = useState(false);
+  const [editingRequest, setEditingRequest] = useState<FeatureRequest | null>(null);
   const { toast } = useToast();
-  const { control, handleSubmit, reset, formState: { errors } } = useForm<FeatureRequestFormData>({
+  const { control, handleSubmit, reset, setValue, formState: { errors } } = useForm<FeatureRequestFormData>({
     resolver: zodResolver(featureRequestSchema)
   });
 
   const onSubmitSuggestion = (data: FeatureRequestFormData) => {
-    const newRequest: FeatureRequest = {
-      id: String(Date.now()),
-      userId: sampleUserProfile.id, // Assuming a logged-in user
-      userName: sampleUserProfile.name,
-      timestamp: new Date().toISOString(),
-      title: data.title,
-      description: data.description,
-      status: 'Pending',
-    };
-    setRequests(prevRequests => [newRequest, ...prevRequests]);
-    toast({ title: "Suggestion Submitted", description: "Thank you for your feedback!" });
+    if (editingRequest) {
+      setRequests(prevRequests => prevRequests.map(req => 
+        req.id === editingRequest.id ? { ...req, title: data.title, description: data.description } : req
+      ));
+      toast({ title: "Suggestion Updated", description: "Your feature request has been updated." });
+    } else {
+      const newRequest: FeatureRequest = {
+        id: String(Date.now()),
+        userId: sampleUserProfile.id, 
+        userName: sampleUserProfile.name,
+        timestamp: new Date().toISOString(),
+        title: data.title,
+        description: data.description,
+        status: 'Pending',
+      };
+      setRequests(prevRequests => [newRequest, ...prevRequests]);
+      toast({ title: "Suggestion Submitted", description: "Thank you for your feedback!" });
+    }
     setIsSuggestDialogOpen(false);
     reset();
+    setEditingRequest(null);
   };
 
   const getStatusColor = (status: FeatureRequest['status']) => {
@@ -58,7 +68,15 @@ export default function FeatureRequestsPage() {
   };
   
   const openNewRequestDialog = () => {
+    setEditingRequest(null);
     reset({ title: '', description: '' });
+    setIsSuggestDialogOpen(true);
+  };
+
+  const openEditRequestDialog = (request: FeatureRequest) => {
+    setEditingRequest(request);
+    setValue('title', request.title);
+    setValue('description', request.description);
     setIsSuggestDialogOpen(true);
   };
 
@@ -71,10 +89,19 @@ export default function FeatureRequestsPage() {
         </Button>
       </div>
 
-      <Dialog open={isSuggestDialogOpen} onOpenChange={setIsSuggestDialogOpen}>
+      <Dialog open={isSuggestDialogOpen} onOpenChange={(isOpen) => {
+        setIsSuggestDialogOpen(isOpen);
+        if (!isOpen) {
+          reset();
+          setEditingRequest(null);
+        }
+      }}>
         <DialogContent className="sm:max-w-[525px]">
           <DialogHeader>
-            <DialogTitle className="text-2xl flex items-center gap-2"><Lightbulb className="h-6 w-6 text-primary"/>Suggest a New Feature</DialogTitle>
+            <DialogTitle className="text-2xl flex items-center gap-2">
+              <Lightbulb className="h-6 w-6 text-primary"/>
+              {editingRequest ? "Edit Feature Suggestion" : "Suggest a New Feature"}
+            </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit(onSubmitSuggestion)} className="space-y-4 py-4">
             <div>
@@ -97,7 +124,7 @@ export default function FeatureRequestsPage() {
             <DialogFooter>
               <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
               <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                <Send className="mr-2 h-4 w-4"/> Submit Suggestion
+                <Send className="mr-2 h-4 w-4"/> {editingRequest ? "Save Changes" : "Submit Suggestion"}
               </Button>
             </DialogFooter>
           </form>
@@ -120,7 +147,7 @@ export default function FeatureRequestsPage() {
             <Card key={request.id} className="shadow-md hover:shadow-lg transition-shadow duration-300">
               <CardHeader>
                 <div className="flex justify-between items-start">
-                  <CardTitle className="text-lg">{request.title}</CardTitle>
+                  <CardTitle className="text-lg flex-1 mr-2">{request.title}</CardTitle>
                   <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${getStatusColor(request.status)}`}>
                     {request.status}
                   </span>
@@ -132,8 +159,15 @@ export default function FeatureRequestsPage() {
               <CardContent>
                 <p className="text-sm text-muted-foreground line-clamp-3">{request.description}</p>
               </CardContent>
-              <CardFooter>
-                 <Button variant="link" size="sm" className="p-0 h-auto text-primary hover:underline">View Details</Button>
+              <CardFooter className="flex justify-between items-center">
+                 <Button variant="link" size="sm" className="p-0 h-auto text-primary hover:underline" onClick={() => toast({title: "View Details (Mock)", description: `Viewing details for "${request.title}"`})}>
+                    View Details
+                 </Button>
+                 {request.userId === sampleUserProfile.id && (
+                   <Button variant="outline" size="sm" onClick={() => openEditRequestDialog(request)}>
+                     <Edit3 className="mr-1 h-4 w-4"/> Edit
+                   </Button>
+                 )}
               </CardFooter>
             </Card>
           ))}
