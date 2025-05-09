@@ -10,26 +10,49 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { MapPin, Users, Search, Briefcase, GraduationCap, MessageSquare, Eye, CalendarPlus, Coins, Filter as FilterIcon } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { DatePicker } from "@/components/ui/date-picker";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Users, Search, Briefcase, GraduationCap, MessageSquare, Eye, CalendarDays, Coins, Filter as FilterIcon, User as UserIcon, Mail, CalendarPlus } from "lucide-react";
 import { sampleAlumni } from "@/lib/sample-data";
-import type { AlumniProfile } from "@/types";
-import { APIProvider, Map, AdvancedMarker, Pin, InfoWindow } from '@vis.gl/react-google-maps';
+import type { AlumniProfile, PreferredTimeSlot } from "@/types";
+import { PreferredTimeSlots } from "@/types";
 import { useToast } from '@/hooks/use-toast';
-import Image from 'next/image';
-import Link from 'next/link'; // Added for View Profile
+import Link from 'next/link';
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 
-// IMPORTANT: Replace with your actual Google Maps API Key
-const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "YOUR_GOOGLE_MAPS_API_KEY_HERE"; 
+const bookingSchema = z.object({
+  purpose: z.string().min(10, "Purpose must be at least 10 characters."),
+  preferredDate: z.date({ required_error: "Preferred date is required." }),
+  preferredTimeSlot: z.string().min(1, "Preferred time slot is required."),
+  message: z.string().optional(),
+});
+type BookingFormData = z.infer<typeof bookingSchema>;
 
 export default function AlumniConnectPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredAlumni, setFilteredAlumni] = useState<AlumniProfile[]>(sampleAlumni);
-  const [selectedAlumnus, setSelectedAlumnus] = useState<AlumniProfile | null>(null);
   const { toast } = useToast();
 
   const [selectedCompanies, setSelectedCompanies] = useState<Set<string>>(new Set());
   const [selectedSkills, setSelectedSkills] = useState<Set<string>>(new Set());
   const [selectedUniversities, setSelectedUniversities] = useState<Set<string>>(new Set());
+
+  const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
+  const [alumniToBook, setAlumniToBook] = useState<AlumniProfile | null>(null);
+  
+  const { control, handleSubmit: handleBookingSubmit, reset: resetBookingForm, formState: { errors: bookingErrors } } = useForm<BookingFormData>({
+    resolver: zodResolver(bookingSchema),
+    defaultValues: {
+      purpose: '',
+      preferredTimeSlot: PreferredTimeSlots[0],
+      message: '',
+    }
+  });
+
 
   const uniqueCompanies = useMemo(() => Array.from(new Set(sampleAlumni.map(a => a.company))).sort(), []);
   const uniqueSkills = useMemo(() => Array.from(new Set(sampleAlumni.flatMap(a => a.skills))).sort(), []);
@@ -72,21 +95,53 @@ export default function AlumniConnectPage() {
     });
   };
 
-  const handleBookAppointment = (alumniName: string) => {
+  const openBookingDialog = (alumni: AlumniProfile) => {
+    setAlumniToBook(alumni);
+    resetBookingForm({
+      purpose: '',
+      preferredDate: new Date(), 
+      preferredTimeSlot: PreferredTimeSlots[0],
+      message: ''
+    });
+    setIsBookingDialogOpen(true);
+  };
+
+  const onBookAppointmentSubmit = (data: BookingFormData) => {
+    if (!alumniToBook) return;
+    
     toast({
       title: "Coins Deducted (Mock)",
-      description: "10 coins deducted from your wallet.",
+      description: `${alumniToBook.appointmentCoinCost || 10} coins deducted from your wallet.`,
     });
     toast({
-      title: "Appointment Booked (Mock)",
-      description: `Appointment with ${alumniName} booked. This is a mocked feature.`,
+      title: "Appointment Request Sent (Mock)",
+      description: `Your appointment request with ${alumniToBook.name} for ${data.preferredDate.toLocaleDateString()} (${data.preferredTimeSlot}) regarding "${data.purpose.substring(0,20)}..." has been sent.`,
     });
+    setIsBookingDialogOpen(false);
   };
+  
+  const renderTags = (tags: string[] | undefined, maxVisible: number = 3) => {
+    if (!tags || tags.length === 0) return <p className="text-xs text-muted-foreground">N/A</p>;
+    const visibleTags = tags.slice(0, maxVisible);
+    const remainingCount = tags.length - maxVisible;
+    return (
+      <div className="flex flex-wrap gap-1">
+        {visibleTags.map(tag => (
+          <span key={tag} className="px-2 py-0.5 text-xs bg-accent text-accent-foreground rounded-full">{tag}</span>
+        ))}
+        {remainingCount > 0 && (
+          <span className="px-2 py-0.5 text-xs bg-accent text-accent-foreground rounded-full">+{remainingCount} more</span>
+        )}
+      </div>
+    );
+  };
+
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Alumni Connect</h1>
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">Alumni Directory</h1>
+        <p className="text-muted-foreground mt-1">Connect with fellow alumni. Discover skills, interests, and potential collaborators.</p>
       </div>
 
       <Accordion type="single" collapsible className="w-full bg-card shadow-lg rounded-lg">
@@ -158,130 +213,144 @@ export default function AlumniConnectPage() {
         </AccordionItem>
       </Accordion>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          <h2 className="text-2xl font-semibold">Search Results ({filteredAlumni.length})</h2>
-          {filteredAlumni.length === 0 ? (
-            <Card className="text-center py-12 shadow-md">
-                <CardHeader>
-                    <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                    <CardTitle className="text-2xl">No Alumni Found</CardTitle>
-                    <CardDescription>
-                    Try adjusting your search or filter criteria.
-                    </CardDescription>
-                </CardHeader>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {filteredAlumni.map(alumni => (
-                <Card key={alumni.id} className="shadow-md hover:shadow-lg transition-shadow duration-300">
-                  <CardContent className="pt-6">
-                    <div className="flex items-center space-x-4 mb-4">
-                      <Avatar className="h-16 w-16">
-                        <AvatarImage src={alumni.profilePictureUrl} alt={alumni.name} data-ai-hint="person portrait" />
-                        <AvatarFallback>{alumni.name.substring(0,1).toUpperCase()}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <h3 className="text-lg font-semibold text-foreground">{alumni.name}</h3>
-                        <p className="text-sm text-primary">{alumni.currentJobTitle}</p>
-                        <p className="text-sm text-muted-foreground">{alumni.company}</p>
-                      </div>
-                    </div>
-                    <p className="text-xs text-muted-foreground mb-1 line-clamp-2">{alumni.shortBio}</p>
-                    <p className="text-xs text-muted-foreground mb-3"><GraduationCap className="inline h-3 w-3 mr-1"/>{alumni.university}</p>
-                    <div className="mb-3">
-                      <h4 className="text-xs font-semibold mb-1">Skills:</h4>
-                      <div className="flex flex-wrap gap-1">
-                        {alumni.skills.slice(0,3).map(skill => (
-                          <span key={skill} className="px-2 py-0.5 text-xs bg-accent text-accent-foreground rounded-full">{skill}</span>
-                        ))}
-                        {alumni.skills.length > 3 && <span className="px-2 py-0.5 text-xs bg-accent text-accent-foreground rounded-full">+{alumni.skills.length - 3} more</span>}
-                      </div>
-                    </div>
-                    <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-2">
-                      <Button variant="outline" size="sm" onClick={() => setSelectedAlumnus(alumni)}>
-                        <MapPin className="mr-1 h-4 w-4" /> Map
-                      </Button>
-                       <Button variant="outline" size="sm" onClick={() => toast({ title: "View Profile (Mock)", description: `Viewing profile of ${alumni.name}. This feature is for demonstration.`})}>
-                        <Eye className="mr-1 h-4 w-4" /> View Profile
-                      </Button>
-                       <Button variant="default" size="sm" onClick={() => handleSendMessage(alumni.name)}>
-                        <MessageSquare className="mr-1 h-4 w-4" /> Message
-                      </Button>
-                    </div>
-                    <Button 
-                        variant="default" 
-                        size="sm" 
-                        className="w-full mt-3 bg-primary hover:bg-primary/90"
-                        onClick={() => handleBookAppointment(alumni.name)}
-                      >
-                        <CalendarPlus className="mr-1 h-4 w-4" /> Book Appointment <Coins className="ml-1 mr-0.5 h-3 w-3" /> (10 Coins)
-                      </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </div>
-        
-        <Card className="lg:col-span-1 shadow-lg h-[400px] md:h-[500px] lg:sticky lg:top-20">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2"><MapPin className="h-6 w-6 text-primary"/>Alumni Locations</CardTitle>
-          </CardHeader>
-          <CardContent className="h-[calc(100%-4rem)] p-0">
-            {GOOGLE_MAPS_API_KEY === "YOUR_GOOGLE_MAPS_API_KEY_HERE" ? (
-              <div className="flex items-center justify-center h-full bg-muted rounded-b-lg">
-                <p className="text-center text-muted-foreground p-4">
-                  Google Maps API Key not configured. <br/>Please set <code className="bg-secondary p-1 rounded">NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</code> in your <code className="bg-secondary p-1 rounded">.env.local</code> file.
-                </p>
-              </div>
-            ) : (
-              <APIProvider apiKey={GOOGLE_MAPS_API_KEY}>
-                <Map
-                  defaultCenter={{ lat: 39.8283, lng: -98.5795 }} // Centered on US
-                  defaultZoom={4}
-                  gestureHandling={'greedy'}
-                  disableDefaultUI={true}
-                  mapId="resumematch_alumni_map"
-                  className="rounded-b-lg"
-                >
-                  {filteredAlumni.map((alumni) => (
-                    <AdvancedMarker
-                      key={alumni.id}
-                      position={alumni.location}
-                      onClick={() => setSelectedAlumnus(alumni)}
-                    >
-                      <Pin borderColor={'hsl(var(--primary))'} glyphColor={'hsl(var(--primary))'} />
-                    </AdvancedMarker>
-                  ))}
-                  {selectedAlumnus && (
-                    <InfoWindow
-                      position={selectedAlumnus.location}
-                      onCloseClick={() => setSelectedAlumnus(null)}
-                      minWidth={200}
-                    >
-                      <div className="p-1">
-                        <div className="flex items-center gap-2 mb-1">
-                           <Avatar className="h-8 w-8">
-                            <AvatarImage src={selectedAlumnus.profilePictureUrl} alt={selectedAlumnus.name} data-ai-hint="person face" />
-                            <AvatarFallback>{selectedAlumnus.name.substring(0,1).toUpperCase()}</AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <h4 className="font-semibold text-sm">{selectedAlumnus.name}</h4>
-                            <p className="text-xs text-primary">{selectedAlumnus.currentJobTitle}</p>
-                          </div>
-                        </div>
-                        <p className="text-xs text-muted-foreground">{selectedAlumnus.company}</p>
-                      </div>
-                    </InfoWindow>
-                  )}
-                </Map>
-              </APIProvider>
-            )}
-          </CardContent>
+      {filteredAlumni.length === 0 ? (
+        <Card className="text-center py-12 shadow-md col-span-1 md:col-span-2 lg:col-span-3">
+            <CardHeader>
+                <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                <CardTitle className="text-2xl">No Alumni Found</CardTitle>
+                <CardDescription>
+                Try adjusting your search or filter criteria.
+                </CardDescription>
+            </CardHeader>
         </Card>
-      </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredAlumni.map(alumni => (
+            <Card key={alumni.id} className="shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col">
+              <CardContent className="pt-6 flex-grow">
+                <div className="flex items-center space-x-4 mb-4">
+                  <Avatar className="h-16 w-16">
+                    <AvatarImage src={alumni.profilePictureUrl || `https://avatar.vercel.sh/${alumni.email}.png`} alt={alumni.name} data-ai-hint="person portrait" />
+                    <AvatarFallback><UserIcon /></AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground">{alumni.name}</h3>
+                    <p className="text-sm text-primary">{alumni.currentJobTitle} at {alumni.company}</p>
+                    <div className="flex items-center text-xs text-muted-foreground mt-1">
+                        <Mail className="h-3 w-3 mr-1" /> {alumni.email}
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-3 mb-4">
+                  <div>
+                    <h4 className="text-sm font-semibold mb-1">Skills:</h4>
+                    {renderTags(alumni.skills, 5)}
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold mb-1">Interests:</h4>
+                    {renderTags(alumni.interests, 3)}
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold mb-1">Offers Help With:</h4>
+                    {renderTags(alumni.offersHelpWith, 3)}
+                  </div>
+                </div>
+                 <p className="text-xs text-muted-foreground mb-1 line-clamp-2">{alumni.shortBio}</p>
+                 <p className="text-xs text-muted-foreground mb-3"><GraduationCap className="inline h-3 w-3 mr-1"/>{alumni.university}</p>
+              </CardContent>
+              <CardFooter className="border-t pt-4 mt-auto flex flex-col space-y-2">
+                <div className="flex w-full justify-between items-center">
+                   <Button variant="outline" size="sm" onClick={() => toast({ title: "View Profile (Mock)", description: `Viewing profile of ${alumni.name}. This feature is for demonstration.`})}>
+                    <Eye className="mr-1 h-4 w-4" /> View Profile
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => handleSendMessage(alumni.name)}>
+                    <MessageSquare className="mr-1 h-4 w-4" /> Message
+                  </Button>
+                </div>
+                <Button 
+                    variant="default" 
+                    size="sm" 
+                    className="w-full bg-primary hover:bg-primary/90"
+                    onClick={() => openBookingDialog(alumni)}
+                  >
+                    <CalendarDays className="mr-1 h-4 w-4" /> Book ({alumni.appointmentCoinCost || 10} <Coins className="ml-1 -mr-0.5 h-3 w-3" />)
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      <Dialog open={isBookingDialogOpen} onOpenChange={(isOpen) => {
+        setIsBookingDialogOpen(isOpen);
+        if (!isOpen) setAlumniToBook(null);
+      }}>
+        <DialogContent className="sm:max-w-[525px]">
+          <DialogHeader>
+            <DialogTitle className="text-2xl">Book Appointment with {alumniToBook?.name}</DialogTitle>
+            <CardDescription>Complete the form below to request a meeting.</CardDescription>
+          </DialogHeader>
+          {alumniToBook && (
+            <form onSubmit={handleBookingSubmit(onBookAppointmentSubmit)} className="space-y-4 py-4">
+              <div>
+                <Label htmlFor="purpose">Purpose of Meeting</Label>
+                <Controller
+                  name="purpose"
+                  control={control}
+                  render={({ field }) => <Textarea id="purpose" placeholder="e.g., Career advice, Mock interview..." {...field} />}
+                />
+                {bookingErrors.purpose && <p className="text-sm text-destructive mt-1">{bookingErrors.purpose.message}</p>}
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="preferredDate">Preferred Date</Label>
+                  <Controller
+                    name="preferredDate"
+                    control={control}
+                    render={({ field }) => <DatePicker date={field.value} setDate={field.onChange} />}
+                  />
+                  {bookingErrors.preferredDate && <p className="text-sm text-destructive mt-1">{bookingErrors.preferredDate.message}</p>}
+                </div>
+                <div>
+                  <Label htmlFor="preferredTimeSlot">Preferred Time Slot</Label>
+                  <Controller
+                    name="preferredTimeSlot"
+                    control={control}
+                    render={({ field }) => (
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <SelectTrigger id="preferredTimeSlot"><SelectValue placeholder="Select a time slot" /></SelectTrigger>
+                        <SelectContent>
+                          {PreferredTimeSlots.map(slot => <SelectItem key={slot} value={slot}>{slot}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {bookingErrors.preferredTimeSlot && <p className="text-sm text-destructive mt-1">{bookingErrors.preferredTimeSlot.message}</p>}
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="message">Brief Message (Optional)</Label>
+                <Controller
+                  name="message"
+                  control={control}
+                  render={({ field }) => <Textarea id="message" placeholder="Any additional details for your request." rows={3} {...field} />}
+                />
+              </div>
+              <p className="text-sm text-muted-foreground">
+                A fee of <strong className="text-primary">{alumniToBook.appointmentCoinCost || 10} coins</strong> will be deducted upon confirmation.
+              </p>
+              <DialogFooter>
+                <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
+                <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                  <CalendarPlus className="mr-2 h-4 w-4"/> Request Appointment
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
-
+```

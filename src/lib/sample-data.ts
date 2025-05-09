@@ -1,4 +1,5 @@
 import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought } from '@/types';
+import { AreasOfSupport } from '@/types';
 
 export const sampleJobApplications: JobApplication[] = [
   { id: '1', companyName: 'Tech Solutions Inc.', jobTitle: 'Software Engineer', status: 'Applied', dateApplied: '2024-07-01', notes: 'Applied via company portal.' },
@@ -8,10 +9,66 @@ export const sampleJobApplications: JobApplication[] = [
 ];
 
 export const sampleAlumni: AlumniProfile[] = [
-  { id: 'alumni1', name: 'Alice Wonderland', profilePictureUrl: 'https://picsum.photos/seed/alice/200/200', currentJobTitle: 'Senior Software Engineer', company: 'Google', shortBio: 'Passionate about AI and cloud computing. Graduated in 2015.', university: 'State University', skills: ['Java', 'Python', 'Machine Learning'], location: { lat: 37.7749, lng: -122.4194 } , email: "alice.wonderland@example.com", role: 'user'},
-  { id: 'alumni2', name: 'Bob The Builder', profilePictureUrl: 'https://picsum.photos/seed/bob/200/200', currentJobTitle: 'Product Manager', company: 'Microsoft', shortBio: 'Focused on user-centric product development. Class of 2018.', university: 'Tech Institute', skills: ['Product Management', 'Agile', 'UX Research'], location: { lat: 47.6062, lng: -122.3321 }, email: "bob.builder@example.com", role: 'manager' },
-  { id: 'alumni3', name: 'Charlie Brown', profilePictureUrl: 'https://picsum.photos/seed/charlie/200/200', currentJobTitle: 'Data Scientist', company: 'Facebook', shortBio: 'Exploring large-scale data and its implications. Alumnus of 2017.', university: 'State University', skills: ['R', 'Statistics', 'Big Data'], location: { lat: 34.0522, lng: -118.2437 }, email: "charlie.brown@example.com", role: 'user' },
-  { id: 'alumni4', name: 'Diana Prince', profilePictureUrl: 'https://picsum.photos/seed/diana/200/200', currentJobTitle: 'Marketing Lead', company: 'Amazon', shortBio: 'Specializing in digital marketing strategies. Graduated 2016.', university: 'Commerce College', skills: ['SEO', 'Content Marketing', 'Social Media'], location: { lat: 40.7128, lng: -74.0060 }, email: "diana.prince@example.com", role: 'admin' },
+  { 
+    id: 'alumni1', 
+    name: 'Alice Wonderland', 
+    profilePictureUrl: 'https://picsum.photos/seed/alice/200/200', 
+    currentJobTitle: 'Senior Software Engineer', 
+    company: 'Google', 
+    shortBio: 'Passionate about AI and cloud computing. Graduated in 2015.', 
+    university: 'State University', 
+    skills: ['Java', 'Python', 'Machine Learning', 'Cloud Computing', 'Algorithms'], 
+    email: "alice.wonderland@example.com", 
+    role: 'user',
+    interests: ['Hiking', 'Photography', 'Open Source'],
+    offersHelpWith: [AreasOfSupport[0], AreasOfSupport[2], AreasOfSupport[4]], // Mentoring, Job Referrals, Startup Mentorship
+    appointmentCoinCost: 10,
+  },
+  { 
+    id: 'alumni2', 
+    name: 'Bob The Builder', 
+    profilePictureUrl: 'https://picsum.photos/seed/bob/200/200', 
+    currentJobTitle: 'Product Manager', 
+    company: 'Microsoft', 
+    shortBio: 'Focused on user-centric product development. Class of 2018.', 
+    university: 'Tech Institute', 
+    skills: ['Product Management', 'Agile', 'UX Research', 'Roadmapping'], 
+    email: "bob.builder@example.com", 
+    role: 'manager',
+    interests: ['Woodworking', 'Community Volunteering', 'Travel'],
+    offersHelpWith: [AreasOfSupport[1], AreasOfSupport[3], AreasOfSupport[8]], // Internships, Guest Lecturing, Organizing Events
+    appointmentCoinCost: 15,
+  },
+  { 
+    id: 'alumni3', 
+    name: 'Charlie Brown', 
+    profilePictureUrl: 'https://picsum.photos/seed/charlie/200/200', 
+    currentJobTitle: 'Data Scientist', 
+    company: 'Facebook', 
+    shortBio: 'Exploring large-scale data and its implications. Alumnus of 2017.', 
+    university: 'State University', 
+    skills: ['R', 'Statistics', 'Big Data', 'Python', 'Data Visualization'], 
+    email: "charlie.brown@example.com", 
+    role: 'user',
+    interests: ['Chess', 'Reading Sci-Fi', 'Data For Good'],
+    offersHelpWith: [AreasOfSupport[0], AreasOfSupport[7]], // Mentoring, Curriculum Feedback
+    appointmentCoinCost: 10,
+  },
+  { 
+    id: 'alumni4', 
+    name: 'Diana Prince', 
+    profilePictureUrl: 'https://picsum.photos/seed/diana/200/200', 
+    currentJobTitle: 'Marketing Lead', 
+    company: 'Amazon', 
+    shortBio: 'Specializing in digital marketing strategies. Graduated 2016.', 
+    university: 'Commerce College', 
+    skills: ['SEO', 'Content Marketing', 'Social Media', 'PPC Advertising'], 
+    email: "diana.prince@example.com", 
+    role: 'admin',
+    interests: ['Yoga', 'Creative Writing', 'Digital Trends'],
+    offersHelpWith: [AreasOfSupport[2], AreasOfSupport[5], AreasOfSupport[9]], // Job Referrals, Sponsorship, Volunteering
+    appointmentCoinCost: 20,
+  },
 ];
 
 export const sampleActivities: Activity[] = [

@@ -93,10 +93,11 @@ export interface AlumniProfile {
   shortBio: string;
   university: string;
   skills: string[];
-  location: { lat: number; lng: number };
   email: string;
-  // Consider adding role here if alumni can also be admins/managers
   role?: UserRole; 
+  interests?: string[];
+  offersHelpWith?: SupportArea[];
+  appointmentCoinCost?: number;
 }
 
 export interface Activity {
@@ -222,3 +223,8 @@ export type Wallet = {
   coins: number;
   transactions: WalletTransaction[];
 };
+
+// For booking appointment form
+export const PreferredTimeSlots = ["Morning (9AM-12PM)", "Afternoon (1PM-4PM)", "Evening (5PM-7PM)"] as const;
+export type PreferredTimeSlot = typeof PreferredTimeSlots[number];
+```
