@@ -1,4 +1,4 @@
-tsx
+
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -51,14 +51,14 @@ export default function JobBoardPage() {
   const currentAlumniUser = sampleAlumni[0]; 
 
   const uniqueLocations = useMemo(() => {
-    const locations = new Set(sampleJobOpenings.map(op => op.location));
+    const locations = new Set(openings.map(op => op.location));
     return Array.from(locations).sort();
-  }, []);
+  }, [openings]);
 
   const uniqueCompanies = useMemo(() => {
-    const companies = new Set(sampleJobOpenings.map(op => op.company));
+    const companies = new Set(openings.map(op => op.company));
     return Array.from(companies).sort();
-  }, []);
+  }, [openings]);
 
   const filteredOpenings = useMemo(() => {
     return openings.filter(opening => {
@@ -89,7 +89,6 @@ export default function JobBoardPage() {
       alumniName: currentAlumniUser.name,
     };
     setOpenings(prev => [newOpening, ...prev]);
-    // Add new locations/companies to filter options if they don't exist
     toast({ title: "Opportunity Posted", description: `${data.title} at ${data.company} has been posted.` });
     setIsPostDialogOpen(false);
     reset();
