@@ -1,14 +1,18 @@
+tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PlusCircle, Aperture, Briefcase, Users, MapPin, Building, CalendarDays } from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { PlusCircle, Aperture, Briefcase, Users, MapPin, Building, CalendarDays, Search, Filter as FilterIcon } from "lucide-react";
 import { sampleJobOpenings, sampleAlumni } from "@/lib/sample-data";
 import type { JobOpening } from "@/types";
 import { useToast } from "@/hooks/use-toast";
@@ -24,22 +28,57 @@ const jobOpeningSchema = z.object({
   location: z.string().min(1, "Location is required"),
   description: z.string().min(10, "Description must be at least 10 characters"),
   type: z.enum(['Full-time', 'Part-time', 'Internship', 'Contract', 'Mentorship']),
-  // postedByAlumniId would be set programmatically based on logged-in user
 });
 
 type JobOpeningFormData = z.infer<typeof jobOpeningSchema>;
 
+const JOB_TYPES: JobOpening['type'][] = ['Full-time', 'Part-time', 'Internship', 'Contract', 'Mentorship'];
+
 export default function JobBoardPage() {
   const [openings, setOpenings] = useState<JobOpening[]>(sampleJobOpenings);
   const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedJobTypes, setSelectedJobTypes] = useState<Set<JobOpening['type']>>(new Set());
+  const [selectedLocations, setSelectedLocations] = useState<Set<string>>(new Set());
+  const [selectedCompanies, setSelectedCompanies] = useState<Set<string>>(new Set());
+  
   const { toast } = useToast();
   const { control, handleSubmit, reset, formState: { errors } } = useForm<JobOpeningFormData>({
     resolver: zodResolver(jobOpeningSchema),
     defaultValues: { type: 'Full-time' }
   });
 
-  // Simulate logged-in user (an alumnus)
   const currentAlumniUser = sampleAlumni[0]; 
+
+  const uniqueLocations = useMemo(() => {
+    const locations = new Set(sampleJobOpenings.map(op => op.location));
+    return Array.from(locations).sort();
+  }, []);
+
+  const uniqueCompanies = useMemo(() => {
+    const companies = new Set(sampleJobOpenings.map(op => op.company));
+    return Array.from(companies).sort();
+  }, []);
+
+  const filteredOpenings = useMemo(() => {
+    return openings.filter(opening => {
+      const matchesSearchTerm = searchTerm === '' || opening.title.toLowerCase().includes(searchTerm.toLowerCase()) || opening.description.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesJobType = selectedJobTypes.size === 0 || selectedJobTypes.has(opening.type);
+      const matchesLocation = selectedLocations.size === 0 || selectedLocations.has(opening.location);
+      const matchesCompany = selectedCompanies.size === 0 || selectedCompanies.has(opening.company);
+      return matchesSearchTerm && matchesJobType && matchesLocation && matchesCompany;
+    });
+  }, [openings, searchTerm, selectedJobTypes, selectedLocations, selectedCompanies]);
+
+  const handleFilterChange = (filterSet: Set<string>, item: string, setter: React.Dispatch<React.SetStateAction<Set<string>>>) => {
+    const newSet = new Set(filterSet);
+    if (newSet.has(item)) {
+      newSet.delete(item);
+    } else {
+      newSet.add(item);
+    }
+    setter(newSet);
+  };
 
   const onPostSubmit = (data: JobOpeningFormData) => {
     const newOpening: JobOpening = {
@@ -50,6 +89,7 @@ export default function JobBoardPage() {
       alumniName: currentAlumniUser.name,
     };
     setOpenings(prev => [newOpening, ...prev]);
+    // Add new locations/companies to filter options if they don't exist
     toast({ title: "Opportunity Posted", description: `${data.title} at ${data.company} has been posted.` });
     setIsPostDialogOpen(false);
     reset();
@@ -62,12 +102,92 @@ export default function JobBoardPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Job & Mentorship Board</h1>
-        <Button onClick={openNewPostDialog} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="flex-1">
+          <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
+            <Briefcase className="h-8 w-8" /> Job Board
+          </h1>
+          <CardDescription>Find job opportunities shared within the alumni network.</CardDescription>
+        </div>
+        <div className="relative w-full md:w-auto md:max-w-xs">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          <Input 
+            type="search" 
+            placeholder="Search jobs..." 
+            className="pl-10 w-full"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <Button onClick={openNewPostDialog} className="bg-primary hover:bg-primary/90 text-primary-foreground w-full md:w-auto">
           <PlusCircle className="mr-2 h-5 w-5" /> Post Opportunity
         </Button>
       </div>
+
+      <Accordion type="single" collapsible className="w-full bg-card shadow-lg rounded-lg">
+        <AccordionItem value="filters">
+          <AccordionTrigger className="px-6 py-4 hover:no-underline">
+            <div className="flex items-center gap-2 text-lg font-semibold">
+              <FilterIcon className="h-5 w-5" /> Filters
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="px-6 pb-6 border-t">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
+              <div>
+                <h4 className="font-medium mb-2">Job Type</h4>
+                <ScrollArea className="h-40 pr-3">
+                  <div className="space-y-2">
+                    {JOB_TYPES.map(type => (
+                      <div key={type} className="flex items-center space-x-2">
+                        <Checkbox 
+                          id={`type-${type}`} 
+                          checked={selectedJobTypes.has(type)}
+                          onCheckedChange={() => handleFilterChange(selectedJobTypes, type, setSelectedJobTypes as React.Dispatch<React.SetStateAction<Set<string>>>)}
+                        />
+                        <Label htmlFor={`type-${type}`} className="font-normal">{type}</Label>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </div>
+              <div>
+                <h4 className="font-medium mb-2">Location</h4>
+                <ScrollArea className="h-40 pr-3">
+                  <div className="space-y-2">
+                    {uniqueLocations.map(location => (
+                      <div key={location} className="flex items-center space-x-2">
+                        <Checkbox 
+                          id={`loc-${location}`} 
+                          checked={selectedLocations.has(location)}
+                          onCheckedChange={() => handleFilterChange(selectedLocations, location, setSelectedLocations)}
+                        />
+                        <Label htmlFor={`loc-${location}`} className="font-normal">{location}</Label>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </div>
+              <div>
+                <h4 className="font-medium mb-2">Company</h4>
+                <ScrollArea className="h-40 pr-3">
+                  <div className="space-y-2">
+                    {uniqueCompanies.map(company => (
+                      <div key={company} className="flex items-center space-x-2">
+                        <Checkbox 
+                          id={`comp-${company}`} 
+                          checked={selectedCompanies.has(company)}
+                          onCheckedChange={() => handleFilterChange(selectedCompanies, company, setSelectedCompanies)}
+                        />
+                        <Label htmlFor={`comp-${company}`} className="font-normal">{company}</Label>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </div>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
 
       <Dialog open={isPostDialogOpen} onOpenChange={setIsPostDialogOpen}>
         <DialogContent className="sm:max-w-[525px] max-h-[90vh] overflow-y-auto">
@@ -99,7 +219,7 @@ export default function JobBoardPage() {
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
                     <SelectContent>
-                      {['Full-time', 'Part-time', 'Internship', 'Contract', 'Mentorship'].map(t => (
+                      {JOB_TYPES.map(t => (
                         <SelectItem key={t} value={t}>{t}</SelectItem>
                       ))}
                     </SelectContent>
@@ -121,17 +241,17 @@ export default function JobBoardPage() {
         </DialogContent>
       </Dialog>
 
-      {openings.length === 0 ? (
+      {filteredOpenings.length === 0 ? (
         <Card className="text-center py-12 shadow-lg">
           <CardHeader>
             <Aperture className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-            <CardTitle className="text-2xl">No Opportunities Posted Yet</CardTitle>
-            <CardDescription>Be the first to share a job or mentorship opportunity!</CardDescription>
+            <CardTitle className="text-2xl">No Opportunities Found</CardTitle>
+            <CardDescription>Try adjusting your search or filters, or be the first to post an opportunity!</CardDescription>
           </CardHeader>
         </Card>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {openings.map((opening) => {
+          {filteredOpenings.map((opening) => {
             const postingAlumni = sampleAlumni.find(a => a.id === opening.postedByAlumniId);
             return (
             <Card key={opening.id} className="shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col">
@@ -140,7 +260,7 @@ export default function JobBoardPage() {
                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
                       opening.type === 'Mentorship' ? 'bg-purple-100 text-purple-700' :
                       opening.type === 'Internship' ? 'bg-blue-100 text-blue-700' :
-                      'bg-green-100 text-green-700' // Default for job types
+                      'bg-green-100 text-green-700'
                     }`}>
                       {opening.type}
                     </span>
