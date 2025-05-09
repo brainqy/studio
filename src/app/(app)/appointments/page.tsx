@@ -6,7 +6,7 @@ import { CalendarDays, PlusCircle, Video, CheckCircle, Clock } from "lucide-reac
 import { sampleAppointments, sampleAlumni } from "@/lib/sample-data";
 import type { Appointment } from "@/types";
 import { useToast } from "@/hooks/use-toast";
-import { format } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function AppointmentsPage() {
@@ -76,7 +76,7 @@ export default function AppointmentsPage() {
                   <strong>Date & Time:</strong> {format(new Date(appt.dateTime), "PPPp")}
                 </p>
                 <p className="text-sm text-muted-foreground mt-1">
-                  (ประมาณ {formatDistanceToNow(new Date(appt.dateTime), { addSuffix: true })})
+                  ({formatDistanceToNow(new Date(appt.dateTime), { addSuffix: true })})
                 </p>
               </CardContent>
               <CardFooter className="border-t pt-4 mt-auto flex justify-end space-x-2">
