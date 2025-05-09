@@ -1,16 +1,20 @@
+tsx
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CalendarDays, PlusCircle, Video, CheckCircle, Clock } from "lucide-react";
+import { CalendarDays, PlusCircle, Video, CheckCircle, Clock, XCircle, ThumbsUp } from "lucide-react";
 import { sampleAppointments, sampleAlumni } from "@/lib/sample-data";
 import type { Appointment } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { format, formatDistanceToNow } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useState } from "react"; // Import useState
 
 export default function AppointmentsPage() {
   const { toast } = useToast();
+  // Use state for appointments to allow status changes
+  const [appointments, setAppointments] = useState<Appointment[]>(sampleAppointments);
 
   const getStatusClass = (status: Appointment['status']) => {
     if (status === 'Confirmed') return 'text-green-600 bg-green-100';
@@ -21,6 +25,24 @@ export default function AppointmentsPage() {
   
   const getAlumniDetails = (name: string) => {
     return sampleAlumni.find(a => a.name === name);
+  };
+
+  const handleAcceptAppointment = (appointmentId: string) => {
+    setAppointments(prevAppointments => 
+      prevAppointments.map(appt => 
+        appt.id === appointmentId ? { ...appt, status: 'Confirmed' } : appt
+      )
+    );
+    toast({ title: "Appointment Confirmed", description: "The appointment has been marked as confirmed." });
+  };
+
+  const handleDeclineAppointment = (appointmentId: string) => {
+     setAppointments(prevAppointments => 
+      prevAppointments.map(appt => 
+        appt.id === appointmentId ? { ...appt, status: 'Cancelled' } : appt
+      )
+    );
+    toast({ title: "Appointment Declined", description: "The appointment has been marked as cancelled.", variant: "destructive" });
   };
 
   return (
@@ -36,7 +58,7 @@ export default function AppointmentsPage() {
       
       <CardDescription>View and manage your scheduled meetings with alumni.</CardDescription>
 
-      {sampleAppointments.length === 0 ? (
+      {appointments.length === 0 ? (
         <Card className="text-center py-12 shadow-lg">
           <CardHeader>
             <CalendarDays className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
@@ -48,7 +70,7 @@ export default function AppointmentsPage() {
         </Card>
       ) : (
         <div className="grid gap-6 md:grid-cols-2">
-          {sampleAppointments.map((appt) => {
+          {appointments.map((appt) => {
             const alumni = getAlumniDetails(appt.withUser);
             return (
             <Card key={appt.id} className="shadow-lg hover:shadow-xl transition-shadow duration-300">
@@ -58,6 +80,7 @@ export default function AppointmentsPage() {
                   <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusClass(appt.status)}`}>
                     {appt.status === 'Confirmed' && <CheckCircle className="inline h-3 w-3 mr-1"/>}
                     {appt.status === 'Pending' && <Clock className="inline h-3 w-3 mr-1"/>}
+                    {appt.status === 'Cancelled' && <XCircle className="inline h-3 w-3 mr-1"/>}
                     {appt.status}
                   </span>
                 </div>
@@ -81,16 +104,30 @@ export default function AppointmentsPage() {
               </CardContent>
               <CardFooter className="border-t pt-4 mt-auto flex justify-end space-x-2">
                 {appt.status === 'Confirmed' && (
-                  <Button size="sm" variant="default" onClick={() => toast({title: "Join Meeting (Mock)"})}>
+                  <Button size="sm" variant="default" onClick={() => toast({title: "Join Meeting (Mock)", description: "This would typically open a video call link."})}>
                     <Video className="mr-2 h-4 w-4" /> Join Meeting
                   </Button>
                 )}
                 {appt.status === 'Pending' && (
-                   <Button size="sm" variant="outline" onClick={() => toast({title: "Manage Appointment (Mock)"})}>Manage</Button>
+                  <>
+                    <Button size="sm" variant="default" onClick={() => handleAcceptAppointment(appt.id)} className="bg-green-600 hover:bg-green-700 text-white">
+                      <ThumbsUp className="mr-2 h-4 w-4"/> Accept
+                    </Button>
+                    <Button size="sm" variant="destructive" onClick={() => handleDeclineAppointment(appt.id)}>
+                      <XCircle className="mr-2 h-4 w-4"/> Decline
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => toast({title: "Manage Appointment (Mock)", description: "This could allow rescheduling or other actions."})}>Manage</Button>
+                  </>
                 )}
-                 {appt.status !== 'Cancelled' && (
-                   <Button size="sm" variant="ghost" className="text-destructive hover:bg-destructive/10" onClick={() => toast({title: "Cancel Appointment (Mock)"})}>Cancel</Button>
+                 {appt.status === 'Confirmed' && appt.status !== 'Cancelled' && ( // Show cancel only if confirmed and not already cancelled
+                   <Button size="sm" variant="ghost" className="text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => {
+                     handleDeclineAppointment(appt.id); // Reuse decline logic for cancelling
+                     toast({title: "Appointment Cancelled (Mock)", description: "The appointment has been cancelled."})
+                    }}>Cancel</Button>
                 )}
+                 {appt.status === 'Cancelled' && (
+                    <p className="text-sm text-muted-foreground">This appointment was cancelled.</p>
+                 )}
               </CardFooter>
             </Card>
           );
