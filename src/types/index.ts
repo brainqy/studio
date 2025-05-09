@@ -1,3 +1,4 @@
+
 export type UserRole = 'admin' | 'manager' | 'user';
 
 export type Gender = 'Male' | 'Female' | 'Prefer not to say';
@@ -227,4 +228,3 @@ export type Wallet = {
 // For booking appointment form
 export const PreferredTimeSlots = ["Morning (9AM-12PM)", "Afternoon (1PM-4PM)", "Evening (5PM-7PM)"] as const;
 export type PreferredTimeSlot = typeof PreferredTimeSlots[number];
-```
