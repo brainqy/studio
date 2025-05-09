@@ -1,4 +1,4 @@
-import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile } from '@/types';
+import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought } from '@/types';
 
 export const sampleJobApplications: JobApplication[] = [
   { id: '1', companyName: 'Tech Solutions Inc.', jobTitle: 'Software Engineer', status: 'Applied', dateApplied: '2024-07-01', notes: 'Applied via company portal.' },
@@ -8,10 +8,10 @@ export const sampleJobApplications: JobApplication[] = [
 ];
 
 export const sampleAlumni: AlumniProfile[] = [
-  { id: 'alumni1', name: 'Alice Wonderland', profilePictureUrl: 'https://picsum.photos/seed/alice/200/200', currentJobTitle: 'Senior Software Engineer', company: 'Google', shortBio: 'Passionate about AI and cloud computing. Graduated in 2015.', university: 'State University', skills: ['Java', 'Python', 'Machine Learning'], location: { lat: 37.7749, lng: -122.4194 } , email: "alice.wonderland@example.com"},
-  { id: 'alumni2', name: 'Bob The Builder', profilePictureUrl: 'https://picsum.photos/seed/bob/200/200', currentJobTitle: 'Product Manager', company: 'Microsoft', shortBio: 'Focused on user-centric product development. Class of 2018.', university: 'Tech Institute', skills: ['Product Management', 'Agile', 'UX Research'], location: { lat: 47.6062, lng: -122.3321 }, email: "bob.builder@example.com" },
-  { id: 'alumni3', name: 'Charlie Brown', profilePictureUrl: 'https://picsum.photos/seed/charlie/200/200', currentJobTitle: 'Data Scientist', company: 'Facebook', shortBio: 'Exploring large-scale data and its implications. Alumnus of 2017.', university: 'State University', skills: ['R', 'Statistics', 'Big Data'], location: { lat: 34.0522, lng: -118.2437 }, email: "charlie.brown@example.com" },
-  { id: 'alumni4', name: 'Diana Prince', profilePictureUrl: 'https://picsum.photos/seed/diana/200/200', currentJobTitle: 'Marketing Lead', company: 'Amazon', shortBio: 'Specializing in digital marketing strategies. Graduated 2016.', university: 'Commerce College', skills: ['SEO', 'Content Marketing', 'Social Media'], location: { lat: 40.7128, lng: -74.0060 }, email: "diana.prince@example.com" },
+  { id: 'alumni1', name: 'Alice Wonderland', profilePictureUrl: 'https://picsum.photos/seed/alice/200/200', currentJobTitle: 'Senior Software Engineer', company: 'Google', shortBio: 'Passionate about AI and cloud computing. Graduated in 2015.', university: 'State University', skills: ['Java', 'Python', 'Machine Learning'], location: { lat: 37.7749, lng: -122.4194 } , email: "alice.wonderland@example.com", role: 'user'},
+  { id: 'alumni2', name: 'Bob The Builder', profilePictureUrl: 'https://picsum.photos/seed/bob/200/200', currentJobTitle: 'Product Manager', company: 'Microsoft', shortBio: 'Focused on user-centric product development. Class of 2018.', university: 'Tech Institute', skills: ['Product Management', 'Agile', 'UX Research'], location: { lat: 47.6062, lng: -122.3321 }, email: "bob.builder@example.com", role: 'manager' },
+  { id: 'alumni3', name: 'Charlie Brown', profilePictureUrl: 'https://picsum.photos/seed/charlie/200/200', currentJobTitle: 'Data Scientist', company: 'Facebook', shortBio: 'Exploring large-scale data and its implications. Alumnus of 2017.', university: 'State University', skills: ['R', 'Statistics', 'Big Data'], location: { lat: 34.0522, lng: -118.2437 }, email: "charlie.brown@example.com", role: 'user' },
+  { id: 'alumni4', name: 'Diana Prince', profilePictureUrl: 'https://picsum.photos/seed/diana/200/200', currentJobTitle: 'Marketing Lead', company: 'Amazon', shortBio: 'Specializing in digital marketing strategies. Graduated 2016.', university: 'Commerce College', skills: ['SEO', 'Content Marketing', 'Social Media'], location: { lat: 40.7128, lng: -74.0060 }, email: "diana.prince@example.com", role: 'admin' },
 ];
 
 export const sampleActivities: Activity[] = [
@@ -45,11 +45,40 @@ export const sampleJobOpenings: JobOpening[] = [
 
 export const sampleUserProfile: UserProfile = {
   id: 'currentUser',
+  role: 'user', // Default role
   name: 'Alex Taylor',
   email: 'alex.taylor@example.com',
-  bio: 'Aspiring full-stack developer with a keen interest in AI and web technologies. Eager to learn and contribute to innovative projects.',
-  skills: ['JavaScript', 'React', 'Node.js', 'Python', 'SQL'],
-  profilePictureUrl: 'https://picsum.photos/seed/alextaylor/200/200',
+  dateOfBirth: '1995-08-15',
+  gender: 'Male',
+  mobileNumber: '+15551234567',
+  currentAddress: '123 Main St, Anytown, CA, USA',
+  
+  graduationYear: '2023',
+  degreeProgram: 'Bachelor of Science (B.Sc)',
+  department: 'Computer Science',
+  
+  currentJobTitle: 'Aspiring Full-Stack Developer', // Existing field
+  currentOrganization: 'Tech Solutions Inc. (Internship)',
+  industry: 'IT/Software',
+  workLocation: 'Anytown, USA',
+  linkedInProfile: 'https://linkedin.com/in/alextaylor',
+  yearsOfExperience: '1',
+
+  skills: ['JavaScript', 'React', 'Node.js', 'Python', 'SQL'], // Existing field
+  
+  areasOfSupport: ['Mentoring Students', 'Sharing Job Referrals'],
+  timeCommitment: '1-2 hours',
+  preferredEngagementMode: 'Online',
+  otherComments: 'Eager to contribute to the alumni community!',
+  
+  lookingForSupportType: 'Career Mentoring',
+  helpNeededDescription: 'Looking for guidance on breaking into the AI/ML field.',
+  
+  shareProfileConsent: true,
+  featureInSpotlightConsent: false,
+
+  bio: 'Aspiring full-stack developer with a keen interest in AI and web technologies. Eager to learn and contribute to innovative projects.', // Existing field
+  profilePictureUrl: 'https://picsum.photos/seed/alextaylor/200/200', // Existing field
   resumeText: `Alex Taylor
 alex.taylor@example.com | (555) 123-4567 | linkedin.com/in/alextaylor | github.com/alextaylor
 
@@ -80,8 +109,8 @@ Software Engineering Intern | Tech Solutions Inc. | Summer 2022
   - Assisted in developing new features for a client-facing web application using React and Node.js.
   - Participated in daily stand-ups, sprint planning, and code reviews.
   - Contributed to bug fixing and improving application performance.
-`,
-  careerInterests: 'Full-stack development, AI/ML engineering, UI/UX design collaboration'
+`, // Existing field
+  careerInterests: 'Full-stack development, AI/ML engineering, UI/UX design collaboration' // Existing field
 };
 
 export const sampleAppointments = [
@@ -96,3 +125,6 @@ export const sampleWalletBalance = {
         { id: 'txn2', date: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString(), description: 'Used for premium report', amount: -20, type: 'debit' as 'credit' | 'debit' },
     ]
 };
+
+// Graduation years for dropdown
+export const graduationYears = Array.from({ length: 26 }, (_, i) => (2025 - i).toString());

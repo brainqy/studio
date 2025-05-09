@@ -1,213 +1,51 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { BarChart, PieChart, LineChart as RechartsLineChart, Bar, Pie, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, Sector } from 'recharts';
-import { Activity, Briefcase, Users, Zap, FileText, CheckCircle, Clock, Target } from "lucide-react";
-import { sampleJobApplications, sampleActivities, sampleAlumni } from "@/lib/sample-data";
-import type { PieSectorDataItem } from "recharts/types/polar/Pie";
-import { useState, useCallback, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { sampleUserProfile } from "@/lib/sample-data";
+import type { UserRole } from "@/types";
 
-const jobApplicationStatusData = sampleJobApplications.reduce((acc, curr) => {
-  const status = curr.status;
-  const existing = acc.find(item => item.name === status);
-  if (existing) {
-    existing.value += 1;
-  } else {
-    acc.push({ name: status, value: 1 });
-  }
-  return acc;
-}, [] as { name: string, value: number }[]);
-
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
-
-const renderActiveShape = (props: PieSectorDataItem) => {
-  const RADIAN = Math.PI / 180;
-  const { cx = 0, cy = 0, midAngle = 0, innerRadius = 0, outerRadius = 0, startAngle, endAngle, fill, payload, percent = 0, value } = props;
-  const sin = Math.sin(-RADIAN * midAngle);
-  const cos = Math.cos(-RADIAN * midAngle);
-  const sx = cx + (outerRadius + 10) * cos;
-  const sy = cy + (outerRadius + 10) * sin;
-  const mx = cx + (outerRadius + 30) * cos;
-  const my = cy + (outerRadius + 30) * sin;
-  const ex = mx + (cos >= 0 ? 1 : -1) * 22;
-  const ey = my;
-  const textAnchor = cos >= 0 ? 'start' : 'end';
-
-  return (
-    <g>
-      <text x={cx} y={cy} dy={8} textAnchor="middle" fill={fill} className="font-semibold text-lg">
-        {payload.name}
-      </text>
-      <Sector
-        cx={cx}
-        cy={cy}
-        innerRadius={innerRadius}
-        outerRadius={outerRadius}
-        startAngle={startAngle}
-        endAngle={endAngle}
-        fill={fill}
-      />
-      <Sector
-        cx={cx}
-        cy={cy}
-        startAngle={startAngle}
-        endAngle={endAngle}
-        innerRadius={outerRadius + 6}
-        outerRadius={outerRadius + 10}
-        fill={fill}
-      />
-      <path d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`} stroke={fill} fill="none" />
-      <circle cx={ex} cy={ey} r={2} fill={fill} stroke="none" />
-      <text x={ex + (cos >= 0 ? 1 : -1) * 12} y={ey} textAnchor={textAnchor} fill="#333">{`${value} Applications`}</text>
-      <text x={ex + (cos >= 0 ? 1 : -1) * 12} y={ey} dy={18} textAnchor={textAnchor} fill="#999">
-        {`(Rate ${(percent * 100).toFixed(2)}%)`}
-      </text>
-    </g>
-  );
-};
-
+import AdminDashboard from "@/components/dashboards/AdminDashboard";
+import ManagerDashboard from "@/components/dashboards/ManagerDashboard";
+import UserDashboard from "@/components/dashboards/UserDashboard";
+import { Skeleton } from "@/components/ui/skeleton"; // For loading state
 
 export default function DashboardPage() {
-  const [totalResumesAnalyzed, setTotalResumesAnalyzed] = useState(0);
-  const [averageMatchScore, setAverageMatchScore] = useState(0);
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate fetching data
-    setTotalResumesAnalyzed(125); // Mock data
-    setAverageMatchScore(78); // Mock data
+    // Simulate fetching user role
+    // In a real app, this would come from an auth context or API call
+    const role = sampleUserProfile.role; 
+    setUserRole(role);
+    setIsLoading(false);
   }, []);
 
-  const onPieEnter = useCallback((_: any, index: number) => {
-    setActiveIndex(index);
-  }, []);
-
-  const matchScoreData = [
-    { date: 'Jan', score: 70 },
-    { date: 'Feb', score: 75 },
-    { date: 'Mar', score: 80 },
-    { date: 'Apr', score: 72 },
-    { date: 'May', score: 85 },
-    { date: 'Jun', score: 78 },
-  ];
-
-  return (
-    <div className="space-y-8">
-      <h1 className="text-3xl font-bold tracking-tight text-foreground">Dashboard</h1>
-      
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="shadow-lg">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Resumes Analyzed</CardTitle>
-            <Zap className="h-5 w-5 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalResumesAnalyzed}</div>
-            <p className="text-xs text-muted-foreground">+10% from last month</p>
-          </CardContent>
-        </Card>
-        <Card className="shadow-lg">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg. Match Score</CardTitle>
-            <Target className="h-5 w-5 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{averageMatchScore}%</div>
-            <p className="text-xs text-muted-foreground">+2.1% from last month</p>
-          </CardContent>
-        </Card>
-        <Card className="shadow-lg">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Job Applications</CardTitle>
-            <Briefcase className="h-5 w-5 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{sampleJobApplications.length}</div>
-            <p className="text-xs text-muted-foreground">{sampleJobApplications.filter(app => app.status === 'Interviewing').length} interviewing</p>
-          </CardContent>
-        </Card>
-        <Card className="shadow-lg">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Alumni Connections</CardTitle>
-            <Users className="h-5 w-5 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{sampleAlumni.length}</div>
-            <p className="text-xs text-muted-foreground">+5 new connections this week</p>
-          </CardContent>
-        </Card>
+  if (isLoading) {
+    return (
+      <div className="space-y-8">
+        <Skeleton className="h-10 w-1/4" />
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <Skeleton className="h-28 w-full" />
+          <Skeleton className="h-28 w-full" />
+          <Skeleton className="h-28 w-full" />
+          <Skeleton className="h-28 w-full" />
+        </div>
+        <div className="grid gap-6 md:grid-cols-2">
+          <Skeleton className="h-96 w-full" />
+          <Skeleton className="h-96 w-full" />
+        </div>
       </div>
+    );
+  }
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle>Job Application Status</CardTitle>
-            <CardDescription>Overview of your current application statuses.</CardDescription>
-          </CardHeader>
-          <CardContent className="h-[350px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  activeIndex={activeIndex}
-                  activeShape={renderActiveShape}
-                  data={jobApplicationStatusData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={100}
-                  fill="hsl(var(--primary))"
-                  dataKey="value"
-                  onMouseEnter={onPieEnter}
-                  stroke="hsl(var(--background))"
-                  className="focus:outline-none"
-                >
-                  {jobApplicationStatusData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle>Average Match Score Over Time</CardTitle>
-            <CardDescription>Track your resume match score improvement.</CardDescription>
-          </CardHeader>
-          <CardContent className="h-[350px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <RechartsLineChart data={matchScoreData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" />
-                <YAxis stroke="hsl(var(--muted-foreground))" />
-                <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }} />
-                <Legend />
-                <Line type="monotone" dataKey="score" stroke="hsl(var(--primary))" strokeWidth={2} activeDot={{ r: 8, style: { fill: 'hsl(var(--primary))', stroke: 'hsl(var(--background))' } }} />
-              </RechartsLineChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card className="shadow-lg">
-        <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ul className="space-y-4">
-            {sampleActivities.slice(0, 5).map(activity => (
-              <li key={activity.id} className="flex items-center space-x-3 p-3 bg-secondary/50 rounded-md">
-                <Activity className="h-5 w-5 text-primary" />
-                <div>
-                  <p className="text-sm text-foreground">{activity.description}</p>
-                  <p className="text-xs text-muted-foreground">{new Date(activity.timestamp).toLocaleString()}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
-    </div>
-  );
+  switch (userRole) {
+    case 'admin':
+      return <AdminDashboard />;
+    case 'manager':
+      return <ManagerDashboard />;
+    case 'user':
+    default:
+      return <UserDashboard />;
+  }
 }
