@@ -1,4 +1,4 @@
-tsx
+
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -9,7 +9,7 @@ import type { Appointment } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { format, formatDistanceToNow } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useState } from "react"; // Import useState
+import { useState } from "react"; 
 
 export default function AppointmentsPage() {
   const { toast } = useToast();
