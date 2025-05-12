@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
-import { User, Mail, Briefcase, Sparkles, Upload, Save, CalendarDays, Users, HelpCircle, CheckSquare, SettingsIcon, Phone, MapPin, GraduationCap, Building, LinkIcon, Brain, Handshake, Clock, MessageCircle, Info, CheckCircle as CheckCircleIcon, XCircle, Edit3, Loader2, ThumbsUp, PlusCircle as PlusCircleIcon } from "lucide-react"; // Renamed CheckCircle to CheckCircleIcon
+import { User, Mail, Briefcase, Sparkles, Upload, Save, CalendarDays, Users, HelpCircle, CheckSquare, Settings as SettingsIcon, Phone, MapPin, GraduationCap, Building, LinkIcon, Brain, Handshake, Clock, MessageCircle, Info, CheckCircle as CheckCircleIcon, XCircle, Edit3, Loader2, ThumbsUp, PlusCircle as PlusCircleIcon } from "lucide-react"; // Renamed CheckCircle to CheckCircleIcon
 import { sampleUserProfile, graduationYears } from "@/lib/sample-data";
 import type { UserProfile, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought } from "@/types";
 import { DegreePrograms, Industries, AreasOfSupport as AreasOfSupportOptions, TimeCommitments, EngagementModes, SupportTypesSought as SupportTypesSoughtOptions } from "@/types";
@@ -470,7 +470,7 @@ export default function ProfilePage() {
                 <Controller name="helpNeededDescription" control={control} render={({ field }) => <Textarea id="helpNeededDescription" {...field} />} />
               </div>
 
-              {renderSectionHeader("Visibility & Consent", CheckSquareIcon, "Manage how your profile information is shared within the platform.")}
+              {renderSectionHeader("Visibility & Consent", CheckSquare, "Manage how your profile information is shared within the platform.")}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label>Can we share your profile with other alumni for relevant collaboration?</Label>
@@ -588,3 +588,4 @@ export default function ProfilePage() {
     </div>
   );
 }
+
