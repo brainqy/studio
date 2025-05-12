@@ -2,7 +2,7 @@
 "use client";
 
 import { Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarSeparator, SidebarGroup, SidebarGroupLabel } from "@/components/ui/sidebar";
-import { Aperture, Award, BarChart2, BookOpen, Briefcase, Building2, CalendarDays, FileText, GalleryVerticalEnd, GitFork, Gift, Handshake, History, Home, Layers3, ListChecks, MessageSquare, Settings, ShieldAlert, ShieldQuestion, User, Users, Wallet, Zap, UserCog, BotMessageSquare, Target, Users2, BookText } from "lucide-react"; // Added BookText
+import { Aperture, Award, BarChart2, BookOpen, Briefcase, Building2, CalendarDays, FileText, GalleryVerticalEnd, GitFork, Gift, Handshake, History, Home, Layers3, ListChecks, MessageSquare, Settings, ShieldAlert, ShieldQuestion, User, Users, Wallet, Zap, UserCog, BotMessageSquare, Target, Users2, BookText, Activity } from "lucide-react"; // Added Activity
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { sampleUserProfile } from "@/lib/sample-data"; // Import user profile to get role and tenant
@@ -11,7 +11,6 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: Home },
   { href: "/resume-analyzer", label: "Resume Analyzer", icon: Zap },
   { href: "/my-resumes", label: "My Resumes", icon: Layers3 },
-  // { href: "/resume-history", label: "Resume History", icon: History }, // Removed Resume History
   { href: "/job-tracker", label: "Job Tracker", icon: Briefcase },
   {
     label: "Alumni Network",
@@ -33,14 +32,14 @@ const utilityItems = [
   { href: "/wallet", label: "Digital Wallet", icon: Wallet },
   { href: "/feature-requests", label: "Feature Requests", icon: ShieldQuestion },
   { href: "/settings", label: "Settings", icon: Settings },
-  { href: "/documentation", label: "Documentation", icon: BookText }, // Added Documentation
+  { href: "/documentation", label: "Documentation", icon: BookText },
 ];
 
 // New Gamification Section
 const gamificationItems = [
   { href: "/gamification", label: "Rewards & Badges", icon: Award },
   { href: "/referrals", label: "Referrals", icon: Gift },
-  { href: "/affiliates", label: "Affiliates Program", icon: Target }, // New Affiliates link
+  { href: "/affiliates", label: "Affiliates Program", icon: Target },
 ];
 
 // New Blog Section
@@ -50,13 +49,14 @@ const blogItems = [
 
 
 const adminItems = [
+   { href: "/dashboard", label: "Admin Dashboard", icon: Activity }, // Added Admin Dashboard link here
    { href: "/admin/tenants", label: "Tenant Management", icon: Building2 },
-   { href: "/admin/tenant-onboarding", label: "Tenant Onboarding", icon: Layers3 }, // New Tenant Onboarding link
+   { href: "/admin/tenant-onboarding", label: "Tenant Onboarding", icon: Layers3 },
    { href: "/admin/user-management", label: "User Management", icon: UserCog },
    { href: "/admin/gamification-rules", label: "Gamification Rules", icon: ListChecks },
    { href: "/admin/content-moderation", label: "Content Moderation", icon: ShieldAlert },
    { href: "/admin/messenger-management", label: "Messenger Mgt.", icon: BotMessageSquare },
-   { href: "/admin/affiliate-management", label: "Affiliate Mgt.", icon: Users2 }, // Added Affiliate Management
+   { href: "/admin/affiliate-management", label: "Affiliate Mgt.", icon: Users2 },
 ];
 
 
@@ -66,13 +66,16 @@ export function AppSidebar() {
 
   const renderMenuItem = (item: any, isSubItem = false) => {
     const isActive = pathname === item.href || (item.href && item.href !== "/dashboard" && pathname.startsWith(item.href));
+    // Special case for admin dashboard link if current path is /dashboard and user is admin
+    const isAdminDashboardActive = item.href === "/dashboard" && item.label === "Admin Dashboard" && pathname === "/dashboard" && currentUser.role === 'admin';
+
     return (
       <SidebarMenuItem key={item.href || item.label}>
          {item.href ? (
            <Link href={item.href} passHref legacyBehavior>
-            <SidebarMenuButton isActive={isActive} size={isSubItem ? "sm" : "default"} className="w-full justify-start">
-              <item.icon className={`h-5 w-5 ${isActive ? "text-sidebar-primary-foreground" : "text-sidebar-foreground/80"}`} />
-              <span className={`${isActive ? "text-sidebar-primary-foreground" : ""} group-data-[collapsible=icon]:hidden`}>{item.label}</span>
+            <SidebarMenuButton isActive={isActive || isAdminDashboardActive} size={isSubItem ? "sm" : "default"} className="w-full justify-start">
+              <item.icon className={`h-5 w-5 ${(isActive || isAdminDashboardActive) ? "text-sidebar-primary-foreground" : "text-sidebar-foreground/80"}`} />
+              <span className={`${(isActive || isAdminDashboardActive) ? "text-sidebar-primary-foreground" : ""} group-data-[collapsible=icon]:hidden`}>{item.label}</span>
             </SidebarMenuButton>
            </Link>
          ) : (
@@ -97,27 +100,24 @@ export function AppSidebar() {
       <SidebarContent className="p-2">
         <SidebarMenu>
           {navItems.map((item) =>
-            item.subItems && item.subItems.length > 0 ? ( // Check if subItems exist and are not empty
+            item.subItems && item.subItems.length > 0 ? ( 
               <SidebarGroup key={item.label} className="p-0">
-                {/* Render the group header itself */}
                  <SidebarMenuButton size="default" className="w-full justify-start cursor-default hover:bg-transparent">
                    <item.icon className="h-5 w-5 text-sidebar-foreground/80" />
                    <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
                  </SidebarMenuButton>
-                {/* Render sub-items indented */}
                 <div className="pl-4 group-data-[collapsible=icon]:hidden">
                   {item.subItems.map(subItem => renderMenuItem(subItem, true))}
                 </div>
               </SidebarGroup>
-            ) : item.subItems && item.subItems.length === 0 ? ( // If subItems is empty, render as a normal item
+            ) : item.subItems && item.subItems.length === 0 ? ( 
                renderMenuItem(item)
-            ) : ( // If no subItems property, render as normal item
+            ) : ( 
               renderMenuItem(item)
             )
           )}
         </SidebarMenu>
 
-         {/* Gamification Section */}
         <SidebarSeparator className="my-4" />
          <SidebarGroup className="p-0">
           <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden text-xs text-sidebar-foreground/60 px-2">Engagement</SidebarGroupLabel>
@@ -135,7 +135,6 @@ export function AppSidebar() {
           </SidebarMenu>
         </SidebarGroup>
 
-        {/* Admin Section */}
         {currentUser.role === 'admin' && (
           <>
             <SidebarSeparator className="my-4" />
@@ -153,13 +152,11 @@ export function AppSidebar() {
           <img src={currentUser.profilePictureUrl || `https://avatar.vercel.sh/${currentUser.email}.png`} alt={currentUser.name} className="w-8 h-8 rounded-full" data-ai-hint="person face" />
           <div>
             <p className="text-sm font-medium text-sidebar-foreground">{currentUser.name}</p>
-            {/* Display Tenant ID or Name */}
             <p className="text-xs text-sidebar-foreground/70 flex items-center gap-1">
               <Building2 className="h-3 w-3"/> Tenant: {currentUser.tenantId}
             </p>
           </div>
         </div>
-         {/* Icon-only view for footer */}
          <div className="hidden items-center gap-2 group-data-[collapsible=icon]:flex">
            <img src={currentUser.profilePictureUrl || `https://avatar.vercel.sh/${currentUser.email}.png`} alt={currentUser.name} className="w-8 h-8 rounded-full" data-ai-hint="person face" />
          </div>
