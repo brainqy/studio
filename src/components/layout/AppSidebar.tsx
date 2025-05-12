@@ -1,20 +1,28 @@
-
 "use client";
 
 import { Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarSeparator, SidebarGroup, SidebarGroupLabel } from "@/components/ui/sidebar";
-import { Aperture, Award, BarChart2, BookOpen, Briefcase, Building2, CalendarDays, FileText, GalleryVerticalEnd, GitFork, Gift, Handshake, History, Home, Layers3, ListChecks, MessageSquare, Settings, ShieldAlert, ShieldQuestion, User, Users, Wallet, Zap, UserCog, BotMessageSquare, Target, Users2, BookText, Activity } from "lucide-react"; // Added Activity
+import { Aperture, Award, BarChart2, BookOpen, Briefcase, Building2, CalendarDays, FileText, GalleryVerticalEnd, GitFork, Gift, Handshake, History, Home, Layers3, ListChecks, MessageSquare, Settings, ShieldAlert, ShieldQuestion, User, Users, Wallet, Zap, UserCog, BotMessageSquare, Target, Users2, BookText, Activity, Edit, FileType } from "lucide-react"; // Added Activity, Edit, FileType
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { sampleUserProfile } from "@/lib/sample-data"; // Import user profile to get role and tenant
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: Home },
-  { href: "/resume-analyzer", label: "Resume Analyzer", icon: Zap },
+  {
+    label: "AI Tools", // Group for AI related tools
+    icon: Zap,
+    subItems: [
+      { href: "/resume-analyzer", label: "Resume Analyzer", icon: Zap },
+      { href: "/ai-resume-writer", label: "AI Resume Writer", icon: Edit },
+      { href: "/cover-letter-generator", label: "Cover Letter Generator", icon: FileType },
+    ]
+  },
   { href: "/my-resumes", label: "My Resumes", icon: Layers3 },
+  { href: "/resume-templates", label: "Resume Templates", icon: Layers3 }, // Changed icon to Layers3 for consistency with My Resumes or use a more specific one like FileArchive
   { href: "/job-tracker", label: "Job Tracker", icon: Briefcase },
   {
     label: "Alumni Network",
-    icon: Users,
+    icon: Handshake, // Changed icon to Handshake for better representation
     subItems: [
       { href: "/alumni-connect", label: "Search Alumni", icon: Users },
     ]
@@ -110,8 +118,6 @@ export function AppSidebar() {
                   {item.subItems.map(subItem => renderMenuItem(subItem, true))}
                 </div>
               </SidebarGroup>
-            ) : item.subItems && item.subItems.length === 0 ? ( 
-               renderMenuItem(item)
             ) : ( 
               renderMenuItem(item)
             )
@@ -164,4 +170,3 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
-

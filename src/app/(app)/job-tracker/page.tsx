@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PlusCircle, Edit3, Trash2, GripVertical, Search, FileText, Clock, Bookmark } from "lucide-react"; // Added Bookmark
+import { PlusCircle, Edit3, Trash2, GripVertical, Search, FileText, Clock, Bookmark, CalendarDays } from "lucide-react"; // Added CalendarDays
 import { sampleJobApplications, sampleResumeScanHistory as initialScanHistory } from "@/lib/sample-data";
 import type { JobApplication, JobApplicationStatus, ResumeScanHistoryItem, KanbanColumnId } from "@/types";
 import { JOB_APPLICATION_STATUSES } from "@/types";
@@ -17,7 +17,8 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
+import { DatePicker } from "@/components/ui/date-picker"; // Added DatePicker
 
 const jobApplicationSchema = z.object({
   id: z.string().optional(),
@@ -28,6 +29,7 @@ const jobApplicationSchema = z.object({
   notes: z.string().optional(),
   jobDescription: z.string().optional(),
   location: z.string().optional(),
+  reminderDate: z.date().optional(), // Changed to z.date() for DatePicker
 });
 
 type JobApplicationFormData = z.infer<typeof jobApplicationSchema>;
@@ -71,7 +73,7 @@ function JobCard({ application, onEdit, onDelete, onMove }: { application: JobAp
   const { toast } = useToast();
   return (
     <Card className="mb-3 shadow-md bg-card hover:shadow-lg transition-shadow duration-200">
-      <CardContent className="p-3">
+      <CardContent className="p-3 space-y-1">
         <div className="flex justify-between items-start">
           <div>
             <h4 className="font-semibold text-sm text-foreground">{application.jobTitle}</h4>
@@ -111,6 +113,11 @@ function JobCard({ application, onEdit, onDelete, onMove }: { application: JobAp
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+        {application.reminderDate && (
+            <p className="text-xs text-amber-600 flex items-center gap-1">
+                <Clock className="h-3 w-3" /> Reminder: {format(parseISO(application.reminderDate), 'MMM dd, yyyy')}
+            </p>
+        )}
       </CardContent>
     </Card>
   );
@@ -223,16 +230,21 @@ export default function JobTrackerPage() {
   });
 
   const onSubmit = (data: JobApplicationFormData) => {
+    const applicationData = {
+        ...data,
+        reminderDate: data.reminderDate ? data.reminderDate.toISOString() : undefined,
+    };
+
     if (editingApplication) {
-      setApplications(apps => apps.map(app => app.id === editingApplication.id ? { ...app, ...data, status: data.status as JobApplicationStatus } : app));
+      setApplications(apps => apps.map(app => app.id === editingApplication.id ? { ...app, ...applicationData, status: data.status as JobApplicationStatus } : app));
       toast({ title: "Application Updated", description: `${data.jobTitle} at ${data.companyName} updated.` });
     } else {
-      const newApp: JobApplication = { ...data, id: String(Date.now()), status: data.status as JobApplicationStatus, tenantId: 'tenant-1', userId: 'currentUser' }; // Added tenant/user ID
+      const newApp: JobApplication = { ...applicationData, id: String(Date.now()), status: data.status as JobApplicationStatus, tenantId: 'tenant-1', userId: 'currentUser' }; // Added tenant/user ID
       setApplications(apps => [newApp, ...apps]);
       toast({ title: "Application Added", description: `${data.jobTitle} at ${data.companyName} added to 'Saved'.` });
     }
     setIsDialogOpen(false);
-    reset({ companyName: '', jobTitle: '', status: 'Saved', dateApplied: new Date().toISOString().split('T')[0], notes: '', jobDescription: '', location: '' });
+    reset({ companyName: '', jobTitle: '', status: 'Saved', dateApplied: new Date().toISOString().split('T')[0], notes: '', jobDescription: '', location: '', reminderDate: undefined });
     setEditingApplication(null);
   };
 
@@ -245,6 +257,7 @@ export default function JobTrackerPage() {
     setValue('notes', app.notes || '');
     setValue('jobDescription', app.jobDescription || '');
     setValue('location', app.location || '');
+    setValue('reminderDate', app.reminderDate ? parseISO(app.reminderDate) : undefined);
     setIsDialogOpen(true);
   };
 
@@ -263,7 +276,7 @@ export default function JobTrackerPage() {
 
   const openNewApplicationDialog = () => {
     setEditingApplication(null);
-    reset({ companyName: '', jobTitle: '', status: 'Saved', dateApplied: new Date().toISOString().split('T')[0], notes: '', jobDescription: '', location: '' });
+    reset({ companyName: '', jobTitle: '', status: 'Saved', dateApplied: new Date().toISOString().split('T')[0], notes: '', jobDescription: '', location: '', reminderDate: undefined });
     setIsDialogOpen(true);
   };
 
@@ -324,7 +337,7 @@ export default function JobTrackerPage() {
         setIsDialogOpen(isOpen);
         if (!isOpen) {
             setEditingApplication(null);
-            reset({ companyName: '', jobTitle: '', status: 'Saved', dateApplied: new Date().toISOString().split('T')[0], notes: '', jobDescription: '', location: '' });
+            reset({ companyName: '', jobTitle: '', status: 'Saved', dateApplied: new Date().toISOString().split('T')[0], notes: '', jobDescription: '', location: '', reminderDate: undefined });
         }
       }}>
         <DialogContent className="sm:max-w-[525px] max-h-[90vh] overflow-y-auto">
@@ -368,6 +381,12 @@ export default function JobTrackerPage() {
               <Label htmlFor="dateApplied">Date Applied / Saved</Label>
               <Controller name="dateApplied" control={control} render={({ field }) => <Input id="dateApplied" type="date" {...field} />} />
               {errors.dateApplied && <p className="text-sm text-destructive mt-1">{errors.dateApplied.message}</p>}
+            </div>
+            <div>
+              <Label htmlFor="reminderDate" className="flex items-center gap-1">
+                <CalendarDays className="h-4 w-4 text-muted-foreground" /> Reminder Date (Optional)
+              </Label>
+              <Controller name="reminderDate" control={control} render={({ field }) => <DatePicker date={field.value} setDate={field.onChange} placeholder="Set a reminder" />} />
             </div>
             <div>
               <Label htmlFor="jobDescription">Job Description (Optional)</Label>

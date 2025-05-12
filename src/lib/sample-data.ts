@@ -1,19 +1,12 @@
-
-
-
-
-
-
-
-import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem, Appointment, Wallet, ResumeProfile, Tenant, Badge, BlogPost, ReferralHistoryItem, GamificationRule, UserStatus, SurveyResponse, Affiliate, AffiliateClick, AffiliateSignup, AffiliateStatus, SurveyStep } from '@/types';
+import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem, Appointment, Wallet, ResumeProfile, Tenant, Badge, BlogPost, ReferralHistoryItem, GamificationRule, UserStatus, SurveyResponse, Affiliate, AffiliateClick, AffiliateSignup, AffiliateStatus, SurveyStep, ResumeTemplate } from '@/types';
 import { AreasOfSupport, AppointmentStatuses, Genders, DegreePrograms, Industries, TimeCommitments, EngagementModes, SupportTypesSought } from '@/types'; // Import AppointmentStatuses and other const arrays
 
 const SAMPLE_TENANT_ID = 'tenant-1'; // Define a default tenant ID for sample data
 
 export const sampleJobApplications: JobApplication[] = [
-  { id: '1', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', companyName: 'Tech Solutions Inc.', jobTitle: 'Software Engineer', status: 'Applied', dateApplied: '2024-07-01', notes: 'Applied via company portal.', location: 'Remote', resumeUsed: 'resume1' },
+  { id: '1', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', companyName: 'Tech Solutions Inc.', jobTitle: 'Software Engineer', status: 'Applied', dateApplied: '2024-07-01', notes: 'Applied via company portal.', location: 'Remote', resumeUsed: 'resume1', reminderDate: new Date(Date.now() + 86400000 * 7).toISOString() }, // Reminder in 7 days
   { id: '2', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', companyName: 'Innovate LLC', jobTitle: 'Frontend Developer', status: 'Interviewing', dateApplied: '2024-06-25', notes: 'First interview scheduled for 2024-07-10.', location: 'New York, NY', resumeUsed: 'resume1' },
-  { id: '3', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', companyName: 'Data Corp', jobTitle: 'Data Analyst', status: 'Offer', dateApplied: '2024-06-15', notes: 'Received offer, considering.', location: 'San Francisco, CA', resumeUsed: 'resume3' },
+  { id: '3', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', companyName: 'Data Corp', jobTitle: 'Data Analyst', status: 'Offer', dateApplied: '2024-06-15', notes: 'Received offer, considering.', location: 'San Francisco, CA', resumeUsed: 'resume3', reminderDate: new Date(Date.now() + 86400000 * 3).toISOString() }, // Reminder in 3 days
   { id: '4', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', companyName: 'Web Wizards', jobTitle: 'UX Designer', status: 'Rejected', dateApplied: '2024-06-20', notes: 'Did not proceed after initial screening.', location: 'Austin, TX', resumeUsed: 'resume2' },
   { id: '5', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', companyName: 'CloudNetics', jobTitle: 'Cloud Engineer', status: 'Saved', dateApplied: '2024-07-05', notes: 'Interested, need to tailor resume.', location: 'Boston, MA', resumeUsed: 'resume3' },
   { id: '6', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', companyName: 'AI Future', jobTitle: 'Machine Learning Eng.', status: 'Saved', dateApplied: '2024-07-15', notes: 'From scan report, good match.', location: 'Seattle, WA', resumeUsed: 'resume1' },
@@ -165,11 +158,10 @@ export const sampleUserProfile: UserProfile = {
   shareProfileConsent: true, 
   featureInSpotlightConsent: true,
 
-  bio: 'Enthusiastic software developer passionate about creating innovative solutions.',
+  bio: 'Enthusiastic software developer passionate about creating innovative solutions. With 5 years in the field, I have honed my skills in JavaScript, React, and Node.js, primarily focusing on building scalable web applications. My experience at Tech Startup Inc. involved leading front-end development for key projects and mentoring junior developers. I am always keen to learn new technologies and contribute to impactful products. Outside of work, I enjoy hiking and exploring new tech trends.',
   profilePictureUrl: 'https://picsum.photos/seed/alexuser/200/200',
   resumeText: `Alex Taylor (User)
-  Email: user@example.com
-  Role: Software Developer
+  Email: user@example.com | LinkedIn: linkedin.com/in/alexuser | Mobile: +15551234567
 
   Summary:
   A highly motivated and results-oriented Software Developer with 5 years of experience in building and maintaining web applications. Proficient in JavaScript, React, Node.js, and cloud technologies. Strong problem-solving skills and a collaborative team player. Eager to contribute to innovative projects and continuously learn new technologies.
@@ -179,6 +171,7 @@ export const sampleUserProfile: UserProfile = {
   - Developed and maintained front-end components using React and TypeScript.
   - Built RESTful APIs with Node.js and Express.
   - Collaborated with cross-functional teams to deliver high-quality software products.
+  - Mentored 2 junior developers, improving team productivity by 15%.
   
   Junior Developer, Web Solutions Co. (Jun 2017 - Dec 2019)
   - Assisted in the development of client websites using HTML, CSS, and JavaScript.
@@ -186,11 +179,18 @@ export const sampleUserProfile: UserProfile = {
   
   Education:
   Bachelor of Science in Computer Science, State University (2013 - 2017)
+  - Dean's List 2016, 2017
+  - Capstone Project: AI-Powered Recommendation Engine
   
   Skills:
-  JavaScript, React, Redux, Node.js, Express, TypeScript, HTML, CSS, Git, SQL, MongoDB, AWS.
+  Languages: JavaScript, TypeScript, Python, HTML, CSS
+  Frameworks/Libraries: React, Redux, Node.js, Express.js
+  Databases: MongoDB, PostgreSQL, SQL
+  Tools: Git, Docker, Jenkins, Jira
+  Cloud: AWS (EC2, S3, Lambda)
+  Other: Agile Methodologies, Problem Solving, Team Collaboration
   `,
-  careerInterests: 'Full-stack Development, AI Applications, Web Technologies',
+  careerInterests: 'Full-stack Development, AI Applications, Web Technologies, Cloud Architecture',
   xpPoints: 1250,
   dailyStreak: 15, 
   longestStreak: 25, 
@@ -589,3 +589,37 @@ export const profileCompletionSurveyDefinition: SurveyStep[] = [
   { id: 'pc_end', type: 'botMessage', text: "Thank you for completing your profile information! Your profile is now more discoverable. 🎉", isLastStep: true },
 ];
 
+export const sampleResumeTemplates: ResumeTemplate[] = [
+  {
+    id: 'template1',
+    name: 'Modern Chronological',
+    description: 'A clean, modern take on the classic chronological resume. Great for experienced professionals.',
+    previewImageUrl: 'https://picsum.photos/seed/template1/300/400',
+    category: 'Modern',
+    dataAiHint: 'resume modern',
+  },
+  {
+    id: 'template2',
+    name: 'Creative Combination',
+    description: 'Highlights skills and projects. Ideal for creative fields or career changers.',
+    previewImageUrl: 'https://picsum.photos/seed/template2/300/400',
+    category: 'Creative',
+    dataAiHint: 'resume creative',
+  },
+  {
+    id: 'template3',
+    name: 'Functional Skills-Based',
+    description: 'Emphasizes skills over work history. Good for those with employment gaps or students.',
+    previewImageUrl: 'https://picsum.photos/seed/template3/300/400',
+    category: 'Functional',
+    dataAiHint: 'resume skills',
+  },
+  {
+    id: 'template4',
+    name: 'Academic CV',
+    description: 'Designed for academic positions, research roles, and grants. Includes publication sections.',
+    previewImageUrl: 'https://picsum.photos/seed/template4/300/400',
+    category: 'Academic',
+    dataAiHint: 'cv academic',
+  },
+];

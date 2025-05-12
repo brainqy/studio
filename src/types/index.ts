@@ -1,19 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 export type UserRole = 'admin' | 'manager' | 'user';
 export type UserStatus = 'active' | 'inactive' | 'pending' | 'suspended';
 
@@ -106,6 +90,7 @@ export interface JobApplication {
   jobDescription?: string;
   resumeUsed?: string; // Reference to a ResumeProfile id
   location?: string;
+  reminderDate?: string; // ISO string for reminder
 }
 
 export interface AlumniProfile {
@@ -444,4 +429,13 @@ export interface AffiliateSignup {
   newUserId: string;
   signupDate: string;
   commissionEarned?: number;
+}
+
+export interface ResumeTemplate {
+  id: string;
+  name: string;
+  description: string;
+  previewImageUrl: string;
+  category: string; // e.g., "Modern", "Creative", "Traditional"
+  dataAiHint?: string;
 }
