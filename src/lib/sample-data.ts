@@ -1,4 +1,4 @@
-import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem, Appointment, Wallet, ResumeProfile, Tenant, Badge, BlogPost, ReferralHistoryItem, GamificationRule, UserStatus, SurveyResponse, Affiliate, AffiliateClick, AffiliateSignup, AffiliateStatus, SurveyStep, ResumeTemplate } from '@/types';
+import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem, Appointment, Wallet, ResumeProfile, Tenant, Badge, BlogPost, ReferralHistoryItem, GamificationRule, UserStatus, SurveyResponse, Affiliate, AffiliateClick, AffiliateSignup, AffiliateStatus, SurveyStep, ResumeTemplate, TourStep, CommunityComment } from '@/types';
 import { AreasOfSupport, AppointmentStatuses, Genders, DegreePrograms, Industries, TimeCommitments, EngagementModes, SupportTypesSought } from '@/types'; // Import AppointmentStatuses and other const arrays
 
 const SAMPLE_TENANT_ID = 'tenant-1'; // Define a default tenant ID for sample data
@@ -97,11 +97,85 @@ export const sampleActivities: Activity[] = [
 ];
 
 export const sampleCommunityPosts: CommunityPost[] = [
-  { id: 'post1', tenantId: SAMPLE_TENANT_ID, userId: 'user123', userName: 'John Doe', userAvatar: 'https://picsum.photos/seed/johndoe/50/50', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(), content: 'Anyone have experience with tackling take-home assignments for Senior Eng roles? Tips appreciated!', type: 'text', tags: ['jobsearch', 'interviewtips'], moderationStatus: 'visible', flagCount: 0 },
-  { id: 'post2', tenantId: SAMPLE_TENANT_ID, userId: 'user456', userName: 'Jane Smith', userAvatar: 'https://picsum.photos/seed/janesmith/50/50', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), content: 'Looking for a mentor in the Product Management space. Any alumni willing to connect?', type: 'request', tags: ['mentorship', 'productmanagement'], status: 'open', moderationStatus: 'visible', flagCount: 0 },
-  { id: 'post3', tenantId: SAMPLE_TENANT_ID, userId: 'alumni1', userName: 'Alice Wonderland', userAvatar: 'https://picsum.photos/seed/alice/50/50', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(), content: 'Upcoming Workshop: Intro to Cloud Native', type: 'event', eventTitle: 'Intro to Cloud Native', eventDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString(), eventLocation: 'Online (Zoom)', tags: ['workshop', 'cloud'], moderationStatus: 'visible', flagCount: 0 },
-  { id: 'post4', tenantId: SAMPLE_TENANT_ID, userId: 'user789', userName: 'Bad Actor', userAvatar: 'https://picsum.photos/seed/badactor/50/50', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(), content: 'This is a borderline inappropriate post for testing moderation.', type: 'text', tags: ['testing'], moderationStatus: 'flagged', flagCount: 1 },
-  { id: 'post5', tenantId: SAMPLE_TENANT_ID, userId: 'user101', userName: 'Another User', userAvatar: 'https://picsum.photos/seed/anotheruser/50/50', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 10).toISOString(), content: 'This post has been removed by admin.', type: 'text', tags: ['removed'], moderationStatus: 'removed', flagCount: 0 },
+  { 
+    id: 'post1', 
+    tenantId: SAMPLE_TENANT_ID, 
+    userId: 'user123', 
+    userName: 'John Doe', 
+    userAvatar: 'https://picsum.photos/seed/johndoe/50/50', 
+    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(), 
+    content: 'Anyone have experience with tackling take-home assignments for Senior Eng roles? Tips appreciated!', 
+    type: 'text', 
+    tags: ['jobsearch', 'interviewtips'], 
+    moderationStatus: 'visible', 
+    flagCount: 0,
+    comments: [
+      { id: 'comment1-1', userId: 'alumni1', userName: 'Alice Wonderland', userAvatar: 'https://picsum.photos/seed/alice/50/50', timestamp: new Date(Date.now() - 1000 * 60 * 50).toISOString(), text: 'Focus on clean code and clear documentation for your solution. Good luck!' },
+      { id: 'comment1-2', userId: 'user456', userName: 'Jane Smith', userAvatar: 'https://picsum.photos/seed/janesmith/50/50', timestamp: new Date(Date.now() - 1000 * 60 * 45).toISOString(), text: 'Great question! I usually allocate specific time blocks for each part of the assignment.' },
+    ]
+  },
+  { 
+    id: 'post2', 
+    tenantId: SAMPLE_TENANT_ID, 
+    userId: 'user456', 
+    userName: 'Jane Smith', 
+    userAvatar: 'https://picsum.photos/seed/janesmith/50/50', 
+    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), 
+    content: 'Looking for a mentor in the Product Management space. Any alumni willing to connect?', 
+    type: 'request', 
+    tags: ['mentorship', 'productmanagement'], 
+    status: 'open', 
+    moderationStatus: 'visible', 
+    flagCount: 0,
+    comments: [] 
+  },
+  { 
+    id: 'post3', 
+    tenantId: SAMPLE_TENANT_ID, 
+    userId: 'alumni1', 
+    userName: 'Alice Wonderland', 
+    userAvatar: 'https://picsum.photos/seed/alice/50/50', 
+    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(), 
+    content: 'Upcoming Workshop: Intro to Cloud Native', 
+    type: 'event', 
+    eventTitle: 'Intro to Cloud Native', 
+    eventDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString(), 
+    eventLocation: 'Online (Zoom)', 
+    tags: ['workshop', 'cloud'], 
+    moderationStatus: 'visible', 
+    flagCount: 0,
+    comments: [
+       { id: 'comment3-1', userId: 'user123', userName: 'John Doe', userAvatar: 'https://picsum.photos/seed/johndoe/50/50', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), text: 'Sounds interesting! Will there be a recording?' },
+    ]
+  },
+  { 
+    id: 'post4', 
+    tenantId: SAMPLE_TENANT_ID, 
+    userId: 'user789', 
+    userName: 'Bad Actor', 
+    userAvatar: 'https://picsum.photos/seed/badactor/50/50', 
+    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(), 
+    content: 'This is a borderline inappropriate post for testing moderation.', 
+    type: 'text', 
+    tags: ['testing'], 
+    moderationStatus: 'flagged', 
+    flagCount: 1,
+    comments: [] 
+  },
+  { 
+    id: 'post5', 
+    tenantId: SAMPLE_TENANT_ID, 
+    userId: 'user101', 
+    userName: 'Another User', 
+    userAvatar: 'https://picsum.photos/seed/anotheruser/50/50', 
+    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 10).toISOString(), 
+    content: 'This post has been removed by admin.', 
+    type: 'text', 
+    tags: ['removed'], 
+    moderationStatus: 'removed', 
+    flagCount: 0,
+    comments: [] 
+  },
 ];
 
 export const sampleFeatureRequests: FeatureRequest[] = [
@@ -584,4 +658,27 @@ export const sampleResumeTemplates: ResumeTemplate[] = [
     category: 'Academic',
     dataAiHint: 'cv academic',
   },
+];
+
+export const userDashboardTourSteps: TourStep[] = [
+  { title: "Welcome to Your Dashboard!", description: "This is your central hub for managing your career journey with ResumeMatch AI." },
+  { title: "Resume Analysis", description: "Use our AI tools to analyze your resume against job descriptions and get improvement suggestions." },
+  { title: "Job Tracker", description: "Keep track of all your job applications in one place with our Kanban-style board." },
+  { title: "Alumni Network", description: "Connect with fellow alumni, find mentors, and expand your professional network." },
+  { title: "Rewards & Progress", description: "Earn XP and badges for your activity on the platform. Check your progress here!" }
+];
+
+export const adminDashboardTourSteps: TourStep[] = [
+  { title: "Admin Dashboard Overview", description: "Welcome, Admin! Manage users, tenants, and platform-wide settings from here." },
+  { title: "User Management", description: "View, edit, and manage all user accounts across different tenants." },
+  { title: "Tenant Management", description: "Oversee and configure settings for individual tenants on the platform." },
+  { title: "Gamification Rules", description: "Define and manage XP point rules and badges awarded for user actions." },
+  { title: "Content Moderation", description: "Review and manage flagged content from the community feed to maintain a positive environment." }
+];
+
+export const managerDashboardTourSteps: TourStep[] = [
+  { title: "Manager Dashboard Insights", description: "Hello Manager! Monitor your team's engagement, manage projects, and track key metrics." },
+  { title: "Team Performance", description: "View analytics related to your team's activity and project progress." },
+  { title: "Mentorship Programs", description: "Oversee mentorship programs, assign mentors, and track mentee progress." },
+  { title: "Event Management", description: "Approve event submissions and manage event logistics for your tenant or group." }
 ];

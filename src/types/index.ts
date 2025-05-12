@@ -122,6 +122,15 @@ export interface Activity {
 
 export type CommunityPostModerationStatus = 'visible' | 'flagged' | 'removed';
 
+export interface CommunityComment {
+  id: string;
+  userId: string;
+  userName: string;
+  userAvatar?: string;
+  timestamp: string;
+  text: string;
+}
+
 export interface CommunityPost {
   id: string;
   tenantId: string;
@@ -140,6 +149,7 @@ export interface CommunityPost {
   status?: 'open' | 'assigned' | 'completed'; 
   moderationStatus: CommunityPostModerationStatus;
   flagCount: number;
+  comments?: CommunityComment[];
 }
 
 export interface FeatureRequest {
@@ -432,4 +442,10 @@ export interface RecentPageItem {
   path: string;
   label: string;
   timestamp: number;
+}
+
+export interface TourStep {
+  title: string;
+  description: string;
+  targetId?: string; // For future use with highlighting specific elements
 }

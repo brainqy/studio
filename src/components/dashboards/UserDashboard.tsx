@@ -1,15 +1,18 @@
+
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { BarChart, PieChart, LineChart as RechartsLineChart, Bar, Pie, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, Sector } from 'recharts';
 import { Activity, Briefcase, Users, Zap, FileText, CheckCircle, Clock, Target, CalendarClock } from "lucide-react";
-import { sampleJobApplications, sampleActivities, sampleAlumni, sampleUserProfile, sampleAppointments } from "@/lib/sample-data"; // Added sampleAppointments
+import { sampleJobApplications, sampleActivities, sampleAlumni, sampleUserProfile, sampleAppointments, userDashboardTourSteps } from "@/lib/sample-data"; // Added sampleAppointments & tour steps
 import type { PieSectorDataItem } from "recharts/types/polar/Pie";
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { format, parseISO, isFuture, differenceInDays, isToday } from "date-fns"; // Added isToday
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast"; // Added useToast
+import { useToast } from "@/hooks/use-toast"; 
+import WelcomeTourDialog from '@/components/features/WelcomeTourDialog';
+import type { TourStep } from '@/types';
 
 
 const jobApplicationStatusData = sampleJobApplications.reduce((acc, curr) => {
@@ -77,24 +80,31 @@ export default function UserDashboard() {
   const [activeIndex, setActiveIndex] = useState(0);
   const user = sampleUserProfile;
   const { toast } = useToast();
+  const [showUserTour, setShowUserTour] = useState(false);
 
   useEffect(() => {
     setTotalResumesAnalyzed(125); 
     setAverageMatchScore(78); 
 
-    // Mock appointment reminder check
     const today = new Date();
     sampleAppointments.forEach(appt => {
-        if (appt.requesterUserId === user.id || appt.alumniUserId === user.id) { // Check if user is involved
+        if (appt.requesterUserId === user.id || appt.alumniUserId === user.id) { 
             if (appt.reminderDate && isToday(parseISO(appt.reminderDate))) {
                 toast({
                     title: "Appointment Reminder",
                     description: `You have an appointment for "${appt.title}" with ${appt.withUser} today, ${format(parseISO(appt.dateTime), 'p')}.`,
-                    duration: 10000, // Show for 10 seconds
+                    duration: 10000, 
                 });
             }
         }
     });
+    
+    if (typeof window !== 'undefined') {
+      const tourSeen = localStorage.getItem('userDashboardTourSeen');
+      if (!tourSeen) {
+        setShowUserTour(true);
+      }
+    }
 
   }, [user.id, toast]);
 
@@ -119,159 +129,168 @@ export default function UserDashboard() {
   }, [user.id]);
 
   return (
-    <div className="space-y-8">
-      <h1 className="text-3xl font-bold tracking-tight text-foreground">User Dashboard</h1>
-      
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="shadow-lg">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Resumes Analyzed</CardTitle>
-            <Zap className="h-5 w-5 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalResumesAnalyzed}</div>
-            <p className="text-xs text-muted-foreground">+10% from last month</p>
-          </CardContent>
-        </Card>
-        <Card className="shadow-lg">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg. Match Score</CardTitle>
-            <Target className="h-5 w-5 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{averageMatchScore}%</div>
-            <p className="text-xs text-muted-foreground">+2.1% from last month</p>
-          </CardContent>
-        </Card>
-        <Card className="shadow-lg">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Job Applications</CardTitle>
-            <Briefcase className="h-5 w-5 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{sampleJobApplications.filter(app => app.userId === user.id).length}</div>
-            <p className="text-xs text-muted-foreground">{sampleJobApplications.filter(app => app.userId === user.id && app.status === 'Interviewing').length} interviewing</p>
-          </CardContent>
-        </Card>
-        <Card className="shadow-lg">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Alumni Connections</CardTitle>
-            <Users className="h-5 w-5 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{sampleAlumni.length}</div> 
-            <p className="text-xs text-muted-foreground">+5 new connections this week</p>
-          </CardContent>
-        </Card>
-      </div>
+    <>
+      <WelcomeTourDialog
+        isOpen={showUserTour}
+        onClose={() => setShowUserTour(false)}
+        tourKey="userDashboardTourSeen"
+        steps={userDashboardTourSteps}
+        title="Welcome to Your Dashboard!"
+      />
+      <div className="space-y-8">
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">User Dashboard</h1>
+        
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <Card className="shadow-lg">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Resumes Analyzed</CardTitle>
+              <Zap className="h-5 w-5 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{totalResumesAnalyzed}</div>
+              <p className="text-xs text-muted-foreground">+10% from last month</p>
+            </CardContent>
+          </Card>
+          <Card className="shadow-lg">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Avg. Match Score</CardTitle>
+              <Target className="h-5 w-5 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{averageMatchScore}%</div>
+              <p className="text-xs text-muted-foreground">+2.1% from last month</p>
+            </CardContent>
+          </Card>
+          <Card className="shadow-lg">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Job Applications</CardTitle>
+              <Briefcase className="h-5 w-5 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{sampleJobApplications.filter(app => app.userId === user.id).length}</div>
+              <p className="text-xs text-muted-foreground">{sampleJobApplications.filter(app => app.userId === user.id && app.status === 'Interviewing').length} interviewing</p>
+            </CardContent>
+          </Card>
+          <Card className="shadow-lg">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Alumni Connections</CardTitle>
+              <Users className="h-5 w-5 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{sampleAlumni.length}</div> 
+              <p className="text-xs text-muted-foreground">+5 new connections this week</p>
+            </CardContent>
+          </Card>
+        </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle>Job Application Status</CardTitle>
-            <CardDescription>Overview of your current application statuses.</CardDescription>
-          </CardHeader>
-          <CardContent className="h-[350px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  activeIndex={activeIndex}
-                  activeShape={renderActiveShape}
-                  data={jobApplicationStatusData.filter(j => sampleJobApplications.find(sja => sja.userId === user.id && sja.status === j.name))}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={100}
-                  fill="hsl(var(--primary))"
-                  dataKey="value"
-                  onMouseEnter={onPieEnter}
-                  stroke="hsl(var(--background))"
-                  className="focus:outline-none"
-                >
-                  {jobApplicationStatusData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                    contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle>Average Match Score Over Time</CardTitle>
-            <CardDescription>Track your resume match score improvement.</CardDescription>
-          </CardHeader>
-          <CardContent className="h-[350px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <RechartsLineChart data={matchScoreData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" />
-                <YAxis stroke="hsl(var(--muted-foreground))" />
-                <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }} />
-                <Legend />
-                <Line type="monotone" dataKey="score" stroke="hsl(var(--primary))" strokeWidth={2} activeDot={{ r: 8, style: { fill: 'hsl(var(--primary))', stroke: 'hsl(var(--background))' } }} />
-              </RechartsLineChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
-      
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2"><CalendarClock className="h-5 w-5 text-primary"/>Upcoming Reminders</CardTitle>
-            <CardDescription>Follow-ups and deadlines for your job applications.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {upcomingReminders.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">No upcoming reminders set.</p>
-            ) : (
-              <ul className="space-y-3">
-                {upcomingReminders.map(app => (
-                  <li key={app.id} className="p-3 bg-secondary/50 rounded-md hover:bg-secondary/70 transition-colors">
-                    <Link href="/job-tracker" className="block">
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <p className="text-sm font-medium text-foreground">{app.jobTitle} at {app.companyName}</p>
-                          <p className="text-xs text-amber-700 dark:text-amber-500">
-                            Reminder: {format(parseISO(app.reminderDate!), 'MMM dd, yyyy')}
-                            {differenceInDays(parseISO(app.reminderDate!), new Date()) === 0 && " (Today!)"}
-                          </p>
+        <div className="grid gap-6 md:grid-cols-2">
+          <Card className="shadow-lg">
+            <CardHeader>
+              <CardTitle>Job Application Status</CardTitle>
+              <CardDescription>Overview of your current application statuses.</CardDescription>
+            </CardHeader>
+            <CardContent className="h-[350px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    activeIndex={activeIndex}
+                    activeShape={renderActiveShape}
+                    data={jobApplicationStatusData.filter(j => sampleJobApplications.find(sja => sja.userId === user.id && sja.status === j.name))}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={100}
+                    fill="hsl(var(--primary))"
+                    dataKey="value"
+                    onMouseEnter={onPieEnter}
+                    stroke="hsl(var(--background))"
+                    className="focus:outline-none"
+                  >
+                    {jobApplicationStatusData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                      contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+          <Card className="shadow-lg">
+            <CardHeader>
+              <CardTitle>Average Match Score Over Time</CardTitle>
+              <CardDescription>Track your resume match score improvement.</CardDescription>
+            </CardHeader>
+            <CardContent className="h-[350px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <RechartsLineChart data={matchScoreData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" />
+                  <YAxis stroke="hsl(var(--muted-foreground))" />
+                  <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }} />
+                  <Legend />
+                  <Line type="monotone" dataKey="score" stroke="hsl(var(--primary))" strokeWidth={2} activeDot={{ r: 8, style: { fill: 'hsl(var(--primary))', stroke: 'hsl(var(--background))' } }} />
+                </RechartsLineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
+        
+        <div className="grid gap-6 md:grid-cols-2">
+          <Card className="shadow-lg">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><CalendarClock className="h-5 w-5 text-primary"/>Upcoming Reminders</CardTitle>
+              <CardDescription>Follow-ups and deadlines for your job applications.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {upcomingReminders.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">No upcoming reminders set.</p>
+              ) : (
+                <ul className="space-y-3">
+                  {upcomingReminders.map(app => (
+                    <li key={app.id} className="p-3 bg-secondary/50 rounded-md hover:bg-secondary/70 transition-colors">
+                      <Link href="/job-tracker" className="block">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <p className="text-sm font-medium text-foreground">{app.jobTitle} at {app.companyName}</p>
+                            <p className="text-xs text-amber-700 dark:text-amber-500">
+                              Reminder: {format(parseISO(app.reminderDate!), 'MMM dd, yyyy')}
+                              {differenceInDays(parseISO(app.reminderDate!), new Date()) === 0 && " (Today!)"}
+                            </p>
+                          </div>
+                          <Button variant="ghost" size="sm" className="text-xs text-primary">View</Button>
                         </div>
-                        <Button variant="ghost" size="sm" className="text-xs text-primary">View</Button>
-                      </div>
-                    </Link>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-lg">
+            <CardHeader>
+              <CardTitle>Recent Activity</CardTitle>
+              <CardDescription>Your latest interactions on the platform.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-4">
+                {sampleActivities.filter(act => act.userId === user.id).slice(0, 5).map(activity => (
+                  <li key={activity.id} className="flex items-center space-x-3 p-3 bg-secondary/50 rounded-md">
+                    <Activity className="h-5 w-5 text-primary" />
+                    <div>
+                      <p className="text-sm text-foreground">{activity.description}</p>
+                      <p className="text-xs text-muted-foreground">{new Date(activity.timestamp).toLocaleString()}</p>
+                    </div>
                   </li>
                 ))}
               </ul>
-            )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
 
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-             <CardDescription>Your latest interactions on the platform.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-4">
-              {sampleActivities.filter(act => act.userId === user.id).slice(0, 5).map(activity => (
-                <li key={activity.id} className="flex items-center space-x-3 p-3 bg-secondary/50 rounded-md">
-                  <Activity className="h-5 w-5 text-primary" />
-                  <div>
-                    <p className="text-sm text-foreground">{activity.description}</p>
-                    <p className="text-xs text-muted-foreground">{new Date(activity.timestamp).toLocaleString()}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
       </div>
-
-    </div>
+    </>
   );
 }

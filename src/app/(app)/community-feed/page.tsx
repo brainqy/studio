@@ -11,14 +11,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MessageSquare, PlusCircle, ThumbsUp, MessageCircle as MessageIcon, Share2, Send, Filter, Edit3, Calendar, MapPin, Flag, ShieldCheck, Trash2 } from "lucide-react"; // Added Flag, ShieldCheck, Trash2
+import { MessageSquare, PlusCircle, ThumbsUp, MessageCircle as MessageIcon, Share2, Send, Filter, Edit3, Calendar, MapPin, Flag, ShieldCheck, Trash2, User as UserIcon } from "lucide-react"; // Added Flag, ShieldCheck, Trash2
 import { sampleCommunityPosts, sampleUserProfile } from "@/lib/sample-data";
-import type { CommunityPost } from "@/types";
+import type { CommunityPost, CommunityComment } from "@/types";
 import { formatDistanceToNow } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { Separator } from "@/components/ui/separator";
 
 const postSchema = z.object({
   content: z.string().min(1, "Post content cannot be empty"),
@@ -30,10 +31,14 @@ const postSchema = z.object({
   // Fields for 'request' type
   assignedTo: z.string().optional(),
   status: z.enum(['open', 'assigned', 'completed']).optional(),
-
 });
 
 type PostFormData = z.infer<typeof postSchema>;
+
+const commentSchema = z.object({
+  commentText: z.string().min(1, "Comment cannot be empty").max(500, "Comment too long"),
+});
+type CommentFormData = z.infer<typeof commentSchema>;
 
 export default function CommunityFeedPage() {
   const [posts, setPosts] = useState<CommunityPost[]>(sampleCommunityPosts);
@@ -42,9 +47,11 @@ export default function CommunityFeedPage() {
 
   const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
   const [editingPost, setEditingPost] = useState<CommunityPost | null>(null);
+  
+  const [newCommentText, setNewCommentText] = useState(""); 
+  const [commentingOnPostId, setCommentingOnPostId] = useState<string | null>(null);
 
   const { control, handleSubmit, reset, setValue, formState: { errors } } = useForm<PostFormData>({
-
     resolver: zodResolver(postSchema),
     defaultValues: {
       content: '',
@@ -53,7 +60,7 @@ export default function CommunityFeedPage() {
     }
   });
   
-  const currentUser = sampleUserProfile; // For checking admin role
+  const currentUser = sampleUserProfile; 
 
   const handleFormSubmit = (data: PostFormData) => {
     if (editingPost) {
@@ -66,15 +73,14 @@ export default function CommunityFeedPage() {
           pollOptions: data.type === 'poll' ? data.pollOptions : undefined,
           eventDate: data.type === 'event' ? data.eventDate : undefined,
           eventLocation: data.type === 'event' ? data.eventLocation : undefined,
-          // Moderation status and flag count should not be editable by users directly through this form
         }
         : p
       ));
       toast({ title: "Post Updated", description: "Your post has been updated." });
     } else {
-      // Create new post
       const newPost: CommunityPost = {
         id: String(Date.now()),
+        tenantId: sampleUserProfile.tenantId,
         userId: sampleUserProfile.id,
         userName: sampleUserProfile.name,
         userAvatar: sampleUserProfile.profilePictureUrl,
@@ -85,8 +91,9 @@ export default function CommunityFeedPage() {
         eventDate: data.type === 'event' ? data.eventDate : undefined,
         eventLocation: data.type === 'event' ? data.eventLocation : undefined,
         tags: data.tags?.split(',').map(tag => tag.trim()).filter(tag => tag) || [],
-        moderationStatus: 'visible', // New posts start as visible
+        moderationStatus: 'visible', 
         flagCount: 0,
+        comments: [],
       };
       setPosts(prevPosts => [newPost, ...prevPosts]);
       toast({ title: "Post Created", description: "Your post has been added to the feed." });
@@ -94,6 +101,27 @@ export default function CommunityFeedPage() {
     setIsPostDialogOpen(false);
     reset();
     setEditingPost(null);
+  };
+
+  const handleCommentSubmit = (postId: string) => {
+    if (!newCommentText.trim()) {
+      toast({ title: "Empty Comment", description: "Cannot submit an empty comment.", variant: "destructive" });
+      return;
+    }
+    const newComment: CommunityComment = {
+      id: `comment-${Date.now()}`,
+      userId: currentUser.id,
+      userName: currentUser.name,
+      userAvatar: currentUser.profilePictureUrl,
+      timestamp: new Date().toISOString(),
+      text: newCommentText.trim(),
+    };
+    setPosts(prevPosts => prevPosts.map(post =>
+      post.id === postId ? { ...post, comments: [...(post.comments || []), newComment] } : post
+    ));
+    toast({ title: "Comment Added", description: "Your comment has been posted." });
+    setNewCommentText("");
+    setCommentingOnPostId(null); 
   };
 
   const handleVote = (postId: string, optionIndex: number) => {
@@ -163,9 +191,9 @@ export default function CommunityFeedPage() {
   };
 
   const filteredPosts = posts.filter(post => {
-    if (filter === 'all') return post.moderationStatus !== 'removed' || currentUser.role === 'admin'; // Admins see removed for context
+    if (filter === 'all') return post.moderationStatus !== 'removed' || currentUser.role === 'admin'; 
     if (filter === 'my_posts') return post.userId === sampleUserProfile.id && (post.moderationStatus !== 'removed' || currentUser.role === 'admin');
-    if (filter === 'flagged') return post.moderationStatus === 'flagged' && currentUser.role === 'admin'; // Only admins can filter by flagged
+    if (filter === 'flagged') return post.moderationStatus === 'flagged' && currentUser.role === 'admin'; 
     return post.type === filter && (post.moderationStatus !== 'removed' || currentUser.role === 'admin');
   });
 
@@ -244,7 +272,6 @@ export default function CommunityFeedPage() {
                 />
               </div>
             </div>
-            {/* Dynamic Fields Based on Type */}
              <Controller
                 name="type"
                 control={control}
@@ -252,7 +279,6 @@ export default function CommunityFeedPage() {
                   if (field.value === 'poll') {
                     return (
                       <div>
-                         {/* TODO: Implement better dynamic poll option UI */}
                         <Label>Poll Options</Label>
                         <Input placeholder="Option 1" className="mb-2"/>
                         <Input placeholder="Option 2" className="mb-2"/>
@@ -286,9 +312,6 @@ export default function CommunityFeedPage() {
                         </div>
                       </div>
                     );
-                  } else if (field.value === 'request') {
-                     // No specific extra fields for request type in this simple version
-                    return null;
                   }
                   return null;
                 }}
@@ -338,7 +361,7 @@ export default function CommunityFeedPage() {
       ) : (
         <div className="space-y-6">
           {filteredPosts.map(post => (
-            <Card key={post.id} className={`shadow-md ${post.moderationStatus === 'flagged' ? 'border-yellow-500 border-2' : post.moderationStatus === 'removed' ? 'opacity-50 bg-secondary' : ''}`}>
+            <Card key={post.id} id={`post-${post.id}`} className={`shadow-md ${post.moderationStatus === 'flagged' ? 'border-yellow-500 border-2' : post.moderationStatus === 'removed' ? 'opacity-50 bg-secondary' : ''}`}>
               <CardHeader className="flex flex-row items-start space-x-3 pb-3">
                 <Avatar className="h-10 w-10">
                   <AvatarImage src={post.userAvatar} alt={post.userName} data-ai-hint="person face"/>
@@ -355,7 +378,6 @@ export default function CommunityFeedPage() {
                      {post.moderationStatus === 'removed' && <span className="ml-2 px-2 py-0.5 text-xs bg-red-400 text-red-900 rounded-full">Removed</span>}
                   </p>
                 </div>
-                {/* Edit button for post owner, but not if post is removed */}
                 {post.userId === sampleUserProfile.id && post.moderationStatus !== 'removed' && (
                   <Button variant="ghost" size="icon" onClick={() => openEditPostDialog(post)}>
                     <Edit3 className="h-4 w-4" />
@@ -413,35 +435,77 @@ export default function CommunityFeedPage() {
                 )}
               </CardContent>
               {post.moderationStatus !== 'removed' && (
-                 <CardFooter className="border-t pt-3 flex items-center justify-start space-x-2">
-                    <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
-                    <ThumbsUp className="mr-1 h-4 w-4" /> Like
-                    </Button>
-                    <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
-                    <MessageIcon className="mr-1 h-4 w-4" /> Comment
-                    </Button>
-                    <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
-                    <Share2 className="mr-1 h-4 w-4" /> Share
-                    </Button>
+                 <CardFooter className="border-t pt-3 flex flex-col items-start">
+                    <div className="flex items-center justify-start space-x-2 w-full">
+                        <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
+                        <ThumbsUp className="mr-1 h-4 w-4" /> Like
+                        </Button>
+                        <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary" onClick={() => setCommentingOnPostId(post.id === commentingOnPostId ? null : post.id)}>
+                        <MessageIcon className="mr-1 h-4 w-4" /> Comment ({post.comments?.length || 0})
+                        </Button>
+                        <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
+                        <Share2 className="mr-1 h-4 w-4" /> Share
+                        </Button>
 
-                    {/* Moderation Actions */}
-                    {currentUser.role === 'admin' ? (
-                    <>
-                        {post.moderationStatus === 'flagged' && (
-                        <Button variant="outline" size="sm" onClick={() => handleApprovePost(post.id)} className="text-green-600 border-green-600 hover:bg-green-50">
-                            <ShieldCheck className="mr-1 h-4 w-4" /> Approve
-                        </Button>
+                        {currentUser.role === 'admin' ? (
+                        <>
+                            {post.moderationStatus === 'flagged' && (
+                            <Button variant="outline" size="sm" onClick={() => handleApprovePost(post.id)} className="text-green-600 border-green-600 hover:bg-green-50 ml-auto">
+                                <ShieldCheck className="mr-1 h-4 w-4" /> Approve
+                            </Button>
+                            )}
+                            <Button variant="destructive" size="sm" onClick={() => handleRemovePost(post.id)} className={`${post.moderationStatus === 'flagged' ? '' : 'ml-auto'}`}>
+                                <Trash2 className="mr-1 h-4 w-4" /> Remove
+                            </Button>
+                        </>
+                        ) : (
+                        post.userId !== currentUser.id && (
+                            <Button variant="ghost" size="sm" onClick={() => handleFlagPost(post.id)} className="text-yellow-600 hover:text-yellow-700 ml-auto">
+                                <Flag className="mr-1 h-4 w-4" /> Flag
+                            </Button>
+                        )
                         )}
-                        <Button variant="destructive" size="sm" onClick={() => handleRemovePost(post.id)}>
-                            <Trash2 className="mr-1 h-4 w-4" /> Remove
-                        </Button>
-                    </>
-                    ) : (
-                    post.userId !== currentUser.id && (
-                        <Button variant="ghost" size="sm" onClick={() => handleFlagPost(post.id)} className="text-yellow-600 hover:text-yellow-700">
-                            <Flag className="mr-1 h-4 w-4" /> Flag
-                        </Button>
-                    )
+                    </div>
+                    {/* Comments Section */}
+                    {commentingOnPostId === post.id && (
+                      <div className="w-full mt-4 space-y-3">
+                        <Separator />
+                         {post.comments && post.comments.length > 0 && (
+                           <div className="max-h-60 overflow-y-auto space-y-2 pr-2">
+                             {post.comments.map(comment => (
+                               <div key={comment.id} className="flex items-start space-x-2 p-2 bg-secondary/40 rounded-md">
+                                 <Avatar className="h-8 w-8">
+                                   <AvatarImage src={comment.userAvatar} alt={comment.userName} data-ai-hint="person face"/>
+                                   <AvatarFallback><UserIcon className="h-4 w-4"/></AvatarFallback>
+                                 </Avatar>
+                                 <div>
+                                   <p className="text-xs font-semibold text-foreground">{comment.userName}</p>
+                                   <p className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(comment.timestamp), { addSuffix: true })}</p>
+                                   <p className="text-sm mt-0.5">{comment.text}</p>
+                                 </div>
+                               </div>
+                             ))}
+                           </div>
+                         )}
+                         {post.comments?.length === 0 && <p className="text-xs text-muted-foreground text-center py-2">No comments yet. Be the first!</p>}
+                         
+                        <div className="flex items-center gap-2 pt-2">
+                           <Avatar className="h-8 w-8">
+                             <AvatarImage src={currentUser.profilePictureUrl} alt={currentUser.name} data-ai-hint="person face"/>
+                             <AvatarFallback>{currentUser.name.substring(0,1)}</AvatarFallback>
+                           </Avatar>
+                          <Textarea 
+                            placeholder="Write a comment..." 
+                            value={newCommentText}
+                            onChange={(e) => setNewCommentText(e.target.value)}
+                            rows={1} 
+                            className="flex-1 min-h-[40px] text-sm"
+                          />
+                          <Button size="sm" onClick={() => handleCommentSubmit(post.id)} disabled={!newCommentText.trim()}>
+                            <Send className="h-4 w-4"/>
+                          </Button>
+                        </div>
+                      </div>
                     )}
                 </CardFooter>
               )}
