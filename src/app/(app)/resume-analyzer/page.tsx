@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, type FormEvent, useEffect, useMemo } from 'react';
@@ -119,8 +120,8 @@ export default function ResumeAnalyzerPage() {
     }
   };
 
-  const handleSubmit = async (event: FormEvent) => {
-    event.preventDefault();
+  const handleSubmit = async (event?: FormEvent) => {
+    if(event) event.preventDefault();
     if (!resumeText && !resumeFile) {
       toast({ title: "Error", description: "Please upload or select a resume, or paste resume text.", variant: "destructive" });
       return;
@@ -161,6 +162,7 @@ export default function ResumeAnalyzerPage() {
         resumeName: currentResumeProfile?.name || resumeFile?.name || 'Pasted Resume',
         jobTitle: jobTitleMatch,
         companyName: companyMatch,
+        resumeTextSnapshot: currentResumeText,
         jobDescriptionText: jobDescription,
         scanDate: new Date().toISOString(),
         matchScore: overallScoreRes.matchScore,
@@ -181,6 +183,10 @@ export default function ResumeAnalyzerPage() {
       toast({ title: "Analysis Failed", description: "An error occurred during analysis.", variant: "destructive" });
     } finally {
       setIsLoading(false);
+      const reportSection = document.getElementById('analysis-report-section');
+        if (reportSection) {
+            reportSection.scrollIntoView({ behavior: 'smooth' });
+        }
     }
   };
 
@@ -199,6 +205,55 @@ export default function ResumeAnalyzerPage() {
 
   const handlePowerEdit = () => {
     toast({ title: "Power Edit (Mock)", description: "This feature would open an advanced resume editor."});
+  };
+
+  const handleViewReport = async (item: ResumeScanHistoryItem) => {
+    if (!item.resumeTextSnapshot || !item.jobDescriptionText) {
+        toast({ title: "Cannot View Report", description: "Missing resume or job description text for this historical scan.", variant: "destructive" });
+        return;
+    }
+    setResumeText(item.resumeTextSnapshot);
+    setJobDescription(item.jobDescriptionText);
+    // Clear resumeFile and selectedResumeId to ensure the historical text is used
+    setResumeFile(null); 
+    setSelectedResumeId(null);
+    
+    toast({ title: "Loading Historical Scan...", description: "Re-generating analysis for the selected scan." });
+    
+    // Trigger analysis with historical data
+    // We need to ensure handleSubmit uses the state that was just set.
+    // A slight delay or direct call to analysis logic is better.
+    // Forcing re-render by setting isLoading true temporarily before calling handleSubmit
+    setIsLoading(true);
+    // Using useEffect to run handleSubmit after state updates might be cleaner
+    // but for this direct action, let's call a modified handleSubmit or the core logic.
+
+    // Directly call the analysis logic.
+    try {
+      const [overallScoreRes, detailedReportRes, improvementsRes, skillSuggestionsRes] = await Promise.all([
+        calculateMatchScore({ resumeText: item.resumeTextSnapshot, jobDescription: item.jobDescriptionText }),
+        analyzeResumeAndJobDescription({ resumeText: item.resumeTextSnapshot, jobDescriptionText: item.jobDescriptionText }),
+        suggestResumeImprovements({ resumeText: item.resumeTextSnapshot, jobDescription: item.jobDescriptionText }),
+        suggestDynamicSkills({ currentSkills: item.resumeTextSnapshot.match(/\b\w+(?:-\w+)*\b/g) || [], contextText: item.jobDescriptionText })
+      ]);
+
+      setResults({
+        overallScore: overallScoreRes,
+        detailedReport: detailedReportRes,
+        improvements: improvementsRes,
+        skillSuggestions: skillSuggestionsRes,
+      });
+      toast({ title: "Historical Report Loaded", description: "The analysis report for the selected scan has been re-generated." });
+    } catch (error) {
+      console.error("Historical analysis error:", error);
+      toast({ title: "Report Load Failed", description: "An error occurred while re-generating the historical report.", variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+      const reportSection = document.getElementById('analysis-report-section');
+        if (reportSection) {
+            reportSection.scrollIntoView({ behavior: 'smooth' });
+        }
+    }
   };
 
 
@@ -367,7 +422,7 @@ export default function ResumeAnalyzerPage() {
       
       {/* DETAILED REPORT SECTION */}
       {results && !isLoading && results.overallScore && results.detailedReport && (
-        <Card className="shadow-xl mt-8">
+        <Card className="shadow-xl mt-8" id="analysis-report-section">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle className="text-2xl font-bold flex items-center gap-2">
@@ -590,7 +645,7 @@ export default function ResumeAnalyzerPage() {
                              </div>
                             <div className="flex flex-col items-end space-y-1 self-start">
                                <p className="text-xs text-muted-foreground">{format(new Date(item.scanDate), 'MMM dd, yyyy')}</p>
-                                {item.reportUrl && <Button variant="link" size="sm" className="p-0 h-auto text-xs" onClick={() => toast({title: "View Report (Mock)", description: `Opening report for ${item.jobTitle}`})}>View Report</Button>}
+                                <Button variant="link" size="sm" className="p-0 h-auto text-xs" onClick={() => handleViewReport(item)}>View Report</Button>
                                 <Button variant="outline" size="sm" onClick={() => handleDeleteScan(item.id)} className="mt-1">
                                   <Trash2 className="h-3 w-3"/>
                                 </Button>

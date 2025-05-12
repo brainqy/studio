@@ -325,10 +325,10 @@ export interface ResumeScanHistoryItem {
   resumeName: string; 
   jobTitle: string;
   companyName: string;
-  jobDescriptionText?: string; 
+  resumeTextSnapshot: string; // Added for reloading analysis
+  jobDescriptionText: string; // Changed to non-optional
   scanDate: string; 
   matchScore?: number;
-  reportUrl?: string; 
   bookmarked?: boolean; 
 }
 

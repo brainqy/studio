@@ -318,6 +318,36 @@ export const sampleResumeProfiles: ResumeProfile[] = [
   { id: 'resume3', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', name: "General Tech Resume", resumeText: "A general purpose resume for various tech roles.", lastAnalyzed: "2024-06-20" },
 ];
 
+const placeholderResumeText = `[Your Name]
+[Your Contact Info]
+
+Summary:
+Experienced professional seeking a challenging role.
+
+Experience:
+Company A - Role 1 (2020-2022)
+- Did task X
+- Accomplished Y
+
+Education:
+University Z - Degree (2016-2020)
+`;
+
+const placeholderJobDescription = `Title: Sample Job
+Company: Sample Corp
+Location: Remote
+
+Responsibilities:
+- Do X
+- Manage Y
+- Achieve Z
+
+Qualifications:
+- Skill A
+- Skill B
+`;
+
+
 export const sampleResumeScanHistory: ResumeScanHistoryItem[] = [
   {
     id: 'scan1',
@@ -327,9 +357,10 @@ export const sampleResumeScanHistory: ResumeScanHistoryItem[] = [
     resumeName: 'Software_Engineer_Resume_v2.pdf',
     jobTitle: 'Senior Software Engineer',
     companyName: 'Innovate LLC',
+    resumeTextSnapshot: placeholderResumeText.replace("professional", "software engineer"),
+    jobDescriptionText: placeholderJobDescription.replace("Sample Job", "Senior Software Engineer"),
     scanDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(), 
     matchScore: 85,
-    reportUrl: '/my-resumes/resumeId123/analysis/reportXYZ', 
     bookmarked: true, 
   },
   {
@@ -340,9 +371,10 @@ export const sampleResumeScanHistory: ResumeScanHistoryItem[] = [
     resumeName: 'Product_Manager_Profile.docx',
     jobTitle: 'Product Lead',
     companyName: 'FutureTech Corp',
+    resumeTextSnapshot: placeholderResumeText.replace("professional", "product manager"),
+    jobDescriptionText: placeholderJobDescription.replace("Sample Job", "Product Lead"),
     scanDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(), 
     matchScore: 72,
-    reportUrl: '/my-resumes/resumeId456/analysis/reportABC', 
     bookmarked: false,
   },
   {
@@ -353,6 +385,8 @@ export const sampleResumeScanHistory: ResumeScanHistoryItem[] = [
     resumeName: 'General_Tech_Resume.pdf',
     jobTitle: 'Data Analyst',
     companyName: 'Data Corp',
+    resumeTextSnapshot: placeholderResumeText.replace("professional", "data analyst"),
+    jobDescriptionText: placeholderJobDescription.replace("Sample Job", "Data Analyst"),
     scanDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(), 
     matchScore: 91,
     bookmarked: false,
