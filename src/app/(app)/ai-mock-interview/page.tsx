@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -11,7 +12,8 @@ import type {
   MockInterviewSession, 
   MockInterviewQuestion,
   EvaluateInterviewAnswerInput,
-  GenerateOverallInterviewFeedbackInput
+  GenerateOverallInterviewFeedbackInput,
+  GenerateOverallInterviewFeedbackOutput // Import the specific type
 } from '@/types';
 import { MOCK_INTERVIEW_STEPS } from '@/types';
 import AiMockInterviewStepper from '@/components/features/ai-mock-interview/AiMockInterviewStepper';
@@ -132,7 +134,7 @@ export default function AiMockInterviewPage() {
       const overallFeedbackResult = await generateOverallInterviewFeedback(feedbackInput);
       setSession(prevSession => prevSession ? ({
         ...prevSession,
-        overallFeedback: overallFeedbackResult as any, // Cast as any to match structure for now
+        overallFeedback: overallFeedbackResult as GenerateOverallInterviewFeedbackOutput, 
         overallScore: overallFeedbackResult.overallScore,
         status: 'completed'
       }) : null);

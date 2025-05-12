@@ -1,3 +1,4 @@
+
 export type UserRole = 'admin' | 'manager' | 'user';
 export type UserStatus = 'active' | 'inactive' | 'pending' | 'suspended';
 
@@ -334,7 +335,7 @@ export interface ResumeScanHistoryItem {
   bookmarked?: boolean; 
 }
 
-export type KanbanColumnId = 'Saved' | 'Applied' | 'Interview' | 'Offer';
+export type KanbanColumnId = 'Saved' | 'Applied' | 'Interviewing' | 'Offer';
 export const JOB_APPLICATION_STATUSES: JobApplicationStatus[] = ['Saved', 'Applied', 'Interviewing', 'Offer', 'Rejected'];
 
 export interface TenantSettings {
@@ -545,6 +546,10 @@ export interface MockInterviewAnswer {
   userAnswer: string; 
   aiFeedback?: string;
   aiScore?: number; 
+  // Add detailed feedback fields if they exist in EvaluateInterviewAnswerOutput
+  strengths?: string[];
+  areasForImprovement?: string[];
+  suggestedImprovements?: string[];
 }
 
 export interface MockInterviewSession {
@@ -554,7 +559,7 @@ export interface MockInterviewSession {
   jobDescription?: string; 
   questions: MockInterviewQuestion[];
   answers: MockInterviewAnswer[];
-  overallFeedback?: string;
+  overallFeedback?: GenerateOverallInterviewFeedbackOutput; // Use the specific output type here
   overallScore?: number; 
   status: 'pending' | 'in-progress' | 'completed';
   createdAt: string;

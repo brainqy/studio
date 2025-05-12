@@ -1,12 +1,15 @@
+
 "use client";
 
 import type React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Sparkles, ListChecks, CheckCircle, AlertTriangle, RefreshCw, MessageSquare } from 'lucide-react';
-import type { MockInterviewSession } from '@/types';
+import { Sparkles, ListChecks, CheckCircle, AlertTriangle, RefreshCw, MessageSquare, Share2 } from 'lucide-react';
+import type { MockInterviewSession, CommunityPost } from '@/types';
 import ScoreCircle from '@/components/ui/score-circle';
+import { useToast } from '@/hooks/use-toast';
+import { sampleCommunityPosts, sampleUserProfile } from '@/lib/sample-data';
 
 interface StepFeedbackProps {
   session: MockInterviewSession;
@@ -14,9 +17,44 @@ interface StepFeedbackProps {
 }
 
 export default function StepFeedback({ session, onRestart }: StepFeedbackProps) {
+  const { toast } = useToast();
+  const currentUser = sampleUserProfile;
+
   if (!session.overallFeedback) {
     return <p>Generating feedback... Please wait.</p>;
   }
+
+  const handleShareToFeed = () => {
+    if (!session.overallFeedback || session.overallScore === undefined) {
+      toast({ title: "Error", description: "Interview data is not complete for sharing.", variant: "destructive" });
+      return;
+    }
+
+    const postContent = `Just aced my AI Mock Interview for "${session.topic}" with a score of ${session.overallScore}%! 🎉 Key takeaway: "${session.overallFeedback.overallSummary.substring(0, 100)}..." #AIMockInterview #CareerPrep`;
+    
+    const newPost: CommunityPost = {
+      id: `post-interview-${Date.now()}`,
+      tenantId: currentUser.tenantId,
+      userId: currentUser.id,
+      userName: currentUser.name,
+      userAvatar: currentUser.profilePictureUrl,
+      timestamp: new Date().toISOString(),
+      content: postContent,
+      type: 'text',
+      tags: ['AIMockInterview', 'CareerPrep', session.topic.toLowerCase().replace(/\s+/g, '')],
+      moderationStatus: 'visible',
+      flagCount: 0,
+      comments: [],
+    };
+
+    // In a real app, this would be an API call
+    sampleCommunityPosts.unshift(newPost);
+
+    toast({
+      title: "Shared to Feed!",
+      description: "Your mock interview achievement has been posted to the community feed.",
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -33,33 +71,33 @@ export default function StepFeedback({ session, onRestart }: StepFeedbackProps) 
              )}
             <div className="flex-1">
               <h4 className="font-semibold text-lg text-foreground">Overall Performance:</h4>
-              <p className="text-sm text-muted-foreground whitespace-pre-line">{session.overallSummary}</p>
+              <p className="text-sm text-muted-foreground whitespace-pre-line">{session.overallFeedback.overallSummary}</p>
             </div>
           </div>
 
-          {session.overallFeedback && 'keyStrengths' in session.overallFeedback && Array.isArray((session.overallFeedback as any).keyStrengths) && (session.overallFeedback as any).keyStrengths.length > 0 && (
+          {session.overallFeedback.keyStrengths && session.overallFeedback.keyStrengths.length > 0 && (
             <div>
               <h4 className="font-semibold text-md text-foreground mb-1 flex items-center gap-1"><CheckCircle className="h-5 w-5 text-green-500" />Key Strengths:</h4>
               <ul className="list-disc list-inside ml-4 space-y-1 text-sm text-muted-foreground">
-                {(session.overallFeedback as any).keyStrengths.map((strength: string, i: number) => <li key={i}>{strength}</li>)}
+                {session.overallFeedback.keyStrengths.map((strength: string, i: number) => <li key={i}>{strength}</li>)}
               </ul>
             </div>
           )}
 
-          {session.overallFeedback && 'keyAreasForImprovement' in session.overallFeedback && Array.isArray((session.overallFeedback as any).keyAreasForImprovement) && (session.overallFeedback as any).keyAreasForImprovement.length > 0 && (
+          {session.overallFeedback.keyAreasForImprovement && session.overallFeedback.keyAreasForImprovement.length > 0 && (
              <div>
               <h4 className="font-semibold text-md text-foreground mb-1 flex items-center gap-1"><AlertTriangle className="h-5 w-5 text-yellow-500" />Key Areas for Improvement:</h4>
               <ul className="list-disc list-inside ml-4 space-y-1 text-sm text-muted-foreground">
-                {(session.overallFeedback as any).keyAreasForImprovement.map((area: string, i: number) => <li key={i}>{area}</li>)}
+                {session.overallFeedback.keyAreasForImprovement.map((area: string, i: number) => <li key={i}>{area}</li>)}
               </ul>
             </div>
           )}
           
-          {session.overallFeedback && 'finalTips' in session.overallFeedback && Array.isArray((session.overallFeedback as any).finalTips) && (session.overallFeedback as any).finalTips.length > 0 && (
+          {session.overallFeedback.finalTips && session.overallFeedback.finalTips.length > 0 && (
              <div>
               <h4 className="font-semibold text-md text-foreground mb-1 flex items-center gap-1"><ListChecks className="h-5 w-5 text-blue-500" />Final Tips:</h4>
               <ul className="list-disc list-inside ml-4 space-y-1 text-sm text-muted-foreground">
-                {(session.overallFeedback as any).finalTips.map((tip: string, i: number) => <li key={i}>{tip}</li>)}
+                {session.overallFeedback.finalTips.map((tip: string, i: number) => <li key={i}>{tip}</li>)}
               </ul>
             </div>
           )}
@@ -126,9 +164,12 @@ export default function StepFeedback({ session, onRestart }: StepFeedbackProps) 
         </CardContent>
       </Card>
 
-      <div className="text-center mt-8">
-        <Button onClick={onRestart} size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground">
+      <div className="text-center mt-8 flex flex-col sm:flex-row justify-center items-center gap-4">
+        <Button onClick={onRestart} size="lg" variant="outline">
           <RefreshCw className="mr-2 h-5 w-5" /> Start New Mock Interview
+        </Button>
+        <Button onClick={handleShareToFeed} size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground">
+          <Share2 className="mr-2 h-5 w-5" /> Share to Feed
         </Button>
       </div>
     </div>
