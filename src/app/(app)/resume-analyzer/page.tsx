@@ -10,32 +10,37 @@ import { Textarea } from "@/components/ui/textarea";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ArrowRight, Download, FileText, Lightbulb, Loader2, Sparkles, UploadCloud, Search, Star, Trash2, BarChart, Clock, Bookmark, CheckCircle, History, Zap, HelpCircle } from "lucide-react"; // Added HelpCircle
+import { ArrowRight, Download, FileText, Lightbulb, Loader2, Sparkles, UploadCloud, Search, Star, Trash2, BarChart, Clock, Bookmark, CheckCircle, History, Zap, HelpCircle, PlusCircle as PlusCircleIcon } from "lucide-react";
 import { analyzeResumeAndJobDescription, type AnalyzeResumeAndJobDescriptionOutput } from '@/ai/flows/analyze-resume-and-job-description';
 import { calculateMatchScore, type CalculateMatchScoreOutput } from '@/ai/flows/calculate-match-score';
 import { suggestResumeImprovements, type SuggestResumeImprovementsOutput } from '@/ai/flows/suggest-resume-improvements';
+import { suggestDynamicSkills, type SuggestDynamicSkillsInput, type SuggestDynamicSkillsOutput } from '@/ai/flows/suggest-dynamic-skills';
 import { useToast } from '@/hooks/use-toast';
 import { sampleResumeScanHistory as initialScanHistory, sampleResumeProfiles, sampleUserProfile } from '@/lib/sample-data';
 import type { ResumeScanHistoryItem, ResumeProfile } from '@/types';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"; // Added Tooltip
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"; 
 
 interface AnalysisResults {
   analysis: AnalyzeResumeAndJobDescriptionOutput | null;
   score: CalculateMatchScoreOutput | null;
   improvements: SuggestResumeImprovementsOutput | null;
+  skillSuggestions?: SuggestDynamicSkillsOutput | null; 
 }
 
+type SuggestedSkillFromAI = SuggestDynamicSkillsOutput['suggestedSkills'][0];
+
+
 const ScoreCircle = ({ score, size = "lg" }: { score: number, size?: "sm" | "lg" }) => {
-  const radius = size === "lg" ? 45 : 30; // Adjusted radius for a slightly larger circle
-  const strokeWidth = size === "lg" ? 8 : 6; // Adjusted stroke width
+  const radius = size === "lg" ? 45 : 30; 
+  const strokeWidth = size === "lg" ? 8 : 6; 
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (score / 100) * circumference;
-  const circleSizeClass = size === "lg" ? "w-28 h-28" : "w-20 h-20"; // Adjusted overall size
-  const textSizeClass = size === "lg" ? "text-3xl" : "text-xl"; // Adjusted text size
-  const subTextSizeClass = size === "lg" ? "text-xs" : "text-[10px]"; // Adjusted subtext size
+  const circleSizeClass = size === "lg" ? "w-28 h-28" : "w-20 h-20"; 
+  const textSizeClass = size === "lg" ? "text-3xl" : "text-xl"; 
+  const subTextSizeClass = size === "lg" ? "text-xs" : "text-[10px]";
 
   return (
     <div className={`relative flex items-center justify-center ${circleSizeClass}`}>
@@ -97,22 +102,6 @@ export default function ResumeAnalyzerPage() {
    }, [selectedResumeId, resumes, toast, resumeFile]);
 
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setResumeFile(file);
-      setSelectedResumeId(null);
-      if (file.type === "text/plain") {
-        const reader = new FileReader();
-        reader.onload = (e) => setResumeText(e.target?.result as string);
-        reader.readAsText(file);
-      } else {
-         setResumeText(`Mock content for ${file.name}. Actual parsing for PDF/DOCX needed.`);
-         toast({ title: "File Uploaded", description: `${file.name} uploaded. Content is mocked for non-TXT files.` });
-      }
-    }
-  };
-
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     if (!resumeText && !resumeFile) {
@@ -136,10 +125,11 @@ export default function ResumeAnalyzerPage() {
       const companyMatch = jdLines.find(line => line.toLowerCase().includes('company:'))?.split(':')[1]?.trim() || "Company Placeholder";
 
 
-      const [analysisRes, scoreRes, improvementsRes] = await Promise.all([
+      const [analysisRes, scoreRes, improvementsRes, skillSuggestionsRes] = await Promise.all([
         analyzeResumeAndJobDescription({ resumeText: currentResumeText, jobDescriptionText: jobDescription }),
         calculateMatchScore({ resumeText: currentResumeText, jobDescription: jobDescription }),
-        suggestResumeImprovements({ resumeText: currentResumeText, jobDescription: jobDescription })
+        suggestResumeImprovements({ resumeText: currentResumeText, jobDescription: jobDescription }),
+        suggestDynamicSkills({ currentSkills: currentResumeText.match(/\b\w+(?:-\w+)*\b/g) || [], contextText: jobDescription }) // Basic skill extraction
       ]);
 
       const newScanEntry: ResumeScanHistoryItem = {
@@ -154,7 +144,6 @@ export default function ResumeAnalyzerPage() {
         scanDate: new Date().toISOString(),
         matchScore: scoreRes.matchScore,
         bookmarked: false,
-        // archived: false, // Assuming new items are not archived by default
       };
       setScanHistory(prev => [newScanEntry, ...prev]);
 
@@ -163,6 +152,7 @@ export default function ResumeAnalyzerPage() {
         analysis: analysisRes,
         score: scoreRes,
         improvements: improvementsRes,
+        skillSuggestions: skillSuggestionsRes,
       });
       toast({ title: "Analysis Complete", description: "Resume analysis results are ready." });
     } catch (error) {
@@ -204,12 +194,8 @@ export default function ResumeAnalyzerPage() {
     } else if (historyFilter === 'starred') {
       filtered = filtered.filter(item => item.bookmarked);
     } else if (historyFilter === 'archived') {
-      // This assumes an 'archived' property might exist, or it filters out everything if not.
-      // For now, let's assume 'archived' is not a feature and it returns empty for this filter.
-      // If 'archived' becomes a feature, this filter needs to be adjusted.
       filtered = filtered.filter(item => (item as any).archived === true);
     }
-    // No 'all' specific filtering needed, as it uses the full `scanHistory`
     return filtered;
   }, [scanHistory, historyFilter]);
 
@@ -217,10 +203,19 @@ export default function ResumeAnalyzerPage() {
     const totalScans = scanHistory.length;
     const uniqueResumes = new Set(scanHistory.map(s => s.resumeId)).size;
     const maxScore = scanHistory.reduce((max, s) => Math.max(max, s.matchScore || 0), 0);
-    // Define "Improvement" as number of scans with score >= 80% (example)
     const improvement = scanHistory.filter(s => (s.matchScore || 0) >= 80).length;
     return { totalScans, uniqueResumes, maxScore, improvement };
   }, [scanHistory]);
+
+  const handleAddSkillToProfile = (skill: string) => {
+    // This is a mock function. In a real app, you'd update the user's profile.
+    // For now, we can just show a toast.
+    toast({
+      title: "Skill Added (Mock)",
+      description: `"${skill}" would be added to your profile skills. (Feature in development)`,
+    });
+    // Optionally, navigate to profile page or open profile edit modal
+  };
 
 
   return (
@@ -433,12 +428,33 @@ export default function ResumeAnalyzerPage() {
                     </AccordionContent>
                  </AccordionItem>
                )}
+              {results.skillSuggestions && results.skillSuggestions.suggestedSkills.length > 0 && (
+                <AccordionItem value="item-3">
+                  <AccordionTrigger className="text-lg font-semibold hover:text-primary">Dynamic Skill Suggestions</AccordionTrigger>
+                  <AccordionContent className="space-y-3 p-1">
+                    <p className="text-sm text-muted-foreground">Based on the job description, consider adding these skills to your profile or resume:</p>
+                    {results.skillSuggestions.suggestedSkills.map((skillRec: SuggestedSkillFromAI) => (
+                      <Card key={skillRec.skill} className="bg-secondary/30 p-3">
+                        <div className="flex justify-between items-start gap-2">
+                          <div>
+                            <h4 className="font-semibold text-foreground">{skillRec.skill}</h4>
+                            <p className="text-xs text-muted-foreground">Relevance: <span className="text-primary font-bold">{skillRec.relevanceScore}%</span></p>
+                          </div>
+                          <Button size="sm" variant="outline" onClick={() => handleAddSkillToProfile(skillRec.skill)}>
+                             <PlusCircleIcon className="mr-1 h-4 w-4" /> Add to Profile (Mock)
+                          </Button>
+                        </div>
+                        <p className="text-sm text-muted-foreground mt-1 italic">Reasoning: {skillRec.reasoning}</p>
+                      </Card>
+                    ))}
+                  </AccordionContent>
+                </AccordionItem>
+              )}
             </Accordion>
           </CardContent>
         </Card>
       )}
 
-      {/* Resume Scan History Section - Moved here as per request */}
       <Card className="shadow-xl mt-12">
          <CardHeader>
           <CardTitle className="text-2xl font-bold tracking-tight flex items-center gap-2">
@@ -452,7 +468,7 @@ export default function ResumeAnalyzerPage() {
                   { title: "Total Scans", value: summaryStats.totalScans },
                   { title: "Unique Resumes", value: summaryStats.uniqueResumes },
                   { title: "Maximum Score", value: `${summaryStats.maxScore}%` },
-                  { title: "High Scoring (>80%)", value: summaryStats.improvement }, // Changed label
+                  { title: "High Scoring (>80%)", value: summaryStats.improvement }, 
                 ].map(stat => (
                   <Card key={stat.title} className="border shadow-sm">
                       <CardContent className="p-4 text-center">
@@ -485,8 +501,6 @@ export default function ResumeAnalyzerPage() {
                              <div className="flex-1 space-y-0.5">
                                 <h4 className="font-semibold text-md text-foreground">{item.jobTitle || 'Job Title Missing'} at {item.companyName || 'Company Missing'}</h4>
                                 <p className="text-sm text-muted-foreground">Resume: {item.resumeName || 'Unknown Resume'}</p>
-                                {/* Optional: Display a snippet of JD if needed */}
-                                {/* <p className="text-xs text-muted-foreground truncate max-w-xs">JD: {item.jobDescriptionText?.substring(0, 40) || 'N/A'}...</p> */}
                              </div>
                             <div className="flex flex-col items-end space-y-1 self-start">
                                <p className="text-xs text-muted-foreground">{format(new Date(item.scanDate), 'MMM dd, yyyy')}</p>
@@ -494,8 +508,6 @@ export default function ResumeAnalyzerPage() {
                                 <Button variant="outline" size="sm" onClick={() => handleDeleteScan(item.id)} className="mt-1">
                                   <Trash2 className="h-3 w-3"/>
                                 </Button>
-                                {/* Add Archive button later if needed */}
-                                {/* <Button variant="outline" size="sm" className="mt-1">Archive</Button> */}
                             </div>
                          </Card>
                     ))

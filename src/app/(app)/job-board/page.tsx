@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
@@ -12,14 +12,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { PlusCircle, Aperture, Briefcase, Users, MapPin, Building, CalendarDays, Search, Filter as FilterIcon, Edit3 } from "lucide-react";
+import { PlusCircle, Aperture, Briefcase, Users, MapPin, Building, CalendarDays, Search, Filter as FilterIcon, Edit3, Sparkles, Loader2, ExternalLink, ThumbsUp } from "lucide-react";
 import { sampleJobOpenings, sampleAlumni, sampleUserProfile } from "@/lib/sample-data";
-import type { JobOpening } from "@/types";
+import type { JobOpening, UserProfile } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { personalizedJobRecommendations, type PersonalizedJobRecommendationsInput, type PersonalizedJobRecommendationsOutput } from "@/ai/flows/personalized-job-recommendations";
+import Link from "next/link";
 
 const jobOpeningSchema = z.object({
   id: z.string().optional(),
@@ -28,9 +30,12 @@ const jobOpeningSchema = z.object({
   location: z.string().min(1, "Location is required"),
   description: z.string().min(10, "Description must be at least 10 characters"),
   type: z.enum(['Full-time', 'Part-time', 'Internship', 'Contract', 'Mentorship']),
+  applicationLink: z.string().url("Must be a valid URL").optional().or(z.literal('')),
 });
 
 type JobOpeningFormData = z.infer<typeof jobOpeningSchema>;
+type RecommendedJob = PersonalizedJobRecommendationsOutput['recommendedJobs'][0];
+
 
 const JOB_TYPES: JobOpening['type'][] = ['Full-time', 'Part-time', 'Internship', 'Contract', 'Mentorship'];
 
@@ -43,13 +48,16 @@ export default function JobBoardPage() {
   const [selectedLocations, setSelectedLocations] = useState<Set<string>>(new Set());
   const [selectedCompanies, setSelectedCompanies] = useState<Set<string>>(new Set());
   
+  const [recommendedJobs, setRecommendedJobs] = useState<RecommendedJob[] | null>(null);
+  const [isRecLoading, setIsRecLoading] = useState(false);
+
   const { toast } = useToast();
   const { control, handleSubmit, reset, setValue, formState: { errors } } = useForm<JobOpeningFormData>({
     resolver: zodResolver(jobOpeningSchema),
     defaultValues: { type: 'Full-time' }
   });
 
-  const currentAlumniUser = sampleUserProfile; 
+  const currentUser = sampleUserProfile; 
 
   const uniqueLocations = useMemo(() => {
     const locations = new Set(openings.map(op => op.location));
@@ -83,15 +91,16 @@ export default function JobBoardPage() {
 
   const onPostSubmit = (data: JobOpeningFormData) => {
     if (editingOpening) {
-      setOpenings(prev => prev.map(op => op.id === editingOpening.id ? { ...op, ...data } : op));
+      setOpenings(prev => prev.map(op => op.id === editingOpening.id ? { ...op, ...data, applicationLink: data.applicationLink || undefined } : op));
       toast({ title: "Opportunity Updated", description: `${data.title} at ${data.company} has been updated.` });
     } else {
       const newOpening: JobOpening = {
         ...data,
+        applicationLink: data.applicationLink || undefined,
         id: String(Date.now()),
         datePosted: new Date().toISOString().split('T')[0],
-        postedByAlumniId: currentAlumniUser.id,
-        alumniName: currentAlumniUser.name,
+        postedByAlumniId: currentUser.id,
+        alumniName: currentUser.name,
       };
       setOpenings(prev => [newOpening, ...prev]);
       toast({ title: "Opportunity Posted", description: `${data.title} at ${data.company} has been posted.` });
@@ -103,7 +112,7 @@ export default function JobBoardPage() {
   
   const openNewPostDialog = () => {
     setEditingOpening(null);
-    reset({ title: '', company: '', location: '', description: '', type: 'Full-time' });
+    reset({ title: '', company: '', location: '', description: '', type: 'Full-time', applicationLink: '' });
     setIsPostDialogOpen(true);
   };
 
@@ -114,8 +123,45 @@ export default function JobBoardPage() {
     setValue('location', opening.location);
     setValue('description', opening.description);
     setValue('type', opening.type);
+    setValue('applicationLink', opening.applicationLink || '');
     setIsPostDialogOpen(true);
   };
+
+  const handleGetRecommendations = async () => {
+    setIsRecLoading(true);
+    setRecommendedJobs(null);
+    try {
+      const userProfileText = `
+        Name: ${currentUser.name}
+        Current Role: ${currentUser.currentJobTitle || 'N/A'} at ${currentUser.currentOrganization || 'N/A'}
+        Skills: ${(currentUser.skills || []).join(', ') || 'N/A'}
+        Bio: ${currentUser.bio || 'N/A'}
+        Years of Experience: ${currentUser.yearsOfExperience || 'N/A'}
+        Industry: ${currentUser.industry || 'N/A'}
+      `;
+      const input: PersonalizedJobRecommendationsInput = {
+        userProfileText,
+        careerInterests: currentUser.careerInterests || 'General job opportunities',
+        availableJobs: openings.map(job => ({ // Map current openings to the schema expected by the flow
+            id: job.id,
+            title: job.title,
+            company: job.company,
+            description: job.description,
+            location: job.location,
+            type: job.type,
+        })),
+      };
+      const result = await personalizedJobRecommendations(input);
+      setRecommendedJobs(result.recommendedJobs);
+      toast({ title: "Recommendations Ready", description: "AI has suggested some job openings for you." });
+    } catch (error) {
+      console.error("Job recommendation error:", error);
+      toast({ title: "Recommendation Failed", description: "Could not fetch job recommendations.", variant: "destructive" });
+    } finally {
+      setIsRecLoading(false);
+    }
+  };
+
 
   return (
     <div className="space-y-8">
@@ -206,6 +252,59 @@ export default function JobBoardPage() {
         </AccordionItem>
       </Accordion>
 
+      {/* AI Job Recommendations Section */}
+      <Card className="shadow-lg">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Sparkles className="h-6 w-6 text-primary"/> AI Job Recommendations
+          </CardTitle>
+          <CardDescription>Get personalized job suggestions based on your profile and interests.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isRecLoading && (
+            <div className="text-center py-4">
+              <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+              <p className="mt-2 text-muted-foreground">Finding jobs for you...</p>
+            </div>
+          )}
+          {!isRecLoading && recommendedJobs && recommendedJobs.length === 0 && (
+             <p className="text-muted-foreground text-center py-4">No specific recommendations found at this time. Try adjusting your profile interests or check back later.</p>
+          )}
+          {!isRecLoading && recommendedJobs && recommendedJobs.length > 0 && (
+            <div className="space-y-3">
+              {recommendedJobs.map(recJob => {
+                 const originalJob = openings.find(op => op.id === recJob.jobId);
+                 return (
+                  <Card key={recJob.jobId} className="bg-secondary/50 p-3">
+                    <div className="flex flex-col sm:flex-row justify-between items-start gap-2">
+                        <div>
+                            <h4 className="font-semibold text-foreground">{recJob.title} at {recJob.company}</h4>
+                            <p className="text-xs text-muted-foreground">Match Strength: <span className="text-primary font-bold">{recJob.matchStrength}%</span></p>
+                        </div>
+                         {originalJob?.applicationLink && (
+                           <Button size="sm" asChild className="mt-2 sm:mt-0">
+                             <Link href={originalJob.applicationLink} target="_blank" rel="noopener noreferrer">
+                               Apply <ExternalLink className="ml-1 h-3 w-3"/>
+                             </Link>
+                           </Button>
+                         )}
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-1 italic">Reasoning: {recJob.reasoning}</p>
+                  </Card>
+                 );
+              })}
+            </div>
+          )}
+        </CardContent>
+        <CardFooter>
+           <Button onClick={handleGetRecommendations} disabled={isRecLoading || openings.length === 0} className="w-full md:w-auto">
+            {isRecLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ThumbsUp className="mr-2 h-4 w-4" />}
+            {openings.length === 0 ? "Add Jobs to Get Recs" : "Get AI Recommendations"}
+          </Button>
+        </CardFooter>
+      </Card>
+
+
       <Dialog open={isPostDialogOpen} onOpenChange={(isOpen) => {
         setIsPostDialogOpen(isOpen);
         if (!isOpen) {
@@ -256,6 +355,11 @@ export default function JobBoardPage() {
               <Controller name="description" control={control} render={({ field }) => <Textarea id="post-description" rows={5} {...field} />} />
               {errors.description && <p className="text-sm text-destructive mt-1">{errors.description.message}</p>}
             </div>
+             <div>
+              <Label htmlFor="applicationLink">Application Link (Optional)</Label>
+              <Controller name="applicationLink" control={control} render={({ field }) => <Input id="applicationLink" type="url" placeholder="https://example.com/apply" {...field} />} />
+              {errors.applicationLink && <p className="text-sm text-destructive mt-1">{errors.applicationLink.message}</p>}
+            </div>
             <DialogFooter>
               <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
               <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground">{editingOpening ? "Save Changes" : "Post Opportunity"}</Button>
@@ -276,7 +380,7 @@ export default function JobBoardPage() {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredOpenings.map((opening) => {
             const postingAlumni = sampleAlumni.find(a => a.id === opening.postedByAlumniId);
-            const isOwnPosting = opening.postedByAlumniId === currentAlumniUser.id;
+            const isOwnPosting = opening.postedByAlumniId === currentUser.id;
             return (
             <Card key={opening.id} className="shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col">
               <CardHeader>
@@ -319,9 +423,17 @@ export default function JobBoardPage() {
                       <Edit3 className="h-4 w-4" />
                     </Button>
                   )}
-                  <Button size="sm" variant="default" onClick={() => toast({title: "Apply (Mocked)", description: `You showed interest in ${opening.title}.`})}>
-                    {opening.type === 'Mentorship' ? 'Express Interest' : 'Apply Now'}
-                  </Button>
+                  {opening.applicationLink ? (
+                    <Button size="sm" variant="default" asChild>
+                       <Link href={opening.applicationLink} target="_blank" rel="noopener noreferrer">
+                         {opening.type === 'Mentorship' ? 'Express Interest' : 'Apply Now'} <ExternalLink className="ml-1 h-3 w-3"/>
+                       </Link>
+                    </Button>
+                  ) : (
+                     <Button size="sm" variant="default" onClick={() => toast({title: "Apply (Mocked)", description: `You showed interest in ${opening.title}.`})}>
+                      {opening.type === 'Mentorship' ? 'Express Interest' : 'Apply Now'}
+                    </Button>
+                  )}
                 </div>
               </CardFooter>
             </Card>

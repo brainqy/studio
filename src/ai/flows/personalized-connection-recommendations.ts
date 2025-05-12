@@ -16,7 +16,7 @@ const PersonalizedConnectionRecommendationsInputSchema = z.object({
   userProfile: z
     .string()
     .describe('The user profile including skills, experience, and interests.'),
-  careerInterests: z.string().describe('The career interests of the user.'),
+  careerInterests: z.string().describe('The career interests and specific goals of the user.'),
 });
 export type PersonalizedConnectionRecommendationsInput = z.infer<
   typeof PersonalizedConnectionRecommendationsInputSchema
@@ -28,7 +28,7 @@ const PersonalizedConnectionRecommendationsOutputSchema = z.object({
     .describe('A list of suggested alumni connection names.'),
   reasoning: z
     .string()
-    .describe('The AI reasoning behind these connection suggestions.'),
+    .describe('The AI reasoning behind these connection suggestions, explaining how each connection aligns with the user\'s goals.'),
 });
 export type PersonalizedConnectionRecommendationsOutput = z.infer<
   typeof PersonalizedConnectionRecommendationsOutputSchema
@@ -44,14 +44,19 @@ const prompt = ai.definePrompt({
   name: 'personalizedConnectionRecommendationsPrompt',
   input: {schema: PersonalizedConnectionRecommendationsInputSchema},
   output: {schema: PersonalizedConnectionRecommendationsOutputSchema},
-  prompt: `You are an AI assistant designed to provide personalized connection recommendations to users based on their profile and career interests.
+  prompt: `You are an AI career networking assistant. Your goal is to provide highly tailored alumni connection recommendations to help users achieve their specific career goals.
 
-  Given the following user profile and career interests, suggest a list of alumni connections that would be relevant for networking and mentorship opportunities. Explain the reasoning behind each suggestion.
+Analyze the user's profile, explicitly stated career interests, and any implied career goals.
+Suggest a list of alumni connections who are particularly well-suited to help with these specific goals, whether for networking, mentorship, or insights.
+For each suggestion, provide a detailed reasoning that clearly links the alumnus's profile/experience to the user's stated interests and goals.
 
-  User Profile: {{{userProfile}}}
-  Career Interests: {{{careerInterests}}}
+User Profile:
+{{{userProfile}}}
 
-  Format the output as a JSON object with 'suggestedConnections' (an array of alumni names) and 'reasoning' (explanation for each suggestion).
+Career Interests & Goals:
+{{{careerInterests}}}
+
+Output in JSON format with 'suggestedConnections' (an array of alumni names or IDs) and 'reasoning' (a comprehensive explanation for the suggestions, tying them to the user's goals).
   `,
 });
 
@@ -63,6 +68,9 @@ const personalizedConnectionRecommendationsFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await prompt(input);
-    return output!;
+    if (!output) {
+        throw new Error("AI failed to generate connection recommendations.");
+    }
+    return output;
   }
 );

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useMemo, type FormEvent } from 'react';
@@ -20,7 +21,7 @@ import * as z from "zod";
 import { personalizedConnectionRecommendations, type PersonalizedConnectionRecommendationsInput, type PersonalizedConnectionRecommendationsOutput } from '@/ai/flows/personalized-connection-recommendations';
 
 const recommendationRequestSchema = z.object({
-  careerInterests: z.string().min(10, "Please describe your career interests in at least 10 characters."),
+  careerInterests: z.string().min(10, "Please describe your career interests and mentorship goals in at least 10 characters."),
 });
 type RecommendationRequestFormData = z.infer<typeof recommendationRequestSchema>;
 
@@ -32,7 +33,7 @@ const bookingSchema = z.object({
 });
 type BookingFormData = z.infer<typeof bookingSchema>;
 
-export default function AlumniRecommendationsPage() {
+export default function AlumniMentorshipMatchingPage() { // Renamed component
   const { toast } = useToast();
   const currentUser = sampleUserProfile;
 
@@ -53,14 +54,15 @@ export default function AlumniRecommendationsPage() {
   });
 
   const constructUserProfileSummary = (profile: UserProfile): string => {
-    return `
-      Name: ${profile.name}
-      Current Role: ${profile.currentJobTitle || 'N/A'} at ${profile.currentOrganization || 'N/A'}
-      Skills: ${(profile.skills || []).join(', ') || 'N/A'}
-      Bio: ${profile.bio || 'N/A'}
-      Years of Experience: ${profile.yearsOfExperience || 'N/A'}
-      Industry: ${profile.industry || 'N/A'}
-    `.trim();
+    let summary = `User Profile:\n`;
+    summary += `Name: ${profile.name}\n`;
+    if (profile.currentJobTitle) summary += `Current Role: ${profile.currentJobTitle}${profile.currentOrganization ? ` at ${profile.currentOrganization}` : ''}\n`;
+    if (profile.industry) summary += `Industry: ${profile.industry}\n`;
+    if (profile.yearsOfExperience) summary += `Years of Experience: ${profile.yearsOfExperience}\n`;
+    if (profile.skills && profile.skills.length > 0) summary += `Skills: ${profile.skills.join(', ')}\n`;
+    if (profile.degreeProgram && profile.graduationYear) summary += `Education: ${profile.degreeProgram}, Graduated ${profile.graduationYear}\n`;
+    if (profile.bio) summary += `Bio: ${profile.bio}\n`;
+    return summary.trim();
   };
 
   const onRecommendationRequest = async (data: RecommendationRequestFormData) => {
@@ -72,7 +74,7 @@ export default function AlumniRecommendationsPage() {
       const userProfileSummary = constructUserProfileSummary(currentUser);
       const input: PersonalizedConnectionRecommendationsInput = {
         userProfile: userProfileSummary,
-        careerInterests: data.careerInterests,
+        careerInterests: data.careerInterests, // This now includes mentorship goals
       };
       const result = await personalizedConnectionRecommendations(input);
       setRecommendations(result);
@@ -83,10 +85,10 @@ export default function AlumniRecommendationsPage() {
           .filter(profile => profile !== undefined) as AlumniProfile[];
         setRecommendedAlumniProfiles(profiles);
       }
-      toast({ title: "Recommendations Ready", description: "AI has suggested some connections for you." });
+      toast({ title: "Mentorship Matches Found", description: "AI has suggested potential mentors for you." });
     } catch (error) {
-      console.error("Recommendation error:", error);
-      toast({ title: "Recommendation Failed", description: "Could not fetch recommendations.", variant: "destructive" });
+      console.error("Mentorship matching error:", error);
+      toast({ title: "Matching Failed", description: "Could not fetch mentorship matches.", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -130,13 +132,13 @@ export default function AlumniRecommendationsPage() {
             <Brain className="h-8 w-8 text-primary" /> AI Mentorship Matching
           </CardTitle>
           <CardDescription>
-            Tell us about your career interests, and our AI will suggest relevant alumni who might be great mentors for you.
+            Tell us about your career interests and mentorship goals, and our AI will suggest relevant alumni who might be great mentors for you.
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleRecommendationRequestSubmit(onRecommendationRequest)}>
           <CardContent>
             <div className="space-y-2">
-              <Label htmlFor="careerInterests">My Career Interests & Goals</Label>
+              <Label htmlFor="careerInterests">My Career Interests & Mentorship Goals</Label>
               <Controller
                 name="careerInterests"
                 control={recommendationFormControl}
@@ -144,7 +146,7 @@ export default function AlumniRecommendationsPage() {
                   <Textarea
                     id="careerInterests"
                     rows={4}
-                    placeholder="e.g., Transitioning into product management, looking for guidance on scaling a startup, interested in AI ethics..."
+                    placeholder="e.g., Transitioning into product management, looking for guidance on scaling a startup, interested in AI ethics, need help with technical interview prep..."
                     {...field}
                   />
                 )}
@@ -157,7 +159,7 @@ export default function AlumniRecommendationsPage() {
               {isLoading ? (
                 <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Finding Mentors...</>
               ) : (
-                <><Sparkles className="mr-2 h-4 w-4" /> Get Recommendations</>
+                <><Sparkles className="mr-2 h-4 w-4" /> Get Mentor Matches</>
               )}
             </Button>
           </CardFooter>
@@ -231,9 +233,9 @@ export default function AlumniRecommendationsPage() {
             <Card className="text-center py-12 shadow-md col-span-1 md:col-span-2 lg:col-span-3">
                 <CardHeader>
                     <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                    <CardTitle className="text-2xl">No Specific Alumni Profiles Found</CardTitle>
+                    <CardTitle className="text-2xl">No Specific Mentor Profiles Found</CardTitle>
                     <CardDescription>
-                    The AI provided general recommendations, but no specific alumni profiles matched directly. Try broadening your interests.
+                    The AI provided general recommendations, but no specific alumni profiles matched directly. Try broadening your interests or goals.
                     </CardDescription>
                 </CardHeader>
             </Card>

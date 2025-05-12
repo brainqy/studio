@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
-import { User, Mail, Briefcase, Sparkles, Upload, Save, CalendarDays, Users, HelpCircle, CheckSquare, SettingsIcon, Phone, MapPin, GraduationCap, Building, LinkIcon, Brain, Handshake, Clock, MessageCircle, Info, CheckCircle, XCircle, Edit3 } from "lucide-react"; // Added Edit3
+import { User, Mail, Briefcase, Sparkles, Upload, Save, CalendarDays, Users, HelpCircle, CheckSquare, SettingsIcon, Phone, MapPin, GraduationCap, Building, LinkIcon, Brain, Handshake, Clock, MessageCircle, Info, CheckCircle as CheckCircleIcon, XCircle, Edit3, Loader2, ThumbsUp, PlusCircle as PlusCircleIcon } from "lucide-react"; // Renamed CheckCircle to CheckCircleIcon
 import { sampleUserProfile, graduationYears } from "@/lib/sample-data";
 import type { UserProfile, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought } from "@/types";
 import { DegreePrograms, Industries, AreasOfSupport as AreasOfSupportOptions, TimeCommitments, EngagementModes, SupportTypesSought as SupportTypesSoughtOptions } from "@/types";
@@ -22,7 +22,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"; // Added Tooltip
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { suggestDynamicSkills, type SuggestDynamicSkillsInput, type SuggestDynamicSkillsOutput } from '@/ai/flows/suggest-dynamic-skills';
 
 const profileSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -33,24 +34,24 @@ const profileSchema = z.object({
   currentAddress: z.string().optional(),
   
   graduationYear: z.string().optional(),
-  degreeProgram: z.string().optional(), // z.enum(DegreePrograms) was too restrictive for "Other"
+  degreeProgram: z.string().optional(), 
   department: z.string().optional(),
   
   currentJobTitle: z.string().optional(),
   currentOrganization: z.string().optional(),
-  industry: z.string().optional(), // z.enum(Industries) was too restrictive for "Other"
+  industry: z.string().optional(), 
   workLocation: z.string().optional(),
   linkedInProfile: z.string().url("Invalid URL").optional().or(z.literal('')),
   yearsOfExperience: z.string().optional(),
   
-  skills: z.string().optional(), // Comma-separated string for simplicity
+  skills: z.string().optional(), 
   
-  areasOfSupport: z.array(z.string()).optional(), // z.enum(AreasOfSupportOptions)
-  timeCommitment: z.string().optional(), // z.enum(TimeCommitments)
-  preferredEngagementMode: z.string().optional(), // z.enum(EngagementModes)
+  areasOfSupport: z.array(z.string()).optional(), 
+  timeCommitment: z.string().optional(), 
+  preferredEngagementMode: z.string().optional(), 
   otherComments: z.string().optional(),
   
-  lookingForSupportType: z.string().optional(), // z.enum(SupportTypesSoughtOptions)
+  lookingForSupportType: z.string().optional(), 
   helpNeededDescription: z.string().optional(),
   
   shareProfileConsent: z.boolean().optional(),
@@ -63,13 +64,16 @@ const profileSchema = z.object({
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
+type SuggestedSkill = SuggestDynamicSkillsOutput['suggestedSkills'][0];
 
 export default function ProfilePage() {
   const [userProfile, setUserProfile] = useState<UserProfile>(sampleUserProfile);
-  const [isEditing, setIsEditing] = useState(false); // State for edit mode
+  const [isEditing, setIsEditing] = useState(false); 
+  const [suggestedSkills, setSuggestedSkills] = useState<SuggestedSkill[] | null>(null);
+  const [isSkillsLoading, setIsSkillsLoading] = useState(false);
   const { toast } = useToast();
 
-  const { control, handleSubmit, watch, reset, formState: { errors, isDirty } } = useForm<ProfileFormData>({
+  const { control, handleSubmit, watch, reset, setValue, formState: { errors, isDirty } } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
       name: userProfile.name,
@@ -104,7 +108,6 @@ export default function ProfilePage() {
   });
   
   useEffect(() => {
-    // If sampleUserProfile changes (e.g. loaded async), reset form
     reset({
       ...sampleUserProfile,
       dateOfBirth: sampleUserProfile.dateOfBirth ? new Date(sampleUserProfile.dateOfBirth) : undefined,
@@ -126,12 +129,11 @@ export default function ProfilePage() {
       watchedFields.currentOrganization, watchedFields.industry, watchedFields.workLocation,
       watchedFields.linkedInProfile, watchedFields.yearsOfExperience, watchedFields.skills,
       watchedFields.profilePictureUrl, watchedFields.resumeText, watchedFields.careerInterests, watchedFields.bio,
-      // Optional but good to have
       watchedFields.areasOfSupport && watchedFields.areasOfSupport.length > 0, 
       watchedFields.timeCommitment, watchedFields.preferredEngagementMode
     ];
     const filledFields = fieldsToCheck.filter(field => {
-      if (typeof field === 'boolean') return true; // Consents are always "filled"
+      if (typeof field === 'boolean') return true; 
       if (field instanceof Date) return true;
       return field && String(field).trim() !== '';
     }).length;
@@ -141,17 +143,21 @@ export default function ProfilePage() {
   const profileCompletion = calculateProfileCompletion();
 
   const onSubmit = (data: ProfileFormData) => {
-    const updatedProfile: UserProfile = {
-      ...userProfile, // Preserve existing fields like id, role
+    const updatedProfileData: UserProfile = {
+      ...userProfile, 
       ...data,
       dateOfBirth: data.dateOfBirth ? data.dateOfBirth.toISOString().split('T')[0] : undefined,
       skills: data.skills ? data.skills.split(',').map(s => s.trim()).filter(s => s) : [],
       areasOfSupport: data.areasOfSupport || [],
     };
-    setUserProfile(updatedProfile);
-    setIsEditing(false); // Exit edit mode on save
-    // In a real app, this would save to a backend
-    console.log("Updated Profile Data:", updatedProfile);
+    setUserProfile(updatedProfileData);
+    // In a real app, update sampleUserProfile or the source of truth.
+    // For demo, directly updating sampleUserProfile if it's the one being edited.
+    if (sampleUserProfile.id === updatedProfileData.id) {
+        Object.assign(sampleUserProfile, updatedProfileData);
+    }
+    setIsEditing(false); 
+    console.log("Updated Profile Data:", updatedProfileData);
     toast({ title: "Profile Updated", description: "Your profile information has been saved." });
   };
   
@@ -177,6 +183,44 @@ export default function ProfilePage() {
       </>
     );
   }
+
+  const handleGetSkillSuggestions = async () => {
+    setIsSkillsLoading(true);
+    setSuggestedSkills(null);
+    try {
+      const currentSkills = watchedFields.skills?.split(',').map(s => s.trim()).filter(s => s) || [];
+      const contextText = `${watchedFields.bio || ''} ${watchedFields.careerInterests || ''} ${watchedFields.currentJobTitle || ''} ${watchedFields.industry || ''}`.trim();
+      if (!contextText) {
+        toast({ title: "Not Enough Info", description: "Please fill in your bio, career interests, or job title for better skill suggestions.", variant: "destructive" });
+        setIsSkillsLoading(false);
+        return;
+      }
+      const input: SuggestDynamicSkillsInput = {
+        currentSkills,
+        contextText,
+      };
+      const result = await suggestDynamicSkills(input);
+      setSuggestedSkills(result.suggestedSkills);
+      toast({ title: "Skill Suggestions Ready", description: "AI has suggested some new skills for you." });
+    } catch (error) {
+      console.error("Skill suggestion error:", error);
+      toast({ title: "Suggestion Failed", description: "Could not fetch skill suggestions.", variant: "destructive" });
+    } finally {
+      setIsSkillsLoading(false);
+    }
+  };
+
+  const handleAddSuggestedSkill = (skill: string) => {
+    const currentSkillsValue = watchedFields.skills || "";
+    const skillsArray = currentSkillsValue.split(',').map(s => s.trim()).filter(s => s);
+    if (!skillsArray.includes(skill)) {
+        const newSkillsString = [...skillsArray, skill].join(', ');
+        setValue('skills', newSkillsString, { shouldDirty: true });
+        toast({title: "Skill Added", description: `"${skill}" added to your skills list. Save profile to keep changes.`});
+    } else {
+        toast({title: "Skill Exists", description: `"${skill}" is already in your skills list.`, variant: "default"});
+    }
+  };
 
 
   return (
@@ -213,7 +257,7 @@ export default function ProfilePage() {
       </Card>
 
       <form onSubmit={handleSubmit(onSubmit)}>
-        <fieldset disabled={!isEditing} className="space-y-6"> {/* Disable form fields when not editing */}
+        <fieldset disabled={!isEditing} className="space-y-6"> 
           <Card className="shadow-lg">
             <CardHeader>
               <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4">
@@ -279,7 +323,6 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              {/* Section 2: Academic Information */}
               {renderSectionHeader("Academic Information", GraduationCap)}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="space-y-1">
@@ -310,7 +353,6 @@ export default function ProfilePage() {
                 </div>
               </div>
               
-              {/* Section 3: Professional Information */}
               {renderSectionHeader("Professional Information", Briefcase)}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-1">
@@ -351,7 +393,6 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              {/* Section 4: Alumni Engagement & Support Interests */}
               {renderSectionHeader("Alumni Engagement & Support Interests", Handshake, "Indicate how you'd like to engage with the alumni community and what support you can offer.")}
               <div className="space-y-4">
                 <Label className="flex items-center gap-1 text-md"><Users className="h-4 w-4 text-muted-foreground"/>Areas Where You Can Support</Label>
@@ -410,7 +451,6 @@ export default function ProfilePage() {
                 <Controller name="otherComments" control={control} render={({ field }) => <Textarea id="otherComments" {...field} />} />
               </div>
 
-              {/* Section 5: Help You’re Looking For (Optional) */}
               {renderSectionHeader("Help You’re Looking For (Optional)", HelpCircle, "Let others know if you are seeking specific support or guidance from the alumni network.")}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-1">
@@ -430,8 +470,7 @@ export default function ProfilePage() {
                 <Controller name="helpNeededDescription" control={control} render={({ field }) => <Textarea id="helpNeededDescription" {...field} />} />
               </div>
 
-              {/* Section 6: Visibility & Consent */}
-              {renderSectionHeader("Visibility & Consent", CheckSquare, "Manage how your profile information is shared within the platform.")}
+              {renderSectionHeader("Visibility & Consent", CheckSquareIcon, "Manage how your profile information is shared within the platform.")}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label>Can we share your profile with other alumni for relevant collaboration?</Label>
@@ -453,7 +492,6 @@ export default function ProfilePage() {
                 </div>
               </div>
               
-              {/* Existing fields */}
               {renderSectionHeader("Additional Information", SettingsIcon)}
               <div className="space-y-1">
                   <Label htmlFor="profilePictureUrl" className="flex items-center gap-1"><User className="h-4 w-4 text-muted-foreground"/>Profile Picture URL</Label>
@@ -489,7 +527,7 @@ export default function ProfilePage() {
                    <Button type="submit" disabled={!isDirty} className="bg-primary hover:bg-primary/90 text-primary-foreground">
                     <Save className="mr-2 h-4 w-4" /> Save Changes
                   </Button>
-                  <Button type="button" variant="outline" onClick={() => { setIsEditing(false); reset(); /* Reset to original values */ }}>
+                  <Button type="button" variant="outline" onClick={() => { setIsEditing(false); reset(); }}>
                     Cancel
                   </Button>
                 </div>
@@ -498,6 +536,54 @@ export default function ProfilePage() {
           </Card>
         </fieldset>
       </form>
+
+      {/* Dynamic Skill Suggestions Card */}
+      <Card className="shadow-lg">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Sparkles className="h-6 w-6 text-primary" /> AI Skill Suggestions
+          </CardTitle>
+          <CardDescription>Get personalized skill suggestions based on your profile and career interests.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isSkillsLoading && (
+            <div className="text-center py-4">
+              <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+              <p className="mt-2 text-muted-foreground">Finding skill suggestions...</p>
+            </div>
+          )}
+          {!isSkillsLoading && suggestedSkills && suggestedSkills.length === 0 && (
+            <p className="text-muted-foreground text-center py-4">No specific skill suggestions found at this time. Ensure your bio and career interests are filled out.</p>
+          )}
+          {!isSkillsLoading && suggestedSkills && suggestedSkills.length > 0 && (
+            <div className="space-y-3">
+              {suggestedSkills.map(skillRec => (
+                <Card key={skillRec.skill} className="bg-secondary/50 p-3">
+                  <div className="flex justify-between items-start gap-2">
+                    <div>
+                      <h4 className="font-semibold text-foreground">{skillRec.skill}</h4>
+                      <p className="text-xs text-muted-foreground">Relevance: <span className="text-primary font-bold">{skillRec.relevanceScore}%</span></p>
+                    </div>
+                    {isEditing && (
+                       <Button size="sm" variant="outline" onClick={() => handleAddSuggestedSkill(skillRec.skill)}>
+                        <PlusCircleIcon className="mr-1 h-4 w-4" /> Add Skill
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-1 italic">Reasoning: {skillRec.reasoning}</p>
+                </Card>
+              ))}
+            </div>
+          )}
+        </CardContent>
+        <CardFooter>
+          <Button onClick={handleGetSkillSuggestions} disabled={isSkillsLoading} className="w-full md:w-auto">
+            {isSkillsLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ThumbsUp className="mr-2 h-4 w-4" />}
+            Get AI Skill Suggestions
+          </Button>
+        </CardFooter>
+      </Card>
+
     </TooltipProvider>
     </div>
   );

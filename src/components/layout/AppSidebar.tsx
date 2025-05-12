@@ -1,10 +1,11 @@
+
 "use client";
 
 import { Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarSeparator, SidebarGroup, SidebarGroupLabel } from "@/components/ui/sidebar";
-import { Aperture, Award, BarChart2, BookOpen, Briefcase, Building2, CalendarDays, FileText, GalleryVerticalEnd, GitFork, Gift, Handshake, History, Home, Layers3, ListChecks, MessageSquare, Settings, ShieldAlert, ShieldQuestion, User, Users, Wallet, Zap, UserCog, BotMessageSquare, Target, Users2, BookText, Activity, Edit, FileType, Brain } from "lucide-react"; // Added Brain
+import { Aperture, Award, BarChart2, BookOpen, Briefcase, Building2, CalendarDays, FileText, GalleryVerticalEnd, GitFork, Gift, Handshake, History, Home, Layers3, ListChecks, MessageSquare, Settings, ShieldAlert, ShieldQuestion, User, Users, Wallet, Zap, UserCog, BotMessageSquare, Target, Users2, BookText, Activity, Edit, FileType, Brain } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { sampleUserProfile } from "@/lib/sample-data"; // Import user profile to get role and tenant
+import { sampleUserProfile } from "@/lib/sample-data"; 
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: Home },
@@ -25,7 +26,7 @@ const navItems = [
     icon: Handshake, 
     subItems: [
       { href: "/alumni-connect", label: "Search Alumni", icon: Users },
-      { href: "/alumni-connect/recommendations", label: "Mentorship Recommendations", icon: Brain }, // New Item
+      { href: "/alumni-connect/recommendations", label: "Mentorship Matching", icon: Brain }, 
     ]
   },
   { href: "/job-board", label: "Job Board", icon: Aperture },
