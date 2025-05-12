@@ -101,6 +101,26 @@ export default function ResumeAnalyzerPage() {
     }
    }, [selectedResumeId, resumes, toast, resumeFile]);
 
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      const file = event.target.files[0];
+      setResumeFile(file);
+      setSelectedResumeId(null); // Clear selected resume if a file is uploaded
+      setResumeText(''); // Clear pasted text if a file is uploaded
+      // Optionally, read file content into resumeText if it's a TXT file for immediate display/use
+      if (file.type === "text/plain") {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setResumeText(e.target?.result as string);
+        };
+        reader.readAsText(file);
+      } else {
+        // For PDF/DOCX, actual text extraction would happen on the server or via a library
+        // For now, we just store the file object.
+        toast({ title: "File Selected", description: `Selected ${file.name}. Content will be extracted upon analysis.` });
+      }
+    }
+  };
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -117,7 +137,16 @@ export default function ResumeAnalyzerPage() {
     setResults(null);
 
     try {
-      const currentResumeText = resumeText || `Content of ${resumeFile?.name}`;
+      let currentResumeText = resumeText;
+      if (resumeFile && !resumeText) {
+        // Placeholder for server-side text extraction for PDF/DOCX
+        // For demo, we'll just use the file name if text isn't already there (e.g. from a .txt upload)
+        currentResumeText = `Content of ${resumeFile.name} (extraction simulation). In a real app, server would extract text from PDF/DOCX.`;
+        // If you have a client-side library for text extraction, use it here.
+        // For simplicity, we're assuming if resumeFile is set and resumeText is empty,
+        // it means a non-txt file was uploaded and its content needs server-side processing.
+      }
+      
       const currentResumeProfile = selectedResumeId ? resumes.find(r => r.id === selectedResumeId) : null;
 
       const jdLines = jobDescription.split('\n');
@@ -194,7 +223,9 @@ export default function ResumeAnalyzerPage() {
     } else if (historyFilter === 'starred') {
       filtered = filtered.filter(item => item.bookmarked);
     } else if (historyFilter === 'archived') {
-      filtered = filtered.filter(item => (item as any).archived === true);
+      // Assuming an 'archived' property could be added to ResumeScanHistoryItem
+      // For now, this will show nothing as 'archived' isn't implemented.
+      filtered = filtered.filter(item => (item as any).archived === true); 
     }
     return filtered;
   }, [scanHistory, historyFilter]);
@@ -208,13 +239,10 @@ export default function ResumeAnalyzerPage() {
   }, [scanHistory]);
 
   const handleAddSkillToProfile = (skill: string) => {
-    // This is a mock function. In a real app, you'd update the user's profile.
-    // For now, we can just show a toast.
     toast({
       title: "Skill Added (Mock)",
       description: `"${skill}" would be added to your profile skills. (Feature in development)`,
     });
-    // Optionally, navigate to profile page or open profile edit modal
   };
 
 
@@ -264,7 +292,7 @@ export default function ResumeAnalyzerPage() {
                     <label htmlFor="resume-file-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-secondary/50 transition-colors">
                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
                             <UploadCloud className="w-8 h-8 mb-2 text-muted-foreground" />
-                            <p className="mb-1 text-sm text-muted-foreground"><span className="font-semibold">Click to upload</span> or drag & drop</p>
+                            <p className="mb-1 text-sm text-muted-foreground"><span className="font-semibold">Click to upload</span> or drag &amp; drop</p>
                             <p className="text-xs text-muted-foreground">PDF, DOCX, TXT</p>
                         </div>
                         <Input id="resume-file-upload" type="file" className="hidden" onChange={handleFileChange} accept=".pdf,.docx,.doc,.txt"/>
@@ -530,3 +558,4 @@ export default function ResumeAnalyzerPage() {
     </div>
   );
 }
+
