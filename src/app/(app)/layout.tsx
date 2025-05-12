@@ -1,7 +1,8 @@
+
 'use client'; 
 
 import type React from 'react';
-import { SidebarProvider } from '@/components/ui/sidebar';
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/layout/AppSidebar';
 import { AppHeader } from '@/components/layout/AppHeader';
 import FloatingMessenger from '@/components/features/FloatingMessenger';
@@ -39,3 +40,4 @@ export default function AppLayout({
     </SidebarProvider>
   );
 }
+
