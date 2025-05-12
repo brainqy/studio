@@ -1,6 +1,7 @@
 
 
 
+
 import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem, Appointment, Wallet, ResumeProfile, Tenant, Badge, BlogPost, ReferralHistoryItem, GamificationRule, UserStatus, SurveyResponse, Affiliate, AffiliateClick, AffiliateSignup } from '@/types';
 import { AreasOfSupport, AppointmentStatuses } from '@/types'; // Import AppointmentStatuses
 
@@ -463,9 +464,9 @@ export const sampleSurveyResponses: SurveyResponse[] = [
 
 // Sample Affiliate Data
 export const sampleUserAffiliateProfile: Affiliate = {
-  id: 'currentUser',
+  id: 'currentUser', // Should match sampleUserProfile.id if current user is an affiliate
   userId: 'currentUser',
-  affiliateCode: 'AFFILIATE123',
+  affiliateCode: 'AFFILIATE123', // Ensure sampleUserProfile also has this if it needs to display it.
   commissionRate: 0.15, // 15%
   totalEarned: 125.50,
   createdAt: new Date(Date.now() - 86400000 * 30).toISOString(), // 30 days ago
@@ -475,9 +476,11 @@ export const sampleAffiliateClicks: AffiliateClick[] = [
   { id: 'click1', affiliateId: 'currentUser', timestamp: new Date(Date.now() - 86400000 * 2).toISOString(), convertedToSignup: true },
   { id: 'click2', affiliateId: 'currentUser', timestamp: new Date(Date.now() - 86400000 * 1).toISOString(), convertedToSignup: false },
   { id: 'click3', affiliateId: 'currentUser', timestamp: new Date(Date.now() - 86400000 * 3).toISOString(), convertedToSignup: true },
+  { id: 'click4', affiliateId: 'currentUser', timestamp: new Date(Date.now() - 86400000 * 0.5).toISOString(), convertedToSignup: false }, // Recent click
 ];
 
 export const sampleAffiliateSignups: AffiliateSignup[] = [
   { id: 'signup1', affiliateId: 'currentUser', newUserId: 'newUser1', signupDate: new Date(Date.now() - 86400000 * 2).toISOString(), commissionEarned: 7.50 },
   { id: 'signup2', affiliateId: 'currentUser', newUserId: 'newUser2', signupDate: new Date(Date.now() - 86400000 * 3).toISOString(), commissionEarned: 7.50 },
+  { id: 'signup3', affiliateId: 'currentUser', newUserId: 'newUser3', signupDate: new Date(Date.now() - 86400000 * 1).toISOString(), commissionEarned: 10.00 }, // More recent signup
 ];
