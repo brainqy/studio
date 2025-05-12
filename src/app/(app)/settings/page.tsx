@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { Settings, Palette, UploadCloud, Bell, Lock, WalletCards, Sun, Moon, Award, Gift, PaintBrush } from "lucide-react";
+import { Settings, Palette, UploadCloud, Bell, Lock, WalletCards, Sun, Moon, Award, Gift, Paintbrush } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { sampleUserProfile } from "@/lib/sample-data"; // For checking admin role
@@ -94,7 +94,7 @@ export default function SettingsPage() {
 
             <div className="space-y-3 p-3 rounded-md border hover:bg-secondary/30">
                 <Label className="text-sm font-medium flex items-center gap-2">
-                    <PaintBrush className="h-5 w-5"/> Tenant Theme Colors (Admins Only - Mocked)
+                    <Paintbrush className="h-5 w-5"/> Tenant Theme Colors (Admins Only - Mocked)
                 </Label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1">
