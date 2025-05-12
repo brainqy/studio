@@ -1,7 +1,6 @@
-
-
 "use client";
 
+import type React from 'react';
 import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -10,27 +9,37 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BotMessageSquare, Eye, PlusCircle, Edit3, AlertTriangle, UserCheck, ShieldAlert, ListFilter, BarChart3, CheckSquare, Users, Info, FileText } from "lucide-react";
+import { BotMessageSquare, Eye, PlusCircle, Edit3, AlertTriangle, UserCheck, ShieldAlert, ListFilter, BarChart3, CheckSquare, Users, Info, FileText, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import type { SurveyResponse, SurveyStep } from "@/types";
+import type { SurveyResponse, SurveyStep, SurveyOption as SurveyOptionType } from "@/types";
 import { sampleSurveyResponses, sampleUserProfile, profileCompletionSurveyDefinition } from "@/lib/sample-data";
 import { format } from "date-fns";
 import Link from "next/link";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface SurveyDefinitionListItem {
   id: string;
   name: string;
   description?: string;
-  steps?: SurveyStep[]; // For storing created survey steps
+  steps?: SurveyStep[];
 }
 
-// Mock survey definitions for selection
 const initialSurveyDefinitions: SurveyDefinitionListItem[] = [
-    { id: 'initialFeedbackSurvey', name: 'Initial User Feedback', description: 'Gather first impressions from users.', steps: [] /* Loaded by FloatingMessenger from its own const */ },
+    { id: 'initialFeedbackSurvey', name: 'Initial User Feedback', description: 'Gather first impressions from users.', steps: [] /* Loaded by FloatingMessenger */ },
     { id: 'profileCompletionSurvey', name: 'Profile Completion Survey', description: 'Guide users to complete their profile.', steps: profileCompletionSurveyDefinition },
 ];
+
+// For creating new steps in the dialog
+interface NewSurveyOption extends SurveyOptionType {
+  tempId: string; // For UI key
+}
+interface NewSurveyStep extends Omit<SurveyStep, 'options' | 'dropdownOptions'> {
+  options?: NewSurveyOption[];
+  dropdownOptions?: { tempId: string; label: string; value: string }[];
+}
+
 
 export default function MessengerManagementPage() {
   const [surveyDefinitionsState, setSurveyDefinitionsState] = useState<SurveyDefinitionListItem[]>(initialSurveyDefinitions);
@@ -40,14 +49,22 @@ export default function MessengerManagementPage() {
   const [isCreateSurveyOpen, setIsCreateSurveyOpen] = useState(false);
   const [activeSurveyId, setActiveSurveyId] = useState<string>(initialSurveyDefinitions[0].id);
   
-  // State for new survey dialog
+  // State for new survey dialog stepper
+  const [surveyCreationDialogStep, setSurveyCreationDialogStep] = useState(0); // 0: Details, 1: Add Steps
   const [newSurveyName, setNewSurveyName] = useState('');
   const [newSurveyDescription, setNewSurveyDescription] = useState('');
-  const [newSurveySteps, setNewSurveySteps] = useState<SurveyStep[]>([]); // For building steps in dialog
+  const [newSurveySteps, setNewSurveySteps] = useState<SurveyStep[]>([]);
+  
+  // State for configuring a single step within the dialog
+  const [currentStepTypeToAdd, setCurrentStepTypeToAdd] = useState<SurveyStep['type'] | null>(null);
+  const [currentStepConfig, setCurrentStepConfig] = useState<Partial<NewSurveyStep>>({});
+  const [currentStepOptions, setCurrentStepOptions] = useState<NewSurveyOption[]>([]);
+  const [currentStepDropdownOptions, setCurrentStepDropdownOptions] = useState<{tempId: string, label: string, value: string}[]>([]);
+
 
   const { toast } = useToast();
-
   const currentUser = sampleUserProfile;
+
   if (currentUser.role !== 'admin') {
     return (
         <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)]">
@@ -61,17 +78,26 @@ export default function MessengerManagementPage() {
     );
   }
   
-  // Dispatch event when activeSurveyId changes
   useEffect(() => {
     if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('changeActiveSurvey', { detail: activeSurveyId }));
     }
   }, [activeSurveyId]);
 
-
   const handleViewDetails = (response: SurveyResponse) => {
     setSelectedResponse(response);
     setIsResponseDetailOpen(true);
+  };
+  
+  const resetSurveyCreationForm = () => {
+    setNewSurveyName('');
+    setNewSurveyDescription('');
+    setNewSurveySteps([]);
+    setSurveyCreationDialogStep(0);
+    setCurrentStepTypeToAdd(null);
+    setCurrentStepConfig({});
+    setCurrentStepOptions([]);
+    setCurrentStepDropdownOptions([]);
   };
 
   const handleCreateNewSurvey = () => {
@@ -79,19 +105,21 @@ export default function MessengerManagementPage() {
         toast({ title: "Error", description: "Survey name cannot be empty.", variant: "destructive" });
         return;
     }
+    if (newSurveySteps.length === 0) {
+        toast({ title: "Error", description: "Survey must have at least one step.", variant: "destructive" });
+        return;
+    }
     const newSurvey: SurveyDefinitionListItem = { 
       id: `survey-${Date.now()}`, 
       name: newSurveyName, 
       description: newSurveyDescription, 
-      steps: newSurveySteps // For now, steps are built in a conceptual way in dialog
+      steps: newSurveySteps 
     };
     
     setSurveyDefinitionsState(prev => [...prev, newSurvey]);
-    toast({ title: "Survey Created (Conceptual)", description: `Survey "${newSurveyName}" has been added to the list. Full step definition and live deployment requires further development.` });
+    toast({ title: "Survey Created", description: `Survey "${newSurveyName}" has been added to the list.` });
     
-    setNewSurveyName('');
-    setNewSurveyDescription('');
-    setNewSurveySteps([]);
+    resetSurveyCreationForm();
     setIsCreateSurveyOpen(false);
   };
   
@@ -107,21 +135,88 @@ export default function MessengerManagementPage() {
   const usersFlaggedForIncompleteProfile = incompleteProfileUsers.length;
   const positiveFeedbackCount = surveyResponses.filter(sr => sr.surveyId === 'initialFeedbackSurvey' && sr.data.experience === 'amazing').length;
 
+  const handleAddConfiguredStep = () => {
+    if (!currentStepTypeToAdd || !currentStepConfig.text?.trim()) {
+        toast({ title: "Error", description: "Step text is required.", variant: "destructive" });
+        return;
+    }
 
-  // Conceptual: Functions to manage steps within the "Create New Survey" dialog
-  const addStepToNewSurvey = (type: SurveyStep['type']) => {
-    const newStep: SurveyStep = {
-      id: `step-${newSurveySteps.length + 1}`,
-      type: type,
-      text: type === 'botMessage' ? 'New Bot Message' : 'New Question',
-      variableName: `var${newSurveySteps.length + 1}`,
-      nextStepId: `step-${newSurveySteps.length + 2}`, // conceptual next
+    const stepToAdd: SurveyStep = {
+        id: currentStepConfig.id || `step-${newSurveySteps.length + 1}`,
+        type: currentStepTypeToAdd,
+        text: currentStepConfig.text,
+        placeholder: currentStepConfig.placeholder,
+        inputType: currentStepConfig.inputType,
+        variableName: currentStepConfig.variableName,
+        nextStepId: currentStepConfig.nextStepId,
+        isLastStep: currentStepConfig.isLastStep || false,
     };
-    if (type === 'userOptions') newStep.options = [{ text: 'Option 1', value: 'opt1' }];
-    if (type === 'userDropdown') newStep.dropdownOptions = [{ label: 'Option 1', value: 'opt1' }];
-    setNewSurveySteps(prev => [...prev, newStep]);
+
+    if (currentStepTypeToAdd === 'userOptions' && currentStepOptions.length > 0) {
+      if (currentStepOptions.some(opt => !opt.text?.trim() || !opt.value?.trim())) {
+        toast({title: "Error", description: "All options must have text and value.", variant: "destructive"});
+        return;
+      }
+        stepToAdd.options = currentStepOptions.map(({tempId, ...rest}) => rest);
+    } else if (currentStepTypeToAdd === 'userOptions' && currentStepOptions.length === 0) {
+        toast({ title: "Error", description: "User Options step must have at least one option.", variant: "destructive"});
+        return;
+    }
+
+    if (currentStepTypeToAdd === 'userDropdown' && currentStepDropdownOptions.length > 0) {
+       if (currentStepDropdownOptions.some(opt => !opt.label?.trim() || !opt.value?.trim())) {
+        toast({title: "Error", description: "All dropdown options must have a label and value.", variant: "destructive"});
+        return;
+      }
+      stepToAdd.dropdownOptions = currentStepDropdownOptions.map(({tempId, ...rest}) => rest);
+    } else if (currentStepTypeToAdd === 'userDropdown' && currentStepDropdownOptions.length === 0) {
+       toast({ title: "Error", description: "User Dropdown step must have at least one option.", variant: "destructive"});
+       return;
+    }
+
+    setNewSurveySteps(prev => [...prev, stepToAdd]);
+    setCurrentStepTypeToAdd(null);
+    setCurrentStepConfig({});
+    setCurrentStepOptions([]);
+    setCurrentStepDropdownOptions([]);
+    toast({title: "Step Added", description: `Step "${stepToAdd.text.substring(0,20)}..." added to survey.`});
   };
-  // Further functions to edit/remove steps in dialog would be needed for full UI
+
+  const addOptionField = (type: 'options' | 'dropdownOptions') => {
+    const newId = `opt-${Date.now()}`;
+    if (type === 'options') {
+      setCurrentStepOptions(prev => [...prev, { tempId: newId, text: '', value: '', nextStepId: '' }]);
+    } else {
+      setCurrentStepDropdownOptions(prev => [...prev, { tempId: newId, label: '', value: ''}]);
+    }
+  };
+  
+  const removeOptionField = (id: string, type: 'options' | 'dropdownOptions') => {
+    if (type === 'options') {
+      setCurrentStepOptions(prev => prev.filter(opt => opt.tempId !== id));
+    } else {
+      setCurrentStepDropdownOptions(prev => prev.filter(opt => opt.tempId !== id));
+    }
+  };
+
+  const handleOptionChange = (id: string, field: keyof NewSurveyOption, value: string, type: 'options') => {
+    setCurrentStepOptions(prev => prev.map(opt => opt.tempId === id ? { ...opt, [field]: value } : opt));
+  };
+
+  const handleDropdownOptionChange = (id: string, field: 'label' | 'value', value: string, type: 'dropdownOptions') => {
+    setCurrentStepDropdownOptions(prev => prev.map(opt => opt.tempId === id ? { ...opt, [field]: value } : opt));
+  };
+
+  const handleNextSurveyStep = () => {
+    if (surveyCreationDialogStep === 0) { // Validating Survey Details
+        if (!newSurveyName.trim()) {
+            toast({title: "Error", description: "Survey name is required to proceed.", variant: "destructive"});
+            return;
+        }
+    }
+    setSurveyCreationDialogStep(prev => prev + 1);
+  };
+
 
   return (
     <div className="space-y-8">
@@ -131,6 +226,7 @@ export default function MessengerManagementPage() {
       <CardDescription>Oversee automated messenger interactions, manage surveys, and analyze user feedback.</CardDescription>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Stat Cards */}
         <Card className="shadow-md">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Responses</CardTitle>
@@ -173,8 +269,8 @@ export default function MessengerManagementPage() {
         </Card>
       </div>
 
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Survey Config Card */}
         <Card className="shadow-lg lg:col-span-1">
           <CardHeader>
             <CardTitle>Survey Configuration</CardTitle>
@@ -195,82 +291,138 @@ export default function MessengerManagementPage() {
               </Select>
               <p className="text-xs text-muted-foreground mt-1">The selected survey will be presented by the floating messenger.</p>
             </div>
-            <Dialog open={isCreateSurveyOpen} onOpenChange={setIsCreateSurveyOpen}>
+            <Dialog open={isCreateSurveyOpen} onOpenChange={(isOpen) => { if (!isOpen) resetSurveyCreationForm(); setIsCreateSurveyOpen(isOpen); }}>
               <DialogTrigger asChild>
                 <Button variant="outline" className="w-full">
                   <PlusCircle className="mr-2 h-4 w-4" /> Create New Survey
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-2xl"> {/* Increased width */}
+              <DialogContent className="sm:max-w-2xl">
                 <DialogHeader>
-                  <DialogTitle className="text-xl">Create New Survey</DialogTitle>
+                  <DialogTitle className="text-xl">Create New Survey (Step {surveyCreationDialogStep + 1} of 2)</DialogTitle>
                   <CardDescription>Define a new survey with its steps.</CardDescription>
                 </DialogHeader>
                 <ScrollArea className="max-h-[70vh] p-1">
-                <div className="space-y-4 py-4 pr-4">
-                  <div>
-                    <Label htmlFor="new-survey-name">Survey Name</Label>
-                    <Input id="new-survey-name" value={newSurveyName} onChange={(e) => setNewSurveyName(e.target.value)} />
-                  </div>
-                  <div>
-                    <Label htmlFor="new-survey-desc">Survey Description (Optional)</Label>
-                    <Textarea id="new-survey-desc" value={newSurveyDescription} onChange={(e) => setNewSurveyDescription(e.target.value)} />
-                  </div>
-                  
-                  <div className="border-t pt-4 mt-4">
-                    <h3 className="text-lg font-medium mb-2">Survey Steps (Conceptual)</h3>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      This section demonstrates how survey steps would be defined. For a full implementation, you'd add UI controls to dynamically add, edit, and reorder steps, choosing types like 'Bot Message', 'User Options', 'User Input', or 'Dropdown', and configuring their respective properties (text, options, variable names, next steps, etc.). The 'Profile Completion Survey' provides a comprehensive example of such a structure.
-                    </p>
-                    <Card className="bg-secondary/50 p-4">
-                      <CardTitle className="text-md mb-2 flex items-center gap-2"><FileText className="h-4 w-4"/>Example Step Structure:</CardTitle>
-                      <pre className="text-xs bg-muted p-2 rounded-sm overflow-x-auto">
-                        {`
-{ 
-  id: 'unique_step_id', 
-  type: 'botMessage' | 'userOptions' | 'userInput' | 'userDropdown',
-  text: 'Your question or bot message here', 
-  // For userOptions:
-  options: [{ text: 'Option Text', value: 'option_value', nextStepId: 'next_id' }],
-  // For userDropdown:
-  dropdownOptions: [{ label: 'Option Label', value: 'option_value' }],
-  // For userInput:
-  placeholder: 'Placeholder text',
-  inputType: 'text' | 'textarea' | 'date' | ...,
-  variableName: 'data_key_for_answer',
-  nextStepId: 'default_next_step_id_after_input_or_dropdown',
-  isLastStep: false 
-}`}
-                      </pre>
-                    </Card>
-                    <div className="mt-4">
-                        <Button type="button" variant="outline" onClick={() => addStepToNewSurvey('botMessage')} className="mr-2"><PlusCircle className="mr-1 h-4 w-4"/> Add Bot Message</Button>
-                        <Button type="button" variant="outline" onClick={() => addStepToNewSurvey('userInput')}><PlusCircle className="mr-1 h-4 w-4"/> Add User Input</Button>
-                        {/* Add more buttons for other step types */}
-                    </div>
-                    {newSurveySteps.length > 0 && (
-                        <div className="mt-4 space-y-2">
-                            <h4 className="font-medium">Current Steps:</h4>
-                            {newSurveySteps.map((step, index) => (
-                                <div key={index} className="p-2 border rounded-md text-xs">
-                                    <p><strong>ID:</strong> {step.id}, <strong>Type:</strong> {step.type}</p>
-                                    <p><strong>Text:</strong> {step.text?.substring(0,50)}...</p>
-                                </div>
-                            ))}
+                  <div className="space-y-4 py-4 pr-4">
+                    {surveyCreationDialogStep === 0 && ( // Step 1: Survey Details
+                      <>
+                        <div>
+                          <Label htmlFor="new-survey-name">Survey Name <span className="text-destructive">*</span></Label>
+                          <Input id="new-survey-name" value={newSurveyName} onChange={(e) => setNewSurveyName(e.target.value)} />
                         </div>
+                        <div>
+                          <Label htmlFor="new-survey-desc">Survey Description (Optional)</Label>
+                          <Textarea id="new-survey-desc" value={newSurveyDescription} onChange={(e) => setNewSurveyDescription(e.target.value)} />
+                        </div>
+                      </>
+                    )}
+                    {surveyCreationDialogStep === 1 && ( // Step 2: Add Steps
+                      <>
+                        <div className="border-t pt-4 mt-4">
+                          <h3 className="text-lg font-medium mb-2">Define Survey Steps</h3>
+                          <div className="flex flex-wrap gap-2 mb-4">
+                            {(['botMessage', 'userInput', 'userOptions', 'userDropdown'] as SurveyStep['type'][]).map(type => (
+                              <Button key={type} type="button" variant="outline" size="sm" onClick={() => { setCurrentStepTypeToAdd(type); setCurrentStepConfig({id: `step-${newSurveySteps.length+1}`})}}>
+                                Add {type.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                              </Button>
+                            ))}
+                          </div>
+
+                          {currentStepTypeToAdd && (
+                            <Card className="p-4 space-y-3 mb-4 bg-secondary/50">
+                              <h4 className="font-semibold">Configure: {currentStepTypeToAdd.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</h4>
+                              <Input placeholder="Step ID (auto)" value={currentStepConfig.id || ''} onChange={e => setCurrentStepConfig(p => ({...p, id: e.target.value}))} disabled/>
+                              <Textarea placeholder="Step Text / Question *" value={currentStepConfig.text || ''} onChange={e => setCurrentStepConfig(p => ({...p, text: e.target.value}))} />
+                              {currentStepTypeToAdd === 'userInput' && (
+                                <>
+                                  <Input placeholder="Placeholder for input" value={currentStepConfig.placeholder || ''} onChange={e => setCurrentStepConfig(p => ({...p, placeholder: e.target.value}))} />
+                                  <Select value={currentStepConfig.inputType || 'text'} onValueChange={val => setCurrentStepConfig(p => ({...p, inputType: val as any}))}>
+                                    <SelectTrigger><SelectValue placeholder="Input Type" /></SelectTrigger>
+                                    <SelectContent>
+                                        {['text', 'textarea', 'email', 'tel', 'url', 'date'].map(it => <SelectItem key={it} value={it}>{it}</SelectItem>)}
+                                    </SelectContent>
+                                  </Select>
+                                </>
+                              )}
+                              {(currentStepTypeToAdd === 'userInput' || currentStepTypeToAdd === 'userOptions' || currentStepTypeToAdd === 'userDropdown') && (
+                                <Input placeholder="Variable Name (for storing answer)" value={currentStepConfig.variableName || ''} onChange={e => setCurrentStepConfig(p => ({...p, variableName: e.target.value}))} />
+                              )}
+                              {currentStepTypeToAdd === 'userOptions' && (
+                                  <div className="space-y-2">
+                                      <Label>Options:</Label>
+                                      {currentStepOptions.map((opt, idx) => (
+                                          <div key={opt.tempId} className="flex items-center gap-2 p-2 border rounded">
+                                              <Input placeholder={`Option ${idx+1} Text`} value={opt.text} onChange={e => handleOptionChange(opt.tempId, 'text', e.target.value, 'options')} className="flex-1"/>
+                                              <Input placeholder="Value" value={opt.value} onChange={e => handleOptionChange(opt.tempId, 'value', e.target.value, 'options')} className="w-24"/>
+                                              <Input placeholder="Next Step ID" value={opt.nextStepId || ''} onChange={e => handleOptionChange(opt.tempId, 'nextStepId', e.target.value, 'options')} className="w-28"/>
+                                              <Button type="button" variant="ghost" size="icon" onClick={() => removeOptionField(opt.tempId, 'options')}><Trash2 className="h-4 w-4 text-destructive"/></Button>
+                                          </div>
+                                      ))}
+                                      <Button type="button" variant="outline" size="sm" onClick={() => addOptionField('options')}>Add Option</Button>
+                                  </div>
+                              )}
+                              {currentStepTypeToAdd === 'userDropdown' && (
+                                 <div className="space-y-2">
+                                      <Label>Dropdown Options:</Label>
+                                      {currentStepDropdownOptions.map((opt, idx) => (
+                                          <div key={opt.tempId} className="flex items-center gap-2 p-2 border rounded">
+                                              <Input placeholder={`Option ${idx+1} Label`} value={opt.label} onChange={e => handleDropdownOptionChange(opt.tempId, 'label', e.target.value, 'dropdownOptions')} className="flex-1"/>
+                                              <Input placeholder="Value" value={opt.value} onChange={e => handleDropdownOptionChange(opt.tempId, 'value', e.target.value, 'dropdownOptions')} className="w-24"/>
+                                               <Button type="button" variant="ghost" size="icon" onClick={() => removeOptionField(opt.tempId, 'dropdownOptions')}><Trash2 className="h-4 w-4 text-destructive"/></Button>
+                                          </div>
+                                      ))}
+                                      <Button type="button" variant="outline" size="sm" onClick={() => addOptionField('dropdownOptions')}>Add Dropdown Option</Button>
+                                  </div>
+                              )}
+                              <Input placeholder="Next Step ID (if no options/default)" value={currentStepConfig.nextStepId || ''} onChange={e => setCurrentStepConfig(p => ({...p, nextStepId: e.target.value}))} />
+                              <div className="flex items-center space-x-2">
+                                <Checkbox id="isLastStep" checked={currentStepConfig.isLastStep} onCheckedChange={checked => setCurrentStepConfig(p => ({...p, isLastStep: Boolean(checked)}))} />
+                                <Label htmlFor="isLastStep">Is this the last step?</Label>
+                              </div>
+                              <Button type="button" onClick={handleAddConfiguredStep} className="w-full">Add This Step to Survey</Button>
+                            </Card>
+                          )}
+
+                          {newSurveySteps.length > 0 && (
+                            <div className="mt-4 space-y-2">
+                                <h4 className="font-medium">Current Survey Steps:</h4>
+                                {newSurveySteps.map((step, index) => (
+                                    <Card key={index} className="p-3 text-xs bg-card">
+                                        <p><strong>ID:</strong> {step.id}, <strong>Type:</strong> {step.type}</p>
+                                        <p className="truncate"><strong>Text:</strong> {step.text?.substring(0,70)}...</p>
+                                        {step.options && <p>Options: {step.options.length}</p>}
+                                        {step.dropdownOptions && <p>Dropdown Options: {step.dropdownOptions.length}</p>}
+                                        <p>Next: {step.nextStepId || (step.isLastStep ? 'END' : 'N/A')}</p>
+                                    </Card>
+                                ))}
+                            </div>
+                          )}
+                        </div>
+                      </>
                     )}
                   </div>
-                </div>
                 </ScrollArea>
-                <DialogFooter>
+                <DialogFooter className="mt-4">
+                  {surveyCreationDialogStep > 0 && (
+                    <Button type="button" variant="outline" onClick={() => setSurveyCreationDialogStep(prev => prev - 1)}>
+                      <ChevronLeft className="mr-1 h-4 w-4" /> Previous
+                    </Button>
+                  )}
+                  {surveyCreationDialogStep < 1 ? (
+                    <Button type="button" onClick={handleNextSurveyStep}>
+                      Next <ChevronRight className="ml-1 h-4 w-4" />
+                    </Button>
+                  ) : (
+                    <Button onClick={handleCreateNewSurvey}>Create Survey</Button>
+                  )}
                   <DialogClose asChild><Button variant="ghost">Cancel</Button></DialogClose>
-                  <Button onClick={handleCreateNewSurvey}>Create Survey Entry</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
           </CardContent>
         </Card>
         
+        {/* Profile Completion Insights Card */}
         <Card className="shadow-lg lg:col-span-2">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2"><ListFilter className="h-5 w-5"/>Profile Completion Insights (Conceptual)</CardTitle>
@@ -299,6 +451,7 @@ export default function MessengerManagementPage() {
         </Card>
       </div>
 
+      {/* Survey Responses Table Card */}
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle>Survey Responses</CardTitle>
@@ -343,6 +496,7 @@ export default function MessengerManagementPage() {
         </CardContent>
       </Card>
 
+      {/* Response Detail Dialog */}
       <Dialog open={isResponseDetailOpen} onOpenChange={setIsResponseDetailOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
