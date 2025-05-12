@@ -53,6 +53,7 @@ export default function FloatingMessenger() {
   const [surveyData, setSurveyData] = useState<Record<string, string>>({});
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messageIdCounter = useRef(0); // Counter for unique message IDs
 
   const currentSurveyStep = surveyDefinition.find(step => step.id === currentStepId);
 
@@ -67,11 +68,12 @@ export default function FloatingMessenger() {
       // Initial message load if survey starts with a bot message
       processStep(currentSurveyStep);
     }
-  }, [isOpen, messages.length]);
+  }, [isOpen, messages.length, currentSurveyStep]); // Added currentSurveyStep to dependencies
 
 
   const addMessage = (type: 'bot' | 'user', content: React.ReactNode) => {
-    setMessages(prev => [...prev, { id: String(Date.now()), type, content }]);
+    const newId = `${Date.now()}-${messageIdCounter.current++}`; // Generate unique ID
+    setMessages(prev => [...prev, { id: newId, type, content }]);
   };
   
   const processStep = (step: SurveyStep | undefined) => {
@@ -148,6 +150,7 @@ export default function FloatingMessenger() {
     setMessages([]);
     setSurveyData({});
     setInputValue('');
+    messageIdCounter.current = 0; // Reset counter
     const firstStep = surveyDefinition[0];
     if (firstStep) {
        setCurrentStepId(firstStep.id);
@@ -252,3 +255,6 @@ export default function FloatingMessenger() {
     </div>
   );
 }
+
+
+    
