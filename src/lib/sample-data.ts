@@ -4,6 +4,7 @@
 
 
 
+
 import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem, Appointment, Wallet, ResumeProfile, Tenant, Badge, BlogPost, ReferralHistoryItem, GamificationRule, UserStatus, SurveyResponse, Affiliate, AffiliateClick, AffiliateSignup, AffiliateStatus, SurveyStep } from '@/types';
 import { AreasOfSupport, AppointmentStatuses, Genders, DegreePrograms, Industries, TimeCommitments, EngagementModes, SupportTypesSought } from '@/types'; // Import AppointmentStatuses and other const arrays
 
@@ -76,15 +77,15 @@ export const sampleAlumni: AlumniProfile[] = [
   {
     id: 'alumni4',
     tenantId: SAMPLE_TENANT_ID,
-    name: 'Diana Prince',
+    name: 'Diana Prince (Admin)', // Marking as Admin for clarity in samplePlatformUsers
     profilePictureUrl: 'https://picsum.photos/seed/diana/200/200',
     currentJobTitle: 'Marketing Lead',
     company: 'Amazon',
     shortBio: 'Specializing in digital marketing strategies. Graduated 2016.',
     university: 'Commerce College',
     skills: ['SEO', 'Content Marketing', 'Social Media', 'PPC Advertising'],
-    email: "diana.prince@example.com",
-    role: 'admin', // Example Admin
+    email: "diana.prince.admin@example.com", // Different email for admin
+    role: 'admin', 
     status: 'active',
     lastLogin: new Date(Date.now() - 86400000 * 0.5).toISOString(), // 12 hours ago
     interests: ['Yoga', 'Creative Writing', 'Digital Trends'],
@@ -123,7 +124,7 @@ export const sampleGalleryEvents: GalleryEvent[] = [
 
 export const sampleJobOpenings: JobOpening[] = [
   { id: 'job1', tenantId: SAMPLE_TENANT_ID, title: 'Junior Developer', company: 'Google', postedByAlumniId: 'alumni1', alumniName: 'Alice Wonderland', description: 'Exciting opportunity for recent graduates to join our engineering team.', datePosted: '2024-07-10', location: 'Mountain View, CA', type: 'Full-time' },
-  { id: 'job2', tenantId: SAMPLE_TENANT_ID, title: 'Marketing Intern (Summer)', company: 'Amazon', postedByAlumniId: 'alumni4', alumniName: 'Diana Prince', description: 'Gain hands-on experience in a fast-paced marketing environment.', datePosted: '2024-07-08', location: 'Seattle, WA', type: 'Internship' },
+  { id: 'job2', tenantId: SAMPLE_TENANT_ID, title: 'Marketing Intern (Summer)', company: 'Amazon', postedByAlumniId: 'alumni4', alumniName: 'Diana Prince (Admin)', description: 'Gain hands-on experience in a fast-paced marketing environment.', datePosted: '2024-07-08', location: 'Seattle, WA', type: 'Internship' },
   { id: 'job3', tenantId: SAMPLE_TENANT_ID, title: 'Project Manager - Mentorship Program', company: 'Self-Employed (Mentorship)', postedByAlumniId: 'alumni2', alumniName: 'Bob The Builder', description: 'Looking to mentor aspiring Product Managers. Part-time commitment.', datePosted: '2024-07-05', location: 'Remote', type: 'Mentorship' },
 ];
 
@@ -131,94 +132,98 @@ export const sampleJobOpenings: JobOpening[] = [
 export const sampleUserProfile: UserProfile = {
   id: 'currentUser',
   tenantId: SAMPLE_TENANT_ID,
-  role: 'admin', 
-  name: 'Alex Taylor (Admin)', 
-  email: 'admin@example.com', 
+  role: 'user', 
+  name: 'Alex Taylor (User)', 
+  email: 'user@example.com', 
   status: 'active',
   lastLogin: new Date().toISOString(),
-  dateOfBirth: '1990-05-20',
-  gender: 'Prefer not to say',
-  mobileNumber: '+15559876543',
-  currentAddress: 'Admin HQ, Anytown, CA, USA',
+  dateOfBirth: '1995-08-15',
+  gender: 'Male',
+  mobileNumber: '+15551234567',
+  currentAddress: '123 Main St, Anytown, CA, USA',
 
-  graduationYear: '2012',
-  degreeProgram: 'Master of Business Administration (MBA)',
-  department: 'Business Administration',
+  graduationYear: '2017',
+  degreeProgram: 'Bachelor of Science (B.Sc)',
+  department: 'Computer Science',
 
-  currentJobTitle: 'Platform Administrator',
-  currentOrganization: 'ResumeMatch AI Platform',
+  currentJobTitle: 'Software Developer',
+  currentOrganization: 'Tech Startup Inc.',
   industry: 'IT/Software',
   workLocation: 'Remote',
-  linkedInProfile: 'https://linkedin.com/in/adminprofile',
-  yearsOfExperience: '10+',
+  linkedInProfile: 'https://linkedin.com/in/alexuser',
+  yearsOfExperience: '5',
 
-  skills: ['System Administration', 'User Management', 'Cloud Infrastructure', 'Security'],
-  areasOfSupport: ['Organizing Alumni Events'],
-  timeCommitment: 'Occasionally, when needed',
+  skills: ['JavaScript', 'React', 'Node.js', 'Problem Solving'],
+  areasOfSupport: ['Mentoring Students'],
+  timeCommitment: '1-2 hours',
   preferredEngagementMode: 'Online',
-  otherComments: 'Overseeing platform operations.',
+  otherComments: 'Happy to help with technical questions.',
 
-  lookingForSupportType: undefined, 
-  helpNeededDescription: '',
+  lookingForSupportType: 'Career Mentoring',
+  helpNeededDescription: 'Guidance on advancing to a senior role.',
 
-  shareProfileConsent: false, 
-  featureInSpotlightConsent: false,
+  shareProfileConsent: true, 
+  featureInSpotlightConsent: true,
 
-  bio: 'Experienced platform administrator ensuring the smooth operation of ResumeMatch AI.',
-  profilePictureUrl: 'https://picsum.photos/seed/admintaylor/200/200',
-  resumeText: `Admin User Profile
-  Email: admin@example.com
-  Role: Platform Administrator
+  bio: 'Enthusiastic software developer passionate about creating innovative solutions.',
+  profilePictureUrl: 'https://picsum.photos/seed/alexuser/200/200',
+  resumeText: `Alex Taylor (User)
+  Email: user@example.com
+  Role: Software Developer
+
+  Summary:
+  A highly motivated and results-oriented Software Developer with 5 years of experience in building and maintaining web applications. Proficient in JavaScript, React, Node.js, and cloud technologies. Strong problem-solving skills and a collaborative team player. Eager to contribute to innovative projects and continuously learn new technologies.
   
-  Responsible for managing tenants, users, and overall system health.
+  Experience:
+  Software Developer, Tech Startup Inc. (Jan 2020 - Present)
+  - Developed and maintained front-end components using React and TypeScript.
+  - Built RESTful APIs with Node.js and Express.
+  - Collaborated with cross-functional teams to deliver high-quality software products.
   
-  Key Responsibilities:
-  - Tenant onboarding and configuration
-  - User account management and role assignment
-  - Monitoring system performance and logs
-  - Overseeing feature deployments
-  - Managing platform settings and integrations
+  Junior Developer, Web Solutions Co. (Jun 2017 - Dec 2019)
+  - Assisted in the development of client websites using HTML, CSS, and JavaScript.
+  - Provided technical support and bug fixes for existing applications.
   
-  Skills: System Administration, User Support, Database Management, Cloud Services (AWS/GCP), Security Best Practices.
+  Education:
+  Bachelor of Science in Computer Science, State University (2013 - 2017)
+  
+  Skills:
+  JavaScript, React, Redux, Node.js, Express, TypeScript, HTML, CSS, Git, SQL, MongoDB, AWS.
   `,
-  careerInterests: 'Platform Scalability, DevOps, AI Ethics',
-  xpPoints: 5000,
-  dailyStreak: 29, // Current streak from image
-  longestStreak: 47, // Longest streak from image
-  totalActiveDays: 882, // Total active days from image
-  // Example: 5 active days ending today (Wednesday in the image)
-  // Assuming today is the 5th element in the array if it represents current week (Mon-Sun or Sun-Sat)
-  // Let's make last 5 true, 2 false before that: [F, F, T, T, T, T, T] for 7 days (last element is today)
-  weeklyActivity: [false, false, true, true, true, true, true],
-  referralCode: 'ADMINREF123',
-  earnedBadges: ['admin-master', 'profile-pro', 'early-adopter'],
-  affiliateCode: 'AFFADMIN001', // Added affiliate code
+  careerInterests: 'Full-stack Development, AI Applications, Web Technologies',
+  xpPoints: 1250,
+  dailyStreak: 15, 
+  longestStreak: 25, 
+  totalActiveDays: 300, 
+  weeklyActivity: [true, true, false, true, true, false, true],
+  referralCode: 'USERREF789',
+  earnedBadges: ['profile-pro', 'analyzer-ace', 'networker'],
+  affiliateCode: 'AFFUSER007',
 };
 
 // Sample platform users for user management page
 export const samplePlatformUsers: UserProfile[] = [
-  sampleUserProfile, // Current admin user
+  sampleUserProfile, // Current user (now a 'user')
+  // Find the 'Diana Prince' entry from sampleAlumni and ensure it's the admin
   ...sampleAlumni.map(alumni => ({
-    ...alumni, // Spread alumni fields
-    // Fill in missing UserProfile fields or adapt AlumniProfile fields
+    ...alumni,
     id: alumni.id,
     tenantId: alumni.tenantId,
-    role: alumni.role || 'user',
+    role: alumni.email === "diana.prince.admin@example.com" ? 'admin' : (alumni.role || 'user'), // Ensure Diana is admin
     name: alumni.name,
     email: alumni.email,
     status: alumni.status || (Math.random() > 0.2 ? 'active' : 'inactive'),
     lastLogin: alumni.lastLogin || new Date(Date.now() - 86400000 * Math.floor(Math.random() * 30)).toISOString(),
     profilePictureUrl: alumni.profilePictureUrl,
-    // Add other UserProfile fields as needed, potentially with defaults or derived from alumni data
-    dateOfBirth: '1990-01-01', // Default
-    gender: 'Prefer not to say', // Default
-    graduationYear: '2015', // Default
+    dateOfBirth: '1990-01-01',
+    gender: 'Prefer not to say',
+    graduationYear: '2015',
     currentJobTitle: alumni.currentJobTitle,
     currentOrganization: alumni.company,
     skills: alumni.skills,
     xpPoints: Math.floor(Math.random() * 5000),
     dailyStreak: Math.floor(Math.random() * 30),
-    weeklyActivity: Array(7).fill(false).map(() => Math.random() > 0.5), // Random weekly activity
+    weeklyActivity: Array(7).fill(false).map(() => Math.random() > 0.5),
   }))
 ];
 
@@ -227,7 +232,7 @@ export const sampleAppointments: Appointment[] = [
     { id: 'appt1', tenantId: SAMPLE_TENANT_ID, requesterUserId: 'currentUser', alumniUserId: 'alumni1', title: 'Mentorship Session with Alice W.', dateTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3).toISOString(), withUser: 'Alice Wonderland', status: 'Confirmed', costInCoins: 10, meetingLink: 'https://zoom.us/j/1234567890' },
     { id: 'appt2', tenantId: SAMPLE_TENANT_ID, requesterUserId: 'currentUser', alumniUserId: 'alumni2', title: 'Networking Call with Bob B.', dateTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 5).toISOString(), withUser: 'Bob The Builder', status: 'Pending', costInCoins: 15 },
     { id: 'appt3', tenantId: SAMPLE_TENANT_ID, requesterUserId: 'alumni3', alumniUserId: 'currentUser', title: 'Incoming Request: Career Advice', dateTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString(), withUser: 'Charlie Brown', status: 'Pending', costInCoins: 10 }, // Example of incoming request
-    { id: 'appt4', tenantId: SAMPLE_TENANT_ID, requesterUserId: 'currentUser', alumniUserId: 'alumni4', title: 'Discuss Marketing Strategy', dateTime: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(), withUser: 'Diana Prince', status: 'Completed', costInCoins: 20 }, // Example of completed appointment
+    { id: 'appt4', tenantId: SAMPLE_TENANT_ID, requesterUserId: 'currentUser', alumniUserId: 'alumni4', title: 'Discuss Marketing Strategy', dateTime: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(), withUser: 'Diana Prince (Admin)', status: 'Completed', costInCoins: 20 }, // Example of completed appointment
 ];
 
 export const sampleWalletBalance: Wallet = {
@@ -468,19 +473,8 @@ export const sampleSurveyResponses: SurveyResponse[] = [
 // Sample Affiliate Data
 export const sampleAffiliates: Affiliate[] = [
   {
-    id: 'currentUser', // Assuming sampleUserProfile is an affiliate
-    userId: 'currentUser',
-    name: sampleUserProfile.name,
-    email: sampleUserProfile.email,
-    status: 'approved' as AffiliateStatus,
-    affiliateCode: sampleUserProfile.affiliateCode || 'AFFADMIN001',
-    commissionRate: 0.15,
-    totalEarned: 125.50, // This could be calculated sum of their signups
-    createdAt: new Date(Date.now() - 86400000 * 30).toISOString(),
-  },
-  {
-    id: 'alumni1', // Alice Wonderland
-    userId: 'alumni1',
+    id: 'affiliateuser1', // Example of a non-admin user who is an affiliate
+    userId: 'alumni1', // Alice Wonderland is an affiliate
     name: 'Alice Wonderland',
     email: 'alice.wonderland@example.com',
     status: 'approved' as AffiliateStatus,
@@ -490,7 +484,7 @@ export const sampleAffiliates: Affiliate[] = [
     createdAt: new Date(Date.now() - 86400000 * 60).toISOString(),
   },
   {
-    id: 'alumni2', // Bob The Builder
+    id: 'affiliateuser2', // Bob The Builder
     userId: 'alumni2',
     name: 'Bob The Builder',
     email: 'bob.builder@example.com',
@@ -501,7 +495,7 @@ export const sampleAffiliates: Affiliate[] = [
     createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
   },
    {
-    id: 'alumni3', // Charlie Brown
+    id: 'affiliateuser3', // Charlie Brown
     userId: 'alumni3',
     name: 'Charlie Brown',
     email: 'charlie.brown@example.com',
@@ -511,23 +505,35 @@ export const sampleAffiliates: Affiliate[] = [
     totalEarned: 0,
     createdAt: new Date(Date.now() - 86400000 * 10).toISOString(),
   },
+  // The current 'currentUser' (Alex Taylor User) can also be an affiliate
+  {
+    id: 'currentUser', 
+    userId: 'currentUser',
+    name: sampleUserProfile.name, // Should be 'Alex Taylor (User)'
+    email: sampleUserProfile.email, // Should be 'user@example.com'
+    status: 'approved' as AffiliateStatus,
+    affiliateCode: sampleUserProfile.affiliateCode || 'AFFUSER007',
+    commissionRate: 0.15,
+    totalEarned: 125.50,
+    createdAt: new Date(Date.now() - 86400000 * 30).toISOString(),
+  },
 ];
 
 
 export const sampleAffiliateClicks: AffiliateClick[] = [
   { id: 'click1', affiliateId: 'currentUser', timestamp: new Date(Date.now() - 86400000 * 2).toISOString(), convertedToSignup: true },
   { id: 'click2', affiliateId: 'currentUser', timestamp: new Date(Date.now() - 86400000 * 1).toISOString(), convertedToSignup: false },
-  { id: 'click3', affiliateId: 'alumni1', timestamp: new Date(Date.now() - 86400000 * 3).toISOString(), convertedToSignup: true },
+  { id: 'click3', affiliateId: 'affiliateuser1', timestamp: new Date(Date.now() - 86400000 * 3).toISOString(), convertedToSignup: true }, // Alice's click
   { id: 'click4', affiliateId: 'currentUser', timestamp: new Date(Date.now() - 86400000 * 0.5).toISOString(), convertedToSignup: false }, 
-  { id: 'click5', affiliateId: 'alumni1', timestamp: new Date(Date.now() - 86400000 * 4).toISOString(), convertedToSignup: false },
-  { id: 'click6', affiliateId: 'alumni2', timestamp: new Date(Date.now() - 86400000 * 1).toISOString(), convertedToSignup: false }, // Click for pending affiliate
+  { id: 'click5', affiliateId: 'affiliateuser1', timestamp: new Date(Date.now() - 86400000 * 4).toISOString(), convertedToSignup: false }, // Alice's click
+  { id: 'click6', affiliateId: 'affiliateuser2', timestamp: new Date(Date.now() - 86400000 * 1).toISOString(), convertedToSignup: false }, // Bob's click (pending affiliate)
 ];
 
 export const sampleAffiliateSignups: AffiliateSignup[] = [
   { id: 'signup1', affiliateId: 'currentUser', newUserId: 'newUser1', signupDate: new Date(Date.now() - 86400000 * 2).toISOString(), commissionEarned: 7.50 },
-  { id: 'signup2', affiliateId: 'alumni1', newUserId: 'newUser2', signupDate: new Date(Date.now() - 86400000 * 3).toISOString(), commissionEarned: 5.00 },
+  { id: 'signup2', affiliateId: 'affiliateuser1', newUserId: 'newUser2', signupDate: new Date(Date.now() - 86400000 * 3).toISOString(), commissionEarned: 5.00 }, // Alice's signup
   { id: 'signup3', affiliateId: 'currentUser', newUserId: 'newUser3', signupDate: new Date(Date.now() - 86400000 * 1).toISOString(), commissionEarned: 10.00 }, 
-  { id: 'signup4', affiliateId: 'alumni1', newUserId: 'newUser4', signupDate: new Date(Date.now() - 86400000 * 5).toISOString(), commissionEarned: 5.00 },
+  { id: 'signup4', affiliateId: 'affiliateuser1', newUserId: 'newUser4', signupDate: new Date(Date.now() - 86400000 * 5).toISOString(), commissionEarned: 5.00 }, // Alice's signup
 ];
 
 // Profile Completion Survey Definition
@@ -582,3 +588,4 @@ export const profileCompletionSurveyDefinition: SurveyStep[] = [
   // End
   { id: 'pc_end', type: 'botMessage', text: "Thank you for completing your profile information! Your profile is now more discoverable. 🎉", isLastStep: true },
 ];
+
