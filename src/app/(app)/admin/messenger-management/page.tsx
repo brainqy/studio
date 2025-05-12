@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BotMessageSquare, Eye, PlusCircle, Edit3, AlertTriangle, UserCheck, ShieldAlert, ListFilter } from "lucide-react";
+import { BotMessageSquare, Eye, PlusCircle, Edit3, AlertTriangle, UserCheck, ShieldAlert, ListFilter, BarChart3, CheckSquare, Users } from "lucide-react"; // Added BarChart3, CheckSquare, Users
 import { useToast } from "@/hooks/use-toast";
 import type { SurveyResponse } from "@/types";
 import { sampleSurveyResponses, sampleUserProfile } from "@/lib/sample-data";
@@ -68,13 +68,18 @@ export default function MessengerManagementPage() {
   };
   
   const incompleteProfileUsers = useMemo(() => {
-    // This is a mock. In reality, you'd check surveyData for specific answers.
-    // For example, if a survey asks "Is profile complete?" and user answers "No"
     return surveyResponses
-        .filter(sr => sr.data.experience === 'needs_improvement') // Example: filter based on some survey data
+        .filter(sr => sr.data.experience === 'needs_improvement') 
         .map(sr => ({ id: sr.userId, name: sr.userName, reason: "Indicated 'Needs Improvement' in feedback" }))
-        .slice(0, 5); // Limit for display
+        .slice(0, 5); 
   }, [surveyResponses]);
+
+  // Statistics Calculation
+  const totalResponses = surveyResponses.length;
+  const totalSurveysDeployed = mockSurveyDefinitions.length;
+  const usersFlaggedForIncompleteProfile = incompleteProfileUsers.length;
+  const positiveFeedbackCount = surveyResponses.filter(sr => sr.data.experience === 'amazing').length;
+
 
   return (
     <div className="space-y-8">
@@ -82,6 +87,51 @@ export default function MessengerManagementPage() {
         <BotMessageSquare className="h-8 w-8" /> Messenger & Survey Management
       </h1>
       <CardDescription>Oversee automated messenger interactions, manage surveys, and analyze user feedback.</CardDescription>
+
+      {/* Statistics Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card className="shadow-md">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Responses</CardTitle>
+                <CheckSquare className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+                <div className="text-2xl font-bold">{totalResponses}</div>
+                <p className="text-xs text-muted-foreground">Across all surveys</p>
+            </CardContent>
+        </Card>
+        <Card className="shadow-md">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Surveys Deployed</CardTitle>
+                <ListFilter className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+                <div className="text-2xl font-bold">{totalSurveysDeployed}</div>
+                <p className="text-xs text-muted-foreground">Currently active</p>
+            </CardContent>
+        </Card>
+         <Card className="shadow-md">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Positive Feedback</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+                <div className="text-2xl font-bold">{positiveFeedbackCount}</div>
+                <p className="text-xs text-muted-foreground">Users reported 'amazing' experience</p>
+            </CardContent>
+        </Card>
+        <Card className="shadow-md">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Profile Nudges Sent</CardTitle>
+                <BarChart3 className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+                <div className="text-2xl font-bold">{usersFlaggedForIncompleteProfile}</div>
+                <p className="text-xs text-muted-foreground">Based on 'needs improvement' feedback</p>
+            </CardContent>
+        </Card>
+      </div>
+
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Survey Configuration Card */}

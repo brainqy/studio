@@ -1,6 +1,7 @@
 
 
-import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem, Appointment, Wallet, ResumeProfile, Tenant, Badge, BlogPost, ReferralHistoryItem, GamificationRule, UserStatus, SurveyResponse } from '@/types';
+
+import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem, Appointment, Wallet, ResumeProfile, Tenant, Badge, BlogPost, ReferralHistoryItem, GamificationRule, UserStatus, SurveyResponse, Affiliate, AffiliateClick, AffiliateSignup } from '@/types';
 import { AreasOfSupport, AppointmentStatuses } from '@/types'; // Import AppointmentStatuses
 
 const SAMPLE_TENANT_ID = 'tenant-1'; // Define a default tenant ID for sample data
@@ -290,9 +291,61 @@ export const graduationYears = Array.from({ length: 26 }, (_, i) => (2025 - i).t
 
 // Sample Tenants
 export const sampleTenants: Tenant[] = [
-  { id: 'tenant-1', name: 'Default University', createdAt: new Date().toISOString(), settings: { allowPublicSignup: true } },
-  { id: 'tenant-2', name: 'Corporate Partner Inc.', createdAt: new Date(Date.now() - 86400000 * 5).toISOString(), settings: { allowPublicSignup: false } },
-  { id: 'tenant-3', name: 'Community College', createdAt: new Date(Date.now() - 86400000 * 10).toISOString(), settings: { allowPublicSignup: true } },
+  {
+    id: 'tenant-1',
+    name: 'Default University',
+    createdAt: new Date().toISOString(),
+    settings: {
+      allowPublicSignup: true,
+      customLogoUrl: 'https://picsum.photos/seed/logo1/200/50',
+      primaryColor: 'hsl(180 100% 25%)', // Teal
+      accentColor: 'hsl(180 100% 30%)',
+      features: {
+        communityFeedEnabled: true,
+        jobBoardEnabled: true,
+        gamificationEnabled: true,
+        walletEnabled: true,
+        eventRegistrationEnabled: true,
+      },
+      emailTemplates: {
+        welcomeEmail: 'Welcome to Default University Alumni Network!',
+      }
+    }
+  },
+  {
+    id: 'tenant-2',
+    name: 'Corporate Partner Inc.',
+    createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
+    settings: {
+      allowPublicSignup: false,
+      primaryColor: 'hsl(221 83% 53%)', // Blue
+      accentColor: 'hsl(221 83% 63%)',
+      features: {
+        communityFeedEnabled: false,
+        jobBoardEnabled: true,
+        gamificationEnabled: false,
+        walletEnabled: false,
+        eventRegistrationEnabled: true,
+      }
+    }
+  },
+  {
+    id: 'tenant-3',
+    name: 'Community College Connect',
+    createdAt: new Date(Date.now() - 86400000 * 10).toISOString(),
+    settings: {
+      allowPublicSignup: true,
+      primaryColor: 'hsl(39 100% 50%)', // Orange
+      accentColor: 'hsl(39 100% 55%)',
+      features: {
+        communityFeedEnabled: true,
+        jobBoardEnabled: true,
+        gamificationEnabled: true,
+        walletEnabled: true,
+        eventRegistrationEnabled: false,
+      }
+    }
+  },
 ];
 
 // Sample Badges (now includes reward and trigger)
@@ -406,4 +459,25 @@ export const sampleSurveyResponses: SurveyResponse[] = [
             referral_likelihood: 'neutral'
         }
     }
+];
+
+// Sample Affiliate Data
+export const sampleUserAffiliateProfile: Affiliate = {
+  id: 'currentUser',
+  userId: 'currentUser',
+  affiliateCode: 'AFFILIATE123',
+  commissionRate: 0.15, // 15%
+  totalEarned: 125.50,
+  createdAt: new Date(Date.now() - 86400000 * 30).toISOString(), // 30 days ago
+};
+
+export const sampleAffiliateClicks: AffiliateClick[] = [
+  { id: 'click1', affiliateId: 'currentUser', timestamp: new Date(Date.now() - 86400000 * 2).toISOString(), convertedToSignup: true },
+  { id: 'click2', affiliateId: 'currentUser', timestamp: new Date(Date.now() - 86400000 * 1).toISOString(), convertedToSignup: false },
+  { id: 'click3', affiliateId: 'currentUser', timestamp: new Date(Date.now() - 86400000 * 3).toISOString(), convertedToSignup: true },
+];
+
+export const sampleAffiliateSignups: AffiliateSignup[] = [
+  { id: 'signup1', affiliateId: 'currentUser', newUserId: 'newUser1', signupDate: new Date(Date.now() - 86400000 * 2).toISOString(), commissionEarned: 7.50 },
+  { id: 'signup2', affiliateId: 'currentUser', newUserId: 'newUser2', signupDate: new Date(Date.now() - 86400000 * 3).toISOString(), commissionEarned: 7.50 },
 ];

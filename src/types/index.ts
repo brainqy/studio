@@ -9,6 +9,7 @@
 
 
 
+
 export type UserRole = 'admin' | 'manager' | 'user';
 export type UserStatus = 'active' | 'inactive' | 'pending' | 'suspended';
 
@@ -331,14 +332,31 @@ export type KanbanColumnId = 'Saved' | 'Applied' | 'Interview' | 'Offer';
 export const JOB_APPLICATION_STATUSES: JobApplicationStatus[] = ['Saved', 'Applied', 'Interviewing', 'Offer', 'Rejected'];
 
 // Tenant Information
+export interface TenantSettings {
+  allowPublicSignup: boolean;
+  customLogoUrl?: string;
+  primaryColor?: string; // HSL or HEX
+  accentColor?: string; // HSL or HEX
+  features?: {
+    communityFeedEnabled?: boolean;
+    jobBoardEnabled?: boolean;
+    gamificationEnabled?: boolean;
+    walletEnabled?: boolean;
+    eventRegistrationEnabled?: boolean;
+    // ... other features
+  };
+  // ... other tenant-specific settings like email templates stored as strings or IDs
+  emailTemplates?: {
+    welcomeEmail?: string; // template ID or content
+    // ... other templates
+  };
+}
+
 export interface Tenant {
   id: string;
   name: string;
   domain?: string; // Optional: for subdomain-based tenancy
-  settings?: {
-    allowPublicSignup: boolean;
-    // Add other tenant-specific settings
-  };
+  settings?: TenantSettings;
   createdAt: string;
 }
 
@@ -388,4 +406,30 @@ export interface SurveyResponse {
   surveyName: string;
   responseDate: string; // ISO string
   data: Record<string, any>; // The collected survey data (e.g., { loved_feature: 'Analyzer', referral_likelihood: 'very_likely' })
+}
+
+// Affiliate types
+export interface Affiliate {
+  id: string; // Usually same as userId
+  userId: string;
+  affiliateCode: string;
+  commissionRate: number; // e.g., 0.10 for 10%
+  totalEarned: number;
+  createdAt: string;
+}
+
+export interface AffiliateClick {
+  id: string;
+  affiliateId: string;
+  timestamp: string;
+  ipAddress?: string; // For tracking, consider privacy
+  convertedToSignup: boolean;
+}
+
+export interface AffiliateSignup {
+  id: string;
+  affiliateId: string;
+  newUserId: string;
+  signupDate: string;
+  commissionEarned?: number;
 }
