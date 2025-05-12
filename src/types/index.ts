@@ -116,14 +116,12 @@ export interface CommunityPost {
   userName: string;
   userAvatar?: string;
   timestamp: string;
-  content: string;
-  type: 'text' | 'poll' | 'event' | 'request'; // Simplified poll/event to text for now
+  content?: string; // Make content optional for poll/event/request
+  type: 'text' | 'poll' | 'event' | 'request';
   tags?: string[];
-  // For polls (future)
-  // pollOptions?: { option: string, votes: number }[];
-  // For events (future)
-  // eventDate?: string;
-  // eventLocation?: string;
+  pollOptions?: { option: string, votes: number }[];
+  eventDate?: string;
+  eventLocation?: string;
 }
 
 export interface FeatureRequest {
