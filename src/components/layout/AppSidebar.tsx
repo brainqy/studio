@@ -18,7 +18,7 @@ const navItems = [
     icon: Users,
     subItems: [
       { href: "/alumni-connect", label: "Search Alumni", icon: Users },
-      { href: "/alumni-connect/recommendations", label: "Recommendations", icon: GitFork },
+      // { href: "/alumni-connect/recommendations", label: "Recommendations", icon: GitFork }, // Removed Recommendations
     ]
   },
   { href: "/job-board", label: "Job Board", icon: Aperture },
@@ -98,7 +98,7 @@ export function AppSidebar() {
       <SidebarContent className="p-2">
         <SidebarMenu>
           {navItems.map((item) =>
-            item.subItems ? (
+            item.subItems && item.subItems.length > 0 ? ( // Check if subItems exist and are not empty
               <SidebarGroup key={item.label} className="p-0">
                 {/* Render the group header itself */}
                  <SidebarMenuButton size="default" className="w-full justify-start cursor-default hover:bg-transparent">
@@ -110,7 +110,9 @@ export function AppSidebar() {
                   {item.subItems.map(subItem => renderMenuItem(subItem, true))}
                 </div>
               </SidebarGroup>
-            ) : (
+            ) : item.subItems && item.subItems.length === 0 ? ( // If subItems is empty, render as a normal item
+               renderMenuItem(item)
+            ) : ( // If no subItems property, render as normal item
               renderMenuItem(item)
             )
           )}
@@ -166,3 +168,4 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
+
