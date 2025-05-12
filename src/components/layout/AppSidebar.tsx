@@ -1,7 +1,8 @@
+
 "use client";
 
 import { Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarSeparator, SidebarGroup, SidebarGroupLabel } from "@/components/ui/sidebar";
-import { Aperture, Award, BarChart2, BookOpen, Briefcase, Building2, CalendarDays, FileText, GalleryVerticalEnd, GitFork, Gift, Home, Layers3, MessageSquare, Settings, ShieldQuestion, User, Users, Wallet, Zap } from "lucide-react"; // Added Building2, Award, Gift, BookOpen
+import { Aperture, Award, BarChart2, BookOpen, Briefcase, Building2, CalendarDays, FileText, GalleryVerticalEnd, GitFork, Gift, History, Home, Layers3, MessageSquare, Settings, ShieldQuestion, User, Users, Wallet, Zap } from "lucide-react"; // Added History
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { sampleUserProfile } from "@/lib/sample-data"; // Import user profile to get role and tenant
@@ -10,6 +11,7 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: Home },
   { href: "/resume-analyzer", label: "Resume Analyzer", icon: Zap },
   { href: "/my-resumes", label: "My Resumes", icon: Layers3 },
+  { href: "/resume-history", label: "Resume History", icon: History }, // Added Resume History
   { href: "/job-tracker", label: "Job Tracker", icon: Briefcase },
   {
     label: "Alumni Network",
@@ -21,7 +23,7 @@ const navItems = [
   },
   { href: "/job-board", label: "Job Board", icon: Aperture },
   { href: "/community-feed", label: "Community Feed", icon: MessageSquare },
-  { href: "/events", label: "Events Registration", icon: CalendarDays }, // Added Events
+  { href: "/events", label: "Events Registration", icon: CalendarDays },
   { href: "/gallery", label: "Event Gallery", icon: GalleryVerticalEnd },
   { href: "/activity-log", label: "Activity Log", icon: BarChart2 },
   { href: "/profile", label: "My Profile", icon: User },
