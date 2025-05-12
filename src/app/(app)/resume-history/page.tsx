@@ -1,9 +1,10 @@
-
 // src/app/(app)/resume-history/page.tsx
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { History } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { History, ArrowRight } from "lucide-react";
+import Link from "next/link";
 
 export default function ResumeHistoryPage() {
   return (
@@ -12,18 +13,22 @@ export default function ResumeHistoryPage() {
         <History className="h-8 w-8" /> Resume Scan History
       </h1>
       <CardDescription>
-        View a detailed log of all your past resume scans and analyses.
+        View a detailed log of all your past resume scans and analyses on the Resume Analyzer page.
       </CardDescription>
 
       <Card className="shadow-lg">
         <CardHeader>
-          <CardTitle>Scan Log</CardTitle>
+          <CardTitle>Scan Log Access</CardTitle>
         </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground text-center py-8">
-            Resume scan history will be displayed here. Feature under development.
-            {/* You can reuse the ResumeScanHistoryCard component here later */}
+        <CardContent className="text-center py-12">
+          <p className="text-muted-foreground mb-6">
+            Your resume scan history, including match scores and bookmarked items, is now available directly within the Resume Analyzer page.
           </p>
+          <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
+            <Link href="/resume-analyzer">
+              Go to Resume Analyzer <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
         </CardContent>
       </Card>
     </div>

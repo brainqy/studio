@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, type FormEvent, useEffect, useMemo } from 'react';
@@ -10,16 +9,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ArrowRight, Download, FileText, Lightbulb, Loader2, Sparkles, UploadCloud, Zap, CheckCircle, Search, Star, Trash2, BarChart, Clock, Bookmark } from "lucide-react";
+import { ArrowRight, Download, FileText, Lightbulb, Loader2, Sparkles, UploadCloud, Search, Star, Trash2, BarChart, Clock, Bookmark, CheckCircle, History, Zap } from "lucide-react"; // Added History and Zap
 import { analyzeResumeAndJobDescription, type AnalyzeResumeAndJobDescriptionOutput } from '@/ai/flows/analyze-resume-and-job-description';
 import { calculateMatchScore, type CalculateMatchScoreOutput } from '@/ai/flows/calculate-match-score';
-import { suggestResumeImprovements, type SuggestResumeImprovementsOutput } from '@/ai/flows/suggest-resume-improvements';
+import { suggestResumeImprovements, type SuggestResumeImprovementsOutput } from '@/ai/flows/suggestResumeImprovements';
 import { useToast } from '@/hooks/use-toast';
-import { sampleResumeScanHistory as initialScanHistory, sampleResumeProfiles, sampleUserProfile } from '@/lib/sample-data'; // Import sample data
-import type { ResumeScanHistoryItem, ResumeProfile } from '@/types'; // Import types
+import { sampleResumeScanHistory as initialScanHistory, sampleResumeProfiles, sampleUserProfile } from '@/lib/sample-data'; 
+import type { ResumeScanHistoryItem, ResumeProfile } from '@/types'; 
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"; // Import Tabs
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface AnalysisResults {
   analysis: AnalyzeResumeAndJobDescriptionOutput | null;
@@ -27,38 +26,80 @@ interface AnalysisResults {
   improvements: SuggestResumeImprovementsOutput | null;
 }
 
+const ScoreCircle = ({ score, size = "lg" }: { score: number, size?: "sm" | "lg" }) => {
+  const radius = size === "lg" ? 45 : 30; // Adjusted radius for a slightly larger circle
+  const strokeWidth = size === "lg" ? 8 : 6; // Adjusted stroke width
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (score / 100) * circumference;
+  const circleSizeClass = size === "lg" ? "w-28 h-28" : "w-20 h-20"; // Adjusted overall size
+  const textSizeClass = size === "lg" ? "text-3xl" : "text-xl"; // Adjusted text size
+  const subTextSizeClass = size === "lg" ? "text-xs" : "text-[10px]"; // Adjusted subtext size
+
+  return (
+    <div className={`relative flex items-center justify-center ${circleSizeClass}`}>
+      <svg className="absolute inset-0" viewBox="0 0 100 100">
+        <circle
+          className="text-secondary"
+          strokeWidth={strokeWidth}
+          stroke="currentColor"
+          fill="transparent"
+          r={radius}
+          cx="50"
+          cy="50"
+        />
+        <circle
+          className="text-primary"
+          strokeWidth={strokeWidth}
+          strokeDasharray={circumference}
+          strokeDashoffset={strokeDashoffset}
+          strokeLinecap="round"
+          stroke="currentColor"
+          fill="transparent"
+          r={radius}
+          cx="50"
+          cy="50"
+          transform="rotate(-90 50 50)"
+        />
+      </svg>
+      <div className="absolute flex flex-col items-center justify-center">
+        <span className={`${textSizeClass} font-bold text-primary`}>{score}%</span>
+        <span className={`${subTextSizeClass} text-muted-foreground mt-0.5`}>Match</span>
+      </div>
+    </div>
+  );
+};
+
+
 export default function ResumeAnalyzerPage() {
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [resumeText, setResumeText] = useState('');
   const [jobDescription, setJobDescription] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<AnalysisResults | null>(null);
-  const [scanHistory, setScanHistory] = useState<ResumeScanHistoryItem[]>(initialScanHistory.filter(item => item.userId === sampleUserProfile.id)); // Filter history for current user
-  const [resumes, setResumes] = useState<ResumeProfile[]>(sampleResumeProfiles.filter(r => r.userId === sampleUserProfile.id)); // User's resumes
-  const [selectedResumeId, setSelectedResumeId] = useState<string | null>(null); // Fix: Correct useState syntax
-  const [historyFilter, setHistoryFilter] = useState<'all' | 'starred' | 'highest'>('all');
+  const [scanHistory, setScanHistory] = useState<ResumeScanHistoryItem[]>(initialScanHistory.filter(item => item.userId === sampleUserProfile.id));
+  const [resumes, setResumes] = useState<ResumeProfile[]>(sampleResumeProfiles.filter(r => r.userId === sampleUserProfile.id));
+  const [selectedResumeId, setSelectedResumeId] = useState<string | null>(null);
+  const [historyFilter, setHistoryFilter] = useState<'all' | 'highest' | 'starred' | 'archived'>('all');
+
 
   const { toast } = useToast();
 
    useEffect(() => {
-    // Fetch resume text when selectedResumeId changes
     const selectedResume = resumes.find(r => r.id === selectedResumeId);
     if (selectedResume) {
       setResumeText(selectedResume.resumeText);
       toast({ title: "Resume Loaded", description: `Loaded content for ${selectedResume.name}.`});
-    } else {
-        setResumeText(''); // Clear if no resume is selected or found
+    } else if (!resumeFile) { 
+        setResumeText('');
     }
-   }, [selectedResumeId, resumes, toast]);
+   }, [selectedResumeId, resumes, toast, resumeFile]);
 
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       setResumeFile(file);
-      setSelectedResumeId(null); // Deselect any chosen resume if a file is uploaded
-      // For simplicity, we'll use a FileReader to get text for .txt files
-      // PDF/DOCX would require more complex parsing libraries (e.g., pdf.js, mammoth.js)
+      setSelectedResumeId(null); 
       if (file.type === "text/plain") {
         const reader = new FileReader();
         reader.onload = (e) => setResumeText(e.target?.result as string);
@@ -88,25 +129,30 @@ export default function ResumeAnalyzerPage() {
       const currentResumeText = resumeText || `Content of ${resumeFile?.name}`;
       const currentResumeProfile = selectedResumeId ? resumes.find(r => r.id === selectedResumeId) : null;
 
+      const jdLines = jobDescription.split('\n');
+      const jobTitleMatch = jdLines.find(line => line.toLowerCase().includes('title:'))?.split(':')[1]?.trim() || "Job Title Placeholder";
+      const companyMatch = jdLines.find(line => line.toLowerCase().includes('company:'))?.split(':')[1]?.trim() || "Company Placeholder";
+
+
       const [analysisRes, scoreRes, improvementsRes] = await Promise.all([
         analyzeResumeAndJobDescription({ resumeText: currentResumeText, jobDescriptionText: jobDescription }),
         calculateMatchScore({ resumeText: currentResumeText, jobDescription: jobDescription }),
         suggestResumeImprovements({ resumeText: currentResumeText, jobDescription: jobDescription })
       ]);
 
-      // Add results to scan history
       const newScanEntry: ResumeScanHistoryItem = {
         id: `scan-${Date.now()}`,
         tenantId: sampleUserProfile.tenantId,
         userId: sampleUserProfile.id,
-        resumeId: currentResumeProfile?.id || 'uploaded-file',
-        resumeName: currentResumeProfile?.name || resumeFile?.name || 'Pasted Text',
-        jobTitle: "Job Title Placeholder", // Need a way to extract/input this
-        companyName: "Company Placeholder", // Need a way to extract/input this
+        resumeId: currentResumeProfile?.id || (resumeFile ? `file-${resumeFile.name}` : 'pasted-text'),
+        resumeName: currentResumeProfile?.name || resumeFile?.name || 'Pasted Resume',
+        jobTitle: jobTitleMatch, 
+        companyName: companyMatch, 
         jobDescriptionText: jobDescription,
         scanDate: new Date().toISOString(),
         matchScore: scoreRes.matchScore,
         bookmarked: false,
+        // archived: false, // Assuming new items are not archived by default
       };
       setScanHistory(prev => [newScanEntry, ...prev]);
 
@@ -126,7 +172,6 @@ export default function ResumeAnalyzerPage() {
   };
 
   const handleDownloadReport = () => {
-    // Mock PDF download. In a real app, use a library like jsPDF or react-pdf, or a server-side PDF generation.
     toast({ title: "Download Report", description: "PDF report generation is mocked. Printing the page to PDF can be an alternative."});
     window.print();
   };
@@ -148,18 +193,21 @@ export default function ResumeAnalyzerPage() {
   const handleDeleteScan = (scanId: string) => {
       setScanHistory(prevHistory => prevHistory.filter(item => item.id !== scanId));
       toast({ title: "Scan Deleted", description: "Scan history entry removed." });
-      // Add API call to delete from backend in a real app
   };
 
   const filteredScanHistory = useMemo(() => {
-    let filtered = scanHistory;
-    if (historyFilter === 'starred') {
+    let filtered = [...scanHistory]; 
+    if (historyFilter === 'highest') {
+      filtered.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
+    } else if (historyFilter === 'starred') {
       filtered = filtered.filter(item => item.bookmarked);
-    } else if (historyFilter === 'highest') {
-      // Sort by score desc, slice(0, 1) might be better if only one is needed
-      filtered = [...filtered].sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
+    } else if (historyFilter === 'archived') {
+      // This assumes an 'archived' property might exist, or it filters out everything if not.
+      // For now, let's assume 'archived' is not a feature and it returns empty for this filter.
+      // If 'archived' becomes a feature, this filter needs to be adjusted.
+      filtered = filtered.filter(item => (item as any).archived === true); 
     }
-    // Add 'archived' filter logic if implemented
+    // No 'all' specific filtering needed, as it uses the full `scanHistory`
     return filtered;
   }, [scanHistory, historyFilter]);
 
@@ -167,51 +215,30 @@ export default function ResumeAnalyzerPage() {
     const totalScans = scanHistory.length;
     const uniqueResumes = new Set(scanHistory.map(s => s.resumeId)).size;
     const maxScore = scanHistory.reduce((max, s) => Math.max(max, s.matchScore || 0), 0);
-    // Improvement metric is complex, using placeholder
-    const improvement = scanHistory.filter(s => (s.matchScore || 0) >= 80).length;
+    // Define "Improvement" as number of scans with score >= 80% (example)
+    const improvement = scanHistory.filter(s => (s.matchScore || 0) >= 80).length; 
     return { totalScans, uniqueResumes, maxScore, improvement };
   }, [scanHistory]);
 
-  // Simple circular progress display
-  const ScoreCircle = ({ score }: { score: number }) => (
-    <div className="relative flex items-center justify-center w-20 h-20 rounded-full border-4 border-primary bg-background shadow-md">
-       <div className="absolute inset-0 rounded-full border-4 border-gray-200 dark:border-gray-600"></div>
-       <div
-         className="absolute inset-0 rounded-full border-4 border-primary transform -rotate-90"
-         style={{
-           clipPath: `polygon(50% 0%, 100% 0%, 100% 100%, 50% 100%, 50% 50%)`, // Simplified progress indicator
-           strokeDasharray: `${score * 2.51} 251`, // Approximation for circumference
-           borderLeftColor: score > 50 ? 'var(--primary)' : 'transparent',
-           borderBottomColor: score > 75 ? 'var(--primary)' : 'transparent',
-           borderRightColor: score > 25 ? 'var(--primary)' : 'transparent',
-           borderTopColor: score > 0 ? 'var(--primary)' : 'transparent',
-         }}
-       ></div>
-      <span className="text-xl font-bold text-primary z-10">{score}%</span>
-       <span className="absolute bottom-2 text-[10px] text-muted-foreground z-10">Match</span>
-    </div>
-  );
 
   return (
     <div className="space-y-8">
-      {/* Analyzer Form Card */}
       <Card className="shadow-xl">
         <CardHeader>
           <CardTitle className="text-3xl font-bold tracking-tight flex items-center gap-2">
-            <Zap className="h-8 w-8 text-primary" /> Resume Analyzer
+            <Zap className="h-8 w-8 text-primary" /> Resume Analyzer 
           </CardTitle>
           <CardDescription>Upload your resume and paste a job description to get an AI-powered analysis and match score.</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Resume Input Section */}
               <div className="space-y-3">
                  <Label htmlFor="resume-select" className="text-lg font-medium">Select Existing Resume</Label>
                  <select
                     id="resume-select"
                     value={selectedResumeId || ''}
-                    onChange={(e) => setSelectedResumeId(e.target.value || null)}
+                    onChange={(e) => { setSelectedResumeId(e.target.value || null); if(e.target.value) setResumeFile(null); }}
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                  >
                     <option value="">-- Select a Resume --</option>
@@ -224,15 +251,15 @@ export default function ResumeAnalyzerPage() {
                     <div className="flex-grow border-t border-muted"></div>
                 </div>
 
-                <Label htmlFor="resume-file" className="text-lg font-medium">Upload New Resume</Label>
+                <Label htmlFor="resume-file-upload" className="text-lg font-medium">Upload New Resume</Label>
                 <div className="flex items-center justify-center w-full">
-                    <label htmlFor="resume-file" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-secondary/50 transition-colors">
+                    <label htmlFor="resume-file-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-secondary/50 transition-colors">
                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
                             <UploadCloud className="w-8 h-8 mb-2 text-muted-foreground" />
                             <p className="mb-1 text-sm text-muted-foreground"><span className="font-semibold">Click to upload</span> or drag & drop</p>
                             <p className="text-xs text-muted-foreground">PDF, DOCX, TXT</p>
                         </div>
-                        <Input id="resume-file" type="file" className="hidden" onChange={handleFileChange} accept=".pdf,.docx,.doc,.txt"/>
+                        <Input id="resume-file-upload" type="file" className="hidden" onChange={handleFileChange} accept=".pdf,.docx,.doc,.txt"/>
                     </label>
                 </div>
                 {resumeFile && <p className="text-sm text-muted-foreground">Uploaded: {resumeFile.name}</p>}
@@ -243,25 +270,24 @@ export default function ResumeAnalyzerPage() {
                     <div className="flex-grow border-t border-muted"></div>
                 </div>
 
-                <Label htmlFor="resume-text" className="text-lg font-medium">Paste Resume Text</Label>
+                <Label htmlFor="resume-text-area" className="text-lg font-medium">Paste Resume Text</Label>
                 <Textarea
-                  id="resume-text"
+                  id="resume-text-area"
                   placeholder="Paste your resume content here..."
                   value={resumeText}
-                  onChange={(e) => { setResumeText(e.target.value); setSelectedResumeId(null); }} // Clear selected resume if text is pasted
+                  onChange={(e) => { setResumeText(e.target.value); setSelectedResumeId(null); setResumeFile(null); }}
                   rows={8}
                   className="border-input focus:ring-primary"
                 />
               </div>
-              {/* Job Description Input Section */}
               <div className="space-y-3">
-                <Label htmlFor="job-description" className="text-lg font-medium">Job Description</Label>
+                <Label htmlFor="job-description-area" className="text-lg font-medium">Job Description</Label>
                 <Textarea
-                  id="job-description"
-                  placeholder="Paste the job description here..."
+                  id="job-description-area"
+                  placeholder="Paste the job description here... For better results, include 'Title: <Job Title>' and 'Company: <Company Name>' on separate lines if possible."
                   value={jobDescription}
                   onChange={(e) => setJobDescription(e.target.value)}
-                  rows={resumes.length > 0 || resumeFile || resumeText ? 10 + 14 : 10} // Adjust height based on resume inputs presence
+                  rows={resumes.length > 0 || resumeFile || resumeText ? 10 + 14 : 10} 
                   className="border-input focus:ring-primary"
                 />
               </div>
@@ -283,7 +309,6 @@ export default function ResumeAnalyzerPage() {
         </form>
       </Card>
 
-      {/* Analysis Results Card */}
       {isLoading && (
         <div className="text-center py-8">
           <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
@@ -296,7 +321,7 @@ export default function ResumeAnalyzerPage() {
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle className="text-2xl font-bold flex items-center gap-2">
-                <Sparkles className="h-7 w-7 text-primary" /> Analysis Report
+                <CheckCircle className="h-7 w-7 text-primary" /> Analysis Report
               </CardTitle>
               <CardDescription>Here's how your resume matches the job description.</CardDescription>
             </div>
@@ -394,92 +419,74 @@ export default function ResumeAnalyzerPage() {
       <Card className="shadow-xl mt-12">
          <CardHeader>
           <CardTitle className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <BarChart className="h-7 w-7 text-primary" /> Resume Scan History
+            <History className="h-7 w-7 text-primary" /> Resume Scan History
           </CardTitle>
           <CardDescription>Review your past resume analyses.</CardDescription>
         </CardHeader>
         <CardContent>
-            {/* Summary Cards */}
-             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <Card>
-                    <CardContent className="p-4 text-center">
-                        <p className="text-2xl font-bold text-primary">{summaryStats.totalScans}</p>
-                        <p className="text-xs text-muted-foreground">Total Scans</p>
-                    </CardContent>
-                </Card>
-                <Card>
-                     <CardContent className="p-4 text-center">
-                        <p className="text-2xl font-bold text-primary">{summaryStats.uniqueResumes}</p>
-                        <p className="text-xs text-muted-foreground">Unique Resumes</p>
-                    </CardContent>
-                </Card>
-                <Card>
-                     <CardContent className="p-4 text-center">
-                        <p className="text-2xl font-bold text-primary">{summaryStats.maxScore}%</p>
-                        <p className="text-xs text-muted-foreground">Maximum Score</p>
-                    </CardContent>
-                </Card>
-                 <Card>
-                     <CardContent className="p-4 text-center">
-                        <p className="text-2xl font-bold text-primary">{summaryStats.improvement}</p>
-                        <p className="text-xs text-muted-foreground">Good Matches (&gt;80%)</p> {/* Example interpretation */}
-                    </CardContent>
-                </Card>
+             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                {[
+                  { title: "Total Scans", value: summaryStats.totalScans },
+                  { title: "Unique Resumes", value: summaryStats.uniqueResumes },
+                  { title: "Maximum Score", value: `${summaryStats.maxScore}%` },
+                  { title: "Improvement", value: summaryStats.improvement }, 
+                ].map(stat => (
+                  <Card key={stat.title} className="border shadow-sm">
+                      <CardContent className="p-4 text-center">
+                          <p className="text-3xl font-bold text-primary">{stat.value}</p>
+                          <p className="text-xs text-muted-foreground">{stat.title}</p>
+                      </CardContent>
+                  </Card>
+                ))}
              </div>
 
-            {/* Filter Tabs */}
-             <Tabs defaultValue="all" onValueChange={(value) => setHistoryFilter(value as any)} className="mb-4">
-              <TabsList>
-                <TabsTrigger value="all">View All</TabsTrigger>
-                <TabsTrigger value="starred">View Starred</TabsTrigger>
+             <Tabs defaultValue="all" onValueChange={(value) => setHistoryFilter(value as 'all' | 'highest' | 'starred' | 'archived')} className="mb-4">
+              <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
                 <TabsTrigger value="highest">View Highest Match</TabsTrigger>
-                {/* Add View Archived if needed */}
+                <TabsTrigger value="starred">View Starred</TabsTrigger>
+                <TabsTrigger value="all">View All</TabsTrigger>
+                <TabsTrigger value="archived">View Archived</TabsTrigger>
               </TabsList>
             </Tabs>
 
-            {/* History List */}
             <div className="space-y-4">
                 {filteredScanHistory.length === 0 ? (
                     <p className="text-center text-muted-foreground py-6">No scans found matching the filter.</p>
                 ) : (
-                    filteredScanHistory.slice(0, 5).map(item => ( // Limit to 5 for standard user
-                         <Card key={item.id} className="flex items-center p-4 gap-4 hover:bg-secondary/30 transition-colors">
-                             <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary" onClick={() => handleToggleBookmark(item.id)}>
-                                 <Star className={cn("h-5 w-5", item.bookmarked && "fill-primary text-primary")} />
+                    filteredScanHistory.slice(0, 5).map(item => (
+                         <Card key={item.id} className="flex items-center p-4 gap-3 border hover:shadow-md transition-shadow">
+                             <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-yellow-500 self-start mt-1" onClick={() => handleToggleBookmark(item.id)}>
+                                 <Star className={cn("h-5 w-5", item.bookmarked && "fill-yellow-400 text-yellow-500")} />
                              </Button>
-                             <ScoreCircle score={item.matchScore || 0} />
-                             <div className="flex-1">
-                                <h4 className="font-semibold text-md">{item.jobTitle || 'N/A'} at {item.companyName || 'N/A'}</h4>
-                                <p className="text-sm text-muted-foreground">Resume: {item.resumeName}</p>
-                                <p className="text-sm text-muted-foreground truncate max-w-xs">JD: {item.jobDescriptionText?.substring(0, 50) || 'N/A'}...</p>
+                             <ScoreCircle score={item.matchScore || 0} size="lg" />
+                             <div className="flex-1 space-y-0.5">
+                                <h4 className="font-semibold text-md text-foreground">{item.jobTitle || 'Default Job Title'}</h4>
+                                <p className="text-sm text-muted-foreground">Resume: {item.resumeName || 'Resume snippet'}</p>
+                                <p className="text-sm text-muted-foreground truncate max-w-xs">Job Description: {item.jobDescriptionText?.substring(0, 50) || 'Job Description'}...</p>
                              </div>
-                            <div className="text-right">
-                                <Button variant="outline" size="sm" onClick={() => handleDeleteScan(item.id)} className="mb-1">
-                                    <Trash2 className="h-4 w-4 mr-1"/> Delete
+                            <div className="flex flex-col items-end space-y-1 self-start">
+                                <Button variant="destructive" size="sm" onClick={() => handleDeleteScan(item.id)} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
+                                    Delete
                                 </Button>
-                                <p className="text-xs text-muted-foreground">{format(new Date(item.scanDate), 'MMM d, yyyy')}</p>
+                                <p className="text-xs text-muted-foreground mt-1">{format(new Date(item.scanDate), 'MMM dd, yyyy')}</p>
                             </div>
                          </Card>
                     ))
                 )}
-                {filteredScanHistory.length > 5 && (
+                {scanHistory.length > 5 && (
                      <p className="text-center text-sm text-muted-foreground mt-4">
                         Standard users can only view the last 5 scans.
                     </p>
                 )}
             </div>
 
-            {/* Unlock Button */}
              <div className="mt-8 text-center">
-                <Button className="bg-primary hover:bg-primary/90 text-primary-foreground" onClick={() => toast({title: "Feature Mock", description: "Unlock unlimited history is a premium feature."})}>
+                <Button className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 text-base" onClick={() => toast({title: "Feature Mock", description: "Unlock unlimited history is a premium feature."})}>
                     Unlock Unlimited Scan History
                 </Button>
              </div>
         </CardContent>
       </Card>
-
-
     </div>
   );
 }
-
