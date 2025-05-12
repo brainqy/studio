@@ -504,12 +504,12 @@ export interface ResumeBuilderData {
 
 export type ResumeBuilderStep = 'header' | 'experience' | 'education' | 'skills' | 'summary' | 'additional-details' | 'finalize';
 
-export const RESUME_BUILDER_STEPS: { id: ResumeBuilderStep; title: string }[] = [
-  { id: 'header', title: 'Header' },
-  { id: 'experience', title: 'Experience' },
-  { id: 'education', title: 'Education' },
-  { id: 'skills', title: 'Skills' },
-  { id: 'summary', title: 'Summary' },
-  { id: 'additional-details', title: 'Additional Details' },
-  { id: 'finalize', title: 'Finalize' },
+export const RESUME_BUILDER_STEPS: { id: ResumeBuilderStep; title: string; description?: string; mainHeading?: string; }[] = [
+  { id: 'header', title: 'Header', description: "Let's start with your contact information.", mainHeading: "Contact Information" },
+  { id: 'experience', title: 'Experience', description: "Add details about your work experience.", mainHeading: "Work Experience" },
+  { id: 'education', title: 'Education', description: "Tell us about your education.", mainHeading: "Education & Training" },
+  { id: 'skills', title: 'Skills', description: "Showcase your skills.", mainHeading: "Skills & Expertise" },
+  { id: 'summary', title: 'Summary', description: "Write a compelling summary.", mainHeading: "Professional Summary" },
+  { id: 'additional-details', title: 'Additional Details', description: "Include any additional relevant details.", mainHeading: "Additional Information" },
+  { id: 'finalize', title: 'Finalize', description: "Review and finalize your resume.", mainHeading: "Review & Finalize" },
 ];

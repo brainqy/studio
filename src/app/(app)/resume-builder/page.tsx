@@ -19,6 +19,7 @@ import StepFinalize from "@/components/features/resume-builder/StepFinalize";
 import ResumePreview from "@/components/features/resume-builder/ResumePreview";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
+import ResumeBuilderStepper from "@/components/features/resume-builder/ResumeBuilderStepper";
 
 const initialResumeData: ResumeBuilderData = {
   header: {
@@ -48,7 +49,8 @@ export default function ResumeBuilderPage() {
   const [resumeData, setResumeData] = useState<ResumeBuilderData>(initialResumeData);
   const { toast } = useToast();
 
-  const currentStep: ResumeBuilderStep = RESUME_BUILDER_STEPS[currentStepIndex].id;
+  const currentStepInfo = RESUME_BUILDER_STEPS[currentStepIndex];
+  const currentStep: ResumeBuilderStep = currentStepInfo.id;
 
   const handleNextStep = () => {
     if (currentStepIndex < RESUME_BUILDER_STEPS.length - 1) {
@@ -62,6 +64,13 @@ export default function ResumeBuilderPage() {
   const handlePrevStep = () => {
     if (currentStepIndex > 0) {
       setCurrentStepIndex(prev => prev - 1);
+    }
+  };
+  
+  const handleStepClick = (stepId: ResumeBuilderStep) => {
+    const stepIndex = RESUME_BUILDER_STEPS.findIndex(s => s.id === stepId);
+    if (stepIndex !== -1 && stepIndex <= currentStepIndex) { // Allow navigation to completed or current steps
+      setCurrentStepIndex(stepIndex);
     }
   };
 
@@ -126,35 +135,13 @@ export default function ResumeBuilderPage() {
             <FileText className="h-7 w-7" />
             <h1 className="text-xl font-semibold">Resume Now.</h1>
           </div>
-          {/* Potentially add account/logout button here if not part of global header */}
         </div>
       </div>
 
       <div className="flex-grow flex flex-col md:flex-row">
         {/* Stepper Sidebar */}
         <aside className="w-full md:w-72 bg-slate-700 text-slate-200 p-6 space-y-4 flex-shrink-0">
-          {RESUME_BUILDER_STEPS.map((step, index) => (
-            <div key={step.id} className="flex items-center">
-              <div className={cn(
-                "w-8 h-8 rounded-full flex items-center justify-center border-2 shrink-0",
-                index < currentStepIndex ? "bg-green-500 border-green-500 text-white" :
-                index === currentStepIndex ? "bg-green-500 border-green-400 text-white scale-110 shadow-lg" :
-                "bg-slate-600 border-slate-500 text-slate-400"
-              )}>
-                {index < currentStepIndex ? <CheckCircle size={18} /> : <span>{index + 1}</span>}
-              </div>
-              <span className={cn(
-                "ml-3 text-sm",
-                index === currentStepIndex ? "font-semibold text-white" : "text-slate-300"
-              )}>{step.title}</span>
-              {index < RESUME_BUILDER_STEPS.length - 1 && (
-                <div className={cn(
-                    "h-6 w-px bg-slate-500 mx-auto transform translate-x-[calc(-50%_-_0.75rem)] translate-y-[1.75rem] absolute left-[2.7rem]",
-                    index >= currentStepIndex ? "opacity-50" : "bg-green-500 opacity-100"
-                    )} style={{left: "calc(1.75rem + 2px)"}} />
-              )}
-            </div>
-          ))}
+          <ResumeBuilderStepper currentStep={currentStep} onStepClick={handleStepClick} />
            <div className="pt-10 text-xs text-slate-400 space-y-1">
                 <p>© {new Date().getFullYear()} ResumeMatch AI. All rights reserved.</p>
                 <div className="space-x-2">
@@ -170,17 +157,11 @@ export default function ResumeBuilderPage() {
           <div className="max-w-3xl mx-auto">
             {currentStep !== 'finalize' && (
                 <p className="text-sm text-slate-500 mb-1">
-                    Great progress! Next up &rarr; {RESUME_BUILDER_STEPS[currentStepIndex].title}
+                    {currentStepInfo.description || `Next up: ${currentStepInfo.title}`}
                 </p>
             )}
             <h2 className="text-3xl md:text-4xl font-bold text-slate-800 mb-3">
-              {currentStep === 'header' ? `Let's start with your contact information` :
-               currentStep === 'experience' ? `Add details about your work experience` :
-               currentStep === 'education' ? `Tell us about your education` :
-               currentStep === 'skills' ? `Showcase your skills` :
-               currentStep === 'summary' ? `Write a compelling summary` :
-               currentStep === 'additional-details' ? `Include any additional relevant details` :
-               `Review and Finalize Your Resume`}
+              {currentStepInfo.mainHeading || currentStepInfo.title}
             </h2>
             <div className="w-20 h-1 bg-green-400 mb-6"></div>
 
@@ -194,13 +175,13 @@ export default function ResumeBuilderPage() {
                 </div>
             )}
 
-            <Card className="shadow-xl mb-8">
+            <Card className="shadow-xl mb-8 bg-white"> {/* Explicitly white background for form area */}
               <CardContent className="p-6">
                 {renderStepContent()}
               </CardContent>
             </Card>
             
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center mt-8">
               <Button 
                 variant="outline" 
                 onClick={handlePrevStep} 
@@ -235,3 +216,4 @@ export default function ResumeBuilderPage() {
     </div>
   );
 }
+

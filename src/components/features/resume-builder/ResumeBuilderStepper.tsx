@@ -28,6 +28,7 @@ export default function ResumeBuilderStepper({ currentStep, onStepClick }: Resum
                 onStepClick ? "cursor-pointer hover:border-green-300" : ""
               )}
               onClick={() => onStepClick && onStepClick(step.id)}
+              title={step.title}
             >
               {index < currentStepIndex ? <CheckCircle size={18} /> : <span>{index + 1}</span>}
             </div>

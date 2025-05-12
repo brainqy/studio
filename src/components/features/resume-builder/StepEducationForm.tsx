@@ -9,7 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import type { ResumeEducationEntry } from "@/types";
 import { PlusCircle, Trash2 } from "lucide-react";
-import { DegreePrograms, graduationYears } from '@/lib/sample-data';
+import { graduationYears } from '@/lib/sample-data';
+import { DegreePrograms } from '@/types'; // Changed import path
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 
 
