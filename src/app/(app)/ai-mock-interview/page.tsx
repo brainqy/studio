@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -52,6 +53,7 @@ export default function AiMockInterviewPage() {
         answers: [],
         status: 'in-progress',
         createdAt: new Date().toISOString(),
+        timerPerQuestion: config.timerPerQuestion, // Store timer setting in session
       };
       setSession(newSession);
       setCurrentQuestionIndex(0);
@@ -65,7 +67,7 @@ export default function AiMockInterviewPage() {
     }
   };
 
-  const handleAnswerSubmit = async (userAnswer: string) => {
+  const handleAnswerSubmit = async (userAnswer: string, isRecording?: boolean) => {
     if (!session || !session.questions) return;
     
     setIsEvaluatingAnswer(true);
@@ -90,7 +92,7 @@ export default function AiMockInterviewPage() {
             userAnswer,
             aiFeedback: evaluationResult.feedback,
             aiScore: evaluationResult.score,
-            // Storing detailed evaluation results if needed by StepFeedback component later
+            isRecording, // Store if answer was recorded
             ...(evaluationResult.strengths && {strengths: evaluationResult.strengths}),
             ...(evaluationResult.areasForImprovement && {areasForImprovement: evaluationResult.areasForImprovement}),
             ...(evaluationResult.suggestedImprovements && {suggestedImprovements: evaluationResult.suggestedImprovements}),
@@ -168,8 +170,9 @@ export default function AiMockInterviewPage() {
             questions={session.questions} 
             currentQuestionIndex={currentQuestionIndex}
             onAnswerSubmit={handleAnswerSubmit}
-            onCompleteInterview={handleCompleteInterview} // This might be implicitly called by onAnswerSubmit now
+            onCompleteInterview={handleCompleteInterview} 
             isEvaluating={isEvaluatingAnswer}
+            timerPerQuestion={session.timerPerQuestion} // Pass timer to StepInterview
           />
         );
       case 'feedback':

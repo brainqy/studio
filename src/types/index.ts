@@ -1,4 +1,5 @@
 
+
 export type UserRole = 'admin' | 'manager' | 'user';
 export type UserStatus = 'active' | 'inactive' | 'pending' | 'suspended';
 
@@ -550,6 +551,7 @@ export interface MockInterviewAnswer {
   strengths?: string[];
   areasForImprovement?: string[];
   suggestedImprovements?: string[];
+  isRecording?: boolean; // Added to track if audio for this answer was recorded
 }
 
 export interface MockInterviewSession {
@@ -563,6 +565,7 @@ export interface MockInterviewSession {
   overallScore?: number; 
   status: 'pending' | 'in-progress' | 'completed';
   createdAt: string;
+  timerPerQuestion?: number; // Optional: time in seconds per question
 }
 
 export interface GenerateMockInterviewQuestionsInput {
@@ -570,6 +573,7 @@ export interface GenerateMockInterviewQuestionsInput {
   jobDescription?: string;
   numQuestions?: number; 
   difficulty?: 'easy' | 'medium' | 'hard';
+  timerPerQuestion?: number; // Optional: time in seconds per question
 }
 export interface GenerateMockInterviewQuestionsOutput {
   questions: MockInterviewQuestion[];
@@ -608,3 +612,4 @@ export const MOCK_INTERVIEW_STEPS: { id: MockInterviewStepId; title: string; des
   { id: 'interview', title: 'Interview Session', description: 'Answer the questions one by one.' },
   { id: 'feedback', title: 'Get Feedback', description: 'Review your performance and AI suggestions.' },
 ];
+

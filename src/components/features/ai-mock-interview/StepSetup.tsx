@@ -1,3 +1,4 @@
+
 "use client";
 
 import type React from 'react';
@@ -10,13 +11,14 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { GenerateMockInterviewQuestionsInput } from '@/types';
-import { Brain } from 'lucide-react';
+import { Brain, Timer } from 'lucide-react'; // Added Timer icon
 
 const setupSchema = z.object({
   topic: z.string().min(3, "Topic must be at least 3 characters long."),
   jobDescription: z.string().optional(),
   numQuestions: z.coerce.number().min(1).max(10).default(5),
   difficulty: z.enum(['easy', 'medium', 'hard']).default('medium'),
+  timerPerQuestion: z.coerce.number().min(0).max(300).optional().default(0), // 0 means no timer, max 5 minutes (300s)
 });
 
 type SetupFormData = z.infer<typeof setupSchema>;
@@ -34,11 +36,16 @@ export default function StepSetup({ onSetupComplete, isLoading }: StepSetupProps
       jobDescription: '',
       numQuestions: 5,
       difficulty: 'medium',
+      timerPerQuestion: 0,
     }
   });
 
   const onSubmit = (data: SetupFormData) => {
-    onSetupComplete(data);
+    const config: GenerateMockInterviewQuestionsInput = {
+      ...data,
+      timerPerQuestion: data.timerPerQuestion === 0 ? undefined : data.timerPerQuestion, // Send undefined if timer is 0
+    };
+    onSetupComplete(config);
   };
 
   return (
@@ -64,7 +71,7 @@ export default function StepSetup({ onSetupComplete, isLoading }: StepSetupProps
         <p className="text-xs text-muted-foreground mt-1">Providing a job description helps the AI generate more relevant questions.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div>
           <Label htmlFor="numQuestions">Number of Questions</Label>
           <Controller
@@ -102,6 +109,32 @@ export default function StepSetup({ onSetupComplete, isLoading }: StepSetupProps
               </Select>
             )}
           />
+        </div>
+        <div>
+          <Label htmlFor="timerPerQuestion" className="flex items-center gap-1">
+            <Timer className="h-4 w-4" /> Time per Question (seconds)
+          </Label>
+          <Controller
+            name="timerPerQuestion"
+            control={control}
+            render={({ field }) => (
+              <Select onValueChange={(value) => field.onChange(Number(value))} value={String(field.value)}>
+                <SelectTrigger id="timerPerQuestion">
+                  <SelectValue placeholder="Select duration" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">No Timer</SelectItem>
+                  <SelectItem value="30">30 seconds</SelectItem>
+                  <SelectItem value="60">1 minute</SelectItem>
+                  <SelectItem value="90">1.5 minutes</SelectItem>
+                  <SelectItem value="120">2 minutes</SelectItem>
+                  <SelectItem value="180">3 minutes</SelectItem>
+                  <SelectItem value="300">5 minutes</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+          />
+           {errors.timerPerQuestion && <p className="text-sm text-destructive mt-1">{errors.timerPerQuestion.message}</p>}
         </div>
       </div>
       
