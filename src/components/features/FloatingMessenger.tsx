@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import type React from 'react';
@@ -12,8 +13,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Bot, X, Send } from 'lucide-react';
 import type { SurveyStep, SurveyOption } from '@/types';
 import { cn } from '@/lib/utils';
-import { DegreePrograms, Industries, AreasOfSupport, TimeCommitments, EngagementModes, SupportTypesSought, Genders } from '@/types';
-import { graduationYears } from '@/lib/sample-data';
+import { profileCompletionSurveyDefinition } from '@/lib/sample-data'; // Import the new survey
 
 
 const initialFeedbackSurvey: SurveyStep[] = [
@@ -42,62 +42,11 @@ const initialFeedbackSurvey: SurveyStep[] = [
   { id: 'thank_you', type: 'botMessage', text: 'Thank you for your valuable feedback! We appreciate you taking the time. Have a great day! 😊', isLastStep: true },
 ];
 
-const profileCompletionSurveyDefinition: SurveyStep[] = [
-  // Intro
-  { id: 'pc_intro', type: 'botMessage', text: "Let's complete your profile! This will help us personalize your experience and connect you with better opportunities.", nextStepId: 'pc_s1_start' },
-
-  // Section 1: Personal & Contact Information
-  { id: 'pc_s1_start', type: 'botMessage', text: "First, some personal details.", nextStepId: 'pc_s1_fullName' },
-  { id: 'pc_s1_fullName', type: 'userInput', text: "What's your full name? (Required)", placeholder: "e.g., John Doe", variableName: 'fullName', nextStepId: 'pc_s1_dob' },
-  { id: 'pc_s1_dob', type: 'userInput', text: "What's your date of birth? (YYYY-MM-DD)", placeholder: "YYYY-MM-DD", variableName: 'dateOfBirth', nextStepId: 'pc_s1_gender' },
-  { id: 'pc_s1_gender', type: 'userDropdown', text: "What's your gender?", dropdownOptions: Genders.map(g => ({label: g, value: g})), variableName: 'gender', nextStepId: 'pc_s1_email' },
-  { id: 'pc_s1_email', type: 'userInput', text: "What's your email ID? (Required)", placeholder: "you@example.com", variableName: 'email', nextStepId: 'pc_s1_mobile' },
-  { id: 'pc_s1_mobile', type: 'userInput', text: "What's your mobile number (with country code)?", placeholder: "+1 123 456 7890", variableName: 'mobileNumber', nextStepId: 'pc_s1_address' },
-  { id: 'pc_s1_address', type: 'userInput', text: "What's your current address (City, State, Country)?", placeholder: "San Francisco, CA, USA", inputType: 'textarea', variableName: 'currentAddress', nextStepId: 'pc_s2_start' },
-
-  // Section 2: Academic Information
-  { id: 'pc_s2_start', type: 'botMessage', text: "Great! Now, let's cover your academic background.", nextStepId: 'pc_s2_gradYear' },
-  { id: 'pc_s2_gradYear', type: 'userDropdown', text: "What's your year of graduation/batch?", dropdownOptions: graduationYears.map(y => ({label: y, value: y})), variableName: 'graduationYear', nextStepId: 'pc_s2_degree' },
-  { id: 'pc_s2_degree', type: 'userDropdown', text: "What's your degree/program?", dropdownOptions: DegreePrograms.map(d => ({label: d, value: d})), variableName: 'degreeProgram', nextStepId: 'pc_s2_department' },
-  { id: 'pc_s2_department', type: 'userInput', text: "What's your department?", placeholder: "e.g., Computer Science", variableName: 'department', nextStepId: 'pc_s3_start' },
-
-  // Section 3: Professional Information
-  { id: 'pc_s3_start', type: 'botMessage', text: "Excellent. Let's move on to your professional information.", nextStepId: 'pc_s3_jobTitle' },
-  { id: 'pc_s3_jobTitle', type: 'userInput', text: "What's your current job title?", placeholder: "e.g., Software Engineer", variableName: 'currentJobTitle', nextStepId: 'pc_s3_organization' },
-  { id: 'pc_s3_organization', type: 'userInput', text: "What's your current organization?", placeholder: "e.g., Tech Corp", variableName: 'currentOrganization', nextStepId: 'pc_s3_industry' },
-  { id: 'pc_s3_industry', type: 'userDropdown', text: "What's your industry/sector?", dropdownOptions: Industries.map(i => ({label: i, value: i})), variableName: 'industry', nextStepId: 'pc_s3_workLocation' },
-  { id: 'pc_s3_workLocation', type: 'userInput', text: "What's your work location (City, Country)?", placeholder: "e.g., London, UK", variableName: 'workLocation', nextStepId: 'pc_s3_linkedin' },
-  { id: 'pc_s3_linkedin', type: 'userInput', text: "What's your LinkedIn profile URL? (Optional)", placeholder: "https://linkedin.com/in/yourprofile", variableName: 'linkedInProfile', nextStepId: 'pc_s3_experience' },
-  { id: 'pc_s3_experience', type: 'userInput', text: "How many years of experience do you have?", placeholder: "e.g., 5 or 5+", variableName: 'yearsOfExperience', nextStepId: 'pc_s3_skills_prompt' },
-  { id: 'pc_s3_skills_prompt', type: 'botMessage', text: "What are your key skills or areas of expertise? (Please list them, separated by commas)", nextStepId: 'pc_s3_skills_input' },
-  { id: 'pc_s3_skills_input', type: 'userInput', placeholder: "e.g., React, Python, Data Analysis", inputType: 'textarea', variableName: 'skills', nextStepId: 'pc_s4_start' },
-  
-  // Section 4: Alumni Engagement & Support Interests
-  { id: 'pc_s4_start', type: 'botMessage', text: "Let's talk about alumni engagement.", nextStepId: 'pc_s4_supportAreas_prompt' },
-  { id: 'pc_s4_supportAreas_prompt', type: 'botMessage', text: `Which areas can you support? (Comma-separated from: ${AreasOfSupport.join(', ')})`, nextStepId: 'pc_s4_supportAreas_input' },
-  { id: 'pc_s4_supportAreas_input', type: 'userInput', text: "Your areas of support:", placeholder: "e.g., Mentoring Students, Job Referrals", inputType: 'textarea', variableName: 'areasOfSupport', nextStepId: 'pc_s4_timeCommitment' },
-  { id: 'pc_s4_timeCommitment', type: 'userDropdown', text: "How much time are you willing to commit per month?", dropdownOptions: TimeCommitments.map(tc => ({label: tc, value: tc})), variableName: 'timeCommitment', nextStepId: 'pc_s4_engagementMode' },
-  { id: 'pc_s4_engagementMode', type: 'userDropdown', text: "What's your preferred mode of engagement?", dropdownOptions: EngagementModes.map(em => ({label: em, value: em})), variableName: 'preferredEngagementMode', nextStepId: 'pc_s4_otherComments' },
-  { id: 'pc_s4_otherComments', type: 'userInput', text: "Any other comments or notes regarding engagement? (Optional)", inputType: 'textarea', variableName: 'otherComments', nextStepId: 'pc_s5_start' },
-
-  // Section 5: Help You’re Looking For (Optional)
-  { id: 'pc_s5_start', type: 'botMessage', text: "Now, optionally, tell us if you're looking for any specific support.", nextStepId: 'pc_s5_supportType' },
-  { id: 'pc_s5_supportType', type: 'userDropdown', text: "What type of support are you looking for? (Optional)", dropdownOptions: [{label: "Not looking for support now", value: "none"}, ...SupportTypesSought.map(st => ({label: st, value: st}))], variableName: 'lookingForSupportType', nextStepId: 'pc_s5_helpNeeded' },
-  { id: 'pc_s5_helpNeeded', type: 'userInput', text: "Briefly describe the help you need. (Optional, if you selected a support type)", inputType: 'textarea', variableName: 'helpNeededDescription', nextStepId: 'pc_s6_start' },
-
-  // Section 6: Visibility & Consent
-  { id: 'pc_s6_start', type: 'botMessage', text: "Almost done! Just a couple of consent questions.", nextStepId: 'pc_s6_shareProfile' },
-  { id: 'pc_s6_shareProfile', type: 'userOptions', text: "Can we share your profile with other alumni for relevant collaboration?", options: [{text: 'Yes', value: 'true'}, {text: 'No', value: 'false'}], variableName: 'shareProfileConsent', nextStepId: 'pc_s6_featureSpotlight' },
-  { id: 'pc_s6_featureSpotlight', type: 'userOptions', text: "Can we feature you on the alumni dashboard or spotlight?", options: [{text: 'Yes', value: 'true'}, {text: 'No', value: 'false'}], variableName: 'featureInSpotlightConsent', nextStepId: 'pc_end' },
-
-  // End
-  { id: 'pc_end', type: 'botMessage', text: "Thank you for completing your profile information! Your profile is now more discoverable. 🎉", isLastStep: true },
-];
 
 // A map of available survey definitions
 const surveyDefinitions: Record<string, SurveyStep[]> = {
   initialFeedbackSurvey: initialFeedbackSurvey,
-  profileCompletionSurvey: profileCompletionSurveyDefinition,
+  profileCompletionSurvey: profileCompletionSurveyDefinition, // Add the new survey
 };
 
 // Default survey if no specific survey is chosen or found
@@ -132,17 +81,18 @@ export default function FloatingMessenger() {
   // Effect to load and potentially start the survey when messenger opens or active survey changes
   useEffect(() => {
     if (isOpen) {
-      const firstStep = currentSurveyDefinition[0];
+      const surveyToLoad = surveyDefinitions[activeSurveyId] || surveyDefinitions[defaultSurveyId];
+      const firstStep = surveyToLoad[0];
       if (firstStep) {
         // Only reset and start if messages are empty (new session) or survey changed
-        if (messages.length === 0 || currentStepId !== firstStep.id) {
-          resetSurvey(activeSurveyId); // Pass active survey ID to reset
+        if (messages.length === 0 || (currentSurveyStep && currentSurveyStep.id !== firstStep.id && !currentSurveyDefinition.some(s => s.id === currentSurveyStep.id) )) {
+          resetSurvey(activeSurveyId); 
         }
       } else {
         setCurrentStepId(null); // No steps in current survey
       }
     }
-  }, [isOpen, activeSurveyId, currentSurveyDefinition]); // Rerun if activeSurveyId changes
+  }, [isOpen, activeSurveyId]); // Rerun if activeSurveyId changes
 
 
   const addMessage = (type: 'bot' | 'user', content: React.ReactNode) => {
@@ -195,9 +145,9 @@ export default function FloatingMessenger() {
   };
   
   const handleDropdownChange = (value: string) => {
-    if (!currentSurveyStep || (currentSurveyStep.type !== 'userDropdown' && currentSurveyStep.type !== 'userOptions' )) return; // Also handle userOptions if they were to use Select
+    if (!currentSurveyStep || (currentSurveyStep.type !== 'userDropdown' && currentSurveyStep.type !== 'userOptions' )) return; 
     
-    let selectedLabel = value; // Default to value if label not found
+    let selectedLabel = value; 
     if(currentSurveyStep.type === 'userDropdown' && currentSurveyStep.dropdownOptions) {
         selectedLabel = currentSurveyStep.dropdownOptions?.find(opt => opt.value === value)?.label || value;
     } else if (currentSurveyStep.type === 'userOptions' && currentSurveyStep.options) {
@@ -228,33 +178,38 @@ export default function FloatingMessenger() {
     setSurveyData({});
     setInputValue('');
     messageIdCounter.current = 0;
-    setActiveSurveyId(surveyIdToLoad); // Set the survey to load
-
+    
     const surveyToStart = surveyDefinitions[surveyIdToLoad] || surveyDefinitions[defaultSurveyId];
+    setActiveSurveyId(surveyIdToLoad); // Set the active survey ID *before* processing the first step
+
     const firstStep = surveyToStart[0];
 
     if (firstStep) {
        setCurrentStepId(firstStep.id);
-       // If the first step is a bot message, process it to display it.
-       // Otherwise, currentStepId is set, and UI will render the user interaction.
        if(firstStep.type === 'botMessage') {
          processStep(firstStep);
-       } else if (firstStep.text) { // For non-botMessage steps that have introductory text
+       } else if (firstStep.text) { 
          addMessage('bot', firstStep.text);
        }
     } else {
-       setCurrentStepId(null); // No steps in the survey
+       setCurrentStepId(null); 
     }
   };
 
-  // This effect is to potentially listen to an external trigger to change the active survey
-  // For now, it's not used but good for future global state management of active survey.
+  // Effect to listen for admin-driven survey changes (simulated)
   useEffect(() => {
-    // const externallySetSurveyId = ...; // Get from global state / props / context
-    // if (externallySetSurveyId && externallySetSurveyId !== activeSurveyId) {
-    //   resetSurvey(externallySetSurveyId);
-    // }
-  }, [/* externallySetSurveyId */]);
+    const handleAdminSurveyChange = (event: Event) => {
+        const customEvent = event as CustomEvent<string>;
+        if (customEvent.detail && customEvent.detail !== activeSurveyId) {
+            setIsOpen(true); // Open messenger if not already
+            resetSurvey(customEvent.detail);
+        }
+    };
+    window.addEventListener('changeActiveSurvey', handleAdminSurveyChange);
+    return () => {
+        window.removeEventListener('changeActiveSurvey', handleAdminSurveyChange);
+    };
+  }, [activeSurveyId]);
 
 
   if (!isOpen) {
@@ -264,7 +219,6 @@ export default function FloatingMessenger() {
         size="icon"
         onClick={() => {
             setIsOpen(true);
-            // resetSurvey will be called by the useEffect hook based on isOpen and activeSurveyId
         }}
       >
         <Bot className="h-7 w-7 text-primary-foreground" />
@@ -348,10 +302,6 @@ export default function FloatingMessenger() {
            {!currentSurveyStep && messages.length > 0 && ( 
              <div className="flex flex-col items-center w-full space-y-2">
                 <Button variant="outline" size="sm" onClick={() => resetSurvey(activeSurveyId)} className="w-full">Restart Current Survey</Button>
-                {/* Example to switch survey, can be tied to admin page later */}
-                {/* <Button variant="outline" size="sm" onClick={() => resetSurvey(activeSurveyId === 'initialFeedbackSurvey' ? 'profileCompletionSurvey' : 'initialFeedbackSurvey')} className="w-full">
-                    Switch to {activeSurveyId === 'initialFeedbackSurvey' ? 'Profile Survey' : 'Feedback Survey'}
-                </Button> */}
                 <Button size="sm" onClick={() => setIsOpen(false)} className="w-full bg-primary hover:bg-primary/90">Close</Button>
              </div>
            )}
@@ -360,3 +310,4 @@ export default function FloatingMessenger() {
     </div>
   );
 }
+

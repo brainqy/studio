@@ -1,7 +1,8 @@
 
+
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -9,29 +10,40 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BotMessageSquare, Eye, PlusCircle, Edit3, AlertTriangle, UserCheck, ShieldAlert, ListFilter, BarChart3, CheckSquare, Users } from "lucide-react"; // Added BarChart3, CheckSquare, Users
+import { BotMessageSquare, Eye, PlusCircle, Edit3, AlertTriangle, UserCheck, ShieldAlert, ListFilter, BarChart3, CheckSquare, Users, Info, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import type { SurveyResponse } from "@/types";
-import { sampleSurveyResponses, sampleUserProfile } from "@/lib/sample-data";
+import type { SurveyResponse, SurveyStep } from "@/types";
+import { sampleSurveyResponses, sampleUserProfile, profileCompletionSurveyDefinition } from "@/lib/sample-data";
 import { format } from "date-fns";
 import Link from "next/link";
 import { Textarea } from "@/components/ui/textarea";
+import { ScrollArea } from "@/components/ui/scroll-area";
+
+interface SurveyDefinitionListItem {
+  id: string;
+  name: string;
+  description?: string;
+  steps?: SurveyStep[]; // For storing created survey steps
+}
 
 // Mock survey definitions for selection
-const mockSurveyDefinitions = [
-    { id: 'initialFeedbackSurvey', name: 'Initial User Feedback' },
-    { id: 'profileCompletionSurvey', name: 'Profile Completion Survey' }, // Added new survey
-    // { id: 'featureUsageSurvey', name: 'New Feature Usage Feedback' }, // Can add more predefined surveys here
+const initialSurveyDefinitions: SurveyDefinitionListItem[] = [
+    { id: 'initialFeedbackSurvey', name: 'Initial User Feedback', description: 'Gather first impressions from users.', steps: [] /* Loaded by FloatingMessenger from its own const */ },
+    { id: 'profileCompletionSurvey', name: 'Profile Completion Survey', description: 'Guide users to complete their profile.', steps: profileCompletionSurveyDefinition },
 ];
 
 export default function MessengerManagementPage() {
+  const [surveyDefinitionsState, setSurveyDefinitionsState] = useState<SurveyDefinitionListItem[]>(initialSurveyDefinitions);
   const [surveyResponses, setSurveyResponses] = useState<SurveyResponse[]>(sampleSurveyResponses);
   const [selectedResponse, setSelectedResponse] = useState<SurveyResponse | null>(null);
   const [isResponseDetailOpen, setIsResponseDetailOpen] = useState(false);
   const [isCreateSurveyOpen, setIsCreateSurveyOpen] = useState(false);
-  const [activeSurveyId, setActiveSurveyId] = useState<string>(mockSurveyDefinitions[0].id);
+  const [activeSurveyId, setActiveSurveyId] = useState<string>(initialSurveyDefinitions[0].id);
+  
+  // State for new survey dialog
   const [newSurveyName, setNewSurveyName] = useState('');
   const [newSurveyDescription, setNewSurveyDescription] = useState('');
+  const [newSurveySteps, setNewSurveySteps] = useState<SurveyStep[]>([]); // For building steps in dialog
 
   const { toast } = useToast();
 
@@ -48,6 +60,14 @@ export default function MessengerManagementPage() {
         </div>
     );
   }
+  
+  // Dispatch event when activeSurveyId changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('changeActiveSurvey', { detail: activeSurveyId }));
+    }
+  }, [activeSurveyId]);
+
 
   const handleViewDetails = (response: SurveyResponse) => {
     setSelectedResponse(response);
@@ -59,29 +79,49 @@ export default function MessengerManagementPage() {
         toast({ title: "Error", description: "Survey name cannot be empty.", variant: "destructive" });
         return;
     }
-    // Mock creation - In a real app, this would save to a backend and potentially involve more complex step definition UI
-    const newSurvey = { id: `survey-${Date.now()}`, name: newSurveyName, description: newSurveyDescription, steps: [] /* Mock empty steps */ };
-    mockSurveyDefinitions.push({id: newSurvey.id, name: newSurvey.name}); // Add to local list for selection
-    toast({ title: "Survey Created (Mock)", description: `Survey "${newSurveyName}" has been added. Full step definition UI is conceptual.` });
+    const newSurvey: SurveyDefinitionListItem = { 
+      id: `survey-${Date.now()}`, 
+      name: newSurveyName, 
+      description: newSurveyDescription, 
+      steps: newSurveySteps // For now, steps are built in a conceptual way in dialog
+    };
+    
+    setSurveyDefinitionsState(prev => [...prev, newSurvey]);
+    toast({ title: "Survey Created (Conceptual)", description: `Survey "${newSurveyName}" has been added to the list. Full step definition and live deployment requires further development.` });
+    
     setNewSurveyName('');
     setNewSurveyDescription('');
+    setNewSurveySteps([]);
     setIsCreateSurveyOpen(false);
   };
   
   const incompleteProfileUsers = useMemo(() => {
-    // This logic would need to be more sophisticated if based on the new detailed profile survey
     return surveyResponses
         .filter(sr => sr.surveyId === 'initialFeedbackSurvey' && sr.data.experience === 'needs_improvement') 
         .map(sr => ({ id: sr.userId, name: sr.userName, reason: "Indicated 'Needs Improvement' in feedback" }))
         .slice(0, 5); 
   }, [surveyResponses]);
 
-  // Statistics Calculation
   const totalResponses = surveyResponses.length;
-  const totalSurveysDeployed = mockSurveyDefinitions.length;
-  const usersFlaggedForIncompleteProfile = incompleteProfileUsers.length; // This remains tied to the old survey for now
+  const totalSurveysDeployed = surveyDefinitionsState.length;
+  const usersFlaggedForIncompleteProfile = incompleteProfileUsers.length;
   const positiveFeedbackCount = surveyResponses.filter(sr => sr.surveyId === 'initialFeedbackSurvey' && sr.data.experience === 'amazing').length;
 
+
+  // Conceptual: Functions to manage steps within the "Create New Survey" dialog
+  const addStepToNewSurvey = (type: SurveyStep['type']) => {
+    const newStep: SurveyStep = {
+      id: `step-${newSurveySteps.length + 1}`,
+      type: type,
+      text: type === 'botMessage' ? 'New Bot Message' : 'New Question',
+      variableName: `var${newSurveySteps.length + 1}`,
+      nextStepId: `step-${newSurveySteps.length + 2}`, // conceptual next
+    };
+    if (type === 'userOptions') newStep.options = [{ text: 'Option 1', value: 'opt1' }];
+    if (type === 'userDropdown') newStep.dropdownOptions = [{ label: 'Option 1', value: 'opt1' }];
+    setNewSurveySteps(prev => [...prev, newStep]);
+  };
+  // Further functions to edit/remove steps in dialog would be needed for full UI
 
   return (
     <div className="space-y-8">
@@ -90,7 +130,6 @@ export default function MessengerManagementPage() {
       </h1>
       <CardDescription>Oversee automated messenger interactions, manage surveys, and analyze user feedback.</CardDescription>
 
-      {/* Statistics Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card className="shadow-md">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -109,12 +148,12 @@ export default function MessengerManagementPage() {
             </CardHeader>
             <CardContent>
                 <div className="text-2xl font-bold">{totalSurveysDeployed}</div>
-                <p className="text-xs text-muted-foreground">Predefined & custom</p>
+                <p className="text-xs text-muted-foreground">Defined surveys</p>
             </CardContent>
         </Card>
          <Card className="shadow-md">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Positive Feedback (Initial Survey)</CardTitle>
+                <CardTitle className="text-sm font-medium">Positive Feedback (Initial)</CardTitle>
                 <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -124,19 +163,18 @@ export default function MessengerManagementPage() {
         </Card>
         <Card className="shadow-md">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Profile Nudges (Initial Survey)</CardTitle>
+                <CardTitle className="text-sm font-medium">Profile Nudges (Initial)</CardTitle>
                 <BarChart3 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
                 <div className="text-2xl font-bold">{usersFlaggedForIncompleteProfile}</div>
-                <p className="text-xs text-muted-foreground">Based on 'needs improvement' feedback</p>
+                <p className="text-xs text-muted-foreground">Based on 'needs improvement'</p>
             </CardContent>
         </Card>
       </div>
 
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Survey Configuration Card */}
         <Card className="shadow-lg lg:col-span-1">
           <CardHeader>
             <CardTitle>Survey Configuration</CardTitle>
@@ -150,7 +188,7 @@ export default function MessengerManagementPage() {
                   <SelectValue placeholder="Select a survey to activate" />
                 </SelectTrigger>
                 <SelectContent>
-                  {mockSurveyDefinitions.map(survey => (
+                  {surveyDefinitionsState.map(survey => (
                     <SelectItem key={survey.id} value={survey.id}>{survey.name}</SelectItem>
                   ))}
                 </SelectContent>
@@ -160,15 +198,16 @@ export default function MessengerManagementPage() {
             <Dialog open={isCreateSurveyOpen} onOpenChange={setIsCreateSurveyOpen}>
               <DialogTrigger asChild>
                 <Button variant="outline" className="w-full">
-                  <PlusCircle className="mr-2 h-4 w-4" /> Create New Survey (Mock UI)
+                  <PlusCircle className="mr-2 h-4 w-4" /> Create New Survey
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="sm:max-w-2xl"> {/* Increased width */}
                 <DialogHeader>
-                  <DialogTitle>Create New Survey</DialogTitle>
-                  <CardDescription>Define a new survey. (Full step definition UI is conceptual for this demo)</CardDescription>
+                  <DialogTitle className="text-xl">Create New Survey</DialogTitle>
+                  <CardDescription>Define a new survey with its steps.</CardDescription>
                 </DialogHeader>
-                <div className="space-y-4 py-4">
+                <ScrollArea className="max-h-[70vh] p-1">
+                <div className="space-y-4 py-4 pr-4">
                   <div>
                     <Label htmlFor="new-survey-name">Survey Name</Label>
                     <Input id="new-survey-name" value={newSurveyName} onChange={(e) => setNewSurveyName(e.target.value)} />
@@ -177,18 +216,61 @@ export default function MessengerManagementPage() {
                     <Label htmlFor="new-survey-desc">Survey Description (Optional)</Label>
                     <Textarea id="new-survey-desc" value={newSurveyDescription} onChange={(e) => setNewSurveyDescription(e.target.value)} />
                   </div>
-                   <p className="text-sm text-muted-foreground">In a full implementation, this dialog would allow adding/editing survey steps with types (bot message, user input, options, etc.), branching logic, and variable names for data collection.</p>
+                  
+                  <div className="border-t pt-4 mt-4">
+                    <h3 className="text-lg font-medium mb-2">Survey Steps (Conceptual)</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      This section demonstrates how survey steps would be defined. For a full implementation, you'd add UI controls to dynamically add, edit, and reorder steps, choosing types like 'Bot Message', 'User Options', 'User Input', or 'Dropdown', and configuring their respective properties (text, options, variable names, next steps, etc.). The 'Profile Completion Survey' provides a comprehensive example of such a structure.
+                    </p>
+                    <Card className="bg-secondary/50 p-4">
+                      <CardTitle className="text-md mb-2 flex items-center gap-2"><FileText className="h-4 w-4"/>Example Step Structure:</CardTitle>
+                      <pre className="text-xs bg-muted p-2 rounded-sm overflow-x-auto">
+                        {`
+{ 
+  id: 'unique_step_id', 
+  type: 'botMessage' | 'userOptions' | 'userInput' | 'userDropdown',
+  text: 'Your question or bot message here', 
+  // For userOptions:
+  options: [{ text: 'Option Text', value: 'option_value', nextStepId: 'next_id' }],
+  // For userDropdown:
+  dropdownOptions: [{ label: 'Option Label', value: 'option_value' }],
+  // For userInput:
+  placeholder: 'Placeholder text',
+  inputType: 'text' | 'textarea' | 'date' | ...,
+  variableName: 'data_key_for_answer',
+  nextStepId: 'default_next_step_id_after_input_or_dropdown',
+  isLastStep: false 
+}`}
+                      </pre>
+                    </Card>
+                    <div className="mt-4">
+                        <Button type="button" variant="outline" onClick={() => addStepToNewSurvey('botMessage')} className="mr-2"><PlusCircle className="mr-1 h-4 w-4"/> Add Bot Message</Button>
+                        <Button type="button" variant="outline" onClick={() => addStepToNewSurvey('userInput')}><PlusCircle className="mr-1 h-4 w-4"/> Add User Input</Button>
+                        {/* Add more buttons for other step types */}
+                    </div>
+                    {newSurveySteps.length > 0 && (
+                        <div className="mt-4 space-y-2">
+                            <h4 className="font-medium">Current Steps:</h4>
+                            {newSurveySteps.map((step, index) => (
+                                <div key={index} className="p-2 border rounded-md text-xs">
+                                    <p><strong>ID:</strong> {step.id}, <strong>Type:</strong> {step.type}</p>
+                                    <p><strong>Text:</strong> {step.text?.substring(0,50)}...</p>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                  </div>
                 </div>
+                </ScrollArea>
                 <DialogFooter>
                   <DialogClose asChild><Button variant="ghost">Cancel</Button></DialogClose>
-                  <Button onClick={handleCreateNewSurvey}>Create Survey Shell</Button>
+                  <Button onClick={handleCreateNewSurvey}>Create Survey Entry</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
           </CardContent>
         </Card>
         
-        {/* Potentially Incomplete Profiles Card (Based on old survey logic for now) */}
         <Card className="shadow-lg lg:col-span-2">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2"><ListFilter className="h-5 w-5"/>Profile Completion Insights (Conceptual)</CardTitle>
@@ -217,7 +299,6 @@ export default function MessengerManagementPage() {
         </Card>
       </div>
 
-      {/* Survey Responses Table */}
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle>Survey Responses</CardTitle>
@@ -241,12 +322,12 @@ export default function MessengerManagementPage() {
                 {surveyResponses.map((response) => (
                   <TableRow key={response.id}>
                     <TableCell className="font-medium">{response.userName} <span className="text-xs text-muted-foreground">({response.userId})</span></TableCell>
-                    <TableCell>{response.surveyName}</TableCell>
+                    <TableCell>{surveyDefinitionsState.find(sds => sds.id === response.surveyId)?.name || response.surveyName}</TableCell>
                     <TableCell>{format(new Date(response.responseDate), 'PPp')}</TableCell>
                     <TableCell className="max-w-xs truncate">
                       {Object.entries(response.data)
                              .map(([key, value]) => `${key.replace(/_/g, ' ')}: ${value}`)
-                             .slice(0,2) // Show first 2 key-value pairs
+                             .slice(0,2) 
                              .join('; ') || 'N/A'}...
                     </TableCell>
                     <TableCell className="text-right">
@@ -262,7 +343,6 @@ export default function MessengerManagementPage() {
         </CardContent>
       </Card>
 
-      {/* Response Detail Dialog */}
       <Dialog open={isResponseDetailOpen} onOpenChange={setIsResponseDetailOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -270,7 +350,7 @@ export default function MessengerManagementPage() {
             {selectedResponse && (
               <CardDescription>
                 From: {selectedResponse.userName} ({selectedResponse.userId}) <br/>
-                Survey: {selectedResponse.surveyName} <br/>
+                Survey: {surveyDefinitionsState.find(sds => sds.id === selectedResponse.surveyId)?.name || selectedResponse.surveyName} <br/>
                 Date: {format(new Date(selectedResponse.responseDate), 'PPp')}
               </CardDescription>
             )}
@@ -290,3 +370,4 @@ export default function MessengerManagementPage() {
     </div>
   );
 }
+
