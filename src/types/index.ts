@@ -441,7 +441,7 @@ export interface ResumeTemplate {
   previewImageUrl: string;
   category: string; 
   dataAiHint?: string;
-  content: string; // Added to store the actual template text
+  content: string; 
 }
 
 export interface RecentPageItem {
@@ -453,5 +453,63 @@ export interface RecentPageItem {
 export interface TourStep {
   title: string;
   description: string;
-  targetId?: string; // For future use with highlighting specific elements
+  targetId?: string; 
 }
+
+// Resume Builder Types
+export interface ResumeHeaderData {
+  fullName: string;
+  phone: string;
+  email: string;
+  linkedin: string;
+  portfolio?: string;
+  address?: string;
+}
+
+export interface ResumeExperienceEntry {
+  id: string;
+  jobTitle: string;
+  company: string;
+  location: string;
+  startDate: string;
+  endDate: string;
+  isCurrent?: boolean;
+  responsibilities: string; // Changed to string for simplicity, can be split by newlines
+}
+
+export interface ResumeEducationEntry {
+  id: string;
+  degree: string;
+  major?: string;
+  university: string;
+  location: string;
+  graduationYear: string;
+  details?: string; // Changed to string
+}
+
+export interface ResumeBuilderData {
+  header: ResumeHeaderData;
+  experience: ResumeExperienceEntry[];
+  education: ResumeEducationEntry[];
+  skills: string[];
+  summary: string;
+  additionalDetails?: {
+    awards?: string;
+    certifications?: string;
+    languages?: string;
+    interests?: string;
+  };
+  templateId: string; // To know which template to use for preview
+}
+
+export type ResumeBuilderStep = 'header' | 'experience' | 'education' | 'skills' | 'summary' | 'additional-details' | 'finalize';
+
+export const RESUME_BUILDER_STEPS: { id: ResumeBuilderStep; title: string }[] = [
+  { id: 'header', title: 'Header' },
+  { id: 'experience', title: 'Experience' },
+  { id: 'education', title: 'Education' },
+  { id: 'skills', title: 'Skills' },
+  { id: 'summary', title: 'Summary' },
+  { id: 'additional-details', title: 'Additional Details' },
+  { id: 'finalize', title: 'Finalize' },
+];

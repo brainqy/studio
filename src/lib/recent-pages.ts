@@ -48,6 +48,7 @@ const PATH_LABEL_MAP: Record<string, string> = {
   '/ai-resume-writer': 'AI Resume Writer',
   '/cover-letter-generator': 'Cover Letter Generator',
   '/my-resumes': 'My Resumes',
+  '/resume-builder': 'Resume Builder',
   '/resume-templates': 'Resume Templates',
   '/job-tracker': 'Job Tracker',
   '/alumni-connect': 'Alumni Directory',
