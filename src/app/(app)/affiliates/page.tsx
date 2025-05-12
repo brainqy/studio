@@ -1,29 +1,46 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Target, Copy, Share2, Users, CheckCircle, LinkIcon, DollarSign, BarChart3, CalendarDays } from "lucide-react";
+import { Target, Copy, Share2, Users, CheckCircle, LinkIcon, DollarSign, BarChart3, CalendarDays, Gift, ThumbsUp, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { sampleUserProfile, sampleUserAffiliateProfile, sampleAffiliateClicks, sampleAffiliateSignups } from "@/lib/sample-data";
-import type { Affiliate, AffiliateClick, AffiliateSignup } from "@/types";
+import { sampleUserProfile, sampleAffiliates, sampleAffiliateClicks, sampleAffiliateSignups } from "@/lib/sample-data";
+import type { Affiliate, AffiliateClick, AffiliateSignup, AffiliateStatus } from "@/types";
 import { format } from "date-fns";
+import Link from "next/link";
 
 export default function AffiliatesPage() {
   const { toast } = useToast();
   const user = sampleUserProfile;
-  const affiliateProfile = sampleUserAffiliateProfile; // Assuming current user is an affiliate
-  const affiliateLink = `https://resumematch.ai/join?aff=${affiliateProfile.affiliateCode}`;
+  const [userAffiliateProfile, setUserAffiliateProfile] = useState<Affiliate | null>(null);
+  const [userSignups, setUserSignups] = useState<AffiliateSignup[]>([]);
+  const [userClicks, setUserClicks] = useState<AffiliateClick[]>([]);
 
-  // Mocked data based on samples
-  const totalClicks = sampleAffiliateClicks.length;
-  const totalSignups = sampleAffiliateSignups.length;
+  useEffect(() => {
+    // Find if the current user is an affiliate
+    const affiliateData = sampleAffiliates.find(aff => aff.userId === user.id);
+    setUserAffiliateProfile(affiliateData || null);
+
+    if (affiliateData) {
+      setUserSignups(sampleAffiliateSignups.filter(s => s.affiliateId === affiliateData.id));
+      setUserClicks(sampleAffiliateClicks.filter(c => c.affiliateId === affiliateData.id));
+    }
+  }, [user.id]);
+
+  const affiliateLink = userAffiliateProfile ? `https://resumematch.ai/join?aff=${userAffiliateProfile.affiliateCode}` : '';
+
+  const totalClicks = userClicks.length;
+  const totalSignups = userSignups.length;
+  const totalEarned = userSignups.reduce((sum, signup) => sum + (signup.commissionEarned || 0), 0);
+
 
   const copyToClipboard = (text: string) => {
+    if (!text) return;
     navigator.clipboard.writeText(text).then(() => {
       toast({ title: "Copied to Clipboard", description: "Affiliate code/link copied!" });
     }).catch(err => {
@@ -33,6 +50,7 @@ export default function AffiliatesPage() {
   };
 
   const handleShare = () => {
+    if (!affiliateLink) return;
      if (navigator.share) {
       navigator.share({
         title: 'Supercharge Your Career with ResumeMatch AI!',
@@ -47,6 +65,95 @@ export default function AffiliatesPage() {
     }
   };
 
+  const handleBecomeAffiliate = () => {
+    // Mock application / joining process
+    const existingAffiliate = sampleAffiliates.find(a => a.userId === user.id);
+    if (existingAffiliate) {
+        toast({title: "Already an Affiliate", description: `Your status is: ${existingAffiliate.status}`});
+        return;
+    }
+    
+    const newAffiliateApplication: Affiliate = {
+        id: user.id,
+        userId: user.id,
+        name: user.name,
+        email: user.email,
+        status: 'pending' as AffiliateStatus,
+        affiliateCode: `TEMP${Date.now().toString().slice(-5)}`, // Temp code
+        commissionRate: 0.10, // Default rate
+        totalEarned: 0,
+        createdAt: new Date().toISOString(),
+    };
+    sampleAffiliates.push(newAffiliateApplication); // Add to global sample list for admin to see
+    setUserAffiliateProfile(newAffiliateApplication); // Update local state for immediate UI change
+    toast({ title: "Affiliate Application Submitted", description: "Your application is pending approval. You will be notified once reviewed."});
+  };
+
+
+  if (!userAffiliateProfile) {
+    return (
+        <div className="space-y-8 max-w-2xl mx-auto text-center py-10">
+            <Card className="shadow-lg">
+                <CardHeader>
+                    <CardTitle className="text-3xl font-bold tracking-tight text-foreground flex items-center justify-center gap-2">
+                       <Gift className="h-8 w-8" /> Join Our Affiliate Program!
+                    </CardTitle>
+                    <CardDescription className="mt-2">Partner with ResumeMatch AI, share with your network, and earn commissions.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                     <p className="text-muted-foreground mb-6">
+                        Ready to earn by promoting a tool you love? Click below to apply to our affiliate program.
+                     </p>
+                     <Button onClick={handleBecomeAffiliate} size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                        <ThumbsUp className="mr-2 h-5 w-5" /> Become an Affiliate
+                     </Button>
+                </CardContent>
+            </Card>
+        </div>
+    );
+  }
+
+  if (userAffiliateProfile.status === 'pending') {
+    return (
+        <div className="space-y-8 max-w-2xl mx-auto text-center py-10">
+            <Card className="shadow-lg">
+                <CardHeader>
+                    <CardTitle className="text-3xl font-bold tracking-tight text-foreground flex items-center justify-center gap-2">
+                       <Info className="h-8 w-8 text-yellow-500" /> Affiliate Application Pending
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                     <p className="text-muted-foreground">
+                        Thank you for applying! Your affiliate application is currently under review. We'll notify you once it's processed.
+                     </p>
+                </CardContent>
+            </Card>
+        </div>
+    );
+  }
+
+  if (userAffiliateProfile.status === 'rejected') {
+     return (
+        <div className="space-y-8 max-w-2xl mx-auto text-center py-10">
+            <Card className="shadow-lg">
+                <CardHeader>
+                    <CardTitle className="text-3xl font-bold tracking-tight text-foreground flex items-center justify-center gap-2">
+                       <Info className="h-8 w-8 text-red-500" /> Affiliate Application Status
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                     <p className="text-muted-foreground">
+                        We appreciate your interest, but unfortunately, your affiliate application was not approved at this time.
+                     </p>
+                     <p className="text-xs text-muted-foreground mt-2">If you have questions, please contact support.</p>
+                </CardContent>
+            </Card>
+        </div>
+    );
+  }
+
+
+  // User is an approved affiliate
   return (
     <div className="space-y-8 max-w-4xl mx-auto">
       <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
@@ -63,8 +170,8 @@ export default function AffiliatesPage() {
           <div>
             <Label htmlFor="affiliate-code">Your Unique Affiliate Code</Label>
             <div className="flex items-center space-x-2">
-              <Input id="affiliate-code" value={affiliateProfile.affiliateCode} readOnly className="font-mono"/>
-              <Button variant="outline" size="icon" onClick={() => copyToClipboard(affiliateProfile.affiliateCode)}>
+              <Input id="affiliate-code" value={userAffiliateProfile.affiliateCode} readOnly className="font-mono"/>
+              <Button variant="outline" size="icon" onClick={() => copyToClipboard(userAffiliateProfile.affiliateCode)}>
                 <Copy className="h-4 w-4" />
               </Button>
             </div>
@@ -79,7 +186,7 @@ export default function AffiliatesPage() {
             </div>
           </div>
            <p className="text-sm text-muted-foreground">
-            Commission Rate: <span className="font-semibold text-primary">{(affiliateProfile.commissionRate * 100).toFixed(0)}%</span>
+            Commission Rate: <span className="font-semibold text-primary">{(userAffiliateProfile.commissionRate * 100).toFixed(0)}%</span>
           </p>
         </CardContent>
          <CardFooter className="flex justify-end">
@@ -107,7 +214,7 @@ export default function AffiliatesPage() {
             </div>
             <div className="p-4 border rounded-lg">
                 <DollarSign className="h-8 w-8 text-yellow-500 mx-auto mb-2"/>
-                <p className="text-2xl font-bold">${affiliateProfile.totalEarned.toFixed(2)}</p>
+                <p className="text-2xl font-bold">${totalEarned.toFixed(2)}</p>
                 <p className="text-sm text-muted-foreground">Total Earned</p>
             </div>
         </CardContent>
@@ -118,7 +225,7 @@ export default function AffiliatesPage() {
           <CardTitle>Recent Signups via Your Link</CardTitle>
         </CardHeader>
         <CardContent>
-          {sampleAffiliateSignups.length === 0 ? (
+          {userSignups.length === 0 ? (
             <p className="text-center text-muted-foreground py-4">No signups through your affiliate link yet.</p>
           ) : (
             <Table>
@@ -130,7 +237,7 @@ export default function AffiliatesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sampleAffiliateSignups.map((signup) => (
+                {userSignups.map((signup) => (
                   <TableRow key={signup.id}>
                     <TableCell className="font-medium">User...{signup.newUserId.slice(-4)}</TableCell>
                     <TableCell>{format(new Date(signup.signupDate), 'PP')}</TableCell>

@@ -2,7 +2,8 @@
 
 
 
-import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem, Appointment, Wallet, ResumeProfile, Tenant, Badge, BlogPost, ReferralHistoryItem, GamificationRule, UserStatus, SurveyResponse, Affiliate, AffiliateClick, AffiliateSignup } from '@/types';
+
+import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem, Appointment, Wallet, ResumeProfile, Tenant, Badge, BlogPost, ReferralHistoryItem, GamificationRule, UserStatus, SurveyResponse, Affiliate, AffiliateClick, AffiliateSignup, AffiliateStatus } from '@/types';
 import { AreasOfSupport, AppointmentStatuses } from '@/types'; // Import AppointmentStatuses
 
 const SAMPLE_TENANT_ID = 'tenant-1'; // Define a default tenant ID for sample data
@@ -190,6 +191,7 @@ export const sampleUserProfile: UserProfile = {
   weeklyActivity: [false, false, true, true, true, true, true],
   referralCode: 'ADMINREF123',
   earnedBadges: ['admin-master', 'profile-pro', 'early-adopter'],
+  affiliateCode: 'AFFADMIN001', // Added affiliate code
 };
 
 // Sample platform users for user management page
@@ -463,24 +465,66 @@ export const sampleSurveyResponses: SurveyResponse[] = [
 ];
 
 // Sample Affiliate Data
-export const sampleUserAffiliateProfile: Affiliate = {
-  id: 'currentUser', // Should match sampleUserProfile.id if current user is an affiliate
-  userId: 'currentUser',
-  affiliateCode: 'AFFILIATE123', // Ensure sampleUserProfile also has this if it needs to display it.
-  commissionRate: 0.15, // 15%
-  totalEarned: 125.50,
-  createdAt: new Date(Date.now() - 86400000 * 30).toISOString(), // 30 days ago
-};
+export const sampleAffiliates: Affiliate[] = [
+  {
+    id: 'currentUser', // Assuming sampleUserProfile is an affiliate
+    userId: 'currentUser',
+    name: sampleUserProfile.name,
+    email: sampleUserProfile.email,
+    status: 'approved' as AffiliateStatus,
+    affiliateCode: sampleUserProfile.affiliateCode || 'AFFADMIN001',
+    commissionRate: 0.15,
+    totalEarned: 125.50, // This could be calculated sum of their signups
+    createdAt: new Date(Date.now() - 86400000 * 30).toISOString(),
+  },
+  {
+    id: 'alumni1', // Alice Wonderland
+    userId: 'alumni1',
+    name: 'Alice Wonderland',
+    email: 'alice.wonderland@example.com',
+    status: 'approved' as AffiliateStatus,
+    affiliateCode: 'ALICEAFF',
+    commissionRate: 0.10,
+    totalEarned: 55.00,
+    createdAt: new Date(Date.now() - 86400000 * 60).toISOString(),
+  },
+  {
+    id: 'alumni2', // Bob The Builder
+    userId: 'alumni2',
+    name: 'Bob The Builder',
+    email: 'bob.builder@example.com',
+    status: 'pending' as AffiliateStatus,
+    affiliateCode: 'BOBAFF',
+    commissionRate: 0.12,
+    totalEarned: 0,
+    createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
+  },
+   {
+    id: 'alumni3', // Charlie Brown
+    userId: 'alumni3',
+    name: 'Charlie Brown',
+    email: 'charlie.brown@example.com',
+    status: 'rejected' as AffiliateStatus,
+    affiliateCode: 'CHARLIEAFF',
+    commissionRate: 0.10,
+    totalEarned: 0,
+    createdAt: new Date(Date.now() - 86400000 * 10).toISOString(),
+  },
+];
+
 
 export const sampleAffiliateClicks: AffiliateClick[] = [
   { id: 'click1', affiliateId: 'currentUser', timestamp: new Date(Date.now() - 86400000 * 2).toISOString(), convertedToSignup: true },
   { id: 'click2', affiliateId: 'currentUser', timestamp: new Date(Date.now() - 86400000 * 1).toISOString(), convertedToSignup: false },
-  { id: 'click3', affiliateId: 'currentUser', timestamp: new Date(Date.now() - 86400000 * 3).toISOString(), convertedToSignup: true },
-  { id: 'click4', affiliateId: 'currentUser', timestamp: new Date(Date.now() - 86400000 * 0.5).toISOString(), convertedToSignup: false }, // Recent click
+  { id: 'click3', affiliateId: 'alumni1', timestamp: new Date(Date.now() - 86400000 * 3).toISOString(), convertedToSignup: true },
+  { id: 'click4', affiliateId: 'currentUser', timestamp: new Date(Date.now() - 86400000 * 0.5).toISOString(), convertedToSignup: false }, 
+  { id: 'click5', affiliateId: 'alumni1', timestamp: new Date(Date.now() - 86400000 * 4).toISOString(), convertedToSignup: false },
+  { id: 'click6', affiliateId: 'alumni2', timestamp: new Date(Date.now() - 86400000 * 1).toISOString(), convertedToSignup: false }, // Click for pending affiliate
 ];
 
 export const sampleAffiliateSignups: AffiliateSignup[] = [
   { id: 'signup1', affiliateId: 'currentUser', newUserId: 'newUser1', signupDate: new Date(Date.now() - 86400000 * 2).toISOString(), commissionEarned: 7.50 },
-  { id: 'signup2', affiliateId: 'currentUser', newUserId: 'newUser2', signupDate: new Date(Date.now() - 86400000 * 3).toISOString(), commissionEarned: 7.50 },
-  { id: 'signup3', affiliateId: 'currentUser', newUserId: 'newUser3', signupDate: new Date(Date.now() - 86400000 * 1).toISOString(), commissionEarned: 10.00 }, // More recent signup
+  { id: 'signup2', affiliateId: 'alumni1', newUserId: 'newUser2', signupDate: new Date(Date.now() - 86400000 * 3).toISOString(), commissionEarned: 5.00 },
+  { id: 'signup3', affiliateId: 'currentUser', newUserId: 'newUser3', signupDate: new Date(Date.now() - 86400000 * 1).toISOString(), commissionEarned: 10.00 }, 
+  { id: 'signup4', affiliateId: 'alumni1', newUserId: 'newUser4', signupDate: new Date(Date.now() - 86400000 * 5).toISOString(), commissionEarned: 5.00 },
 ];

@@ -11,6 +11,7 @@
 
 
 
+
 export type UserRole = 'admin' | 'manager' | 'user';
 export type UserStatus = 'active' | 'inactive' | 'pending' | 'suspended';
 
@@ -262,6 +263,7 @@ export interface UserProfile {
   weeklyActivity?: boolean[];
   referralCode?: string;
   earnedBadges?: string[]; // Array of Badge IDs
+  affiliateCode?: string; // User's unique affiliate code
 }
 
 
@@ -410,18 +412,22 @@ export interface SurveyResponse {
 }
 
 // Affiliate types
+export type AffiliateStatus = 'pending' | 'approved' | 'rejected';
 export interface Affiliate {
   id: string; // Usually same as userId
   userId: string;
+  name: string; // User's full name
+  email: string; // User's email
+  status: AffiliateStatus;
   affiliateCode: string;
   commissionRate: number; // e.g., 0.10 for 10%
-  totalEarned: number;
+  totalEarned: number; // This might be better calculated dynamically or stored as a sum of their signups' commissions
   createdAt: string;
 }
 
 export interface AffiliateClick {
   id: string;
-  affiliateId: string;
+  affiliateId: string; // Corresponds to Affiliate.id (which is userId)
   timestamp: string;
   ipAddress?: string; // For tracking, consider privacy
   convertedToSignup: boolean;
@@ -429,7 +435,7 @@ export interface AffiliateClick {
 
 export interface AffiliateSignup {
   id: string;
-  affiliateId: string;
+  affiliateId: string; // Corresponds to Affiliate.id (which is userId)
   newUserId: string;
   signupDate: string;
   commissionEarned?: number;

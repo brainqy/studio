@@ -4,10 +4,11 @@
 
 
 
+
 "use client";
 
 import { Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarSeparator, SidebarGroup, SidebarGroupLabel } from "@/components/ui/sidebar";
-import { Aperture, Award, BarChart2, BookOpen, Briefcase, Building2, CalendarDays, FileText, GalleryVerticalEnd, GitFork, Gift, Handshake, History, Home, Layers3, ListChecks, MessageSquare, Settings, ShieldAlert, ShieldQuestion, User, Users, Wallet, Zap, UserCog, BotMessageSquare, Target } from "lucide-react"; // Added Target for Affiliates
+import { Aperture, Award, BarChart2, BookOpen, Briefcase, Building2, CalendarDays, FileText, GalleryVerticalEnd, GitFork, Gift, Handshake, History, Home, Layers3, ListChecks, MessageSquare, Settings, ShieldAlert, ShieldQuestion, User, Users, Wallet, Zap, UserCog, BotMessageSquare, Target, Users2 } from "lucide-react"; // Added Users2 for Affiliate Management
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { sampleUserProfile } from "@/lib/sample-data"; // Import user profile to get role and tenant
@@ -61,6 +62,7 @@ const adminItems = [
    { href: "/admin/gamification-rules", label: "Gamification Rules", icon: ListChecks },
    { href: "/admin/content-moderation", label: "Content Moderation", icon: ShieldAlert },
    { href: "/admin/messenger-management", label: "Messenger Mgt.", icon: BotMessageSquare },
+   { href: "/admin/affiliate-management", label: "Affiliate Mgt.", icon: Users2 }, // Added Affiliate Management
 ];
 
 
