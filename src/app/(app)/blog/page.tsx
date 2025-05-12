@@ -92,8 +92,7 @@ export default function BlogPage() {
               )}
               <CardHeader>
                 <CardTitle className="text-xl leading-tight hover:text-primary transition-colors">
-                  {/* In a real app, Link would go to /blog/{post.slug} */}
-                   <Link href="#" onClick={(e) => { e.preventDefault(); alert(`Navigate to blog post: ${post.title}`); }}>
+                   <Link href={`/blog/${post.slug}`}>
                      {post.title}
                    </Link>
                 </CardTitle>
@@ -114,8 +113,7 @@ export default function BlogPage() {
                    ))}
                  </div>
                  <Button variant="link" size="sm" className="p-0 h-auto text-primary" asChild>
-                   {/* In a real app, Link would go to /blog/{post.slug} */}
-                   <Link href="#" onClick={(e) => { e.preventDefault(); alert(`Navigate to blog post: ${post.title}`); }}>
+                   <Link href={`/blog/${post.slug}`}>
                     Read More <ArrowRight className="ml-1 h-4 w-4"/>
                    </Link>
                  </Button>
