@@ -81,21 +81,21 @@ export type JobApplicationStatus = 'Saved' | 'Applied' | 'Interviewing' | 'Offer
 export interface JobApplication {
   id: string;
   tenantId: string;
-  userId: string; // User who owns this application tracker entry
+  userId: string; 
   companyName: string;
   jobTitle: string;
   status: JobApplicationStatus;
   dateApplied: string;
   notes?: string;
   jobDescription?: string;
-  resumeUsed?: string; // Reference to a ResumeProfile id
+  resumeUsed?: string; 
   location?: string;
-  reminderDate?: string; // ISO string for reminder
+  reminderDate?: string; 
 }
 
 export interface AlumniProfile {
   id: string;
-  tenantId: string; // Tenant this alumni belongs to (e.g., which university/org)
+  tenantId: string; 
   name: string;
   profilePictureUrl?: string;
   currentJobTitle: string;
@@ -104,9 +104,9 @@ export interface AlumniProfile {
   university: string;
   skills: string[];
   email: string;
-  role?: UserRole; // Role within the platform for THIS tenant
-  status?: UserStatus; // Status of the user account
-  lastLogin?: string; // ISO string for last login date
+  role?: UserRole; 
+  status?: UserStatus; 
+  lastLogin?: string; 
   interests?: string[];
   offersHelpWith?: SupportArea[];
   appointmentCoinCost?: number;
@@ -117,7 +117,7 @@ export interface Activity {
   tenantId: string;
   timestamp: string;
   description: string;
-  userId?: string; // User who performed the activity
+  userId?: string; 
 }
 
 export type CommunityPostModerationStatus = 'visible' | 'flagged' | 'removed';
@@ -135,16 +135,16 @@ export interface CommunityPost {
   pollOptions?: { option: string, votes: number }[];
   eventDate?: string;
   eventLocation?: string;
-  eventTitle?: string; // Added for event type
-  assignedTo?: string; // Added for request type
-  status?: 'open' | 'assigned' | 'completed'; // Added for request type
+  eventTitle?: string; 
+  assignedTo?: string; 
+  status?: 'open' | 'assigned' | 'completed'; 
   moderationStatus: CommunityPostModerationStatus;
   flagCount: number;
 }
 
 export interface FeatureRequest {
   id: string;
-  tenantId: string; // Which tenant made the request (or 'platform' for global)
+  tenantId: string; 
   userId: string;
   userName: string;
   timestamp: string;
@@ -172,95 +172,92 @@ export interface JobOpening {
   description: string;
   datePosted: string;
   type: 'Full-time' | 'Part-time' | 'Internship' | 'Contract' | 'Mentorship';
-  postedByAlumniId: string; // User ID of the alumni who posted
-  alumniName: string; // Denormalized for easy display
+  postedByAlumniId: string; 
+  alumniName: string; 
 }
 
 export interface Badge {
   id: string;
   name: string;
   description: string;
-  icon: string; // Lucide icon name or URL
-  achieved?: boolean; // Indicates if the current user has achieved this badge (optional here, depends on context)
-  xpReward?: number; // XP points awarded for achieving this badge
-  triggerCondition?: string; // Description of how the badge is earned
+  icon: string; 
+  achieved?: boolean; 
+  xpReward?: number; 
+  triggerCondition?: string; 
 }
 
 export interface BlogPost {
   id: string;
-  tenantId?: string | 'platform'; // Optional tenant ID, 'platform' for global posts
+  tenantId?: string | 'platform'; 
   title: string;
-  slug: string; // For URL routing
-  author: string; // User name or "Platform Team"
-  date: string; // ISO String
+  slug: string; 
+  author: string; 
+  date: string; 
   imageUrl?: string;
-  content: string; // Can be Markdown or HTML
+  content: string; 
   excerpt: string;
   tags?: string[];
 }
 
 export interface UserProfile {
   id: string;
-  tenantId: string; // The tenant this user belongs to
-  role: UserRole; // Role within the specific tenant context
+  tenantId: string; 
+  role: UserRole; 
   name: string;
-  email: string; // Used for login, likely globally unique
-  status?: UserStatus; // Status of the user account
-  lastLogin?: string; // ISO string for last login date
+  email: string; 
+  status?: UserStatus; 
+  lastLogin?: string; 
   
-  dateOfBirth?: string; // ISO string e.g. "1990-01-01"
+  dateOfBirth?: string; 
   gender?: Gender;
   mobileNumber?: string;
-  currentAddress?: string; // Paragraph
+  currentAddress?: string; 
 
-  graduationYear?: string; // e.g., "2020"
+  graduationYear?: string; 
   degreeProgram?: DegreeProgram;
   department?: string;
 
   currentJobTitle?: string;
   currentOrganization?: string;
   industry?: Industry;
-  workLocation?: string; // City, Country
-  linkedInProfile?: string; // URL
-  yearsOfExperience?: string; // e.g., "5" or "5+"
+  workLocation?: string; 
+  linkedInProfile?: string; 
+  yearsOfExperience?: string; 
 
   skills?: string[];
 
-  // Tenant-specific engagement settings
   areasOfSupport?: SupportArea[];
   timeCommitment?: TimeCommitment;
   preferredEngagementMode?: EngagementMode;
-  otherComments?: string; // Paragraph
+  otherComments?: string; 
 
   lookingForSupportType?: SupportTypeSought;
-  helpNeededDescription?: string; // Paragraph
+  helpNeededDescription?: string; 
 
-  shareProfileConsent?: boolean; // Consent within the tenant
-  featureInSpotlightConsent?: boolean; // Consent within the tenant
+  shareProfileConsent?: boolean; 
+  featureInSpotlightConsent?: boolean; 
 
   profilePictureUrl?: string;
-  resumeText?: string; // Store the main resume text
+  resumeText?: string; 
   careerInterests?: string;
   bio?: string;
 
-  // Gamification fields
   xpPoints?: number;
-  dailyStreak?: number; // Number of consecutive days active
+  dailyStreak?: number; 
   longestStreak?: number;
   totalActiveDays?: number;
-  // Represents activity for the last 7 days, where index 0 is 6 days ago, index 6 is today.
   weeklyActivity?: boolean[];
   referralCode?: string;
-  earnedBadges?: string[]; // Array of Badge IDs
-  affiliateCode?: string; // User's unique affiliate code
+  earnedBadges?: string[]; 
+  affiliateCode?: string; 
 }
 
 
 export interface ResumeProfile {
   id: string;
   tenantId: string;
-  userId: string; // User who owns this resume
-  name: string; // e.g., "Resume for Tech Roles"
+  userId: string; 
+  name: string; 
   resumeText: string;
   lastAnalyzed?: string;
 }
@@ -271,16 +268,17 @@ export type AppointmentStatus = typeof AppointmentStatuses[number];
 export type Appointment = {
   id: string;
   tenantId: string;
-  requesterUserId: string; // User who requested the appointment
-  alumniUserId: string; // Alumni being booked
-  title: string; // Purpose of meeting
-  dateTime: string; // ISO String
+  requesterUserId: string; 
+  alumniUserId: string; 
+  title: string; 
+  dateTime: string; 
   status: AppointmentStatus;
-  meetingLink?: string; // For confirmed online meetings
-  location?: string; // For in-person meetings
-  notes?: string; // From requester or alumni
-  costInCoins?: number; // Coins deducted upon confirmation
-  withUser: string; // Name of the other person in the appointment
+  meetingLink?: string; 
+  location?: string; 
+  notes?: string; 
+  costInCoins?: number; 
+  withUser: string; 
+  reminderDate?: string; // ISO string for reminder
 };
 
 export type WalletTransaction = {
@@ -289,7 +287,7 @@ export type WalletTransaction = {
   userId: string;
   date: string;
   description: string;
-  amount: number; // positive for credit, negative for debit
+  amount: number; 
   type: 'credit' | 'debit';
 };
 
@@ -300,7 +298,6 @@ export type Wallet = {
   transactions: WalletTransaction[];
 };
 
-// For booking appointment form
 export const PreferredTimeSlots = ["Morning (9AM-12PM)", "Afternoon (1PM-4PM)", "Evening (5PM-7PM)"] as const;
 export type PreferredTimeSlot = typeof PreferredTimeSlots[number];
 
@@ -308,69 +305,61 @@ export interface ResumeScanHistoryItem {
   id: string;
   tenantId: string;
   userId: string;
-  resumeId: string; // Link to the ResumeProfile used
-  resumeName: string; // Denormalized
+  resumeId: string; 
+  resumeName: string; 
   jobTitle: string;
   companyName: string;
-  jobDescriptionText?: string; // Store the JD used for the scan
-  scanDate: string; // ISO string
+  jobDescriptionText?: string; 
+  scanDate: string; 
   matchScore?: number;
-  reportUrl?: string; // Link to analysis report if available
-  bookmarked?: boolean; // New field for bookmarking
+  reportUrl?: string; 
+  bookmarked?: boolean; 
 }
 
-// Kanban column IDs for Job Tracker
 export type KanbanColumnId = 'Saved' | 'Applied' | 'Interview' | 'Offer';
 export const JOB_APPLICATION_STATUSES: JobApplicationStatus[] = ['Saved', 'Applied', 'Interviewing', 'Offer', 'Rejected'];
 
-// Tenant Information
 export interface TenantSettings {
   allowPublicSignup: boolean;
   customLogoUrl?: string;
-  primaryColor?: string; // HSL or HEX
-  accentColor?: string; // HSL or HEX
+  primaryColor?: string; 
+  accentColor?: string; 
   features?: {
     communityFeedEnabled?: boolean;
     jobBoardEnabled?: boolean;
     gamificationEnabled?: boolean;
     walletEnabled?: boolean;
     eventRegistrationEnabled?: boolean;
-    // ... other features
   };
-  // ... other tenant-specific settings like email templates stored as strings or IDs
   emailTemplates?: {
-    welcomeEmail?: string; // template ID or content
-    // ... other templates
+    welcomeEmail?: string; 
   };
 }
 
 export interface Tenant {
   id: string;
   name: string;
-  domain?: string; // Optional: for subdomain-based tenancy
+  domain?: string; 
   settings?: TenantSettings;
   createdAt: string;
 }
 
-// Referral History Item
 export type ReferralStatus = 'Pending' | 'Signed Up' | 'Reward Earned' | 'Expired';
 export interface ReferralHistoryItem {
     id: string;
     referrerUserId: string;
-    referredEmailOrName: string; // Use email initially, update to name upon signup
-    referralDate: string; // ISO String
+    referredEmailOrName: string; 
+    referralDate: string; 
     status: ReferralStatus;
-    rewardAmount?: number; // Optional: Coins/XP earned
+    rewardAmount?: number; 
 }
 
-// Gamification XP Rule
 export interface GamificationRule {
-    actionId: string; // Unique identifier for the action e.g., 'profile_complete', 'resume_scan'
-    description: string; // User-friendly description e.g., "Complete Your Profile", "Analyze a Resume"
+    actionId: string; 
+    description: string; 
     xpPoints: number;
 }
 
-// Survey types for Floating Messenger
 export interface SurveyOption {
   text: string;
   value: string;
@@ -380,52 +369,50 @@ export interface SurveyOption {
 export interface SurveyStep {
   id: string;
   type: 'botMessage' | 'userOptions' | 'userInput' | 'userDropdown';
-  text?: string; // Bot message or question prompt
-  options?: SurveyOption[]; // For userOptions
-  dropdownOptions?: { label: string; value: string }[]; // For userDropdown
-  placeholder?: string; // For userInput
-  inputType?: 'text' | 'textarea' | 'email' | 'tel' | 'url' | 'date'; // Added inputType for userInput
-  nextStepId?: string; // Default next step if not specified by option or after input/dropdown
-  variableName?: string; // Key to store the user's answer
+  text?: string; 
+  options?: SurveyOption[]; 
+  dropdownOptions?: { label: string; value: string }[]; 
+  placeholder?: string; 
+  inputType?: 'text' | 'textarea' | 'email' | 'tel' | 'url' | 'date'; 
+  nextStepId?: string; 
+  variableName?: string; 
   isLastStep?: boolean;
 }
 
-// For Messenger Management page
 export interface SurveyResponse {
   id: string;
   userId: string;
   userName: string;
   surveyId: string;
   surveyName: string;
-  responseDate: string; // ISO string
-  data: Record<string, any>; // The collected survey data (e.g., { loved_feature: 'Analyzer', referral_likelihood: 'very_likely' })
+  responseDate: string; 
+  data: Record<string, any>; 
 }
 
-// Affiliate types
 export type AffiliateStatus = 'pending' | 'approved' | 'rejected';
 export interface Affiliate {
-  id: string; // Usually same as userId
+  id: string; 
   userId: string;
-  name: string; // User's full name
-  email: string; // User's email
+  name: string; 
+  email: string; 
   status: AffiliateStatus;
   affiliateCode: string;
-  commissionRate: number; // e.g., 0.10 for 10%
-  totalEarned: number; // This might be better calculated dynamically or stored as a sum of their signups' commissions
+  commissionRate: number; 
+  totalEarned: number; 
   createdAt: string;
 }
 
 export interface AffiliateClick {
   id: string;
-  affiliateId: string; // Corresponds to Affiliate.id (which is userId)
+  affiliateId: string; 
   timestamp: string;
-  ipAddress?: string; // For tracking, consider privacy
+  ipAddress?: string; 
   convertedToSignup: boolean;
 }
 
 export interface AffiliateSignup {
   id: string;
-  affiliateId: string; // Corresponds to Affiliate.id (which is userId)
+  affiliateId: string; 
   newUserId: string;
   signupDate: string;
   commissionEarned?: number;
@@ -436,6 +423,6 @@ export interface ResumeTemplate {
   name: string;
   description: string;
   previewImageUrl: string;
-  category: string; // e.g., "Modern", "Creative", "Traditional"
+  category: string; 
   dataAiHint?: string;
 }

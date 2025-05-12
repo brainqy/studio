@@ -1,36 +1,42 @@
-
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CalendarDays, PlusCircle, Video, CheckCircle, Clock, XCircle, ThumbsUp, Filter, Edit3, CalendarPlus } from "lucide-react"; // Added Filter, Edit3, CalendarPlus
+import { CalendarDays, PlusCircle, Video, CheckCircle, Clock, XCircle, ThumbsUp, Filter, Edit3, CalendarPlus, MessageSquare as FeedbackIcon, Star as StarIcon } from "lucide-react";
 import { sampleAppointments, sampleAlumni, sampleUserProfile } from "@/lib/sample-data";
-import type { Appointment, AlumniProfile, AppointmentStatus, PreferredTimeSlot } from "@/types"; // Added AlumniProfile, AppointmentStatus, PreferredTimeSlot
-import { AppointmentStatuses, PreferredTimeSlots } from "@/types"; // Added AppointmentStatuses, PreferredTimeSlots
+import type { Appointment, AlumniProfile, AppointmentStatus, PreferredTimeSlot } from "@/types";
+import { AppointmentStatuses, PreferredTimeSlots } from "@/types";
 import { useToast } from "@/hooks/use-toast";
-import { format, formatDistanceToNow, parseISO } from 'date-fns';
+import { format, formatDistanceToNow, parseISO, isFuture, differenceInDays } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useState, useMemo } from "react"; // Added useMemo
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"; // Added Accordion
-import { Checkbox } from "@/components/ui/checkbox"; // Added Checkbox
-import { Label } from "@/components/ui/label"; // Added Label
-import { Input } from "@/components/ui/input"; // Added Input
-import { ScrollArea } from "@/components/ui/scroll-area"; // Added ScrollArea
-import { DatePicker } from "@/components/ui/date-picker"; // Added DatePicker
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; // Added Select
-import { Textarea } from "@/components/ui/textarea"; // Added Textarea
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog"; // Added Dialog
-import { useForm, Controller } from "react-hook-form"; // Added useForm, Controller
-import { zodResolver } from "@hookform/resolvers/zod"; // Added zodResolver
-import * as z from "zod"; // Added z
+import { useState, useMemo } from "react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { DatePicker } from "@/components/ui/date-picker";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { cn } from "@/lib/utils";
 
-// Schema for rescheduling form
 const rescheduleSchema = z.object({
   preferredDate: z.date({ required_error: "New date is required." }),
   preferredTimeSlot: z.string().min(1, "New time slot is required."),
   message: z.string().optional(),
 });
 type RescheduleFormData = z.infer<typeof rescheduleSchema>;
+
+const feedbackSchema = z.object({
+    rating: z.coerce.number().min(1, "Rating is required.").max(5),
+    comments: z.string().optional(),
+});
+type FeedbackFormData = z.infer<typeof feedbackSchema>;
+
 
 export default function AppointmentsPage() {
   const { toast } = useToast();
@@ -46,12 +52,19 @@ export default function AppointmentsPage() {
     resolver: zodResolver(rescheduleSchema),
   });
 
+  const [isFeedbackDialogOpen, setIsFeedbackDialogOpen] = useState(false);
+  const [appointmentForFeedback, setAppointmentForFeedback] = useState<Appointment | null>(null);
+  const { control: feedbackControl, handleSubmit: handleFeedbackSubmit, reset: resetFeedbackForm, formState: { errors: feedbackErrors } } = useForm<FeedbackFormData>({
+    resolver: zodResolver(feedbackSchema),
+    defaultValues: { rating: 0, comments: ''}
+  });
+
 
   const getStatusClass = (status: AppointmentStatus) => {
     if (status === 'Confirmed') return 'text-green-600 bg-green-100';
     if (status === 'Pending') return 'text-yellow-600 bg-yellow-100';
     if (status === 'Cancelled') return 'text-red-600 bg-red-100';
-    if (status === 'Completed') return 'text-blue-600 bg-blue-100'; // Added Completed style
+    if (status === 'Completed') return 'text-blue-600 bg-blue-100';
     return 'text-gray-600 bg-gray-100';
   };
 
@@ -90,7 +103,7 @@ export default function AppointmentsPage() {
     setAppointmentToReschedule(appointment);
     resetRescheduleForm({
       preferredDate: parseISO(appointment.dateTime),
-      preferredTimeSlot: PreferredTimeSlots[0], // Or try to parse from original dateTime if possible/needed
+      preferredTimeSlot: PreferredTimeSlots[0], 
       message: '',
     });
     setIsRescheduleDialogOpen(true);
@@ -98,32 +111,38 @@ export default function AppointmentsPage() {
 
   const onRescheduleSubmit = (data: RescheduleFormData) => {
     if (!appointmentToReschedule) return;
-
-    // Combine date and a representative time from the slot for storing
-    // In a real app, you'd handle timezones and precise times better
     const newDateTime = new Date(data.preferredDate);
     const timeParts = data.preferredTimeSlot.match(/(\d+)(AM|PM)/);
     if (timeParts) {
       let hour = parseInt(timeParts[1]);
       if (timeParts[2] === 'PM' && hour !== 12) hour += 12;
-      if (timeParts[2] === 'AM' && hour === 12) hour = 0; // Midnight case
-      newDateTime.setHours(hour, 0, 0, 0); // Set to start of the hour
+      if (timeParts[2] === 'AM' && hour === 12) hour = 0;
+      newDateTime.setHours(hour, 0, 0, 0);
     }
-
     setAppointments(prevAppointments =>
       prevAppointments.map(appt =>
         appt.id === appointmentToReschedule.id
-          ? { ...appt, dateTime: newDateTime.toISOString(), status: 'Pending' } // Reset status to Pending after reschedule request
+          ? { ...appt, dateTime: newDateTime.toISOString(), status: 'Pending' }
           : appt
       )
     );
-
-    toast({
-      title: "Reschedule Request Sent (Mock)",
-      description: `Reschedule request sent for appointment with ${appointmentToReschedule.withUser}.`,
-    });
+    toast({ title: "Reschedule Request Sent (Mock)", description: `Reschedule request sent for appointment with ${appointmentToReschedule.withUser}.` });
     setIsRescheduleDialogOpen(false);
   };
+
+  const openFeedbackDialog = (appointment: Appointment) => {
+    setAppointmentForFeedback(appointment);
+    resetFeedbackForm({ rating: 0, comments: '' });
+    setIsFeedbackDialogOpen(true);
+  };
+
+  const onFeedbackSubmit = (data: FeedbackFormData) => {
+    if (!appointmentForFeedback) return;
+    console.log("Feedback Submitted (Mock):", { appointmentId: appointmentForFeedback.id, ...data });
+    toast({ title: "Feedback Submitted (Mock)", description: `Thank you for your feedback on the session with ${appointmentForFeedback.withUser}.` });
+    setIsFeedbackDialogOpen(false);
+  };
+
 
   const handleFilterChange = (filterSet: Set<string>, item: string, setter: React.Dispatch<React.SetStateAction<Set<string>>>) => {
     const newSet = new Set(filterSet);
@@ -156,10 +175,8 @@ export default function AppointmentsPage() {
           <PlusCircle className="mr-2 h-5 w-5" /> Schedule New
         </Button>
       </div>
-
       <CardDescription>View and manage your scheduled meetings with alumni.</CardDescription>
 
-      {/* Filter Panel */}
       <Accordion type="single" collapsible className="w-full bg-card shadow-lg rounded-lg">
         <AccordionItem value="filters">
           <AccordionTrigger className="px-6 py-4 hover:no-underline">
@@ -175,11 +192,7 @@ export default function AppointmentsPage() {
                   <div className="space-y-2">
                     {AppointmentStatuses.map(status => (
                       <div key={status} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`status-${status}`}
-                          checked={filterStatuses.has(status)}
-                          onCheckedChange={() => handleFilterChange(filterStatuses, status, setFilterStatuses as React.Dispatch<React.SetStateAction<Set<string>>>)}
-                        />
+                        <Checkbox id={`status-${status}`} checked={filterStatuses.has(status)} onCheckedChange={() => handleFilterChange(filterStatuses, status, setFilterStatuses as React.Dispatch<React.SetStateAction<Set<string>>>)} />
                         <Label htmlFor={`status-${status}`} className="font-normal">{status}</Label>
                       </div>
                     ))}
@@ -189,12 +202,7 @@ export default function AppointmentsPage() {
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="filter-alumni-name">Alumni Name</Label>
-                  <Input
-                    id="filter-alumni-name"
-                    placeholder="Search by name..."
-                    value={filterAlumniName}
-                    onChange={(e) => setFilterAlumniName(e.target.value)}
-                  />
+                  <Input id="filter-alumni-name" placeholder="Search by name..." value={filterAlumniName} onChange={(e) => setFilterAlumniName(e.target.value)} />
                 </div>
                  <div>
                   <Label htmlFor="filter-start-date">Date Range</Label>
@@ -214,16 +222,18 @@ export default function AppointmentsPage() {
           <CardHeader>
             <CalendarDays className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
             <CardTitle className="text-2xl">No Appointments Found</CardTitle>
-            <CardDescription>
-              {appointments.length > 0 ? "Try adjusting your filters." : "You have no appointments scheduled."}
-            </CardDescription>
+            <CardDescription>{appointments.length > 0 ? "Try adjusting your filters." : "You have no appointments scheduled."}</CardDescription>
           </CardHeader>
         </Card>
       ) : (
         <div className="grid gap-6 md:grid-cols-2">
           {filteredAppointments.map((appt) => {
             const alumni = getAlumniDetails(appt.withUser);
-            const isCurrentUserRequester = appt.requesterUserId === sampleUserProfile.id; // Check if the current user requested this
+            const isCurrentUserRequester = appt.requesterUserId === sampleUserProfile.id;
+            const apptDate = parseISO(appt.dateTime);
+            const reminderDate = appt.reminderDate ? parseISO(appt.reminderDate) : null;
+            const daysToReminder = reminderDate && isFuture(reminderDate) ? differenceInDays(reminderDate, new Date()) : null;
+
             return (
             <Card key={appt.id} className="shadow-lg hover:shadow-xl transition-shadow duration-300">
               <CardHeader>
@@ -233,60 +243,47 @@ export default function AppointmentsPage() {
                     {appt.status === 'Confirmed' && <CheckCircle className="inline h-3 w-3 mr-1"/>}
                     {appt.status === 'Pending' && <Clock className="inline h-3 w-3 mr-1"/>}
                     {appt.status === 'Cancelled' && <XCircle className="inline h-3 w-3 mr-1"/>}
-                    {appt.status === 'Completed' && <CheckCircle className="inline h-3 w-3 mr-1 text-blue-600"/>} {/* Icon for Completed */}
+                    {appt.status === 'Completed' && <CheckCircle className="inline h-3 w-3 mr-1 text-blue-600"/>}
                     {appt.status}
                   </span>
                 </div>
                 {alumni && (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground pt-1">
-                        <Avatar className="h-6 w-6">
-                            <AvatarImage src={alumni.profilePictureUrl} alt={alumni.name} data-ai-hint="person face"/>
-                            <AvatarFallback>{alumni.name.substring(0,1)}</AvatarFallback>
-                        </Avatar>
+                        <Avatar className="h-6 w-6"><AvatarImage src={alumni.profilePictureUrl} alt={alumni.name} data-ai-hint="person face"/><AvatarFallback>{alumni.name.substring(0,1)}</AvatarFallback></Avatar>
                         <span>With {alumni.name} {isCurrentUserRequester ? '' : '(Incoming)'}</span>
                     </div>
                 )}
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-foreground">
-                  <strong>Date & Time:</strong> {format(new Date(appt.dateTime), "PPPp")}
-                </p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  ({formatDistanceToNow(new Date(appt.dateTime), { addSuffix: true })})
-                </p>
+                <p className="text-sm text-foreground"><strong>Date & Time:</strong> {format(apptDate, "PPPp")}</p>
+                <p className="text-sm text-muted-foreground mt-1">({formatDistanceToNow(apptDate, { addSuffix: true })})</p>
+                {daysToReminder !== null && (
+                    <p className={cn("text-xs mt-1 flex items-center gap-1", daysToReminder === 0 ? "text-red-600 font-semibold" : "text-amber-600")}>
+                        <Clock className="h-3 w-3"/>
+                        Reminder {daysToReminder === 0 ? "Today!" : `in ${daysToReminder} day${daysToReminder > 1 ? 's' : ''}`}
+                    </p>
+                )}
               </CardContent>
               <CardFooter className="border-t pt-4 mt-auto flex justify-end space-x-2">
                 {appt.status === 'Confirmed' && (
                   <>
-                  <Button size="sm" variant="default" onClick={() => toast({title: "Join Meeting (Mock)", description: "This would typically open a video call link."})}>
-                    <Video className="mr-2 h-4 w-4" /> Join Meeting
-                  </Button>
+                  <Button size="sm" variant="default" onClick={() => toast({title: "Join Meeting (Mock)", description: "This would typically open a video call link."})}><Video className="mr-2 h-4 w-4" /> Join Meeting</Button>
                    <Button size="sm" variant="outline" onClick={() => handleMarkComplete(appt.id)}>Mark as Completed</Button>
                   </>
                 )}
-                 {/* Show Accept/Decline only if the current user is NOT the requester (i.e., it's an incoming request) */}
                 {appt.status === 'Pending' && !isCurrentUserRequester && (
                   <>
-                    <Button size="sm" variant="default" onClick={() => handleAcceptAppointment(appt.id)} className="bg-green-600 hover:bg-green-700 text-white">
-                      <ThumbsUp className="mr-2 h-4 w-4"/> Accept
-                    </Button>
-                    <Button size="sm" variant="destructive" onClick={() => handleDeclineAppointment(appt.id)}>
-                      <XCircle className="mr-2 h-4 w-4"/> Decline
-                    </Button>
+                    <Button size="sm" variant="default" onClick={() => handleAcceptAppointment(appt.id)} className="bg-green-600 hover:bg-green-700 text-white"><ThumbsUp className="mr-2 h-4 w-4"/> Accept</Button>
+                    <Button size="sm" variant="destructive" onClick={() => handleDeclineAppointment(appt.id)}><XCircle className="mr-2 h-4 w-4"/> Decline</Button>
                   </>
                 )}
-                {/* Allow managing/rescheduling only for Pending/Confirmed and if the current user requested it */}
                  {(appt.status === 'Pending' || appt.status === 'Confirmed') && isCurrentUserRequester && (
-                     <Button size="sm" variant="outline" onClick={() => openRescheduleDialog(appt)}>
-                        <Edit3 className="mr-1 h-4 w-4"/> Manage/Reschedule
-                     </Button>
+                     <Button size="sm" variant="outline" onClick={() => openRescheduleDialog(appt)}><Edit3 className="mr-1 h-4 w-4"/> Manage/Reschedule</Button>
                  )}
-                 {appt.status === 'Cancelled' && (
-                    <p className="text-sm text-muted-foreground">This appointment was cancelled.</p>
+                 {appt.status === 'Completed' && (
+                    <Button size="sm" variant="outline" onClick={() => openFeedbackDialog(appt)}><FeedbackIcon className="mr-1 h-4 w-4"/> Provide Feedback</Button>
                  )}
-                  {appt.status === 'Completed' && (
-                    <p className="text-sm text-blue-600 font-medium">Appointment Completed.</p>
-                 )}
+                 {appt.status === 'Cancelled' && (<p className="text-sm text-muted-foreground">This appointment was cancelled.</p>)}
               </CardFooter>
             </Card>
           );
@@ -294,58 +291,49 @@ export default function AppointmentsPage() {
         </div>
       )}
 
-      {/* Reschedule Dialog */}
       <Dialog open={isRescheduleDialogOpen} onOpenChange={setIsRescheduleDialogOpen}>
         <DialogContent className="sm:max-w-[525px]">
-          <DialogHeader>
-            <DialogTitle className="text-2xl">Reschedule Appointment</DialogTitle>
-            <CardDescription>Request a new time for your appointment with {appointmentToReschedule?.withUser}.</CardDescription>
-          </DialogHeader>
+          <DialogHeader><DialogTitle className="text-2xl">Reschedule Appointment</DialogTitle><CardDescription>Request a new time for your appointment with {appointmentToReschedule?.withUser}.</CardDescription></DialogHeader>
           {appointmentToReschedule && (
             <form onSubmit={handleRescheduleSubmit(onRescheduleSubmit)} className="space-y-4 py-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="rescheduleDate">New Preferred Date</Label>
-                  <Controller
-                    name="preferredDate"
-                    control={rescheduleControl}
-                    render={({ field }) => <DatePicker date={field.value} setDate={field.onChange} />}
-                  />
-                  {rescheduleErrors.preferredDate && <p className="text-sm text-destructive mt-1">{rescheduleErrors.preferredDate.message}</p>}
-                </div>
-                <div>
-                  <Label htmlFor="rescheduleTimeSlot">New Preferred Time Slot</Label>
-                  <Controller
-                    name="preferredTimeSlot"
-                    control={rescheduleControl}
-                    render={({ field }) => (
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <SelectTrigger id="rescheduleTimeSlot"><SelectValue placeholder="Select a time slot" /></SelectTrigger>
-                        <SelectContent>
-                          {PreferredTimeSlots.map(slot => <SelectItem key={slot} value={slot}>{slot}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
-                  {rescheduleErrors.preferredTimeSlot && <p className="text-sm text-destructive mt-1">{rescheduleErrors.preferredTimeSlot.message}</p>}
-                </div>
+                <div><Label htmlFor="rescheduleDate">New Preferred Date</Label><Controller name="preferredDate" control={rescheduleControl} render={({ field }) => <DatePicker date={field.value} setDate={field.onChange} />} />{rescheduleErrors.preferredDate && <p className="text-sm text-destructive mt-1">{rescheduleErrors.preferredDate.message}</p>}</div>
+                <div><Label htmlFor="rescheduleTimeSlot">New Preferred Time Slot</Label><Controller name="preferredTimeSlot" control={rescheduleControl} render={({ field }) => (<Select onValueChange={field.onChange} value={field.value}><SelectTrigger id="rescheduleTimeSlot"><SelectValue placeholder="Select a time slot" /></SelectTrigger><SelectContent>{PreferredTimeSlots.map(slot => <SelectItem key={slot} value={slot}>{slot}</SelectItem>)}</SelectContent></Select>)} />{rescheduleErrors.preferredTimeSlot && <p className="text-sm text-destructive mt-1">{rescheduleErrors.preferredTimeSlot.message}</p>}</div>
               </div>
-              <div>
-                <Label htmlFor="rescheduleMessage">Message (Optional)</Label>
-                <Controller
-                  name="message"
-                  control={rescheduleControl}
-                  render={({ field }) => <Textarea id="rescheduleMessage" placeholder="Reason for rescheduling or additional details." rows={3} {...field} />}
-                />
-              </div>
-              <DialogFooter>
-                <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
-                <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                  <CalendarPlus className="mr-2 h-4 w-4"/> Request Reschedule
-                </Button>
-              </DialogFooter>
+              <div><Label htmlFor="rescheduleMessage">Message (Optional)</Label><Controller name="message" control={rescheduleControl} render={({ field }) => <Textarea id="rescheduleMessage" placeholder="Reason for rescheduling or additional details." rows={3} {...field} />} /></div>
+              <DialogFooter><DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose><Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground"><CalendarPlus className="mr-2 h-4 w-4"/> Request Reschedule</Button></DialogFooter>
             </form>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isFeedbackDialogOpen} onOpenChange={setIsFeedbackDialogOpen}>
+        <DialogContent className="sm:max-w-[480px]">
+            <DialogHeader><DialogTitle className="text-2xl">Provide Feedback</DialogTitle><CardDescription>Share your experience for the session with {appointmentForFeedback?.withUser}.</CardDescription></DialogHeader>
+            {appointmentForFeedback && (
+                <form onSubmit={handleFeedbackSubmit(onFeedbackSubmit)} className="space-y-4 py-4">
+                    <div>
+                        <Label htmlFor="rating">Overall Rating (1-5 Stars)</Label>
+                        <Controller name="rating" control={feedbackControl} render={({ field }) => (
+                            <Select onValueChange={(value) => field.onChange(Number(value))} value={String(field.value || 0)}>
+                                <SelectTrigger id="rating"><SelectValue placeholder="Select rating" /></SelectTrigger>
+                                <SelectContent>
+                                    {[1,2,3,4,5].map(r => <SelectItem key={r} value={String(r)}>{r} Star{r > 1 ? 's' : ''}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        )} />
+                         {feedbackErrors.rating && <p className="text-sm text-destructive mt-1">{feedbackErrors.rating.message}</p>}
+                    </div>
+                    <div>
+                        <Label htmlFor="comments">Comments (Optional)</Label>
+                        <Controller name="comments" control={feedbackControl} render={({ field }) => <Textarea id="comments" placeholder="What went well? Any suggestions?" rows={4} {...field} />} />
+                    </div>
+                    <DialogFooter>
+                        <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
+                        <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground"><FeedbackIcon className="mr-2 h-4 w-4"/> Submit Feedback</Button>
+                    </DialogFooter>
+                </form>
+            )}
         </DialogContent>
       </Dialog>
 

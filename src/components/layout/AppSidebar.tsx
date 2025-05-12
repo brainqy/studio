@@ -1,7 +1,7 @@
 "use client";
 
 import { Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarSeparator, SidebarGroup, SidebarGroupLabel } from "@/components/ui/sidebar";
-import { Aperture, Award, BarChart2, BookOpen, Briefcase, Building2, CalendarDays, FileText, GalleryVerticalEnd, GitFork, Gift, Handshake, History, Home, Layers3, ListChecks, MessageSquare, Settings, ShieldAlert, ShieldQuestion, User, Users, Wallet, Zap, UserCog, BotMessageSquare, Target, Users2, BookText, Activity, Edit, FileType } from "lucide-react"; // Added Activity, Edit, FileType
+import { Aperture, Award, BarChart2, BookOpen, Briefcase, Building2, CalendarDays, FileText, GalleryVerticalEnd, GitFork, Gift, Handshake, History, Home, Layers3, ListChecks, MessageSquare, Settings, ShieldAlert, ShieldQuestion, User, Users, Wallet, Zap, UserCog, BotMessageSquare, Target, Users2, BookText, Activity, Edit, FileType, Brain } from "lucide-react"; // Added Brain
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { sampleUserProfile } from "@/lib/sample-data"; // Import user profile to get role and tenant
@@ -9,7 +9,7 @@ import { sampleUserProfile } from "@/lib/sample-data"; // Import user profile to
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: Home },
   {
-    label: "AI Tools", // Group for AI related tools
+    label: "AI Tools", 
     icon: Zap,
     subItems: [
       { href: "/resume-analyzer", label: "Resume Analyzer", icon: Zap },
@@ -18,13 +18,14 @@ const navItems = [
     ]
   },
   { href: "/my-resumes", label: "My Resumes", icon: Layers3 },
-  { href: "/resume-templates", label: "Resume Templates", icon: Layers3 }, // Changed icon to Layers3 for consistency with My Resumes or use a more specific one like FileArchive
+  { href: "/resume-templates", label: "Resume Templates", icon: Layers3 }, 
   { href: "/job-tracker", label: "Job Tracker", icon: Briefcase },
   {
     label: "Alumni Network",
-    icon: Handshake, // Changed icon to Handshake for better representation
+    icon: Handshake, 
     subItems: [
       { href: "/alumni-connect", label: "Search Alumni", icon: Users },
+      { href: "/alumni-connect/recommendations", label: "Mentorship Recommendations", icon: Brain }, // New Item
     ]
   },
   { href: "/job-board", label: "Job Board", icon: Aperture },
@@ -43,21 +44,18 @@ const utilityItems = [
   { href: "/documentation", label: "Documentation", icon: BookText },
 ];
 
-// New Gamification Section
 const gamificationItems = [
   { href: "/gamification", label: "Rewards & Badges", icon: Award },
   { href: "/referrals", label: "Referrals", icon: Gift },
   { href: "/affiliates", label: "Affiliates Program", icon: Target },
 ];
 
-// New Blog Section
 const blogItems = [
   { href: "/blog", label: "Blog", icon: BookOpen },
 ];
 
-
 const adminItems = [
-   { href: "/dashboard", label: "Admin Dashboard", icon: Activity }, // Added Admin Dashboard link here
+   { href: "/dashboard", label: "Admin Dashboard", icon: Activity }, 
    { href: "/admin/tenants", label: "Tenant Management", icon: Building2 },
    { href: "/admin/tenant-onboarding", label: "Tenant Onboarding", icon: Layers3 },
    { href: "/admin/user-management", label: "User Management", icon: UserCog },
@@ -67,14 +65,12 @@ const adminItems = [
    { href: "/admin/affiliate-management", label: "Affiliate Mgt.", icon: Users2 },
 ];
 
-
 export function AppSidebar() {
   const pathname = usePathname();
-  const currentUser = sampleUserProfile; // Get current user details
+  const currentUser = sampleUserProfile; 
 
   const renderMenuItem = (item: any, isSubItem = false) => {
     const isActive = pathname === item.href || (item.href && item.href !== "/dashboard" && pathname.startsWith(item.href));
-    // Special case for admin dashboard link if current path is /dashboard and user is admin
     const isAdminDashboardActive = item.href === "/dashboard" && item.label === "Admin Dashboard" && pathname === "/dashboard" && currentUser.role === 'admin';
 
     return (
@@ -87,7 +83,6 @@ export function AppSidebar() {
             </SidebarMenuButton>
            </Link>
          ) : (
-           // Handle group headers without links
            <SidebarMenuButton size={isSubItem ? "sm" : "default"} className="w-full justify-start cursor-default hover:bg-transparent">
               <item.icon className="h-5 w-5 text-sidebar-foreground/80" />
               <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>

@@ -4,9 +4,9 @@ import { AreasOfSupport, AppointmentStatuses, Genders, DegreePrograms, Industrie
 const SAMPLE_TENANT_ID = 'tenant-1'; // Define a default tenant ID for sample data
 
 export const sampleJobApplications: JobApplication[] = [
-  { id: '1', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', companyName: 'Tech Solutions Inc.', jobTitle: 'Software Engineer', status: 'Applied', dateApplied: '2024-07-01', notes: 'Applied via company portal.', location: 'Remote', resumeUsed: 'resume1', reminderDate: new Date(Date.now() + 86400000 * 7).toISOString() }, // Reminder in 7 days
+  { id: '1', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', companyName: 'Tech Solutions Inc.', jobTitle: 'Software Engineer', status: 'Applied', dateApplied: '2024-07-01', notes: 'Applied via company portal.', location: 'Remote', resumeUsed: 'resume1', reminderDate: new Date(Date.now() + 86400000 * 7).toISOString() }, 
   { id: '2', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', companyName: 'Innovate LLC', jobTitle: 'Frontend Developer', status: 'Interviewing', dateApplied: '2024-06-25', notes: 'First interview scheduled for 2024-07-10.', location: 'New York, NY', resumeUsed: 'resume1' },
-  { id: '3', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', companyName: 'Data Corp', jobTitle: 'Data Analyst', status: 'Offer', dateApplied: '2024-06-15', notes: 'Received offer, considering.', location: 'San Francisco, CA', resumeUsed: 'resume3', reminderDate: new Date(Date.now() + 86400000 * 3).toISOString() }, // Reminder in 3 days
+  { id: '3', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', companyName: 'Data Corp', jobTitle: 'Data Analyst', status: 'Offer', dateApplied: '2024-06-15', notes: 'Received offer, considering.', location: 'San Francisco, CA', resumeUsed: 'resume3', reminderDate: new Date(Date.now() + 86400000 * 3).toISOString() }, 
   { id: '4', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', companyName: 'Web Wizards', jobTitle: 'UX Designer', status: 'Rejected', dateApplied: '2024-06-20', notes: 'Did not proceed after initial screening.', location: 'Austin, TX', resumeUsed: 'resume2' },
   { id: '5', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', companyName: 'CloudNetics', jobTitle: 'Cloud Engineer', status: 'Saved', dateApplied: '2024-07-05', notes: 'Interested, need to tailor resume.', location: 'Boston, MA', resumeUsed: 'resume3' },
   { id: '6', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', companyName: 'AI Future', jobTitle: 'Machine Learning Eng.', status: 'Saved', dateApplied: '2024-07-15', notes: 'From scan report, good match.', location: 'Seattle, WA', resumeUsed: 'resume1' },
@@ -26,9 +26,9 @@ export const sampleAlumni: AlumniProfile[] = [
     email: "alice.wonderland@example.com",
     role: 'user',
     status: 'active',
-    lastLogin: new Date(Date.now() - 86400000 * 1).toISOString(), // 1 day ago
+    lastLogin: new Date(Date.now() - 86400000 * 1).toISOString(), 
     interests: ['Hiking', 'Photography', 'Open Source'],
-    offersHelpWith: [AreasOfSupport[0], AreasOfSupport[2], AreasOfSupport[4]], // Mentoring, Job Referrals, Startup Mentorship
+    offersHelpWith: [AreasOfSupport[0], AreasOfSupport[2], AreasOfSupport[4]], 
     appointmentCoinCost: 10,
   },
   {
@@ -44,9 +44,9 @@ export const sampleAlumni: AlumniProfile[] = [
     email: "bob.builder@example.com",
     role: 'manager',
     status: 'active',
-    lastLogin: new Date(Date.now() - 86400000 * 2).toISOString(), // 2 days ago
+    lastLogin: new Date(Date.now() - 86400000 * 2).toISOString(), 
     interests: ['Woodworking', 'Community Volunteering', 'Travel'],
-    offersHelpWith: [AreasOfSupport[1], AreasOfSupport[3], AreasOfSupport[8]], // Internships, Guest Lecturing, Organizing Events
+    offersHelpWith: [AreasOfSupport[1], AreasOfSupport[3], AreasOfSupport[8]], 
     appointmentCoinCost: 15,
   },
   {
@@ -62,27 +62,27 @@ export const sampleAlumni: AlumniProfile[] = [
     email: "charlie.brown@example.com",
     role: 'user',
     status: 'inactive',
-    lastLogin: new Date(Date.now() - 86400000 * 30).toISOString(), // 30 days ago
+    lastLogin: new Date(Date.now() - 86400000 * 30).toISOString(), 
     interests: ['Chess', 'Reading Sci-Fi', 'Data For Good'],
-    offersHelpWith: [AreasOfSupport[0], AreasOfSupport[7]], // Mentoring, Curriculum Feedback
+    offersHelpWith: [AreasOfSupport[0], AreasOfSupport[7]], 
     appointmentCoinCost: 10,
   },
   {
     id: 'alumni4',
     tenantId: SAMPLE_TENANT_ID,
-    name: 'Diana Prince (Admin)', // Marking as Admin for clarity in samplePlatformUsers
+    name: 'Diana Prince (Admin)', 
     profilePictureUrl: 'https://picsum.photos/seed/diana/200/200',
     currentJobTitle: 'Marketing Lead',
     company: 'Amazon',
     shortBio: 'Specializing in digital marketing strategies. Graduated 2016.',
     university: 'Commerce College',
     skills: ['SEO', 'Content Marketing', 'Social Media', 'PPC Advertising'],
-    email: "diana.prince.admin@example.com", // Different email for admin
+    email: "diana.prince.admin@example.com", 
     role: 'admin', 
     status: 'active',
-    lastLogin: new Date(Date.now() - 86400000 * 0.5).toISOString(), // 12 hours ago
+    lastLogin: new Date(Date.now() - 86400000 * 0.5).toISOString(), 
     interests: ['Yoga', 'Creative Writing', 'Digital Trends'],
-    offersHelpWith: [AreasOfSupport[2], AreasOfSupport[5], AreasOfSupport[9]], // Job Referrals, Sponsorship, Volunteering
+    offersHelpWith: [AreasOfSupport[2], AreasOfSupport[5], AreasOfSupport[9]], 
     appointmentCoinCost: 20,
   },
 ];
@@ -121,7 +121,6 @@ export const sampleJobOpenings: JobOpening[] = [
   { id: 'job3', tenantId: SAMPLE_TENANT_ID, title: 'Project Manager - Mentorship Program', company: 'Self-Employed (Mentorship)', postedByAlumniId: 'alumni2', alumniName: 'Bob The Builder', description: 'Looking to mentor aspiring Product Managers. Part-time commitment.', datePosted: '2024-07-05', location: 'Remote', type: 'Mentorship' },
 ];
 
-// Default sample user profile - CAN BE MODIFIED FOR TESTING ROLES
 export const sampleUserProfile: UserProfile = {
   id: 'currentUser',
   tenantId: SAMPLE_TENANT_ID,
@@ -134,30 +133,24 @@ export const sampleUserProfile: UserProfile = {
   gender: 'Male',
   mobileNumber: '+15551234567',
   currentAddress: '123 Main St, Anytown, CA, USA',
-
   graduationYear: '2017',
   degreeProgram: 'Bachelor of Science (B.Sc)',
   department: 'Computer Science',
-
   currentJobTitle: 'Software Developer',
   currentOrganization: 'Tech Startup Inc.',
   industry: 'IT/Software',
   workLocation: 'Remote',
   linkedInProfile: 'https://linkedin.com/in/alexuser',
   yearsOfExperience: '5',
-
   skills: ['JavaScript', 'React', 'Node.js', 'Problem Solving'],
   areasOfSupport: ['Mentoring Students'],
   timeCommitment: '1-2 hours',
   preferredEngagementMode: 'Online',
   otherComments: 'Happy to help with technical questions.',
-
   lookingForSupportType: 'Career Mentoring',
   helpNeededDescription: 'Guidance on advancing to a senior role.',
-
   shareProfileConsent: true, 
   featureInSpotlightConsent: true,
-
   bio: 'Enthusiastic software developer passionate about creating innovative solutions. With 5 years in the field, I have honed my skills in JavaScript, React, and Node.js, primarily focusing on building scalable web applications. My experience at Tech Startup Inc. involved leading front-end development for key projects and mentoring junior developers. I am always keen to learn new technologies and contribute to impactful products. Outside of work, I enjoy hiking and exploring new tech trends.',
   profilePictureUrl: 'https://picsum.photos/seed/alexuser/200/200',
   resumeText: `Alex Taylor (User)
@@ -201,15 +194,13 @@ export const sampleUserProfile: UserProfile = {
   affiliateCode: 'AFFUSER007',
 };
 
-// Sample platform users for user management page
 export const samplePlatformUsers: UserProfile[] = [
-  sampleUserProfile, // Current user (now a 'user')
-  // Find the 'Diana Prince' entry from sampleAlumni and ensure it's the admin
+  sampleUserProfile, 
   ...sampleAlumni.map(alumni => ({
     ...alumni,
     id: alumni.id,
     tenantId: alumni.tenantId,
-    role: alumni.email === "diana.prince.admin@example.com" ? 'admin' : (alumni.role || 'user'), // Ensure Diana is admin
+    role: alumni.email === "diana.prince.admin@example.com" ? 'admin' : (alumni.role || 'user'),
     name: alumni.name,
     email: alumni.email,
     status: alumni.status || (Math.random() > 0.2 ? 'active' : 'inactive'),
@@ -227,12 +218,11 @@ export const samplePlatformUsers: UserProfile[] = [
   }))
 ];
 
-
 export const sampleAppointments: Appointment[] = [
-    { id: 'appt1', tenantId: SAMPLE_TENANT_ID, requesterUserId: 'currentUser', alumniUserId: 'alumni1', title: 'Mentorship Session with Alice W.', dateTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3).toISOString(), withUser: 'Alice Wonderland', status: 'Confirmed', costInCoins: 10, meetingLink: 'https://zoom.us/j/1234567890' },
-    { id: 'appt2', tenantId: SAMPLE_TENANT_ID, requesterUserId: 'currentUser', alumniUserId: 'alumni2', title: 'Networking Call with Bob B.', dateTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 5).toISOString(), withUser: 'Bob The Builder', status: 'Pending', costInCoins: 15 },
-    { id: 'appt3', tenantId: SAMPLE_TENANT_ID, requesterUserId: 'alumni3', alumniUserId: 'currentUser', title: 'Incoming Request: Career Advice', dateTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString(), withUser: 'Charlie Brown', status: 'Pending', costInCoins: 10 }, // Example of incoming request
-    { id: 'appt4', tenantId: SAMPLE_TENANT_ID, requesterUserId: 'currentUser', alumniUserId: 'alumni4', title: 'Discuss Marketing Strategy', dateTime: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(), withUser: 'Diana Prince (Admin)', status: 'Completed', costInCoins: 20 }, // Example of completed appointment
+    { id: 'appt1', tenantId: SAMPLE_TENANT_ID, requesterUserId: 'currentUser', alumniUserId: 'alumni1', title: 'Mentorship Session with Alice W.', dateTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3).toISOString(), withUser: 'Alice Wonderland', status: 'Confirmed', costInCoins: 10, meetingLink: 'https://zoom.us/j/1234567890', reminderDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 2).toISOString() },
+    { id: 'appt2', tenantId: SAMPLE_TENANT_ID, requesterUserId: 'currentUser', alumniUserId: 'alumni2', title: 'Networking Call with Bob B.', dateTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 5).toISOString(), withUser: 'Bob The Builder', status: 'Pending', costInCoins: 15, reminderDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 4).toISOString() },
+    { id: 'appt3', tenantId: SAMPLE_TENANT_ID, requesterUserId: 'alumni3', alumniUserId: 'currentUser', title: 'Incoming Request: Career Advice', dateTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 0).toISOString(), withUser: 'Charlie Brown', status: 'Pending', costInCoins: 10, reminderDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 0).toISOString() }, // Reminder today
+    { id: 'appt4', tenantId: SAMPLE_TENANT_ID, requesterUserId: 'currentUser', alumniUserId: 'alumni4', title: 'Discuss Marketing Strategy', dateTime: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(), withUser: 'Diana Prince (Admin)', status: 'Completed', costInCoins: 20 },
 ];
 
 export const sampleWalletBalance: Wallet = {
@@ -253,7 +243,6 @@ export const sampleResumeProfiles: ResumeProfile[] = [
   { id: 'resume3', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', name: "General Tech Resume", resumeText: "A general purpose resume for various tech roles.", lastAnalyzed: "2024-06-20" },
 ];
 
-
 export const sampleResumeScanHistory: ResumeScanHistoryItem[] = [
   {
     id: 'scan1',
@@ -263,10 +252,10 @@ export const sampleResumeScanHistory: ResumeScanHistoryItem[] = [
     resumeName: 'Software_Engineer_Resume_v2.pdf',
     jobTitle: 'Senior Software Engineer',
     companyName: 'Innovate LLC',
-    scanDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(), // 2 days ago
+    scanDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(), 
     matchScore: 85,
-    reportUrl: '/my-resumes/resumeId123/analysis/reportXYZ', // Example URL
-    bookmarked: true, // Sample bookmarked item
+    reportUrl: '/my-resumes/resumeId123/analysis/reportXYZ', 
+    bookmarked: true, 
   },
   {
     id: 'scan2',
@@ -276,9 +265,9 @@ export const sampleResumeScanHistory: ResumeScanHistoryItem[] = [
     resumeName: 'Product_Manager_Profile.docx',
     jobTitle: 'Product Lead',
     companyName: 'FutureTech Corp',
-    scanDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(), // 5 days ago
+    scanDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(), 
     matchScore: 72,
-    reportUrl: '/my-resumes/resumeId456/analysis/reportABC', // Example URL
+    reportUrl: '/my-resumes/resumeId456/analysis/reportABC', 
     bookmarked: false,
   },
   {
@@ -289,16 +278,14 @@ export const sampleResumeScanHistory: ResumeScanHistoryItem[] = [
     resumeName: 'General_Tech_Resume.pdf',
     jobTitle: 'Data Analyst',
     companyName: 'Data Corp',
-    scanDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(), // 10 days ago
+    scanDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(), 
     matchScore: 91,
     bookmarked: false,
   },
 ];
 
-// Graduation years for dropdown
 export const graduationYears = Array.from({ length: 26 }, (_, i) => (2025 - i).toString());
 
-// Sample Tenants
 export const sampleTenants: Tenant[] = [
   {
     id: 'tenant-1',
@@ -307,7 +294,7 @@ export const sampleTenants: Tenant[] = [
     settings: {
       allowPublicSignup: true,
       customLogoUrl: 'https://picsum.photos/seed/logo1/200/50',
-      primaryColor: 'hsl(180 100% 25%)', // Teal
+      primaryColor: 'hsl(180 100% 25%)', 
       accentColor: 'hsl(180 100% 30%)',
       features: {
         communityFeedEnabled: true,
@@ -327,7 +314,7 @@ export const sampleTenants: Tenant[] = [
     createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
     settings: {
       allowPublicSignup: false,
-      primaryColor: 'hsl(221 83% 53%)', // Blue
+      primaryColor: 'hsl(221 83% 53%)', 
       accentColor: 'hsl(221 83% 63%)',
       features: {
         communityFeedEnabled: false,
@@ -344,7 +331,7 @@ export const sampleTenants: Tenant[] = [
     createdAt: new Date(Date.now() - 86400000 * 10).toISOString(),
     settings: {
       allowPublicSignup: true,
-      primaryColor: 'hsl(39 100% 50%)', // Orange
+      primaryColor: 'hsl(39 100% 50%)', 
       accentColor: 'hsl(39 100% 55%)',
       features: {
         communityFeedEnabled: true,
@@ -357,21 +344,19 @@ export const sampleTenants: Tenant[] = [
   },
 ];
 
-// Sample Badges (now includes reward and trigger)
 export const sampleBadges: Badge[] = [
     { id: 'profile-pro', name: 'Profile Pro', description: 'Completed 100% of your profile.', icon: 'UserCheck', xpReward: 100, triggerCondition: 'Profile completion reaches 100%' },
     { id: 'early-adopter', name: 'Early Adopter', description: 'Joined within the first month of launch.', icon: 'Award', xpReward: 50, triggerCondition: 'User signup date within launch window' },
     { id: 'networker', name: 'Networker', description: 'Made 10+ alumni connections.', icon: 'Users', xpReward: 75, triggerCondition: 'Number of connections > 10' },
     { id: 'analyzer-ace', name: 'Analyzer Ace', description: 'Analyzed 5+ resumes.', icon: 'Zap', xpReward: 50, triggerCondition: 'Resume scan count > 5' },
     { id: 'contributor', name: 'Contributor', description: 'Posted 5+ times in the community feed.', icon: 'MessageSquare', xpReward: 30, triggerCondition: 'Community post count > 5' },
-    { id: 'admin-master', name: 'Admin Master', description: 'Successfully managed platform settings.', icon: 'ShieldCheck', xpReward: 0, triggerCondition: 'User role is Admin' }, // Admin only badge example
+    { id: 'admin-master', name: 'Admin Master', description: 'Successfully managed platform settings.', icon: 'ShieldCheck', xpReward: 0, triggerCondition: 'User role is Admin' }, 
 ];
 
-// Sample Blog Posts
 export const sampleBlogPosts: BlogPost[] = [
   {
     id: 'blog1',
-    tenantId: 'platform', // Global post
+    tenantId: 'platform', 
     title: 'Mastering the AI Resume Analysis',
     slug: 'mastering-ai-resume-analysis',
     author: 'ResumeMatch AI Team',
@@ -383,7 +368,7 @@ export const sampleBlogPosts: BlogPost[] = [
   },
   {
     id: 'blog2',
-    tenantId: SAMPLE_TENANT_ID, // Tenant-specific post
+    tenantId: SAMPLE_TENANT_ID, 
     title: 'Networking Success Stories from State University Alumni',
     slug: 'state-uni-networking-success',
     author: 'Alumni Relations (State University)',
@@ -407,7 +392,6 @@ export const sampleBlogPosts: BlogPost[] = [
   },
 ];
 
-// Sample Referral History
 export const sampleReferralHistory: ReferralHistoryItem[] = [
   { id: 'ref1', referrerUserId: 'currentUser', referredEmailOrName: 'friend1@example.com', referralDate: new Date(Date.now() - 86400000 * 7).toISOString(), status: 'Signed Up' },
   { id: 'ref2', referrerUserId: 'currentUser', referredEmailOrName: 'colleague@example.com', referralDate: new Date(Date.now() - 86400000 * 5).toISOString(), status: 'Reward Earned', rewardAmount: 25 },
@@ -415,7 +399,6 @@ export const sampleReferralHistory: ReferralHistoryItem[] = [
   { id: 'ref4', referrerUserId: 'currentUser', referredEmailOrName: 'another@example.com', referralDate: new Date(Date.now() - 86400000 * 10).toISOString(), status: 'Expired' },
 ];
 
-// Sample Gamification XP Rules
 export const sampleXpRules: GamificationRule[] = [
     { actionId: 'profile_complete_50', description: 'Reach 50% Profile Completion', xpPoints: 25 },
     { actionId: 'profile_complete_100', description: 'Reach 100% Profile Completion', xpPoints: 100 },
@@ -427,7 +410,6 @@ export const sampleXpRules: GamificationRule[] = [
     { actionId: 'daily_login', description: 'Daily Login', xpPoints: 10 },
 ];
 
-// Sample Survey Responses for Messenger Management
 export const sampleSurveyResponses: SurveyResponse[] = [
     {
         id: 'resp1',
@@ -460,7 +442,6 @@ export const sampleSurveyResponses: SurveyResponse[] = [
         userId: 'alumni3',
         userName: 'Charlie Brown',
         surveyId: 'initialFeedbackSurvey',
-        surveyName: 'Initial User Feedback',
         responseDate: new Date(Date.now() - 86400000 * 3).toISOString(),
         data: {
             experience: 'needs_improvement',
@@ -470,11 +451,10 @@ export const sampleSurveyResponses: SurveyResponse[] = [
     }
 ];
 
-// Sample Affiliate Data
 export const sampleAffiliates: Affiliate[] = [
   {
-    id: 'affiliateuser1', // Example of a non-admin user who is an affiliate
-    userId: 'alumni1', // Alice Wonderland is an affiliate
+    id: 'affiliateuser1', 
+    userId: 'alumni1', 
     name: 'Alice Wonderland',
     email: 'alice.wonderland@example.com',
     status: 'approved' as AffiliateStatus,
@@ -484,7 +464,7 @@ export const sampleAffiliates: Affiliate[] = [
     createdAt: new Date(Date.now() - 86400000 * 60).toISOString(),
   },
   {
-    id: 'affiliateuser2', // Bob The Builder
+    id: 'affiliateuser2', 
     userId: 'alumni2',
     name: 'Bob The Builder',
     email: 'bob.builder@example.com',
@@ -495,7 +475,7 @@ export const sampleAffiliates: Affiliate[] = [
     createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
   },
    {
-    id: 'affiliateuser3', // Charlie Brown
+    id: 'affiliateuser3', 
     userId: 'alumni3',
     name: 'Charlie Brown',
     email: 'charlie.brown@example.com',
@@ -505,12 +485,11 @@ export const sampleAffiliates: Affiliate[] = [
     totalEarned: 0,
     createdAt: new Date(Date.now() - 86400000 * 10).toISOString(),
   },
-  // The current 'currentUser' (Alex Taylor User) can also be an affiliate
   {
     id: 'currentUser', 
     userId: 'currentUser',
-    name: sampleUserProfile.name, // Should be 'Alex Taylor (User)'
-    email: sampleUserProfile.email, // Should be 'user@example.com'
+    name: sampleUserProfile.name, 
+    email: sampleUserProfile.email, 
     status: 'approved' as AffiliateStatus,
     affiliateCode: sampleUserProfile.affiliateCode || 'AFFUSER007',
     commissionRate: 0.15,
@@ -519,29 +498,24 @@ export const sampleAffiliates: Affiliate[] = [
   },
 ];
 
-
 export const sampleAffiliateClicks: AffiliateClick[] = [
   { id: 'click1', affiliateId: 'currentUser', timestamp: new Date(Date.now() - 86400000 * 2).toISOString(), convertedToSignup: true },
   { id: 'click2', affiliateId: 'currentUser', timestamp: new Date(Date.now() - 86400000 * 1).toISOString(), convertedToSignup: false },
-  { id: 'click3', affiliateId: 'affiliateuser1', timestamp: new Date(Date.now() - 86400000 * 3).toISOString(), convertedToSignup: true }, // Alice's click
+  { id: 'click3', affiliateId: 'affiliateuser1', timestamp: new Date(Date.now() - 86400000 * 3).toISOString(), convertedToSignup: true }, 
   { id: 'click4', affiliateId: 'currentUser', timestamp: new Date(Date.now() - 86400000 * 0.5).toISOString(), convertedToSignup: false }, 
-  { id: 'click5', affiliateId: 'affiliateuser1', timestamp: new Date(Date.now() - 86400000 * 4).toISOString(), convertedToSignup: false }, // Alice's click
-  { id: 'click6', affiliateId: 'affiliateuser2', timestamp: new Date(Date.now() - 86400000 * 1).toISOString(), convertedToSignup: false }, // Bob's click (pending affiliate)
+  { id: 'click5', affiliateId: 'affiliateuser1', timestamp: new Date(Date.now() - 86400000 * 4).toISOString(), convertedToSignup: false }, 
+  { id: 'click6', affiliateId: 'affiliateuser2', timestamp: new Date(Date.now() - 86400000 * 1).toISOString(), convertedToSignup: false }, 
 ];
 
 export const sampleAffiliateSignups: AffiliateSignup[] = [
   { id: 'signup1', affiliateId: 'currentUser', newUserId: 'newUser1', signupDate: new Date(Date.now() - 86400000 * 2).toISOString(), commissionEarned: 7.50 },
-  { id: 'signup2', affiliateId: 'affiliateuser1', newUserId: 'newUser2', signupDate: new Date(Date.now() - 86400000 * 3).toISOString(), commissionEarned: 5.00 }, // Alice's signup
+  { id: 'signup2', affiliateId: 'affiliateuser1', newUserId: 'newUser2', signupDate: new Date(Date.now() - 86400000 * 3).toISOString(), commissionEarned: 5.00 }, 
   { id: 'signup3', affiliateId: 'currentUser', newUserId: 'newUser3', signupDate: new Date(Date.now() - 86400000 * 1).toISOString(), commissionEarned: 10.00 }, 
-  { id: 'signup4', affiliateId: 'affiliateuser1', newUserId: 'newUser4', signupDate: new Date(Date.now() - 86400000 * 5).toISOString(), commissionEarned: 5.00 }, // Alice's signup
+  { id: 'signup4', affiliateId: 'affiliateuser1', newUserId: 'newUser4', signupDate: new Date(Date.now() - 86400000 * 5).toISOString(), commissionEarned: 5.00 }, 
 ];
 
-// Profile Completion Survey Definition
 export const profileCompletionSurveyDefinition: SurveyStep[] = [
-  // Intro
   { id: 'pc_intro', type: 'botMessage', text: "Let's complete your profile! This will help us personalize your experience and connect you with better opportunities.", nextStepId: 'pc_s1_start' },
-
-  // Section 1: Personal & Contact Information
   { id: 'pc_s1_start', type: 'botMessage', text: "First, some personal details.", nextStepId: 'pc_s1_fullName' },
   { id: 'pc_s1_fullName', type: 'userInput', text: "What's your full name? (Required)", placeholder: "e.g., John Doe", variableName: 'fullName', nextStepId: 'pc_s1_dob' },
   { id: 'pc_s1_dob', type: 'userInput', inputType: 'date', text: "What's your date of birth? (YYYY-MM-DD)", placeholder: "YYYY-MM-DD", variableName: 'dateOfBirth', nextStepId: 'pc_s1_gender' },
@@ -549,14 +523,10 @@ export const profileCompletionSurveyDefinition: SurveyStep[] = [
   { id: 'pc_s1_email', type: 'userInput', inputType: 'email', text: "What's your email ID? (Required)", placeholder: "you@example.com", variableName: 'email', nextStepId: 'pc_s1_mobile' },
   { id: 'pc_s1_mobile', type: 'userInput', inputType: 'tel', text: "What's your mobile number (with country code)?", placeholder: "+1 123 456 7890", variableName: 'mobileNumber', nextStepId: 'pc_s1_address' },
   { id: 'pc_s1_address', type: 'userInput', text: "What's your current address (City, State, Country)?", placeholder: "San Francisco, CA, USA", inputType: 'textarea', variableName: 'currentAddress', nextStepId: 'pc_s2_start' },
-
-  // Section 2: Academic Information
   { id: 'pc_s2_start', type: 'botMessage', text: "Great! Now, let's cover your academic background.", nextStepId: 'pc_s2_gradYear' },
   { id: 'pc_s2_gradYear', type: 'userDropdown', text: "What's your year of graduation/batch?", dropdownOptions: graduationYears.map(y => ({label: y, value: y})), variableName: 'graduationYear', nextStepId: 'pc_s2_degree' },
   { id: 'pc_s2_degree', type: 'userDropdown', text: "What's your degree/program?", dropdownOptions: DegreePrograms.map(d => ({label: d, value: d})), variableName: 'degreeProgram', nextStepId: 'pc_s2_department' },
   { id: 'pc_s2_department', type: 'userInput', text: "What's your department?", placeholder: "e.g., Computer Science", variableName: 'department', nextStepId: 'pc_s3_start' },
-
-  // Section 3: Professional Information
   { id: 'pc_s3_start', type: 'botMessage', text: "Excellent. Let's move on to your professional information.", nextStepId: 'pc_s3_jobTitle' },
   { id: 'pc_s3_jobTitle', type: 'userInput', text: "What's your current job title?", placeholder: "e.g., Software Engineer", variableName: 'currentJobTitle', nextStepId: 'pc_s3_organization' },
   { id: 'pc_s3_organization', type: 'userInput', text: "What's your current organization?", placeholder: "e.g., Tech Corp", variableName: 'currentOrganization', nextStepId: 'pc_s3_industry' },
@@ -566,26 +536,18 @@ export const profileCompletionSurveyDefinition: SurveyStep[] = [
   { id: 'pc_s3_experience', type: 'userInput', text: "How many years of experience do you have?", placeholder: "e.g., 5 or 5+", variableName: 'yearsOfExperience', nextStepId: 'pc_s3_skills_prompt' },
   { id: 'pc_s3_skills_prompt', type: 'botMessage', text: "What are your key skills or areas of expertise? (Please list them, separated by commas)", nextStepId: 'pc_s3_skills_input' },
   { id: 'pc_s3_skills_input', type: 'userInput', placeholder: "e.g., React, Python, Data Analysis", inputType: 'textarea', variableName: 'skills', nextStepId: 'pc_s4_start' },
-  
-  // Section 4: Alumni Engagement & Support Interests
   { id: 'pc_s4_start', type: 'botMessage', text: "Let's talk about alumni engagement.", nextStepId: 'pc_s4_supportAreas_prompt' },
-  { id: 'pc_s4_supportAreas_prompt', type: 'botMessage', text: `Which areas can you support? (Comma-separated from: ${AreasOfSupport.join(', ')})`, nextStepId: 'pc_s4_supportAreas_input' }, // This might be better as multi-select checkboxes in a real UI, but for chatbot, free text then parse.
+  { id: 'pc_s4_supportAreas_prompt', type: 'botMessage', text: `Which areas can you support? (Comma-separated from: ${AreasOfSupport.join(', ')})`, nextStepId: 'pc_s4_supportAreas_input' },
   { id: 'pc_s4_supportAreas_input', type: 'userInput', text: "Your areas of support:", placeholder: "e.g., Mentoring Students, Job Referrals", inputType: 'textarea', variableName: 'areasOfSupport', nextStepId: 'pc_s4_timeCommitment' },
   { id: 'pc_s4_timeCommitment', type: 'userDropdown', text: "How much time are you willing to commit per month?", dropdownOptions: TimeCommitments.map(tc => ({label: tc, value: tc})), variableName: 'timeCommitment', nextStepId: 'pc_s4_engagementMode' },
   { id: 'pc_s4_engagementMode', type: 'userDropdown', text: "What's your preferred mode of engagement?", dropdownOptions: EngagementModes.map(em => ({label: em, value: em})), variableName: 'preferredEngagementMode', nextStepId: 'pc_s4_otherComments' },
   { id: 'pc_s4_otherComments', type: 'userInput', text: "Any other comments or notes regarding engagement? (Optional)", inputType: 'textarea', variableName: 'otherComments', nextStepId: 'pc_s5_start' },
-
-  // Section 5: Help You’re Looking For (Optional)
   { id: 'pc_s5_start', type: 'botMessage', text: "Now, optionally, tell us if you're looking for any specific support.", nextStepId: 'pc_s5_supportType' },
   { id: 'pc_s5_supportType', type: 'userDropdown', text: "What type of support are you looking for? (Optional)", dropdownOptions: [{label: "Not looking for support now", value: "none"}, ...SupportTypesSought.map(st => ({label: st, value: st}))], variableName: 'lookingForSupportType', nextStepId: 'pc_s5_helpNeeded' },
   { id: 'pc_s5_helpNeeded', type: 'userInput', text: "Briefly describe the help you need. (Optional, if you selected a support type)", inputType: 'textarea', variableName: 'helpNeededDescription', nextStepId: 'pc_s6_start' },
-
-  // Section 6: Visibility & Consent
   { id: 'pc_s6_start', type: 'botMessage', text: "Almost done! Just a couple of consent questions.", nextStepId: 'pc_s6_shareProfile' },
   { id: 'pc_s6_shareProfile', type: 'userOptions', text: "Can we share your profile with other alumni for relevant collaboration?", options: [{text: 'Yes', value: 'true', nextStepId: 'pc_s6_featureSpotlight'}, {text: 'No', value: 'false', nextStepId: 'pc_s6_featureSpotlight'}], variableName: 'shareProfileConsent' },
   { id: 'pc_s6_featureSpotlight', type: 'userOptions', text: "Can we feature you on the alumni dashboard or spotlight?", options: [{text: 'Yes', value: 'true', nextStepId: 'pc_end'}, {text: 'No', value: 'false', nextStepId: 'pc_end'}], variableName: 'featureInSpotlightConsent' },
-
-  // End
   { id: 'pc_end', type: 'botMessage', text: "Thank you for completing your profile information! Your profile is now more discoverable. 🎉", isLastStep: true },
 ];
 

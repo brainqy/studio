@@ -2,13 +2,14 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { BarChart, PieChart, LineChart as RechartsLineChart, Bar, Pie, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, Sector } from 'recharts';
-import { Activity, Briefcase, Users, Zap, FileText, CheckCircle, Clock, Target, CalendarClock } from "lucide-react"; // Added CalendarClock
-import { sampleJobApplications, sampleActivities, sampleAlumni, sampleUserProfile } from "@/lib/sample-data";
+import { Activity, Briefcase, Users, Zap, FileText, CheckCircle, Clock, Target, CalendarClock } from "lucide-react";
+import { sampleJobApplications, sampleActivities, sampleAlumni, sampleUserProfile, sampleAppointments } from "@/lib/sample-data"; // Added sampleAppointments
 import type { PieSectorDataItem } from "recharts/types/polar/Pie";
 import { useState, useCallback, useEffect, useMemo } from "react";
-import { format, parseISO, isFuture, differenceInDays } from "date-fns"; // Added date-fns functions
+import { format, parseISO, isFuture, differenceInDays, isToday } from "date-fns"; // Added isToday
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast"; // Added useToast
 
 
 const jobApplicationStatusData = sampleJobApplications.reduce((acc, curr) => {
@@ -22,7 +23,7 @@ const jobApplicationStatusData = sampleJobApplications.reduce((acc, curr) => {
   return acc;
 }, [] as { name: string, value: number }[]);
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8']; // These are specific colors, might want to use theme variables
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8']; 
 
 const renderActiveShape = (props: PieSectorDataItem) => {
   const RADIAN = Math.PI / 180;
@@ -75,12 +76,27 @@ export default function UserDashboard() {
   const [averageMatchScore, setAverageMatchScore] = useState(0);
   const [activeIndex, setActiveIndex] = useState(0);
   const user = sampleUserProfile;
+  const { toast } = useToast();
 
   useEffect(() => {
-    // Simulate fetching data
-    setTotalResumesAnalyzed(125); // Mock data
-    setAverageMatchScore(78); // Mock data
-  }, []);
+    setTotalResumesAnalyzed(125); 
+    setAverageMatchScore(78); 
+
+    // Mock appointment reminder check
+    const today = new Date();
+    sampleAppointments.forEach(appt => {
+        if (appt.requesterUserId === user.id || appt.alumniUserId === user.id) { // Check if user is involved
+            if (appt.reminderDate && isToday(parseISO(appt.reminderDate))) {
+                toast({
+                    title: "Appointment Reminder",
+                    description: `You have an appointment for "${appt.title}" with ${appt.withUser} today, ${format(parseISO(appt.dateTime), 'p')}.`,
+                    duration: 10000, // Show for 10 seconds
+                });
+            }
+        }
+    });
+
+  }, [user.id, toast]);
 
   const onPieEnter = useCallback((_: any, index: number) => {
     setActiveIndex(index);
@@ -96,11 +112,10 @@ export default function UserDashboard() {
   ];
 
   const upcomingReminders = useMemo(() => {
-    const today = new Date();
     return sampleJobApplications
       .filter(app => app.userId === user.id && app.reminderDate && isFuture(parseISO(app.reminderDate)))
       .sort((a, b) => new Date(a.reminderDate!).getTime() - new Date(b.reminderDate!).getTime())
-      .slice(0, 5); // Show top 5 upcoming
+      .slice(0, 5); 
   }, [user.id]);
 
   return (
@@ -144,7 +159,7 @@ export default function UserDashboard() {
             <Users className="h-5 w-5 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{sampleAlumni.length}</div> {/* This should be user specific connections count */}
+            <div className="text-2xl font-bold">{sampleAlumni.length}</div> 
             <p className="text-xs text-muted-foreground">+5 new connections this week</p>
           </CardContent>
         </Card>
