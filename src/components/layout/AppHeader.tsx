@@ -4,7 +4,7 @@
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Bell, LogOut, UserCircle, Settings as SettingsIcon, History, Briefcase, Bookmark, Award, WalletCards, Layers3, BookOpen, Activity as ActivityIcon, Flame, Star, Coins, PanelLeft } from "lucide-react"; // Added PanelLeft for consistency if needed, though SidebarTrigger uses its own
+import { Bell, LogOut, UserCircle, Settings as SettingsIcon, Briefcase, Award, WalletCards, Layers3, BookOpen, Activity as ActivityIcon, Flame, Star, Coins, PanelLeft, History as HistoryIcon } from "lucide-react"; 
 import Link from "next/link";
 import {
   DropdownMenu,
@@ -13,15 +13,25 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub, 
+  DropdownMenuSubTrigger, 
+  DropdownMenuSubContent, 
+  DropdownMenuPortal, 
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { sampleUserProfile, sampleWalletBalance } from "@/lib/sample-data";
+import { useState, useEffect } from 'react'; 
+import { getRecentPages } from '@/lib/recent-pages'; 
+import type { RecentPageItem } from '@/types'; 
+import { usePathname } from "next/navigation"; 
 
 export function AppHeader() {
   const { toast } = useToast();
   const user = sampleUserProfile;
   const wallet = sampleWalletBalance;
+  const [recentPages, setRecentPages] = useState<RecentPageItem[]>([]);
+  const pathname = usePathname(); 
 
   // Mock logout function
   const handleLogout = () => {
@@ -29,12 +39,16 @@ export function AppHeader() {
     // In a real app, redirect to login: router.push('/auth/login');
   };
 
+  useEffect(() => {
+    // Load recent pages on component mount and when pathname changes
+    setRecentPages(getRecentPages());
+  }, [pathname]); // Depend on pathname to re-fetch when navigation occurs
+
   return (
     <TooltipProvider>
       <header className="sticky top-0 z-10 border-b bg-card shadow-sm">
         {/* Top row for main controls */}
         <div className="flex h-16 items-center gap-4 px-4 md:px-6">
-          {/* SidebarTrigger is now always visible */}
           <SidebarTrigger />
           
           <div className="flex-1">
@@ -54,7 +68,7 @@ export function AppHeader() {
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuContent align="end" className="w-64"> 
                 <DropdownMenuLabel>{user.name}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <Link href="/profile" passHref>
@@ -63,12 +77,30 @@ export function AppHeader() {
                     Profile
                   </DropdownMenuItem>
                 </Link>
-                <Link href="/job-tracker" passHref>
-                  <DropdownMenuItem>
-                    <History className="mr-2 h-4 w-4" />
-                    Scan History & Bookmarks
-                  </DropdownMenuItem>
-                </Link>
+
+                {/* Recent Visited Pages Sub-Menu */}
+                {recentPages.length > 0 && (
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger>
+                      <HistoryIcon className="mr-2 h-4 w-4" />
+                      Recent Pages
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuPortal>
+                      <DropdownMenuSubContent>
+                        {recentPages.map(page => (
+                          <Link href={page.path} key={page.path} passHref>
+                            <DropdownMenuItem className="text-xs">
+                              {page.label}
+                            </DropdownMenuItem>
+                          </Link>
+                        ))}
+                      </DropdownMenuSubContent>
+                    </DropdownMenuPortal>
+                  </DropdownMenuSub>
+                )}
+
+                <DropdownMenuSeparator /> 
+                
                 <Link href="/job-tracker" passHref>
                   <DropdownMenuItem>
                     <Briefcase className="mr-2 h-4 w-4" />
@@ -78,7 +110,7 @@ export function AppHeader() {
                 <Link href="/gamification" passHref>
                   <DropdownMenuItem>
                     <Award className="mr-2 h-4 w-4" />
-                    Badges
+                    Rewards & Badges
                   </DropdownMenuItem>
                 </Link>
                 <Link href="/wallet" passHref>
@@ -93,7 +125,7 @@ export function AppHeader() {
                     Resume Manager
                   </DropdownMenuItem>
                 </Link>
-                <Link href="/settings" passHref>
+                 <Link href="/settings" passHref>
                   <DropdownMenuItem>
                     <SettingsIcon className="mr-2 h-4 w-4" />
                     Settings
@@ -122,7 +154,6 @@ export function AppHeader() {
         </div>
 
         {/* Bottom row for gamification stats */}
-        {/* This div contains the gamification stats, styled as a sub-bar */}
         <div className="hidden sm:flex h-10 items-center justify-end gap-4 border-t bg-secondary/30 px-4 md:px-6">
            <Tooltip>
             <TooltipTrigger asChild>

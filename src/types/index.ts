@@ -174,6 +174,7 @@ export interface JobOpening {
   type: 'Full-time' | 'Part-time' | 'Internship' | 'Contract' | 'Mentorship';
   postedByAlumniId: string; 
   alumniName: string; 
+  applicationLink?: string;
 }
 
 export interface Badge {
@@ -425,4 +426,10 @@ export interface ResumeTemplate {
   previewImageUrl: string;
   category: string; 
   dataAiHint?: string;
+}
+
+export interface RecentPageItem {
+  path: string;
+  label: string;
+  timestamp: number;
 }
