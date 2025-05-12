@@ -30,57 +30,17 @@ export function AppHeader() {
   };
 
   return (
-    <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-card px-4 md:px-6 shadow-sm">
-      <div className="md:hidden">
-        <SidebarTrigger />
-      </div>
-      <div className="flex-1">
-        {/* Optionally, add a search bar or breadcrumbs here */}
-      </div>
-      <TooltipProvider>
+    // Remove fixed height from header, let content define it. Add border-b here.
+    <header className="sticky top-0 z-10 border-b bg-card shadow-sm">
+      {/* Top row for main controls */}
+      <div className="flex h-16 items-center gap-4 px-4 md:px-6">
+        <div className="md:hidden">
+          <SidebarTrigger />
+        </div>
+        <div className="flex-1">
+          {/* Optionally, add a search bar or breadcrumbs here */}
+        </div>
         <div className="flex items-center gap-4">
-          {/* Gamification Stats */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="hidden sm:flex items-center gap-1 text-sm font-medium text-muted-foreground cursor-default">
-                <Flame className="h-5 w-5 text-orange-500" />
-                <span>{user.dailyStreak || 0}</span>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Daily Login Streak</p>
-            </TooltipContent>
-          </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="hidden sm:flex items-center gap-1 text-sm font-medium text-muted-foreground cursor-default">
-                <Star className="h-5 w-5 text-yellow-500" />
-                <span>{user.xpPoints || 0} XP</span>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Total Experience Points</p>
-            </TooltipContent>
-          </Tooltip>
-
-          <Tooltip>
-             <TooltipTrigger asChild>
-                <Link href="/wallet" passHref>
-                  <div className="flex items-center gap-1 text-sm font-medium text-muted-foreground cursor-pointer hover:text-primary transition-colors">
-                    <Coins className="h-5 w-5 text-green-500" />
-                    <span>{wallet.coins || 0}</span>
-                  </div>
-                 </Link>
-            </TooltipTrigger>
-             <TooltipContent>
-              <p>Coin Balance</p>
-            </TooltipContent>
-          </Tooltip>
-
-          {/* Separator for visual clarity */}
-           <div className="hidden sm:block h-6 w-px bg-border mx-2"></div>
-
           <Button variant="ghost" size="icon" className="rounded-full">
             <Bell className="h-5 w-5 text-muted-foreground" />
             <span className="sr-only">Notifications</span>
@@ -104,7 +64,7 @@ export function AppHeader() {
                 </DropdownMenuItem>
               </Link>
               {/* Link to Job Tracker page for both scan history and bookmarks */}
-               <Link href="/job-tracker" passHref>
+              <Link href="/job-tracker" passHref>
                 <DropdownMenuItem>
                   <History className="mr-2 h-4 w-4" />
                   Scan History & Bookmarks
@@ -159,6 +119,50 @@ export function AppHeader() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+        </div>
+      </div>
+
+      {/* Bottom row for gamification stats */}
+      <TooltipProvider>
+        {/* This div contains the gamification stats, styled as a sub-bar */}
+        <div className="hidden sm:flex h-10 items-center justify-end gap-4 border-t bg-secondary/30 px-4 md:px-6">
+           <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center gap-1 text-sm font-medium text-muted-foreground cursor-default">
+                <Flame className="h-5 w-5 text-orange-500" />
+                <span>{user.dailyStreak || 0}</span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Daily Login Streak</p>
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center gap-1 text-sm font-medium text-muted-foreground cursor-default">
+                <Star className="h-5 w-5 text-yellow-500" />
+                <span>{user.xpPoints || 0} XP</span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Total Experience Points</p>
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+             <TooltipTrigger asChild>
+                <Link href="/wallet" passHref>
+                  <div className="flex items-center gap-1 text-sm font-medium text-muted-foreground cursor-pointer hover:text-primary transition-colors">
+                    <Coins className="h-5 w-5 text-green-500" />
+                    <span>{wallet.coins || 0}</span>
+                  </div>
+                 </Link>
+            </TooltipTrigger>
+             <TooltipContent>
+              <p>Coin Balance</p>
+            </TooltipContent>
+          </Tooltip>
         </div>
       </TooltipProvider>
     </header>
