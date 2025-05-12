@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ArrowRight, Download, FileText, Lightbulb, Loader2, Sparkles, UploadCloud, Search, Star, Trash2, BarChart, Clock, Bookmark, CheckCircle, History, Zap, HelpCircle, PlusCircle as PlusCircleIcon, XCircle, Info } from "lucide-react";
+import { ArrowRight, Download, FileText, Lightbulb, Loader2, Search, Star, Trash2, BarChart, Clock, Bookmark, CheckCircle, History, Zap, HelpCircle, PlusCircle as PlusCircleIcon, XCircle, Info, UploadCloud } from "lucide-react";
 import { analyzeResumeAndJobDescription, type AnalyzeResumeAndJobDescriptionOutput } from '@/ai/flows/analyze-resume-and-job-description';
 import { calculateMatchScore, type CalculateMatchScoreOutput } from '@/ai/flows/calculate-match-score';
 import { suggestResumeImprovements, type SuggestResumeImprovementsOutput } from '@/ai/flows/suggest-resume-improvements';
@@ -22,6 +22,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"; 
+import ScoreCircle from '@/components/ui/score-circle'; // Import the new component
 
 interface AnalysisResults {
   overallScore: CalculateMatchScoreOutput | null;
@@ -31,52 +32,6 @@ interface AnalysisResults {
 }
 
 type SuggestedSkillFromAI = SuggestDynamicSkillsOutput['suggestedSkills'][0];
-
-
-const ScoreCircle = ({ score, size = "lg", label = "Match" }: { score: number, size?: "sm" | "lg" | "xl", label?: string }) => {
-  const radius = size === "xl" ? 60 : (size === "lg" ? 45 : 30);
-  const strokeWidth = size === "xl" ? 10 : (size === "lg" ? 8 : 6);
-  const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (score / 100) * circumference;
-  const circleSizeClass = size === "xl" ? "w-36 h-36" : (size === "lg" ? "w-28 h-28" : "w-20 h-20");
-  const textSizeClass = size === "xl" ? "text-4xl" : (size === "lg" ? "text-3xl" : "text-xl");
-  const subTextSizeClass = size === "xl" ? "text-sm" : (size === "lg" ? "text-xs" : "text-[10px]");
-
-
-  return (
-    <div className={`relative flex items-center justify-center ${circleSizeClass}`}>
-      <svg className="absolute inset-0" viewBox="0 0 100 100" style={{width: radius*2 + strokeWidth, height: radius*2 + strokeWidth, margin: 'auto'}}>
-        <circle
-          className="text-secondary"
-          strokeWidth={strokeWidth/2} // Adjust stroke width relative to new viewbox
-          stroke="currentColor"
-          fill="transparent"
-          r={radius}
-          cx="50%"
-          cy="50%"
-        />
-        <circle
-          className="text-primary"
-          strokeWidth={strokeWidth/2} // Adjust stroke width
-          strokeDasharray={circumference}
-          strokeDashoffset={strokeDashoffset}
-          strokeLinecap="round"
-          stroke="currentColor"
-          fill="transparent"
-          r={radius}
-          cx="50%"
-          cy="50%"
-          transform={`rotate(-90 ${radius + strokeWidth/4} ${radius + strokeWidth/4})`}
-        />
-      </svg>
-      <div className="absolute flex flex-col items-center justify-center">
-        <span className={`${textSizeClass} font-bold text-primary`}>{score}%</span>
-        <span className={`${subTextSizeClass} text-muted-foreground mt-0.5`}>{label}</span>
-      </div>
-    </div>
-  );
-};
-
 
 export default function ResumeAnalyzerPage() {
   const [resumeFile, setResumeFile] = useState<File | null>(null);
@@ -297,10 +252,23 @@ export default function ResumeAnalyzerPage() {
   }, [scanHistory]);
 
   const handleAddSkillToProfile = (skill: string) => {
-    toast({
-      title: "Skill Added (Mock)",
-      description: `"${skill}" would be added to your profile skills. (Feature in development)`,
-    });
+     // In a real app, this would update user profile state and call an API
+    // For demo, we just show a toast
+    // You might want to navigate the user to their profile page or open a skill editing modal
+    const currentProfileSkills = sampleUserProfile.skills || [];
+    if (!currentProfileSkills.includes(skill)) {
+        sampleUserProfile.skills = [...currentProfileSkills, skill]; // Update sample data for demo persistence
+        toast({
+            title: "Skill Added to Profile (Mock)",
+            description: `"${skill}" has been added to your profile. Visit My Profile to see changes.`,
+        });
+    } else {
+        toast({
+            title: "Skill Already Exists (Mock)",
+            description: `"${skill}" is already in your profile skills.`,
+            variant: "default",
+        });
+    }
   };
 
 
@@ -579,7 +547,7 @@ export default function ResumeAnalyzerPage() {
                                 <p className="text-xs text-muted-foreground">Relevance: <span className="text-primary font-bold">{skillRec.relevanceScore}%</span></p>
                               </div>
                               <Button size="sm" variant="outline" onClick={() => handleAddSkillToProfile(skillRec.skill)}>
-                                 <PlusCircleIcon className="mr-1 h-4 w-4" /> Add to Profile (Mock)
+                                 <PlusCircleIcon className="mr-1 h-4 w-4" /> Add to Profile
                               </Button>
                             </div>
                             <p className="text-sm text-muted-foreground mt-1 italic">Reasoning: {skillRec.reasoning}</p>
