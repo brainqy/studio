@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -130,7 +131,12 @@ export default function EventsPage() {
               <CardFooter className="border-t pt-4 mt-auto flex justify-between items-center">
                 <div className="text-sm text-muted-foreground flex items-center gap-1">
                   <Users className="h-4 w-4" />
-                  {event.attendees}/{event.capacity} spots filled
+                  {event.attendees < event.capacity ? (
+                    <span>{event.capacity - event.attendees} seats available</span>
+                  ) : (
+                    <span>Event Full</span>
+                  )}
+                  <span className="text-xs">({event.attendees}/{event.capacity})</span>
                 </div>
                 {event.status === 'upcoming' && event.attendees < event.capacity && (
                   <Button size="sm" onClick={() => handleRegister(event.id, event.title)} className="bg-primary hover:bg-primary/90 text-primary-foreground">
@@ -155,3 +161,4 @@ export default function EventsPage() {
     </div>
   );
 }
+
