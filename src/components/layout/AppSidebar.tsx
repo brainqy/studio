@@ -1,8 +1,7 @@
-
 "use client";
 
 import { Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarSeparator, SidebarGroup, SidebarGroupLabel } from "@/components/ui/sidebar";
-import { Aperture, Award, BarChart2, BookOpen, Briefcase, Building2, CalendarDays, FileText, GalleryVerticalEnd, GitFork, Gift, Handshake, History, Home, Layers3, ListChecks, MessageSquare, Settings, ShieldAlert, ShieldQuestion, User, Users, Wallet, Zap, UserCog, BotMessageSquare, Target, Users2, BookText, Activity, Edit, FileType, Brain, FilePlus2 } from "lucide-react";
+import { Aperture, Award, BarChart2, BookOpen, Briefcase, Building2, CalendarDays, FileText, GalleryVerticalEnd, GitFork, Gift, Handshake, History, Home, Layers3, ListChecks, MessageSquare, Settings, ShieldAlert, ShieldQuestion, User, Users, Wallet, Zap, UserCog, BotMessageSquare, Target, Users2, BookText, Activity, Edit, FileType, Brain, FilePlus2, Trophy, Settings2Icon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { sampleUserProfile } from "@/lib/sample-data"; 
@@ -22,12 +21,12 @@ const navItems = [
   { href: "/resume-builder", label: "Resume Builder", icon: FilePlus2 },
   { href: "/resume-templates", label: "Resume Templates", icon: Layers3 }, 
   { href: "/job-tracker", label: "Job Tracker", icon: Briefcase },
+  { href: "/interview-prep", label: "Interview Prep", icon: Brain },
   {
     label: "Alumni Network",
     icon: Handshake, 
     subItems: [
       { href: "/alumni-connect", label: "Search Alumni", icon: Users },
-      // { href: "/alumni-connect/recommendations", label: "Mentorship Matching", icon: Brain }, 
     ]
   },
   { href: "/job-board", label: "Job Board", icon: Aperture },
@@ -48,6 +47,7 @@ const utilityItems = [
 
 const gamificationItems = [
   { href: "/gamification", label: "Rewards & Badges", icon: Award },
+  { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
   { href: "/referrals", label: "Referrals", icon: Gift },
   { href: "/affiliates", label: "Affiliates Program", icon: Target },
 ];
@@ -66,6 +66,7 @@ const adminItems = [
    { href: "/admin/messenger-management", label: "Messenger Mgt.", icon: BotMessageSquare },
    { href: "/admin/affiliate-management", label: "Affiliate Mgt.", icon: Users2 },
    { href: "/admin/gallery-management", label: "Gallery Mgt.", icon: GalleryVerticalEnd },
+   { href: "/admin/blog-settings", label: "Blog Settings", icon: Settings2Icon },
 ];
 
 export function AppSidebar() {
@@ -167,3 +168,4 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
+

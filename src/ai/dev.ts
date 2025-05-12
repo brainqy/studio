@@ -9,3 +9,4 @@ import '@/ai/flows/generate-resume-variant.ts';
 import '@/ai/flows/generate-cover-letter.ts';
 import '@/ai/flows/personalized-job-recommendations.ts';
 import '@/ai/flows/suggest-dynamic-skills.ts';
+import '@/ai/flows/generate-ai-blog-post.ts';

@@ -51,8 +51,8 @@ const PATH_LABEL_MAP: Record<string, string> = {
   '/resume-builder': 'Resume Builder',
   '/resume-templates': 'Resume Templates',
   '/job-tracker': 'Job Tracker',
+  '/interview-prep': 'Interview Prep',
   '/alumni-connect': 'Alumni Directory',
-  '/alumni-connect/recommendations': 'Mentorship Matching',
   '/job-board': 'Job Board',
   '/community-feed': 'Community Feed',
   '/events': 'Events Registration',
@@ -65,6 +65,7 @@ const PATH_LABEL_MAP: Record<string, string> = {
   '/settings': 'Settings',
   '/documentation': 'Documentation',
   '/gamification': 'Rewards & Badges',
+  '/leaderboard': 'Leaderboard',
   '/referrals': 'Referrals',
   '/affiliates': 'Affiliates Program',
   '/blog': 'Blog',
@@ -76,6 +77,8 @@ const PATH_LABEL_MAP: Record<string, string> = {
   '/admin/content-moderation': 'Content Moderation',
   '/admin/messenger-management': 'Messenger Management',
   '/admin/affiliate-management': 'Affiliate Management',
+  '/admin/gallery-management': 'Gallery Management',
+  '/admin/blog-settings': 'AI Blog Settings',
 };
 
 export function getLabelForPath(path: string): string {
@@ -88,3 +91,4 @@ export function getLabelForPath(path: string): string {
   }
   return PATH_LABEL_MAP[path] || path; // Fallback to path if no label found
 }
+

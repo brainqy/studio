@@ -1,4 +1,4 @@
-import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem, Appointment, Wallet, ResumeProfile, Tenant, Badge, BlogPost, ReferralHistoryItem, GamificationRule, UserStatus, SurveyResponse, Affiliate, AffiliateClick, AffiliateSignup, AffiliateStatus, SurveyStep, ResumeTemplate, TourStep, CommunityComment } from '@/types';
+import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem, Appointment, Wallet, ResumeProfile, Tenant, Badge, BlogPost, ReferralHistoryItem, GamificationRule, UserStatus, SurveyResponse, Affiliate, AffiliateClick, AffiliateSignup, AffiliateStatus, SurveyStep, ResumeTemplate, TourStep, CommunityComment, InterviewQuestion, InterviewQuestionCategory, BlogGenerationSettings } from '@/types';
 import { AreasOfSupport, AppointmentStatuses, Genders, DegreePrograms, Industries, TimeCommitments, EngagementModes, SupportTypesSought } from '@/types'; // Import AppointmentStatuses and other const arrays
 
 const SAMPLE_TENANT_ID = 'tenant-1'; // Define a default tenant ID for sample data
@@ -30,6 +30,8 @@ export const sampleAlumni: AlumniProfile[] = [
     interests: ['Hiking', 'Photography', 'Open Source'],
     offersHelpWith: [AreasOfSupport[0], AreasOfSupport[2], AreasOfSupport[4]], 
     appointmentCoinCost: 10,
+    xpPoints: 2500,
+    bio: 'Passionate about AI and cloud computing. Graduated in 2015 from State University. Currently working as a Senior Software Engineer at Google, focusing on large-scale distributed systems. My expertise lies in Java, Python, and Machine Learning. I enjoy mentoring students and discussing career paths in tech.',
   },
   {
     id: 'alumni2',
@@ -48,6 +50,8 @@ export const sampleAlumni: AlumniProfile[] = [
     interests: ['Woodworking', 'Community Volunteering', 'Travel'],
     offersHelpWith: [AreasOfSupport[1], AreasOfSupport[3], AreasOfSupport[8]], 
     appointmentCoinCost: 15,
+    xpPoints: 1800,
+    bio: 'Focused on user-centric product development. Class of 2018 from Tech Institute. As a Product Manager at Microsoft, I drive product strategy and execution for consumer-facing applications. Skilled in Agile methodologies and UX research. I enjoy discussing product strategy and career development in product roles.',
   },
   {
     id: 'alumni3',
@@ -66,6 +70,8 @@ export const sampleAlumni: AlumniProfile[] = [
     interests: ['Chess', 'Reading Sci-Fi', 'Data For Good'],
     offersHelpWith: [AreasOfSupport[0], AreasOfSupport[7]], 
     appointmentCoinCost: 10,
+    xpPoints: 1200,
+    bio: 'Exploring large-scale data and its implications. Alumnus of 2017 from State University. Currently a Data Scientist at Facebook, specializing in statistical modeling and data visualization using R and Python. Interested in discussing data ethics and applications of big data.',
   },
   {
     id: 'alumni4',
@@ -84,6 +90,8 @@ export const sampleAlumni: AlumniProfile[] = [
     interests: ['Yoga', 'Creative Writing', 'Digital Trends'],
     offersHelpWith: [AreasOfSupport[2], AreasOfSupport[5], AreasOfSupport[9]], 
     appointmentCoinCost: 20,
+    xpPoints: 5000,
+    bio: 'Specializing in digital marketing strategies. Graduated 2016 from Commerce College. As a Marketing Lead at Amazon, I oversee digital campaigns and content strategy. My skills include SEO, content marketing, and social media advertising. Available for discussions on marketing careers and digital trends.',
   },
 ];
 
@@ -211,6 +219,7 @@ export const sampleUserProfile: UserProfile = {
   degreeProgram: 'Bachelor of Science (B.Sc)',
   department: 'Computer Science',
   currentJobTitle: 'Software Developer',
+  company: 'Tech Startup Inc.', // Added company for consistency with AlumniProfile
   currentOrganization: 'Tech Startup Inc.',
   industry: 'IT/Software',
   workLocation: 'Remote',
@@ -225,9 +234,12 @@ export const sampleUserProfile: UserProfile = {
   helpNeededDescription: 'Guidance on advancing to a senior role.',
   shareProfileConsent: true, 
   featureInSpotlightConsent: true,
-  bio: 'Enthusiastic software developer passionate about creating innovative solutions. With 5 years in the field, I have honed my skills in JavaScript, React, and Node.js, primarily focusing on building scalable web applications. My experience at Tech Startup Inc. involved leading front-end development for key projects and mentoring junior developers. I am always keen to learn new technologies and contribute to impactful products. Outside of work, I enjoy hiking and exploring new tech trends.',
+  shortBio: 'Enthusiastic software developer passionate about creating innovative solutions. With 5 years in the field, I have honed my skills in JavaScript, React, and Node.js, primarily focusing on building scalable web applications. My experience at Tech Startup Inc. involved leading front-end development for key projects and mentoring junior developers. I am always keen to learn new technologies and contribute to impactful products. Outside of work, I enjoy hiking and exploring new tech trends.',
+  university: 'State University', // Added for consistency
   profilePictureUrl: 'https://picsum.photos/seed/alexuser/200/200',
   interests: ['Coding', 'AI Ethics', 'Sci-fi Novels'],
+  offersHelpWith: [AreasOfSupport[0]], // Added for consistency
+  appointmentCoinCost: 0, // Users typically don't charge themselves
   resumeText: `Alex Taylor (User)
   Email: user@example.com | LinkedIn: linkedin.com/in/alexuser | Mobile: +15551234567
 
@@ -271,27 +283,9 @@ export const sampleUserProfile: UserProfile = {
 
 export const samplePlatformUsers: UserProfile[] = [
   sampleUserProfile, 
-  ...sampleAlumni.map(alumni => ({
-    ...alumni,
-    id: alumni.id,
-    tenantId: alumni.tenantId,
-    role: alumni.email === "diana.prince.admin@example.com" ? 'admin' : (alumni.role || 'user'),
-    name: alumni.name,
-    email: alumni.email,
-    status: alumni.status || (Math.random() > 0.2 ? 'active' : 'inactive'),
-    lastLogin: alumni.lastLogin || new Date(Date.now() - 86400000 * Math.floor(Math.random() * 30)).toISOString(),
-    profilePictureUrl: alumni.profilePictureUrl,
-    dateOfBirth: '1990-01-01',
-    gender: 'Prefer not to say',
-    graduationYear: '2015',
-    currentJobTitle: alumni.currentJobTitle,
-    currentOrganization: alumni.company,
-    skills: alumni.skills,
-    xpPoints: Math.floor(Math.random() * 5000),
-    dailyStreak: Math.floor(Math.random() * 30),
-    weeklyActivity: Array(7).fill(false).map(() => Math.random() > 0.5),
-  }))
+  ...sampleAlumni, // Directly spread sampleAlumni as they now include xpPoints
 ];
+
 
 export const sampleAppointments: Appointment[] = [
     { id: 'appt1', tenantId: SAMPLE_TENANT_ID, requesterUserId: 'currentUser', alumniUserId: 'alumni1', title: 'Mentorship Session with Alice W.', dateTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3).toISOString(), withUser: 'Alice Wonderland', status: 'Confirmed', costInCoins: 10, meetingLink: 'https://zoom.us/j/1234567890', reminderDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 2).toISOString() },
@@ -892,3 +886,21 @@ export const managerDashboardTourSteps: TourStep[] = [
   { title: "Mentorship Programs", description: "Oversee mentorship programs, assign mentors, and track mentee progress." },
   { title: "Event Management", description: "Approve event submissions and manage event logistics for your tenant or group." }
 ];
+
+export const sampleInterviewQuestions: InterviewQuestion[] = [
+  { id: 'iq1', category: 'Behavioral', question: "Tell me about a time you failed.", answerOrTip: "Focus on what you learned and how you grew from the experience. Use the STAR method (Situation, Task, Action, Result).", tags: ['failure', 'learning'] },
+  { id: 'iq2', category: 'Behavioral', question: "Describe a situation where you had to work with a difficult team member.", answerOrTip: "Highlight your conflict resolution skills, empathy, and focus on achieving team goals despite interpersonal challenges.", tags: ['teamwork', 'conflict'] },
+  { id: 'iq3', category: 'Technical', question: "Explain the difference between an abstract class and an interface.", answerOrTip: "Discuss concepts like multiple inheritance, default implementations, and when to use each.", tags: ['oop', 'programming'] },
+  { id: 'iq4', category: 'Role-Specific', question: "How would you approach designing a new feature for our product? (For Product Managers)", answerOrTip: "Outline your process: user research, defining requirements, prioritization, working with dev/design, and measuring success.", tags: ['product management', 'design'] },
+  { id: 'iq5', category: 'Common', question: "Why are you interested in this role?", answerOrTip: "Connect your skills and career goals to the specific aspects of the job description and the company's mission.", tags: ['motivation', 'fit'] },
+  { id: 'iq6', category: 'Common', question: "Where do you see yourself in 5 years?", answerOrTip: "Show ambition but also realism. Align your long-term goals with opportunities for growth within the company or industry.", tags: ['career goals'] },
+  { id: 'iq7', category: 'Technical', question: "What are the principles of RESTful API design?", answerOrTip: "Discuss statelessness, client-server architecture, cacheability, uniform interface (resources, HTTP verbs, URIs), layered system.", tags: ['api', 'backend'] },
+  { id: 'iq8', category: 'Behavioral', question: "Give an example of a goal you reached and tell me how you achieved it.", answerOrTip: "Detail the steps you took, any obstacles you overcame, and the specific result. Quantify if possible.", tags: ['achievement', 'goals'] },
+];
+
+export let sampleBlogGenerationSettings: BlogGenerationSettings = {
+  generationIntervalHours: 24, // Default to once a day
+  topics: ['Career Advice', 'Resume Writing Tips', 'Interview Skills', 'Networking Strategies', 'Industry Trends'],
+  style: 'informative',
+  lastGenerated: undefined,
+};

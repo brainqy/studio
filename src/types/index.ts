@@ -72,6 +72,7 @@ export const SupportTypesSought = [
   "Higher Education Guidance",
   "Startup Advice",
   "Relocation Help",
+  "General Networking",
 ] as const;
 export type SupportTypeSought = typeof SupportTypesSought[number];
 
@@ -109,6 +110,7 @@ export interface AlumniProfile {
   interests?: string[];
   offersHelpWith?: SupportArea[];
   appointmentCoinCost?: number;
+  xpPoints?: number; // Added for leaderboard
 }
 
 export interface Activity {
@@ -214,7 +216,7 @@ export interface BlogPost {
   comments?: CommunityComment[]; 
 }
 
-export interface UserProfile {
+export interface UserProfile extends AlumniProfile { // Extend AlumniProfile for UserProfile to share common fields
   id: string;
   tenantId: string; 
   role: UserRole; 
@@ -232,14 +234,14 @@ export interface UserProfile {
   degreeProgram?: DegreeProgram;
   department?: string;
 
-  currentJobTitle?: string;
-  currentOrganization?: string;
+  currentJobTitle: string; // Made non-optional as it's in AlumniProfile
+  currentOrganization?: string; // Keep optional if user might not have one
   industry?: Industry;
   workLocation?: string; 
   linkedInProfile?: string; 
   yearsOfExperience?: string; 
 
-  skills?: string[];
+  skills: string[]; // Made non-optional as it's in AlumniProfile
 
   areasOfSupport?: SupportArea[];
   timeCommitment?: TimeCommitment;
@@ -255,7 +257,7 @@ export interface UserProfile {
   profilePictureUrl?: string;
   resumeText?: string; 
   careerInterests?: string;
-  bio?: string;
+  bio: string; // Made non-optional as it's in AlumniProfile
   interests?: string[];
 
   xpPoints?: number;
@@ -325,8 +327,8 @@ export interface ResumeScanHistoryItem {
   resumeName: string; 
   jobTitle: string;
   companyName: string;
-  resumeTextSnapshot: string; // Added for reloading analysis
-  jobDescriptionText: string; // Changed to non-optional
+  resumeTextSnapshot: string; 
+  jobDescriptionText: string; 
   scanDate: string; 
   matchScore?: number;
   bookmarked?: boolean; 
@@ -513,3 +515,19 @@ export const RESUME_BUILDER_STEPS: { id: ResumeBuilderStep; title: string; descr
   { id: 'additional-details', title: 'Additional Info', description: "Include any other relevant details like awards or languages.", mainHeading: "Additional Information" },
   { id: 'finalize', title: 'Finalize', description: "Review and finalize your resume.", mainHeading: "Review & Finalize" },
 ];
+
+export type InterviewQuestionCategory = 'Behavioral' | 'Technical' | 'Role-Specific' | 'Common';
+export interface InterviewQuestion {
+  id: string;
+  category: InterviewQuestionCategory;
+  question: string;
+  answerOrTip: string;
+  tags?: string[];
+}
+
+export interface BlogGenerationSettings {
+  generationIntervalHours: number;
+  topics: string[]; // Comma-separated string initially, then array
+  style?: 'informative' | 'casual' | 'formal' | 'technical';
+  lastGenerated?: string; // ISO date string
+}
