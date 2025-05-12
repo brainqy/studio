@@ -11,14 +11,13 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: Home },
   { href: "/resume-analyzer", label: "Resume Analyzer", icon: Zap },
   { href: "/my-resumes", label: "My Resumes", icon: Layers3 },
-  { href: "/resume-history", label: "Resume History", icon: History }, // Added Resume History
+  // { href: "/resume-history", label: "Resume History", icon: History }, // Removed Resume History
   { href: "/job-tracker", label: "Job Tracker", icon: Briefcase },
   {
     label: "Alumni Network",
     icon: Users,
     subItems: [
       { href: "/alumni-connect", label: "Search Alumni", icon: Users },
-      // { href: "/alumni-connect/recommendations", label: "Recommendations", icon: GitFork }, // Removed Recommendations
     ]
   },
   { href: "/job-board", label: "Job Board", icon: Aperture },
