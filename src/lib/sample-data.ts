@@ -215,6 +215,7 @@ export const sampleResumeScanHistory: ResumeScanHistoryItem[] = [
     scanDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(), // 2 days ago
     matchScore: 85,
     reportUrl: '/my-resumes/resumeId123/analysis/reportXYZ', // Example URL
+    bookmarked: true, // Sample bookmarked item
   },
   {
     id: 'scan2',
@@ -227,6 +228,7 @@ export const sampleResumeScanHistory: ResumeScanHistoryItem[] = [
     scanDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(), // 5 days ago
     matchScore: 72,
     reportUrl: '/my-resumes/resumeId456/analysis/reportABC', // Example URL
+    bookmarked: false,
   },
   {
     id: 'scan3',
@@ -238,6 +240,7 @@ export const sampleResumeScanHistory: ResumeScanHistoryItem[] = [
     companyName: 'Data Corp',
     scanDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(), // 10 days ago
     matchScore: 91,
+    bookmarked: false,
   },
 ];
 

@@ -1,5 +1,6 @@
 
 
+
 export type UserRole = 'admin' | 'manager' | 'user';
 
 export type Gender = 'Male' | 'Female' | 'Prefer not to say';
@@ -230,6 +231,7 @@ export type Appointment = {
   location?: string; // For in-person meetings
   notes?: string; // From requester or alumni
   costInCoins?: number; // Coins deducted upon confirmation
+  withUser: string; // Name of the other person in the appointment
 };
 
 export type WalletTransaction = {
@@ -265,6 +267,7 @@ export interface ResumeScanHistoryItem {
   scanDate: string; // ISO string
   matchScore?: number;
   reportUrl?: string; // Link to analysis report if available
+  bookmarked?: boolean; // New field for bookmarking
 }
 
 // Kanban column IDs for Job Tracker

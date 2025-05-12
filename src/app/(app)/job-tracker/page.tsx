@@ -8,8 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PlusCircle, Edit3, Trash2, GripVertical, Search, FileText, Clock } from "lucide-react";
-import { sampleJobApplications, sampleResumeScanHistory } from "@/lib/sample-data";
+import { PlusCircle, Edit3, Trash2, GripVertical, Search, FileText, Clock, Bookmark } from "lucide-react"; // Added Bookmark
+import { sampleJobApplications, sampleResumeScanHistory as initialScanHistory } from "@/lib/sample-data";
 import type { JobApplication, JobApplicationStatus, ResumeScanHistoryItem, KanbanColumnId } from "@/types";
 import { JOB_APPLICATION_STATUSES } from "@/types";
 import { useToast } from "@/hooks/use-toast";
@@ -98,7 +98,7 @@ function JobCard({ application, onEdit, onDelete, onMove }: { application: JobAp
                           {col.title}
                         </DropdownMenuItem>
                     ))}
-                    {application.status !== 'Rejected' && 
+                    {application.status !== 'Rejected' &&
                         <DropdownMenuItem onClick={() => onMove(application.id, 'Rejected')}>Rejected</DropdownMenuItem>
                     }
                   </DropdownMenuSubContent>
@@ -158,12 +158,13 @@ function KanbanColumn({ column, applications, onEdit, onDelete, onMove }: { colu
 }
 
 
-function ResumeScanHistoryCard({ historyItems }: { historyItems: ResumeScanHistoryItem[] }) {
+function ResumeScanHistoryCard({ historyItems, onToggleBookmark }: { historyItems: ResumeScanHistoryItem[], onToggleBookmark: (id: string) => void }) {
+  const { toast } = useToast();
   return (
     <Card className="shadow-lg">
       <CardHeader>
         <CardTitle className="flex items-center gap-2"><FileText className="h-6 w-6 text-primary"/>Resume Scan History</CardTitle>
-        <CardDescription>A log of your past resume scans and analyses.</CardDescription>
+        <CardDescription>A log of your past resume scans and analyses. Bookmark important ones.</CardDescription>
       </CardHeader>
       <CardContent>
         {historyItems.length === 0 ? (
@@ -173,19 +174,32 @@ function ResumeScanHistoryCard({ historyItems }: { historyItems: ResumeScanHisto
             <ul className="space-y-3">
               {historyItems.map(item => (
                 <li key={item.id} className="p-3 border rounded-md bg-card hover:bg-secondary/30 transition-colors">
-                  <div className="flex justify-between items-center">
-                    <h4 className="font-medium text-sm text-foreground">{item.jobTitle} at {item.companyName}</h4>
-                    {item.matchScore && (
-                       <span className={`px-2 py-0.5 text-xs rounded-full font-semibold ${item.matchScore >= 80 ? 'bg-green-100 text-green-700' : item.matchScore >= 60 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
-                        {item.matchScore}% Match
-                      </span>
-                    )}
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h4 className="font-medium text-sm text-foreground">{item.jobTitle} at {item.companyName}</h4>
+                      <p className="text-xs text-muted-foreground">Scanned: {item.resumeName}</p>
+                      <p className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Clock className="h-3 w-3"/> {format(new Date(item.scanDate), "PPp")}
+                      </p>
+                      {item.reportUrl && <Button variant="link" size="sm" className="p-0 h-auto text-xs mt-1" onClick={() => toast({title: "View Report (Mock)", description: `Opening report for ${item.jobTitle}`})}>View Report</Button>}
+                    </div>
+                    <div className="flex flex-col items-end space-y-1">
+                        {item.matchScore && (
+                           <span className={`px-2 py-0.5 text-xs rounded-full font-semibold ${item.matchScore >= 80 ? 'bg-green-100 text-green-700' : item.matchScore >= 60 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
+                            {item.matchScore}% Match
+                          </span>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-muted-foreground hover:text-primary"
+                          onClick={() => onToggleBookmark(item.id)}
+                          title={item.bookmarked ? "Remove Bookmark" : "Add Bookmark"}
+                        >
+                           <Bookmark className={`h-4 w-4 ${item.bookmarked ? 'fill-primary text-primary' : ''}`} />
+                         </Button>
+                    </div>
                   </div>
-                  <p className="text-xs text-muted-foreground">Scanned: {item.resumeName}</p>
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Clock className="h-3 w-3"/> {format(new Date(item.scanDate), "PPp")}
-                  </p>
-                  {item.reportUrl && <Button variant="link" size="sm" className="p-0 h-auto text-xs mt-1">View Report</Button>}
                 </li>
               ))}
             </ul>
@@ -199,6 +213,7 @@ function ResumeScanHistoryCard({ historyItems }: { historyItems: ResumeScanHisto
 
 export default function JobTrackerPage() {
   const [applications, setApplications] = useState<JobApplication[]>(sampleJobApplications);
+  const [scanHistory, setScanHistory] = useState<ResumeScanHistoryItem[]>(initialScanHistory); // State for scan history
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingApplication, setEditingApplication] = useState<JobApplication | null>(null);
   const { toast } = useToast();
@@ -212,7 +227,7 @@ export default function JobTrackerPage() {
       setApplications(apps => apps.map(app => app.id === editingApplication.id ? { ...app, ...data, status: data.status as JobApplicationStatus } : app));
       toast({ title: "Application Updated", description: `${data.jobTitle} at ${data.companyName} updated.` });
     } else {
-      const newApp: JobApplication = { ...data, id: String(Date.now()), status: data.status as JobApplicationStatus };
+      const newApp: JobApplication = { ...data, id: String(Date.now()), status: data.status as JobApplicationStatus, tenantId: 'tenant-1', userId: 'currentUser' }; // Added tenant/user ID
       setApplications(apps => [newApp, ...apps]);
       toast({ title: "Application Added", description: `${data.jobTitle} at ${data.companyName} added to 'Saved'.` });
     }
@@ -245,18 +260,35 @@ export default function JobTrackerPage() {
       toast({ title: "Application Moved", description: `${app.jobTitle} moved to ${newStatus === 'Interviewing' ? 'Interview' : newStatus}.` });
     }
   };
-  
+
   const openNewApplicationDialog = () => {
     setEditingApplication(null);
     reset({ companyName: '', jobTitle: '', status: 'Saved', dateApplied: new Date().toISOString().split('T')[0], notes: '', jobDescription: '', location: '' });
     setIsDialogOpen(true);
   };
-  
+
   const getAppsForColumn = (column: typeof KANBAN_COLUMNS_CONFIG[0]): JobApplication[] => {
     return applications.filter(app => column.acceptedStatuses.includes(app.status));
   };
 
+  const handleToggleBookmark = (scanId: string) => {
+    setScanHistory(prevHistory => {
+      const updatedHistory = prevHistory.map(item =>
+        item.id === scanId ? { ...item, bookmarked: !item.bookmarked } : item
+      );
+      const bookmarkedItem = updatedHistory.find(item => item.id === scanId);
+      toast({
+        title: bookmarkedItem?.bookmarked ? "Scan Bookmarked" : "Bookmark Removed",
+        description: `Scan for ${bookmarkedItem?.jobTitle} at ${bookmarkedItem?.companyName} has been ${bookmarkedItem?.bookmarked ? 'bookmarked' : 'unbookmarked'}.`
+      });
+      return updatedHistory;
+    });
+    // In a real app, you would also make an API call here to persist the bookmark state.
+  };
+
+
   return (
+    // The Job Tracker page displays scan history below the Kanban board.
     <div className="flex flex-col h-full space-y-4 p-0 -m-4 sm:-m-6 lg:-m-8"> {/* Adjusted padding */}
       <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 lg:pt-8">
         <h1 className="text-3xl font-bold tracking-tight text-foreground">Job Application Tracker</h1>
@@ -265,6 +297,7 @@ export default function JobTrackerPage() {
         </Button>
       </div>
 
+      {/* Kanban Board Section */}
       <div className="flex flex-1 gap-4 overflow-x-auto px-4 sm:px-6 lg:px-8 pb-4 sm:pb-6 lg:pb-8">
         <JobSearchSidebar />
         <div className="flex flex-1 gap-4 h-full"> {/* Kanban columns container */}
@@ -280,11 +313,13 @@ export default function JobTrackerPage() {
           ))}
         </div>
       </div>
-      
+
+      {/* Resume Scan History Section */}
       <div className="px-4 sm:px-6 lg:px-8 pb-4 sm:pb-6 lg:pb-8">
-        <ResumeScanHistoryCard historyItems={sampleResumeScanHistory} />
+        <ResumeScanHistoryCard historyItems={scanHistory} onToggleBookmark={handleToggleBookmark} />
       </div>
 
+      {/* Dialog for Adding/Editing Applications */}
       <Dialog open={isDialogOpen} onOpenChange={(isOpen) => {
         setIsDialogOpen(isOpen);
         if (!isOpen) {
