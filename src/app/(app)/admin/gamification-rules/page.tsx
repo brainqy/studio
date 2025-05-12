@@ -51,10 +51,22 @@ export default function GamificationRulesPage() {
 
   const { control: badgeControl, handleSubmit: handleBadgeSubmit, reset: resetBadgeForm, setValue: setBadgeValue, formState: { errors: badgeErrors } } = useForm<BadgeFormData>({
     resolver: zodResolver(badgeSchema),
+    defaultValues: {
+        name: '',
+        description: '',
+        icon: 'Award',
+        xpReward: 0,
+        triggerCondition: ''
+    }
   });
 
   const { control: xpRuleControl, handleSubmit: handleXpRuleSubmit, reset: resetXpRuleForm, setValue: setXpRuleValue, formState: { errors: xpRuleErrors } } = useForm<XpRuleFormData>({
     resolver: zodResolver(xpRuleSchema),
+    defaultValues: {
+        actionId: '',
+        description: '',
+        xpPoints: 0
+    }
   });
 
   const onBadgeFormSubmit = (data: BadgeFormData) => {
