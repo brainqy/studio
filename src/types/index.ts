@@ -7,6 +7,7 @@
 
 
 
+
 export type UserRole = 'admin' | 'manager' | 'user';
 export type UserStatus = 'active' | 'inactive' | 'pending' | 'suspended';
 
@@ -356,4 +357,23 @@ export interface GamificationRule {
     actionId: string; // Unique identifier for the action e.g., 'profile_complete', 'resume_scan'
     description: string; // User-friendly description e.g., "Complete Your Profile", "Analyze a Resume"
     xpPoints: number;
+}
+
+// Survey types for Floating Messenger
+export interface SurveyOption {
+  text: string;
+  value: string;
+  nextStepId?: string;
+}
+
+export interface SurveyStep {
+  id: string;
+  type: 'botMessage' | 'userOptions' | 'userInput' | 'userDropdown';
+  text?: string; // Bot message or question prompt
+  options?: SurveyOption[]; // For userOptions
+  dropdownOptions?: { label: string; value: string }[]; // For userDropdown
+  placeholder?: string; // For userInput
+  nextStepId?: string; // Default next step if not specified by option or after input/dropdown
+  variableName?: string; // Key to store the user's answer
+  isLastStep?: boolean;
 }
