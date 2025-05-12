@@ -1,4 +1,3 @@
-
 "use client";
 
 import type React from 'react';
@@ -30,7 +29,20 @@ export default function StepFeedback({ session, onRestart }: StepFeedbackProps) 
       return;
     }
 
-    const postContent = `Just aced my AI Mock Interview for "${session.topic}" with a score of ${session.overallScore}%! 🎉 Key takeaway: "${session.overallFeedback.overallSummary.substring(0, 100)}..." #AIMockInterview #CareerPrep`;
+    let postContent = `Just finished an AI Mock Interview for "${session.topic}"`;
+    if (session.overallScore !== undefined) {
+      postContent += ` with a score of ${session.overallScore}%! 🎉`;
+    } else {
+      postContent += `! 🎉`;
+    }
+    
+    if (session.overallFeedback.keyStrengths && session.overallFeedback.keyStrengths.length > 0) {
+        postContent += `\n\nKey Strength: "${session.overallFeedback.keyStrengths[0]}"`;
+    } else if (session.overallFeedback.overallSummary) {
+        postContent += `\n\nLearned a lot: "${session.overallFeedback.overallSummary.substring(0, 100)}${session.overallFeedback.overallSummary.length > 100 ? '...' : ''}"`;
+    }
+
+    postContent += `\n\n#AIMockInterview #CareerPrep #${session.topic.toLowerCase().replace(/\s+/g, '')}`;
     
     const newPost: CommunityPost = {
       id: `post-interview-${Date.now()}`,
@@ -47,12 +59,14 @@ export default function StepFeedback({ session, onRestart }: StepFeedbackProps) 
       comments: [],
     };
 
-    // In a real app, this would be an API call
-    sampleCommunityPosts.unshift(newPost);
+    // In a real app, this would be an API call to the backend.
+    // For demo purposes, we're modifying the sample data directly.
+    sampleCommunityPosts.unshift(newPost); // Adds to the beginning of the array
 
     toast({
       title: "Shared to Feed!",
       description: "Your mock interview achievement has been posted to the community feed.",
+      duration: 5000,
     });
   };
 
