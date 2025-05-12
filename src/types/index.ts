@@ -6,6 +6,7 @@
 
 
 
+
 export type UserRole = 'admin' | 'manager' | 'user';
 export type UserStatus = 'active' | 'inactive' | 'pending' | 'suspended';
 
@@ -125,6 +126,8 @@ export interface Activity {
   userId?: string; // User who performed the activity
 }
 
+export type CommunityPostModerationStatus = 'visible' | 'flagged' | 'removed';
+
 export interface CommunityPost {
   id: string;
   tenantId: string;
@@ -141,6 +144,8 @@ export interface CommunityPost {
   eventTitle?: string; // Added for event type
   assignedTo?: string; // Added for request type
   status?: 'open' | 'assigned' | 'completed'; // Added for request type
+  moderationStatus: CommunityPostModerationStatus;
+  flagCount: number;
 }
 
 export interface FeatureRequest {

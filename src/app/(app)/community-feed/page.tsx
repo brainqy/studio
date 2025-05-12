@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -10,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MessageSquare, PlusCircle, ThumbsUp, MessageCircle as MessageIcon, Share2, Send, Filter, Edit3, Calendar, MapPin } from "lucide-react";
+import { MessageSquare, PlusCircle, ThumbsUp, MessageCircle as MessageIcon, Share2, Send, Filter, Edit3, Calendar, MapPin, Flag, ShieldCheck, Trash2 } from "lucide-react"; // Added Flag, ShieldCheck, Trash2
 import { sampleCommunityPosts, sampleUserProfile } from "@/lib/sample-data";
 import type { CommunityPost } from "@/types";
 import { formatDistanceToNow } from 'date-fns';
@@ -36,7 +37,7 @@ type PostFormData = z.infer<typeof postSchema>;
 
 export default function CommunityFeedPage() {
   const [posts, setPosts] = useState<CommunityPost[]>(sampleCommunityPosts);
-  const [filter, setFilter] = useState<'all' | 'text' | 'poll' | 'event' | 'request' | 'my_posts'>('all');
+  const [filter, setFilter] = useState<'all' | 'text' | 'poll' | 'event' | 'request' | 'my_posts' | 'flagged'>('all');
   const { toast } = useToast();
 
   const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
@@ -51,20 +52,21 @@ export default function CommunityFeedPage() {
       type: 'text',
     }
   });
+  
+  const currentUser = sampleUserProfile; // For checking admin role
 
   const handleFormSubmit = (data: PostFormData) => {
     if (editingPost) {
-      // Edit existing post
-      // Edit existing post
       setPosts(prevPosts => prevPosts.map(p => p.id === editingPost.id
         ? {
           ...p,
           content: data.content,
-          tags: data.tags?.split(',').map(tag => tag.trim()).filter(tag => tag) || [], // TODO: Clean up casting
-          type: data.type as any, // TODO: Clean up casting
+          tags: data.tags?.split(',').map(tag => tag.trim()).filter(tag => tag) || [],
+          type: data.type as any, 
           pollOptions: data.type === 'poll' ? data.pollOptions : undefined,
           eventDate: data.type === 'event' ? data.eventDate : undefined,
           eventLocation: data.type === 'event' ? data.eventLocation : undefined,
+          // Moderation status and flag count should not be editable by users directly through this form
         }
         : p
       ));
@@ -78,11 +80,13 @@ export default function CommunityFeedPage() {
         userAvatar: sampleUserProfile.profilePictureUrl,
         timestamp: new Date().toISOString(),
         content: data.content,
-        type: data.type as any, // TODO: Clean up casting
+        type: data.type as any, 
         pollOptions: data.type === 'poll' ? data.pollOptions : undefined,
         eventDate: data.type === 'event' ? data.eventDate : undefined,
         eventLocation: data.type === 'event' ? data.eventLocation : undefined,
         tags: data.tags?.split(',').map(tag => tag.trim()).filter(tag => tag) || [],
+        moderationStatus: 'visible', // New posts start as visible
+        flagCount: 0,
       };
       setPosts(prevPosts => [newPost, ...prevPosts]);
       toast({ title: "Post Created", description: "Your post has been added to the feed." });
@@ -96,7 +100,6 @@ export default function CommunityFeedPage() {
     setPosts(prevPosts => prevPosts.map(post => {
       if (post.id === postId && post.type === 'poll' && post.pollOptions) {
         const newPollOptions = [...post.pollOptions];
-        // Find the option and increment votes
         if (newPollOptions[optionIndex]) {
           newPollOptions[optionIndex].votes += 1;
           return { ...post, pollOptions: newPollOptions };
@@ -110,7 +113,6 @@ export default function CommunityFeedPage() {
   const handleAssign = (postId: string, userName: string) => {
     setPosts(prevPosts => prevPosts.map(post => {
       if (post.id === postId && post.type === 'request') {
-        // Check if the request is already assigned
         if (post.assignedTo) {
           toast({ title: "Already Assigned", description: "This request is already assigned to someone." });
           return post;
@@ -139,11 +141,32 @@ export default function CommunityFeedPage() {
     setIsPostDialogOpen(true);
   };
 
+  const handleFlagPost = (postId: string) => {
+    setPosts(prevPosts => prevPosts.map(post =>
+      post.id === postId ? { ...post, moderationStatus: 'flagged', flagCount: (post.flagCount || 0) + 1 } : post
+    ));
+    toast({ title: "Post Flagged", description: "The post has been flagged for review." });
+  };
+
+  const handleApprovePost = (postId: string) => {
+    setPosts(prevPosts => prevPosts.map(post =>
+      post.id === postId ? { ...post, moderationStatus: 'visible', flagCount: 0 } : post
+    ));
+    toast({ title: "Post Approved", description: "The post is now visible." });
+  };
+
+  const handleRemovePost = (postId: string) => {
+    setPosts(prevPosts => prevPosts.map(post =>
+      post.id === postId ? { ...post, moderationStatus: 'removed' } : post
+    ));
+    toast({ title: "Post Removed", description: "The post has been removed.", variant: "destructive" });
+  };
 
   const filteredPosts = posts.filter(post => {
-    if (filter === 'all') return true;
-    if (filter === 'my_posts') return post.userId === sampleUserProfile.id;
-    return post.type === filter;
+    if (filter === 'all') return post.moderationStatus !== 'removed' || currentUser.role === 'admin'; // Admins see removed for context
+    if (filter === 'my_posts') return post.userId === sampleUserProfile.id && (post.moderationStatus !== 'removed' || currentUser.role === 'admin');
+    if (filter === 'flagged') return post.moderationStatus === 'flagged' && currentUser.role === 'admin'; // Only admins can filter by flagged
+    return post.type === filter && (post.moderationStatus !== 'removed' || currentUser.role === 'admin');
   });
 
   return (
@@ -285,7 +308,7 @@ export default function CommunityFeedPage() {
         <h2 className="text-2xl font-semibold">Recent Posts</h2>
         <div className="flex items-center gap-2">
           <Filter className="h-5 w-5 text-muted-foreground" />
-          <Select value={filter} onValueChange={(value: 'all' | 'text' | 'poll' | 'event' | 'request' | 'my_posts') => setFilter(value)}>
+          <Select value={filter} onValueChange={(value: 'all' | 'text' | 'poll' | 'event' | 'request' | 'my_posts' | 'flagged') => setFilter(value)}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Filter posts" />
             </SelectTrigger>
@@ -296,6 +319,7 @@ export default function CommunityFeedPage() {
               <SelectItem value="event">Events</SelectItem>
               <SelectItem value="request">Requests</SelectItem>
               <SelectItem value="my_posts">My Posts</SelectItem>
+              {currentUser.role === 'admin' && <SelectItem value="flagged">Flagged Posts</SelectItem>}
             </SelectContent>
           </Select>
         </div>
@@ -314,7 +338,7 @@ export default function CommunityFeedPage() {
       ) : (
         <div className="space-y-6">
           {filteredPosts.map(post => (
-            <Card key={post.id} className="shadow-md">
+            <Card key={post.id} className={`shadow-md ${post.moderationStatus === 'flagged' ? 'border-yellow-500 border-2' : post.moderationStatus === 'removed' ? 'opacity-50 bg-secondary' : ''}`}>
               <CardHeader className="flex flex-row items-start space-x-3 pb-3">
                 <Avatar className="h-10 w-10">
                   <AvatarImage src={post.userAvatar} alt={post.userName} data-ai-hint="person face"/>
@@ -327,70 +351,100 @@ export default function CommunityFeedPage() {
                     {post.type === 'poll' && <span className="ml-2 px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded-full">Poll</span>}
                     {post.type === 'request' && <span className="ml-2 px-2 py-0.5 text-xs bg-yellow-100 text-yellow-700 rounded-full">Request</span>}
                      {post.type === 'event' && <span className="ml-2 px-2 py-0.5 text-xs bg-green-100 text-green-700 rounded-full">Event</span>}
+                     {post.moderationStatus === 'flagged' && <span className="ml-2 px-2 py-0.5 text-xs bg-yellow-400 text-yellow-900 rounded-full">Flagged ({post.flagCount})</span>}
+                     {post.moderationStatus === 'removed' && <span className="ml-2 px-2 py-0.5 text-xs bg-red-400 text-red-900 rounded-full">Removed</span>}
                   </p>
                 </div>
-                {post.userId === sampleUserProfile.id && (
+                {/* Edit button for post owner, but not if post is removed */}
+                {post.userId === sampleUserProfile.id && post.moderationStatus !== 'removed' && (
                   <Button variant="ghost" size="icon" onClick={() => openEditPostDialog(post)}>
                     <Edit3 className="h-4 w-4" />
                   </Button>
                 )}
               </CardHeader>
               <CardContent>
-                {post.type === 'text' && (
-                  <p className="text-sm text-foreground whitespace-pre-line">{post.content}</p>
-                )}
-                {post.type === 'poll' && post.content && (
-                 <div>
-                  <p className="text-sm font-semibold text-foreground mb-2">{post.content}</p>
-                   {/* TODO: Implement poll voting UI */}
-                   {post.pollOptions?.map((option, index) => (
-                      <div key={index} className="flex items-center space-x-2 mb-1">
-                        <Input type="radio" id={`poll-option-${post.id}-${index}`} name={`poll-${post.id}`} value={option.option} className="h-4 w-4 text-primary focus:ring-primary" onClick={() => handleVote(post.id, index)} />
-                        <Label htmlFor={`poll-option-${post.id}-${index}`} className="text-sm text-foreground">{option.option} ({option.votes})</Label>
-                      </div>
-                    ))}
-                 </div>
-                )}
-                {post.type === 'event' && post.content && (
-                  <div>
-                    <p className="text-sm font-semibold text-foreground mb-2">{post.content}</p>
-                    <div className="border rounded-md p-3 space-y-1">
-                      <p className="text-sm font-medium">{post.eventTitle || 'Event Details'}</p> {/* Assuming eventTitle exists or use a default */}
-                      <p className="text-xs text-muted-foreground flex items-center gap-1"><Calendar className="h-3 w-3"/> {post.eventDate ? new Date(post.eventDate).toLocaleString() : 'Date TBD'}</p>
-                      <p className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3"/> {post.eventLocation || 'Location TBD'}</p>
-                    </div>
-                 </div>
-                )}
-                {post.type === 'request' && post.content && (
-                  <div>
-                    <p className="text-sm text-foreground whitespace-pre-line mb-2">{post.content}</p>
-                    {!post.assignedTo && (
-                      <Button variant="outline" size="sm" className="mt-2" onClick={() => handleAssign(post.id, sampleUserProfile.name)}> {/* Using sampleUserProfile.name as placeholder */}
-                       Assign to Me
-                      </Button>
+                {post.moderationStatus === 'removed' && currentUser.role !== 'admin' ? (
+                    <p className="text-sm text-muted-foreground italic">This post has been removed by a moderator.</p>
+                ) : (
+                  <>
+                    {post.type === 'text' && (
+                      <p className="text-sm text-foreground whitespace-pre-line">{post.content}</p>
+                    )}
+                    {post.type === 'poll' && post.content && (
+                     <div>
+                      <p className="text-sm font-semibold text-foreground mb-2">{post.content}</p>
+                       {post.pollOptions?.map((option, index) => (
+                          <div key={index} className="flex items-center space-x-2 mb-1">
+                            <Input type="radio" id={`poll-option-${post.id}-${index}`} name={`poll-${post.id}`} value={option.option} className="h-4 w-4 text-primary focus:ring-primary" onClick={() => handleVote(post.id, index)} />
+                            <Label htmlFor={`poll-option-${post.id}-${index}`} className="text-sm text-foreground">{option.option} ({option.votes})</Label>
+                          </div>
+                        ))}
+                     </div>
+                    )}
+                    {post.type === 'event' && post.content && (
+                      <div>
+                        <p className="text-sm font-semibold text-foreground mb-2">{post.content}</p>
+                        <div className="border rounded-md p-3 space-y-1">
+                          <p className="text-sm font-medium">{post.eventTitle || 'Event Details'}</p>
+                          <p className="text-xs text-muted-foreground flex items-center gap-1"><Calendar className="h-3 w-3"/> {post.eventDate ? new Date(post.eventDate).toLocaleString() : 'Date TBD'}</p>
+                          <p className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3"/> {post.eventLocation || 'Location TBD'}</p>
+                        </div>
+                     </div>
+                    )}
+                    {post.type === 'request' && post.content && (
+                      <div>
+                        <p className="text-sm text-foreground whitespace-pre-line mb-2">{post.content}</p>
+                        {!post.assignedTo && (
+                          <Button variant="outline" size="sm" className="mt-2" onClick={() => handleAssign(post.id, sampleUserProfile.name)}>
+                           Assign to Me
+                          </Button>
+                         )}
+                       {post.assignedTo && <p className="text-xs text-muted-foreground">Assigned to: {post.assignedTo}</p>}
+                     </div>
+                    )}
+                     {post.tags && post.tags.length > 0 && (
+                       <div className="mt-3 flex flex-wrap gap-2">
+                         {post.tags.map(tag => (
+                           <span key={tag} className="px-2 py-0.5 text-xs bg-accent text-accent-foreground rounded-full">#{tag}</span>
+                         ))}
+                       </div>
                      )}
-                   {post.assignedTo && <p className="text-xs text-muted-foreground">Assigned to: {post.assignedTo}</p>}
-                 </div>
+                  </>
                 )}
-                 {post.tags && post.tags.length > 0 && (
-                   <div className="mt-3 flex flex-wrap gap-2">
-                     {post.tags.map(tag => (
-                       <span key={tag} className="px-2 py-0.5 text-xs bg-accent text-accent-foreground rounded-full">#{tag}</span>
-                     ))}
-                   </div>
-                 )}
               </CardContent>
-              <CardFooter className="border-t pt-3 flex items-center justify-start space-x-4">
-                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
-                  <ThumbsUp className="mr-1 h-4 w-4" /> Like
-                </Button>
-                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
-                  <MessageIcon className="mr-1 h-4 w-4" /> Comment
-                </Button>
-                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
-                  <Share2 className="mr-1 h-4 w-4" /> Share
-                </Button>
-              </CardFooter>
+              {post.moderationStatus !== 'removed' && (
+                 <CardFooter className="border-t pt-3 flex items-center justify-start space-x-2">
+                    <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
+                    <ThumbsUp className="mr-1 h-4 w-4" /> Like
+                    </Button>
+                    <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
+                    <MessageIcon className="mr-1 h-4 w-4" /> Comment
+                    </Button>
+                    <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
+                    <Share2 className="mr-1 h-4 w-4" /> Share
+                    </Button>
+
+                    {/* Moderation Actions */}
+                    {currentUser.role === 'admin' ? (
+                    <>
+                        {post.moderationStatus === 'flagged' && (
+                        <Button variant="outline" size="sm" onClick={() => handleApprovePost(post.id)} className="text-green-600 border-green-600 hover:bg-green-50">
+                            <ShieldCheck className="mr-1 h-4 w-4" /> Approve
+                        </Button>
+                        )}
+                        <Button variant="destructive" size="sm" onClick={() => handleRemovePost(post.id)}>
+                            <Trash2 className="mr-1 h-4 w-4" /> Remove
+                        </Button>
+                    </>
+                    ) : (
+                    post.userId !== currentUser.id && (
+                        <Button variant="ghost" size="sm" onClick={() => handleFlagPost(post.id)} className="text-yellow-600 hover:text-yellow-700">
+                            <Flag className="mr-1 h-4 w-4" /> Flag
+                        </Button>
+                    )
+                    )}
+                </CardFooter>
+              )}
             </Card>
           ))}
         </div>
