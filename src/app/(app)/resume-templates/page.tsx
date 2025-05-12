@@ -5,10 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Layers, Search, Eye, Download, Edit } from "lucide-react";
+import { Layers, Search, Eye, Download, Edit, PlusCircle } from "lucide-react";
 import Image from "next/image";
-import { sampleResumeTemplates } from "@/lib/sample-data";
-import type { ResumeTemplate } from "@/types";
+import { sampleResumeTemplates, sampleUserProfile, sampleResumeProfiles } from "@/lib/sample-data";
+import type { ResumeTemplate, ResumeProfile } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -24,6 +24,7 @@ export default function ResumeTemplatesPage() {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<ResumeTemplate | null>(null);
   const { toast } = useToast();
+  const currentUser = sampleUserProfile;
 
   const allCategories = Array.from(new Set(sampleResumeTemplates.map(template => template.category)));
 
@@ -42,23 +43,41 @@ export default function ResumeTemplatesPage() {
     setIsPreviewOpen(true);
   };
 
-  const handleUseTemplate = (templateName: string) => {
-    toast({
-      title: "Template Selected (Mock)",
-      description: `"${templateName}" would ideally pre-fill a new resume or provide downloadable content. This feature is for demonstration.`,
+  const handleUseTemplate = (template: ResumeTemplate) => {
+    const newResumeName = `Resume from ${template.name} (${new Date().toLocaleDateString()})`;
+    const newResume: ResumeProfile = {
+      id: `resume-${Date.now()}`,
+      tenantId: currentUser.tenantId,
+      userId: currentUser.id,
+      name: newResumeName,
+      resumeText: template.content, // Use the template's content
+      lastAnalyzed: undefined,
+    };
+
+    // Add to global sample data (for demo persistence across app)
+    // In a real app, this would be an API call to save to backend.
+    sampleResumeProfiles.unshift(newResume); 
+
+    toast({ 
+      title: "Resume Created from Template", 
+      description: `"${newResumeName}" has been added to 'My Resumes'. You can edit it there.` 
     });
-    // In a real app:
-    // 1. Option to download a .docx or .txt version of the template.
-    // 2. Option to navigate to "My Resumes" with this template pre-selected/pre-filled.
-    setIsPreviewOpen(false);
+    setIsPreviewOpen(false); // Close the preview dialog
   };
   
   const handleEditTemplate = (templateName: string) => {
     toast({
       title: "Edit Template (Mock)",
-      description: `Editing features for "${templateName}" are not yet implemented.`,
+      description: `Editing features for "${templateName}" are not yet implemented. This would be an admin feature.`,
     });
   };
+  
+  const handleDownloadTemplate = (templateName: string) => {
+     toast({
+      title: "Download Template (Mock)",
+      description: `Download functionality for "${templateName}" is not yet implemented.`,
+    });
+  }
 
   return (
     <div className="space-y-8">
@@ -111,7 +130,7 @@ export default function ResumeTemplatesPage() {
                   src={template.previewImageUrl}
                   alt={template.name}
                   layout="fill"
-                  objectFit="contain" // Use contain to see the whole template structure
+                  objectFit="contain" 
                   className="p-2"
                   data-ai-hint={template.dataAiHint || "resume template"}
                 />
@@ -127,8 +146,8 @@ export default function ResumeTemplatesPage() {
                 <Button variant="outline" size="sm" onClick={() => openPreviewDialog(template)}>
                   <Eye className="mr-1 h-4 w-4" /> Preview
                 </Button>
-                <Button size="sm" className="bg-primary hover:bg-primary/90" onClick={() => handleUseTemplate(template.name)}>
-                  Use Template
+                <Button size="sm" className="bg-primary hover:bg-primary/90" onClick={() => handleUseTemplate(template)}>
+                   <PlusCircle className="mr-2 h-4 w-4" /> Use Template
                 </Button>
               </CardFooter>
             </Card>
@@ -147,7 +166,7 @@ export default function ResumeTemplatesPage() {
               <div className="p-6 max-h-[70vh] overflow-y-auto">
                 <div className="aspect-[8.5/11] w-full max-w-xl mx-auto bg-secondary shadow-lg">
                   <Image
-                    src={selectedTemplate.previewImageUrl.replace('/300/400', '/800/1035')} // Request larger image for preview
+                    src={selectedTemplate.previewImageUrl.replace('/300/400', '/800/1035')} 
                     alt={`${selectedTemplate.name} Preview`}
                     width={800}
                     height={1035}
@@ -161,8 +180,11 @@ export default function ResumeTemplatesPage() {
                 <Button variant="outline" onClick={() => handleEditTemplate(selectedTemplate.name)}>
                   <Edit className="mr-2 h-4 w-4" /> Customize (Mock)
                 </Button>
-                <Button onClick={() => handleUseTemplate(selectedTemplate.name)} className="bg-primary hover:bg-primary/90">
-                  <Download className="mr-2 h-4 w-4" /> Use Template
+                <Button variant="outline" onClick={() => handleDownloadTemplate(selectedTemplate.name)}>
+                  <Download className="mr-2 h-4 w-4" /> Download (Mock)
+                </Button>
+                <Button onClick={() => handleUseTemplate(selectedTemplate)} className="bg-primary hover:bg-primary/90">
+                  <PlusCircle className="mr-2 h-4 w-4" /> Use This Template
                 </Button>
                 <DialogClose asChild>
                   <Button variant="ghost">Close</Button>

@@ -441,6 +441,7 @@ export interface ResumeTemplate {
   previewImageUrl: string;
   category: string; 
   dataAiHint?: string;
+  content: string; // Added to store the actual template text
 }
 
 export interface RecentPageItem {
