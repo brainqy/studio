@@ -1,4 +1,4 @@
-import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem, Appointment, Wallet, ResumeProfile, Tenant, Badge, BlogPost, ReferralHistoryItem, GamificationRule } from '@/types';
+import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem, Appointment, Wallet, ResumeProfile, Tenant, Badge, BlogPost, ReferralHistoryItem, GamificationRule, UserStatus } from '@/types';
 import { AreasOfSupport, AppointmentStatuses } from '@/types'; // Import AppointmentStatuses
 
 const SAMPLE_TENANT_ID = 'tenant-1'; // Define a default tenant ID for sample data
@@ -25,6 +25,8 @@ export const sampleAlumni: AlumniProfile[] = [
     skills: ['Java', 'Python', 'Machine Learning', 'Cloud Computing', 'Algorithms'],
     email: "alice.wonderland@example.com",
     role: 'user',
+    status: 'active',
+    lastLogin: new Date(Date.now() - 86400000 * 1).toISOString(), // 1 day ago
     interests: ['Hiking', 'Photography', 'Open Source'],
     offersHelpWith: [AreasOfSupport[0], AreasOfSupport[2], AreasOfSupport[4]], // Mentoring, Job Referrals, Startup Mentorship
     appointmentCoinCost: 10,
@@ -41,6 +43,8 @@ export const sampleAlumni: AlumniProfile[] = [
     skills: ['Product Management', 'Agile', 'UX Research', 'Roadmapping'],
     email: "bob.builder@example.com",
     role: 'manager',
+    status: 'active',
+    lastLogin: new Date(Date.now() - 86400000 * 2).toISOString(), // 2 days ago
     interests: ['Woodworking', 'Community Volunteering', 'Travel'],
     offersHelpWith: [AreasOfSupport[1], AreasOfSupport[3], AreasOfSupport[8]], // Internships, Guest Lecturing, Organizing Events
     appointmentCoinCost: 15,
@@ -57,6 +61,8 @@ export const sampleAlumni: AlumniProfile[] = [
     skills: ['R', 'Statistics', 'Big Data', 'Python', 'Data Visualization'],
     email: "charlie.brown@example.com",
     role: 'user',
+    status: 'inactive',
+    lastLogin: new Date(Date.now() - 86400000 * 30).toISOString(), // 30 days ago
     interests: ['Chess', 'Reading Sci-Fi', 'Data For Good'],
     offersHelpWith: [AreasOfSupport[0], AreasOfSupport[7]], // Mentoring, Curriculum Feedback
     appointmentCoinCost: 10,
@@ -73,6 +79,8 @@ export const sampleAlumni: AlumniProfile[] = [
     skills: ['SEO', 'Content Marketing', 'Social Media', 'PPC Advertising'],
     email: "diana.prince@example.com",
     role: 'admin', // Example Admin
+    status: 'active',
+    lastLogin: new Date(Date.now() - 86400000 * 0.5).toISOString(), // 12 hours ago
     interests: ['Yoga', 'Creative Writing', 'Digital Trends'],
     offersHelpWith: [AreasOfSupport[2], AreasOfSupport[5], AreasOfSupport[9]], // Job Referrals, Sponsorship, Volunteering
     appointmentCoinCost: 20,
@@ -115,9 +123,11 @@ export const sampleJobOpenings: JobOpening[] = [
 export const sampleUserProfile: UserProfile = {
   id: 'currentUser',
   tenantId: SAMPLE_TENANT_ID,
-  role: 'admin', // <= CHANGED TO ADMIN
-  name: 'Alex Taylor (Admin)', // Added "(Admin)" to name for clarity during testing
-  email: 'admin@example.com', // Changed email for admin context
+  role: 'admin', 
+  name: 'Alex Taylor (Admin)', 
+  email: 'admin@example.com', 
+  status: 'active',
+  lastLogin: new Date().toISOString(),
   dateOfBirth: '1990-05-20',
   gender: 'Prefer not to say',
   mobileNumber: '+15559876543',
@@ -135,17 +145,15 @@ export const sampleUserProfile: UserProfile = {
   yearsOfExperience: '10+',
 
   skills: ['System Administration', 'User Management', 'Cloud Infrastructure', 'Security'],
-
-  // Admins might not engage in the same way, but keeping structure
   areasOfSupport: ['Organizing Alumni Events'],
   timeCommitment: 'Occasionally, when needed',
   preferredEngagementMode: 'Online',
   otherComments: 'Overseeing platform operations.',
 
-  lookingForSupportType: undefined, // Admins likely don't seek support via this form
+  lookingForSupportType: undefined, 
   helpNeededDescription: '',
 
-  shareProfileConsent: false, // Admins might default to less visibility
+  shareProfileConsent: false, 
   featureInSpotlightConsent: false,
 
   bio: 'Experienced platform administrator ensuring the smooth operation of ResumeMatch AI.',
@@ -166,13 +174,38 @@ export const sampleUserProfile: UserProfile = {
   Skills: System Administration, User Support, Database Management, Cloud Services (AWS/GCP), Security Best Practices.
   `,
   careerInterests: 'Platform Scalability, DevOps, AI Ethics',
-
-  // Gamification Data for Admin (Could be less relevant, but included for consistency)
   xpPoints: 5000,
   dailyStreak: 15,
   referralCode: 'ADMINREF123',
   earnedBadges: ['admin-master', 'profile-pro', 'early-adopter'],
 };
+
+// Sample platform users for user management page
+export const samplePlatformUsers: UserProfile[] = [
+  sampleUserProfile, // Current admin user
+  ...sampleAlumni.map(alumni => ({
+    ...alumni, // Spread alumni fields
+    // Fill in missing UserProfile fields or adapt AlumniProfile fields
+    id: alumni.id,
+    tenantId: alumni.tenantId,
+    role: alumni.role || 'user',
+    name: alumni.name,
+    email: alumni.email,
+    status: alumni.status || (Math.random() > 0.2 ? 'active' : 'inactive'),
+    lastLogin: alumni.lastLogin || new Date(Date.now() - 86400000 * Math.floor(Math.random() * 30)).toISOString(),
+    profilePictureUrl: alumni.profilePictureUrl,
+    // Add other UserProfile fields as needed, potentially with defaults or derived from alumni data
+    dateOfBirth: '1990-01-01', // Default
+    gender: 'Prefer not to say', // Default
+    graduationYear: '2015', // Default
+    currentJobTitle: alumni.currentJobTitle,
+    currentOrganization: alumni.company,
+    skills: alumni.skills,
+    xpPoints: Math.floor(Math.random() * 5000),
+    dailyStreak: Math.floor(Math.random() * 30),
+  }))
+];
+
 
 export const sampleAppointments: Appointment[] = [
     { id: 'appt1', tenantId: SAMPLE_TENANT_ID, requesterUserId: 'currentUser', alumniUserId: 'alumni1', title: 'Mentorship Session with Alice W.', dateTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3).toISOString(), withUser: 'Alice Wonderland', status: 'Confirmed', costInCoins: 10, meetingLink: 'https://zoom.us/j/1234567890' },
@@ -320,3 +353,5 @@ export const sampleXpRules: GamificationRule[] = [
     { actionId: 'successful_referral', description: 'Successful Referral Signup', xpPoints: 50 },
     { actionId: 'daily_login', description: 'Daily Login', xpPoints: 10 },
 ];
+
+```

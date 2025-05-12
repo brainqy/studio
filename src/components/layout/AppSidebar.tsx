@@ -1,8 +1,9 @@
 
+
 "use client";
 
 import { Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarSeparator, SidebarGroup, SidebarGroupLabel } from "@/components/ui/sidebar";
-import { Aperture, Award, BarChart2, BookOpen, Briefcase, Building2, CalendarDays, FileText, GalleryVerticalEnd, GitFork, Gift, History, Home, Layers3, ListChecks, MessageSquare, Settings, ShieldQuestion, User, Users, Wallet, Zap } from "lucide-react"; // Added History, ListChecks
+import { Aperture, Award, BarChart2, BookOpen, Briefcase, Building2, CalendarDays, FileText, GalleryVerticalEnd, GitFork, Gift, History, Home, Layers3, ListChecks, MessageSquare, Settings, ShieldQuestion, User, Users, Wallet, Zap, UserCog } from "lucide-react"; // Added History, ListChecks, UserCog
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { sampleUserProfile } from "@/lib/sample-data"; // Import user profile to get role and tenant
@@ -50,6 +51,7 @@ const blogItems = [
 
 const adminItems = [
    { href: "/admin/tenants", label: "Tenant Management", icon: Building2 },
+   { href: "/admin/user-management", label: "User Management", icon: UserCog },
    { href: "/admin/gamification-rules", label: "Gamification Rules", icon: ListChecks }, // Added Gamification Rules link
    // Add other admin-specific routes here
 ];

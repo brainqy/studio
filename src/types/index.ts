@@ -3,7 +3,10 @@
 
 
 
+
 export type UserRole = 'admin' | 'manager' | 'user';
+export type UserStatus = 'active' | 'inactive' | 'pending' | 'suspended';
+
 
 export type Gender = 'Male' | 'Female' | 'Prefer not to say';
 
@@ -105,6 +108,8 @@ export interface AlumniProfile {
   skills: string[];
   email: string;
   role?: UserRole; // Role within the platform for THIS tenant
+  status?: UserStatus; // Status of the user account
+  lastLogin?: string; // ISO string for last login date
   interests?: string[];
   offersHelpWith?: SupportArea[];
   appointmentCoinCost?: number;
@@ -198,9 +203,12 @@ export interface UserProfile {
   tenantId: string; // The tenant this user belongs to
   role: UserRole; // Role within the specific tenant context
   name: string;
+  email: string; // Used for login, likely globally unique
+  status?: UserStatus; // Status of the user account
+  lastLogin?: string; // ISO string for last login date
+  
   dateOfBirth?: string; // ISO string e.g. "1990-01-01"
   gender?: Gender;
-  email: string; // Used for login, likely globally unique
   mobileNumber?: string;
   currentAddress?: string; // Paragraph
 
@@ -338,3 +346,5 @@ export interface GamificationRule {
     description: string; // User-friendly description e.g., "Complete Your Profile", "Analyze a Resume"
     xpPoints: number;
 }
+
+```
