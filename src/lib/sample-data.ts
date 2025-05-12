@@ -1,5 +1,5 @@
-import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem, Appointment, Wallet, ResumeProfile, Tenant, Badge, BlogPost } from '@/types';
-import { AreasOfSupport } from '@/types';
+import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem, Appointment, Wallet, ResumeProfile, Tenant, Badge, BlogPost, ReferralHistoryItem, GamificationRule } from '@/types';
+import { AreasOfSupport, AppointmentStatuses } from '@/types'; // Import AppointmentStatuses
 
 const SAMPLE_TENANT_ID = 'tenant-1'; // Define a default tenant ID for sample data
 
@@ -178,6 +178,7 @@ export const sampleAppointments: Appointment[] = [
     { id: 'appt1', tenantId: SAMPLE_TENANT_ID, requesterUserId: 'currentUser', alumniUserId: 'alumni1', title: 'Mentorship Session with Alice W.', dateTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3).toISOString(), withUser: 'Alice Wonderland', status: 'Confirmed', costInCoins: 10, meetingLink: 'https://zoom.us/j/1234567890' },
     { id: 'appt2', tenantId: SAMPLE_TENANT_ID, requesterUserId: 'currentUser', alumniUserId: 'alumni2', title: 'Networking Call with Bob B.', dateTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 5).toISOString(), withUser: 'Bob The Builder', status: 'Pending', costInCoins: 15 },
     { id: 'appt3', tenantId: SAMPLE_TENANT_ID, requesterUserId: 'alumni3', alumniUserId: 'currentUser', title: 'Incoming Request: Career Advice', dateTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString(), withUser: 'Charlie Brown', status: 'Pending', costInCoins: 10 }, // Example of incoming request
+    { id: 'appt4', tenantId: SAMPLE_TENANT_ID, requesterUserId: 'currentUser', alumniUserId: 'alumni4', title: 'Discuss Marketing Strategy', dateTime: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(), withUser: 'Diana Prince', status: 'Completed', costInCoins: 20 }, // Example of completed appointment
 ];
 
 export const sampleWalletBalance: Wallet = {
@@ -250,14 +251,14 @@ export const sampleTenants: Tenant[] = [
   { id: 'tenant-3', name: 'Community College', createdAt: new Date(Date.now() - 86400000 * 10).toISOString(), settings: { allowPublicSignup: true } },
 ];
 
-// Sample Badges
+// Sample Badges (now includes reward and trigger)
 export const sampleBadges: Badge[] = [
-    { id: 'profile-pro', name: 'Profile Pro', description: 'Completed 100% of your profile.', icon: 'UserCheck', achieved: true },
-    { id: 'early-adopter', name: 'Early Adopter', description: 'Joined within the first month of launch.', icon: 'Award', achieved: true },
-    { id: 'networker', name: 'Networker', description: 'Made 10+ alumni connections.', icon: 'Users', achieved: false },
-    { id: 'analyzer-ace', name: 'Analyzer Ace', description: 'Analyzed 5+ resumes.', icon: 'Zap', achieved: false },
-    { id: 'contributor', name: 'Contributor', description: 'Posted 5+ times in the community feed.', icon: 'MessageSquare', achieved: false },
-    { id: 'admin-master', name: 'Admin Master', description: 'Successfully managed platform settings.', icon: 'ShieldCheck', achieved: true }, // Admin only badge example
+    { id: 'profile-pro', name: 'Profile Pro', description: 'Completed 100% of your profile.', icon: 'UserCheck', xpReward: 100, triggerCondition: 'Profile completion reaches 100%' },
+    { id: 'early-adopter', name: 'Early Adopter', description: 'Joined within the first month of launch.', icon: 'Award', xpReward: 50, triggerCondition: 'User signup date within launch window' },
+    { id: 'networker', name: 'Networker', description: 'Made 10+ alumni connections.', icon: 'Users', xpReward: 75, triggerCondition: 'Number of connections > 10' },
+    { id: 'analyzer-ace', name: 'Analyzer Ace', description: 'Analyzed 5+ resumes.', icon: 'Zap', xpReward: 50, triggerCondition: 'Resume scan count > 5' },
+    { id: 'contributor', name: 'Contributor', description: 'Posted 5+ times in the community feed.', icon: 'MessageSquare', xpReward: 30, triggerCondition: 'Community post count > 5' },
+    { id: 'admin-master', name: 'Admin Master', description: 'Successfully managed platform settings.', icon: 'ShieldCheck', xpReward: 0, triggerCondition: 'User role is Admin' }, // Admin only badge example
 ];
 
 // Sample Blog Posts
@@ -270,7 +271,7 @@ export const sampleBlogPosts: BlogPost[] = [
     author: 'ResumeMatch AI Team',
     date: '2024-07-20T10:00:00Z',
     imageUrl: 'https://picsum.photos/seed/blogai/800/400',
-    content: 'Learn how to leverage our AI analysis tool to its full potential. Understand match scores, keyword analysis, and how to use suggestions effectively...\n\n *Detailed content goes here*',
+    content: 'Learn how to leverage our AI analysis tool to its full potential. Understand match scores, keyword analysis, and how to use suggestions effectively...\n\nOur AI engine scans your resume against the provided job description, identifying key skills, experiences, and keywords. It then calculates a match score based on alignment.\n\n**Understanding the Score:**\n- **80%+:** Excellent match, likely a strong candidate.\n- **60-79%:** Good match, minor adjustments might be needed.\n- **Below 60%:** Significant gaps, consider tailoring your resume.\n\n**Using Suggestions:**\nThe AI provides suggestions for improvement. Focus on incorporating missing keywords naturally and highlighting relevant experiences mentioned in the job description. Remember, authenticity is key!\n\n*This is sample content. More details would follow in a real post.*',
     excerpt: 'Learn how to leverage our AI analysis tool to its full potential. Understand match scores, keyword analysis...',
     tags: ['resume', 'ai', 'jobsearch'],
   },
@@ -282,9 +283,9 @@ export const sampleBlogPosts: BlogPost[] = [
     author: 'Alumni Relations (State University)',
     date: '2024-07-15T14:30:00Z',
     imageUrl: 'https://picsum.photos/seed/blognetwork/800/400',
-    content: 'Hear inspiring stories from fellow alumni who found opportunities through the ResumeMatch AI network. Discover tips for effective networking...\n\n *Detailed content goes here*',
+    content: 'Hear inspiring stories from fellow alumni who found opportunities through the ResumeMatch AI network. Discover tips for effective networking...\n\nAlice Wonderland (Class of \'15) shares how a connection made through the platform led to her current role at Google. "The recommendation feature pointed me towards someone I hadn\'t considered, and it turned out to be the perfect connection," she says.\n\nBob The Builder (Class of \'18) used the Alumni Search to find mentors in Product Management. "Being able to filter by skills and industry was invaluable," Bob notes.\n\n**Networking Tips:**\n1. Personalize your connection requests.\n2. Be clear about what you\'re seeking (advice, referral, chat).\n3. Follow up respectfully.\n\n*This is sample content. More details would follow in a real post.*',
     excerpt: 'Hear inspiring stories from fellow alumni who found opportunities through the ResumeMatch AI network...',
-    tags: ['networking', 'career', 'success stories'],
+    tags: ['networking', 'career', 'success stories', 'state university'],
   },
   {
     id: 'blog3',
@@ -294,8 +295,28 @@ export const sampleBlogPosts: BlogPost[] = [
     author: 'ResumeMatch AI Team',
     date: '2024-07-10T09:00:00Z',
     imageUrl: 'https://picsum.photos/seed/blogmentor/800/400',
-    content: 'Explore the benefits of both being a mentor and finding a mentor within our community. How our platform facilitates these connections...\n\n *Detailed content goes here*',
+    content: 'Explore the benefits of both being a mentor and finding a mentor within our community. How our platform facilitates these connections...\n\nMentorship provides invaluable guidance for career growth. Our platform makes it easy to identify alumni willing to offer support in specific areas.\n\n**Benefits for Mentees:**\n- Gain industry insights.\n- Receive personalized career advice.\n- Expand your professional network.\n\n**Benefits for Mentors:**\n- Develop leadership skills.\n- Give back to the community.\n- Stay connected with emerging talent.\n\nUse the Alumni Directory filters to find potential mentors or mentees based on your interests and needs.\n\n*This is sample content. More details would follow in a real post.*',
     excerpt: 'Explore the benefits of both being a mentor and finding a mentor within our community...',
     tags: ['mentorship', 'community', 'connections'],
   },
+];
+
+// Sample Referral History
+export const sampleReferralHistory: ReferralHistoryItem[] = [
+  { id: 'ref1', referrerUserId: 'currentUser', referredEmailOrName: 'friend1@example.com', referralDate: new Date(Date.now() - 86400000 * 7).toISOString(), status: 'Signed Up' },
+  { id: 'ref2', referrerUserId: 'currentUser', referredEmailOrName: 'colleague@example.com', referralDate: new Date(Date.now() - 86400000 * 5).toISOString(), status: 'Reward Earned', rewardAmount: 25 },
+  { id: 'ref3', referrerUserId: 'currentUser', referredEmailOrName: 'contact@example.com', referralDate: new Date(Date.now() - 86400000 * 3).toISOString(), status: 'Pending' },
+  { id: 'ref4', referrerUserId: 'currentUser', referredEmailOrName: 'another@example.com', referralDate: new Date(Date.now() - 86400000 * 10).toISOString(), status: 'Expired' },
+];
+
+// Sample Gamification XP Rules
+export const sampleXpRules: GamificationRule[] = [
+    { actionId: 'profile_complete_50', description: 'Reach 50% Profile Completion', xpPoints: 25 },
+    { actionId: 'profile_complete_100', description: 'Reach 100% Profile Completion', xpPoints: 100 },
+    { actionId: 'resume_scan', description: 'Analyze a Resume', xpPoints: 20 },
+    { actionId: 'book_appointment', description: 'Book an Appointment', xpPoints: 30 },
+    { actionId: 'community_post', description: 'Create a Community Post', xpPoints: 15 },
+    { actionId: 'community_comment', description: 'Comment on a Post', xpPoints: 5 },
+    { actionId: 'successful_referral', description: 'Successful Referral Signup', xpPoints: 50 },
+    { actionId: 'daily_login', description: 'Daily Login', xpPoints: 10 },
 ];

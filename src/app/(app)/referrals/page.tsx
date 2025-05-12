@@ -6,18 +6,22 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Gift, Copy, Share2, Users, CheckCircle, LinkIcon } from "lucide-react";
+import { Gift, Copy, Share2, Users, CheckCircle, LinkIcon, Clock, AlertCircle, Star } from "lucide-react"; // Added Clock, AlertCircle, Star
 import { useToast } from "@/hooks/use-toast";
-import { sampleUserProfile } from "@/lib/sample-data";
+import { sampleUserProfile, sampleReferralHistory } from "@/lib/sample-data"; // Added sampleReferralHistory
+import type { ReferralHistoryItem, ReferralStatus } from "@/types"; // Added ReferralHistoryItem, ReferralStatus
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"; // Added Table components
+import { format } from "date-fns"; // Added format
 
 export default function ReferralsPage() {
   const { toast } = useToast();
   const user = sampleUserProfile;
   const referralLink = `https://resumematch.ai/signup?ref=${user.referralCode || 'DEFAULT123'}`;
+  const referralHistory = sampleReferralHistory.filter(r => r.referrerUserId === user.id); // Filter for current user
 
-  // Mock referral stats
-  const [referralsCount, setReferralsCount] = useState(5); // Example count
-  const [successfulReferrals, setSuccessfulReferrals] = useState(2); // Example successful count
+  // Mock referral stats derived from history
+  const referralsCount = referralHistory.length;
+  const successfulReferrals = referralHistory.filter(r => r.status === 'Reward Earned' || r.status === 'Signed Up').length;
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text).then(() => {
@@ -44,8 +48,18 @@ export default function ReferralsPage() {
     }
   };
 
+  const getStatusIcon = (status: ReferralStatus) => {
+    switch (status) {
+      case 'Signed Up': return <CheckCircle className="h-4 w-4 text-blue-500" />;
+      case 'Reward Earned': return <Star className="h-4 w-4 text-yellow-500 fill-yellow-400" />;
+      case 'Pending': return <Clock className="h-4 w-4 text-gray-500" />;
+      case 'Expired': return <AlertCircle className="h-4 w-4 text-red-500" />;
+      default: return null;
+    }
+  };
+
   return (
-    <div className="space-y-8 max-w-3xl mx-auto">
+    <div className="space-y-8 max-w-4xl mx-auto"> {/* Increased max-width */}
       <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
         <Gift className="h-8 w-8" /> Referrals
       </h1>
@@ -104,6 +118,48 @@ export default function ReferralsPage() {
              <p className="text-xs text-muted-foreground">Rewards are typically credited once a referred user completes their profile setup.</p>
          </CardFooter>
       </Card>
+
+       {/* Referral History Table */}
+       <Card className="shadow-lg">
+        <CardHeader>
+          <CardTitle>Referral History</CardTitle>
+          <CardDescription>Details of users you have referred.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {referralHistory.length === 0 ? (
+            <p className="text-center text-muted-foreground py-4">You haven't referred anyone yet.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Referred User</TableHead>
+                  <TableHead>Date Referred</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Reward</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {referralHistory.map((referral) => (
+                  <TableRow key={referral.id}>
+                    <TableCell className="font-medium">{referral.referredEmailOrName}</TableCell>
+                    <TableCell>{format(new Date(referral.referralDate), 'PP')}</TableCell>
+                    <TableCell>
+                      <span className="inline-flex items-center gap-1">
+                        {getStatusIcon(referral.status)}
+                        {referral.status}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {referral.rewardAmount ? `${referral.rewardAmount} Coins/XP` : '-'}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
 
        <Card className="shadow-lg bg-primary/10 border-primary/30">
             <CardHeader>

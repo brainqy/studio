@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -6,14 +7,17 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { Settings, Palette, UploadCloud, Bell, Lock, WalletCards, Sun, Moon } from "lucide-react";
+import { Settings, Palette, UploadCloud, Bell, Lock, WalletCards, Sun, Moon, Award, Gift } from "lucide-react"; // Added Award, Gift
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 
 export default function SettingsPage() {
   const { toast } = useToast();
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [emailNotificationsEnabled, setEmailNotificationsEnabled] = useState(true); // Changed name for clarity
+  const [appNotificationsEnabled, setAppNotificationsEnabled] = useState(true);
+  const [gamificationNotificationsEnabled, setGamificationNotificationsEnabled] = useState(true);
+  const [referralNotificationsEnabled, setReferralNotificationsEnabled] = useState(true);
   const [walletEnabled, setWalletEnabled] = useState(true);
 
   useEffect(() => {
@@ -35,7 +39,7 @@ export default function SettingsPage() {
     localStorage.setItem('theme', newIsDarkMode ? 'dark' : 'light');
     toast({ title: "Theme Changed", description: `Switched to ${newIsDarkMode ? 'Dark' : 'Light'} Mode.` });
   };
-  
+
   const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
@@ -80,16 +84,28 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between p-3 rounded-md border hover:bg-secondary/30">
-            <Label htmlFor="email-notifications" className="text-sm font-medium">Email Notifications</Label>
-            <Switch id="email-notifications" checked={notificationsEnabled} onCheckedChange={setNotificationsEnabled} />
+            <Label htmlFor="email-notifications" className="text-sm font-medium">General Email Notifications</Label>
+            <Switch id="email-notifications" checked={emailNotificationsEnabled} onCheckedChange={setEmailNotificationsEnabled} />
+          </div>
+           <div className="flex items-center justify-between p-3 rounded-md border hover:bg-secondary/30">
+            <Label htmlFor="app-notifications" className="text-sm font-medium">General In-App Notifications</Label>
+            <Switch id="app-notifications" checked={appNotificationsEnabled} onCheckedChange={setAppNotificationsEnabled} />
           </div>
           <div className="flex items-center justify-between p-3 rounded-md border hover:bg-secondary/30">
-            <Label htmlFor="app-notifications" className="text-sm font-medium">In-App Notifications</Label>
-            <Switch id="app-notifications" defaultChecked />
+            <Label htmlFor="gamification-notifications" className="flex items-center gap-2 text-sm font-medium">
+              <Award className="h-4 w-4" /> Gamification Notifications
+            </Label>
+            <Switch id="gamification-notifications" checked={gamificationNotificationsEnabled} onCheckedChange={setGamificationNotificationsEnabled} />
+          </div>
+           <div className="flex items-center justify-between p-3 rounded-md border hover:bg-secondary/30">
+            <Label htmlFor="referral-notifications" className="flex items-center gap-2 text-sm font-medium">
+              <Gift className="h-4 w-4" /> Referral Notifications
+            </Label>
+            <Switch id="referral-notifications" checked={referralNotificationsEnabled} onCheckedChange={setReferralNotificationsEnabled} />
           </div>
         </CardContent>
       </Card>
-      
+
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="flex items-center gap-2"><WalletCards className="h-5 w-5 text-primary"/>Features</CardTitle>
@@ -113,13 +129,15 @@ export default function SettingsPage() {
              <Label htmlFor="data-sharing" className="text-sm font-medium">Data Sharing with Alumni Network</Label>
             <Switch id="data-sharing" defaultChecked />
           </div>
-          <Button variant="outline">Change Password</Button>
+          <Button variant="outline" onClick={() => toast({title: "Action Mocked", description:"Password change form would appear here."})}>
+            Change Password
+          </Button>
           <Button variant="destructive" onClick={() => toast({title: "Data Deletion (Mock)", description:"Data deletion request initiated."})}>
             Request Data Deletion
           </Button>
         </CardContent>
       </Card>
-      
+
       <div className="pt-4 text-center">
         <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground" onClick={() => toast({title:"Settings Saved", description:"Your preferences have been updated."})}>
           Save All Settings

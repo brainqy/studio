@@ -2,6 +2,7 @@
 
 
 
+
 export type UserRole = 'admin' | 'manager' | 'user';
 
 export type Gender = 'Male' | 'Female' | 'Prefer not to say';
@@ -174,7 +175,9 @@ export interface Badge {
   name: string;
   description: string;
   icon: string; // Lucide icon name or URL
-  achieved: boolean; // Indicates if the current user has achieved this badge
+  achieved?: boolean; // Indicates if the current user has achieved this badge (optional here, depends on context)
+  xpReward?: number; // XP points awarded for achieving this badge
+  triggerCondition?: string; // Description of how the badge is earned
 }
 
 export interface BlogPost {
@@ -248,6 +251,9 @@ export interface ResumeProfile {
   lastAnalyzed?: string;
 }
 
+export const AppointmentStatuses = ['Pending', 'Confirmed', 'Cancelled', 'Completed'] as const;
+export type AppointmentStatus = typeof AppointmentStatuses[number];
+
 export type Appointment = {
   id: string;
   tenantId: string;
@@ -255,7 +261,7 @@ export type Appointment = {
   alumniUserId: string; // Alumni being booked
   title: string; // Purpose of meeting
   dateTime: string; // ISO String
-  status: 'Pending' | 'Confirmed' | 'Cancelled' | 'Completed'; // Added Completed
+  status: AppointmentStatus;
   meetingLink?: string; // For confirmed online meetings
   location?: string; // For in-person meetings
   notes?: string; // From requester or alumni
@@ -313,4 +319,22 @@ export interface Tenant {
     // Add other tenant-specific settings
   };
   createdAt: string;
+}
+
+// Referral History Item
+export type ReferralStatus = 'Pending' | 'Signed Up' | 'Reward Earned' | 'Expired';
+export interface ReferralHistoryItem {
+    id: string;
+    referrerUserId: string;
+    referredEmailOrName: string; // Use email initially, update to name upon signup
+    referralDate: string; // ISO String
+    status: ReferralStatus;
+    rewardAmount?: number; // Optional: Coins/XP earned
+}
+
+// Gamification XP Rule
+export interface GamificationRule {
+    actionId: string; // Unique identifier for the action e.g., 'profile_complete', 'resume_scan'
+    description: string; // User-friendly description e.g., "Complete Your Profile", "Analyze a Resume"
+    xpPoints: number;
 }
