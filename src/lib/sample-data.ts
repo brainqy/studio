@@ -183,10 +183,10 @@ export const sampleFeatureRequests: FeatureRequest[] = [
   { id: 'fr2', tenantId: SAMPLE_TENANT_ID, userId: 'user101', userName: 'Maria Hill', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 72).toISOString(), title: 'Dark mode for the dashboard', description: 'A dark theme option would be easier on the eyes.', status: 'In Progress' },
 ];
 
-export const sampleGalleryEvents: GalleryEvent[] = [
-  { id: 'event1', tenantId: SAMPLE_TENANT_ID, title: 'Annual Alumni Meet 2023', date: '2023-10-15', imageUrl: 'https://picsum.photos/seed/event1/600/400', description: 'A wonderful evening connecting with fellow alumni.' , dataAiHint: 'conference networking'},
-  { id: 'event2', tenantId: SAMPLE_TENANT_ID, title: 'Tech Talk Series: AI Today', date: '2024-03-22', imageUrl: 'https://picsum.photos/seed/event2/600/400', description: 'Insightful talks on the future of Artificial Intelligence.' , dataAiHint: 'presentation seminar'},
-  { id: 'event3', tenantId: SAMPLE_TENANT_ID, title: 'Campus Job Fair Spring 2024', date: '2024-04-10', imageUrl: 'https://picsum.photos/seed/event3/600/400', description: 'Connecting students with top employers.', dataAiHint: 'job fair students' },
+export let sampleGalleryEvents: GalleryEvent[] = [ // Changed to let for admin modifications
+  { id: 'event1', tenantId: SAMPLE_TENANT_ID, title: 'Annual Alumni Meet 2023', date: '2023-10-15T10:00:00Z', imageUrl: 'https://picsum.photos/seed/event1/600/400', description: 'A wonderful evening connecting with fellow alumni.' , dataAiHint: 'conference networking'},
+  { id: 'event2', tenantId: SAMPLE_TENANT_ID, title: 'Tech Talk Series: AI Today', date: '2024-03-22T10:00:00Z', imageUrl: 'https://picsum.photos/seed/event2/600/400', description: 'Insightful talks on the future of Artificial Intelligence.' , dataAiHint: 'presentation seminar'},
+  { id: 'event3', tenantId: SAMPLE_TENANT_ID, title: 'Campus Job Fair Spring 2024', date: '2024-04-10T10:00:00Z', imageUrl: 'https://picsum.photos/seed/event3/600/400', description: 'Connecting students with top employers.', dataAiHint: 'job fair students' },
 ];
 
 export const sampleJobOpenings: JobOpening[] = [
@@ -427,10 +427,13 @@ export const sampleBadges: Badge[] = [
     { id: 'admin-master', name: 'Admin Master', description: 'Successfully managed platform settings.', icon: 'ShieldCheck', xpReward: 0, triggerCondition: 'User role is Admin' }, 
 ];
 
-export const sampleBlogPosts: BlogPost[] = [
+export let sampleBlogPosts: BlogPost[] = [ // Changed to let for user blog creation
   {
     id: 'blog1',
     tenantId: 'platform', 
+    userId: 'system',
+    userName: 'ResumeMatch AI Team',
+    userAvatar: 'https://picsum.photos/seed/systemlogo/50/50',
     title: 'Mastering the AI Resume Analysis',
     slug: 'mastering-ai-resume-analysis',
     author: 'ResumeMatch AI Team',
@@ -439,10 +442,14 @@ export const sampleBlogPosts: BlogPost[] = [
     content: 'Learn how to leverage our AI analysis tool to its full potential. Understand match scores, keyword analysis, and how to use suggestions effectively...\n\nOur AI engine scans your resume against the provided job description, identifying key skills, experiences, and keywords. It then calculates a match score based on alignment.\n\n**Understanding the Score:**\n- **80%+:** Excellent match, likely a strong candidate.\n- **60-79%:** Good match, minor adjustments might be needed.\n- **Below 60%:** Significant gaps, consider tailoring your resume.\n\n**Using Suggestions:**\nThe AI provides suggestions for improvement. Focus on incorporating missing keywords naturally and highlighting relevant experiences mentioned in the job description. Remember, authenticity is key!\n\n*This is sample content. More details would follow in a real post.*',
     excerpt: 'Learn how to leverage our AI analysis tool to its full potential. Understand match scores, keyword analysis...',
     tags: ['resume', 'ai', 'jobsearch'],
+    comments: [],
   },
   {
     id: 'blog2',
     tenantId: SAMPLE_TENANT_ID, 
+    userId: 'alumni4', // Assuming Diana (admin) posted this for the tenant
+    userName: 'Diana Prince (Admin)',
+    userAvatar: 'https://picsum.photos/seed/diana/50/50',
     title: 'Networking Success Stories from State University Alumni',
     slug: 'state-uni-networking-success',
     author: 'Alumni Relations (State University)',
@@ -451,10 +458,14 @@ export const sampleBlogPosts: BlogPost[] = [
     content: 'Hear inspiring stories from fellow alumni who found opportunities through the ResumeMatch AI network. Discover tips for effective networking...\n\nAlice Wonderland (Class of \'15) shares how a connection made through the platform led to her current role at Google. "The recommendation feature pointed me towards someone I hadn\'t considered, and it turned out to be the perfect connection," she says.\n\nBob The Builder (Class of \'18) used the Alumni Search to find mentors in Product Management. "Being able to filter by skills and industry was invaluable," Bob notes.\n\n**Networking Tips:**\n1. Personalize your connection requests.\n2. Be clear about what you\'re seeking (advice, referral, chat).\n3. Follow up respectfully.\n\n*This is sample content. More details would follow in a real post.*',
     excerpt: 'Hear inspiring stories from fellow alumni who found opportunities through the ResumeMatch AI network...',
     tags: ['networking', 'career', 'success stories', 'state university'],
+    comments: [],
   },
   {
     id: 'blog3',
     tenantId: 'platform',
+    userId: 'system',
+    userName: 'ResumeMatch AI Team',
+    userAvatar: 'https://picsum.photos/seed/systemlogo/50/50',
     title: 'The Power of Mentorship: Connecting Generations',
     slug: 'power-of-mentorship',
     author: 'ResumeMatch AI Team',
@@ -463,6 +474,7 @@ export const sampleBlogPosts: BlogPost[] = [
     content: 'Explore the benefits of both being a mentor and finding a mentor within our community. How our platform facilitates these connections...\n\nMentorship provides invaluable guidance for career growth. Our platform makes it easy to identify alumni willing to offer support in specific areas.\n\n**Benefits for Mentees:**\n- Gain industry insights.\n- Receive personalized career advice.\n- Expand your professional network.\n\n**Benefits for Mentors:**\n- Develop leadership skills.\n- Give back to the community.\n- Stay connected with emerging talent.\n\nUse the Alumni Directory filters to find potential mentors or mentees based on your interests and needs.\n\n*This is sample content. More details would follow in a real post.*',
     excerpt: 'Explore the benefits of both being a mentor and finding a mentor within our community...',
     tags: ['mentorship', 'community', 'connections'],
+    comments: [],
   },
 ];
 

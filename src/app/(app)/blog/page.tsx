@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BookOpen, Search, CalendarDays, User, Tag, ArrowRight } from "lucide-react";
+import { BookOpen, Search, CalendarDays, User, Tag, ArrowRight, PlusCircle } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { sampleBlogPosts } from "@/lib/sample-data";
@@ -16,9 +16,8 @@ import { format, parseISO } from 'date-fns';
 export default function BlogPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTag, setSelectedTag] = useState('all');
-  const allPosts = sampleBlogPosts; // In real app, fetch posts
+  const allPosts = sampleBlogPosts; 
 
-  // Get unique tags from all posts
   const allTags = Array.from(new Set(allPosts.flatMap(post => post.tags || [])));
 
   const filteredPosts = allPosts.filter(post => {
@@ -38,7 +37,6 @@ export default function BlogPage() {
         <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
           <BookOpen className="h-8 w-8" /> Blog & Insights
         </h1>
-         {/* Filter and Search Controls */}
         <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
            <div className="relative flex-1 sm:flex-grow-0 sm:w-48">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -61,6 +59,11 @@ export default function BlogPage() {
               ))}
             </SelectContent>
           </Select>
+          <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
+            <Link href="/blog/create">
+              <PlusCircle className="mr-2 h-5 w-5" /> Create New Post
+            </Link>
+          </Button>
         </div>
       </div>
       <CardDescription>Stay updated with the latest news, tips, and success stories from the ResumeMatch AI community.</CardDescription>

@@ -64,6 +64,7 @@ const adminItems = [
    { href: "/admin/content-moderation", label: "Content Moderation", icon: ShieldAlert },
    { href: "/admin/messenger-management", label: "Messenger Mgt.", icon: BotMessageSquare },
    { href: "/admin/affiliate-management", label: "Affiliate Mgt.", icon: Users2 },
+   { href: "/admin/gallery-management", label: "Gallery Mgt.", icon: GalleryVerticalEnd },
 ];
 
 export function AppSidebar() {
@@ -83,8 +84,8 @@ export function AppSidebar() {
               <span className={`${(isActive || isAdminDashboardActive) ? "text-sidebar-primary-foreground" : ""} group-data-[collapsible=icon]:hidden`}>{item.label}</span>
             </SidebarMenuButton>
            </Link>
-         ) : (
-           <SidebarMenuButton size={isSubItem ? "sm" : "default"} className="w-full justify-start cursor-default hover:bg-transparent">
+         ) : ( // This case is for group labels that are not links themselves
+           <SidebarMenuButton size={isSubItem ? "sm" : "default"} className="w-full justify-start cursor-default hover:bg-transparent group-data-[collapsible=icon]:justify-center">
               <item.icon className="h-5 w-5 text-sidebar-foreground/80" />
               <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
            </SidebarMenuButton>
@@ -106,12 +107,11 @@ export function AppSidebar() {
           {navItems.map((item) =>
             item.subItems && item.subItems.length > 0 ? ( 
               <SidebarGroup key={item.label} className="p-0">
-                 <SidebarMenuButton size="default" className="w-full justify-start cursor-default hover:bg-transparent">
-                   <item.icon className="h-5 w-5 text-sidebar-foreground/80" />
-                   <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
-                 </SidebarMenuButton>
+                 {renderMenuItem(item, false)} {/* Render the group item itself */}
                 <div className="pl-4 group-data-[collapsible=icon]:hidden">
-                  {item.subItems.map(subItem => renderMenuItem(subItem, true))}
+                  <SidebarMenu>
+                    {item.subItems.map(subItem => renderMenuItem(subItem, true))}
+                  </SidebarMenu>
                 </div>
               </SidebarGroup>
             ) : ( 

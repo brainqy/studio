@@ -167,10 +167,11 @@ export interface GalleryEvent {
   id: string;
   tenantId: string;
   title: string;
-  date: string;
+  date: string; // ISO string date
   imageUrl: string;
   description?: string;
   dataAiHint?: string;
+  isPlatformGlobal?: boolean; // To differentiate between tenant-specific and platform-wide
 }
 
 export interface JobOpening {
@@ -200,14 +201,18 @@ export interface Badge {
 export interface BlogPost {
   id: string;
   tenantId?: string | 'platform'; 
+  userId: string; // Added userId for user-created blogs
+  userName: string; // Added userName for user-created blogs
+  userAvatar?: string; // Added userAvatar for user-created blogs
   title: string;
   slug: string; 
-  author: string; 
+  author: string; // Will be same as userName for user blogs, or "Platform Team"
   date: string; 
   imageUrl?: string;
   content: string; 
   excerpt: string;
   tags?: string[];
+  comments?: CommunityComment[]; // Added for blog comments
 }
 
 export interface UserProfile {
