@@ -528,6 +528,78 @@ export interface InterviewQuestion {
 export interface BlogGenerationSettings {
   generationIntervalHours: number;
   topics: string[]; // Comma-separated string initially, then array
-  style?: 'informative' | 'casual' | 'formal' | 'technical';
+  style?: 'informative' | 'casual' | 'formal' | 'technical' | 'storytelling'; // Added storytelling
   lastGenerated?: string; // ISO date string
 }
+
+// AI Mock Interview Types
+export interface MockInterviewQuestion {
+  id: string;
+  questionText: string;
+  category?: string; 
+}
+
+export interface MockInterviewAnswer {
+  questionId: string;
+  questionText: string;
+  userAnswer: string; 
+  aiFeedback?: string;
+  aiScore?: number; 
+}
+
+export interface MockInterviewSession {
+  id: string;
+  userId: string;
+  topic: string; 
+  jobDescription?: string; 
+  questions: MockInterviewQuestion[];
+  answers: MockInterviewAnswer[];
+  overallFeedback?: string;
+  overallScore?: number; 
+  status: 'pending' | 'in-progress' | 'completed';
+  createdAt: string;
+}
+
+export interface GenerateMockInterviewQuestionsInput {
+  topic: string;
+  jobDescription?: string;
+  numQuestions?: number; 
+  difficulty?: 'easy' | 'medium' | 'hard';
+}
+export interface GenerateMockInterviewQuestionsOutput {
+  questions: MockInterviewQuestion[];
+}
+
+export interface EvaluateInterviewAnswerInput {
+  questionText: string;
+  userAnswer: string;
+  topic?: string; 
+  jobDescription?: string; 
+}
+export interface EvaluateInterviewAnswerOutput {
+  feedback: string; 
+  strengths?: string[];
+  areasForImprovement?: string[];
+  score: number; 
+  suggestedImprovements?: string[]; 
+}
+
+export interface GenerateOverallInterviewFeedbackInput {
+  topic: string;
+  jobDescription?: string;
+  evaluatedAnswers: { questionText: string; userAnswer: string; feedback: string; score: number }[];
+}
+export interface GenerateOverallInterviewFeedbackOutput {
+  overallSummary: string;
+  keyStrengths: string[];
+  keyAreasForImprovement: string[];
+  finalTips: string[];
+  overallScore: number; 
+}
+
+export type MockInterviewStepId = 'setup' | 'interview' | 'feedback';
+export const MOCK_INTERVIEW_STEPS: { id: MockInterviewStepId; title: string; description: string }[] = [
+  { id: 'setup', title: 'Setup Interview', description: 'Configure your mock interview session.' },
+  { id: 'interview', title: 'Interview Session', description: 'Answer the questions one by one.' },
+  { id: 'feedback', title: 'Get Feedback', description: 'Review your performance and AI suggestions.' },
+];

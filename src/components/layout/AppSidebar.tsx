@@ -15,6 +15,7 @@ const navItems = [
       { href: "/resume-analyzer", label: "Resume Analyzer", icon: Zap },
       { href: "/ai-resume-writer", label: "AI Resume Writer", icon: Edit },
       { href: "/cover-letter-generator", label: "Cover Letter Generator", icon: FileType },
+      { href: "/ai-mock-interview", label: "AI Mock Interview", icon: Brain },
     ]
   },
   { href: "/my-resumes", label: "My Resumes", icon: Layers3 },
@@ -168,4 +169,3 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
-

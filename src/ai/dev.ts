@@ -10,3 +10,6 @@ import '@/ai/flows/generate-cover-letter.ts';
 import '@/ai/flows/personalized-job-recommendations.ts';
 import '@/ai/flows/suggest-dynamic-skills.ts';
 import '@/ai/flows/generate-ai-blog-post.ts';
+import '@/ai/flows/generate-mock-interview-questions.ts';
+import '@/ai/flows/evaluate-interview-answer.ts';
+import '@/ai/flows/generate-overall-interview-feedback.ts';
