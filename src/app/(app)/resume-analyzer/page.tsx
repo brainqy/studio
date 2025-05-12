@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, type FormEvent, useEffect, useMemo } from 'react';
@@ -10,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ArrowRight, Download, FileText, Lightbulb, Loader2, Sparkles, UploadCloud, Search, Star, Trash2, BarChart, Clock, Bookmark, CheckCircle, History, Zap, HelpCircle, PlusCircle as PlusCircleIcon } from "lucide-react";
+import { ArrowRight, Download, FileText, Lightbulb, Loader2, Sparkles, UploadCloud, Search, Star, Trash2, BarChart, Clock, Bookmark, CheckCircle, History, Zap, HelpCircle, PlusCircle as PlusCircleIcon, XCircle, Info } from "lucide-react";
 import { analyzeResumeAndJobDescription, type AnalyzeResumeAndJobDescriptionOutput } from '@/ai/flows/analyze-resume-and-job-description';
 import { calculateMatchScore, type CalculateMatchScoreOutput } from '@/ai/flows/calculate-match-score';
 import { suggestResumeImprovements, type SuggestResumeImprovementsOutput } from '@/ai/flows/suggest-resume-improvements';
@@ -24,53 +23,54 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"; 
 
 interface AnalysisResults {
-  analysis: AnalyzeResumeAndJobDescriptionOutput | null;
-  score: CalculateMatchScoreOutput | null;
+  overallScore: CalculateMatchScoreOutput | null;
+  detailedReport: AnalyzeResumeAndJobDescriptionOutput | null;
   improvements: SuggestResumeImprovementsOutput | null;
-  skillSuggestions?: SuggestDynamicSkillsOutput | null; 
+  skillSuggestions: SuggestDynamicSkillsOutput | null;
 }
 
 type SuggestedSkillFromAI = SuggestDynamicSkillsOutput['suggestedSkills'][0];
 
 
-const ScoreCircle = ({ score, size = "lg" }: { score: number, size?: "sm" | "lg" }) => {
-  const radius = size === "lg" ? 45 : 30; 
-  const strokeWidth = size === "lg" ? 8 : 6; 
+const ScoreCircle = ({ score, size = "lg", label = "Match" }: { score: number, size?: "sm" | "lg" | "xl", label?: string }) => {
+  const radius = size === "xl" ? 60 : (size === "lg" ? 45 : 30);
+  const strokeWidth = size === "xl" ? 10 : (size === "lg" ? 8 : 6);
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (score / 100) * circumference;
-  const circleSizeClass = size === "lg" ? "w-28 h-28" : "w-20 h-20"; 
-  const textSizeClass = size === "lg" ? "text-3xl" : "text-xl"; 
-  const subTextSizeClass = size === "lg" ? "text-xs" : "text-[10px]";
+  const circleSizeClass = size === "xl" ? "w-36 h-36" : (size === "lg" ? "w-28 h-28" : "w-20 h-20");
+  const textSizeClass = size === "xl" ? "text-4xl" : (size === "lg" ? "text-3xl" : "text-xl");
+  const subTextSizeClass = size === "xl" ? "text-sm" : (size === "lg" ? "text-xs" : "text-[10px]");
+
 
   return (
     <div className={`relative flex items-center justify-center ${circleSizeClass}`}>
-      <svg className="absolute inset-0" viewBox="0 0 100 100">
+      <svg className="absolute inset-0" viewBox="0 0 100 100" style={{width: radius*2 + strokeWidth, height: radius*2 + strokeWidth, margin: 'auto'}}>
         <circle
           className="text-secondary"
-          strokeWidth={strokeWidth}
+          strokeWidth={strokeWidth/2} // Adjust stroke width relative to new viewbox
           stroke="currentColor"
           fill="transparent"
           r={radius}
-          cx="50"
-          cy="50"
+          cx="50%"
+          cy="50%"
         />
         <circle
           className="text-primary"
-          strokeWidth={strokeWidth}
+          strokeWidth={strokeWidth/2} // Adjust stroke width
           strokeDasharray={circumference}
           strokeDashoffset={strokeDashoffset}
           strokeLinecap="round"
           stroke="currentColor"
           fill="transparent"
           r={radius}
-          cx="50"
-          cy="50"
-          transform="rotate(-90 50 50)"
+          cx="50%"
+          cy="50%"
+          transform={`rotate(-90 ${radius + strokeWidth/4} ${radius + strokeWidth/4})`}
         />
       </svg>
       <div className="absolute flex flex-col items-center justify-center">
         <span className={`${textSizeClass} font-bold text-primary`}>{score}%</span>
-        <span className={`${subTextSizeClass} text-muted-foreground mt-0.5`}>Match</span>
+        <span className={`${subTextSizeClass} text-muted-foreground mt-0.5`}>{label}</span>
       </div>
     </div>
   );
@@ -97,7 +97,7 @@ export default function ResumeAnalyzerPage() {
       setResumeText(selectedResume.resumeText);
       toast({ title: "Resume Loaded", description: `Loaded content for ${selectedResume.name}.`});
     } else if (!resumeFile) {
-        setResumeText('');
+        // setResumeText(''); // Commented out to prevent clearing pasted text when deselecting
     }
    }, [selectedResumeId, resumes, toast, resumeFile]);
 
@@ -105,9 +105,8 @@ export default function ResumeAnalyzerPage() {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
       setResumeFile(file);
-      setSelectedResumeId(null); // Clear selected resume if a file is uploaded
-      setResumeText(''); // Clear pasted text if a file is uploaded
-      // Optionally, read file content into resumeText if it's a TXT file for immediate display/use
+      setSelectedResumeId(null); 
+      setResumeText(''); 
       if (file.type === "text/plain") {
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -115,8 +114,6 @@ export default function ResumeAnalyzerPage() {
         };
         reader.readAsText(file);
       } else {
-        // For PDF/DOCX, actual text extraction would happen on the server or via a library
-        // For now, we just store the file object.
         toast({ title: "File Selected", description: `Selected ${file.name}. Content will be extracted upon analysis.` });
       }
     }
@@ -139,12 +136,7 @@ export default function ResumeAnalyzerPage() {
     try {
       let currentResumeText = resumeText;
       if (resumeFile && !resumeText) {
-        // Placeholder for server-side text extraction for PDF/DOCX
-        // For demo, we'll just use the file name if text isn't already there (e.g. from a .txt upload)
         currentResumeText = `Content of ${resumeFile.name} (extraction simulation). In a real app, server would extract text from PDF/DOCX.`;
-        // If you have a client-side library for text extraction, use it here.
-        // For simplicity, we're assuming if resumeFile is set and resumeText is empty,
-        // it means a non-txt file was uploaded and its content needs server-side processing.
       }
       
       const currentResumeProfile = selectedResumeId ? resumes.find(r => r.id === selectedResumeId) : null;
@@ -154,11 +146,11 @@ export default function ResumeAnalyzerPage() {
       const companyMatch = jdLines.find(line => line.toLowerCase().includes('company:'))?.split(':')[1]?.trim() || "Company Placeholder";
 
 
-      const [analysisRes, scoreRes, improvementsRes, skillSuggestionsRes] = await Promise.all([
-        analyzeResumeAndJobDescription({ resumeText: currentResumeText, jobDescriptionText: jobDescription }),
+      const [overallScoreRes, detailedReportRes, improvementsRes, skillSuggestionsRes] = await Promise.all([
         calculateMatchScore({ resumeText: currentResumeText, jobDescription: jobDescription }),
+        analyzeResumeAndJobDescription({ resumeText: currentResumeText, jobDescriptionText: jobDescription }),
         suggestResumeImprovements({ resumeText: currentResumeText, jobDescription: jobDescription }),
-        suggestDynamicSkills({ currentSkills: currentResumeText.match(/\b\w+(?:-\w+)*\b/g) || [], contextText: jobDescription }) // Basic skill extraction
+        suggestDynamicSkills({ currentSkills: currentResumeText.match(/\b\w+(?:-\w+)*\b/g) || [], contextText: jobDescription })
       ]);
 
       const newScanEntry: ResumeScanHistoryItem = {
@@ -171,15 +163,15 @@ export default function ResumeAnalyzerPage() {
         companyName: companyMatch,
         jobDescriptionText: jobDescription,
         scanDate: new Date().toISOString(),
-        matchScore: scoreRes.matchScore,
+        matchScore: overallScoreRes.matchScore,
         bookmarked: false,
       };
       setScanHistory(prev => [newScanEntry, ...prev]);
 
 
       setResults({
-        analysis: analysisRes,
-        score: scoreRes,
+        overallScore: overallScoreRes,
+        detailedReport: detailedReportRes,
         improvements: improvementsRes,
         skillSuggestions: skillSuggestionsRes,
       });
@@ -194,8 +186,21 @@ export default function ResumeAnalyzerPage() {
 
   const handleDownloadReport = () => {
     toast({ title: "Download Report", description: "PDF report generation is mocked. Printing the page to PDF can be an alternative."});
-    window.print();
+    // window.print(); // This would print the whole page, not ideal for a focused report
   };
+  
+  const handleUploadAndRescan = () => {
+    setResumeFile(null);
+    setResumeText('');
+    setSelectedResumeId(null);
+    setResults(null); // Clear previous results
+    toast({ title: "Ready for Rescan", description: "Please upload or select a new resume to analyze against the current job description."});
+  };
+
+  const handlePowerEdit = () => {
+    toast({ title: "Power Edit (Mock)", description: "This feature would open an advanced resume editor."});
+  };
+
 
   const handleToggleBookmark = (scanId: string) => {
     setScanHistory(prevHistory => {
@@ -223,8 +228,6 @@ export default function ResumeAnalyzerPage() {
     } else if (historyFilter === 'starred') {
       filtered = filtered.filter(item => item.bookmarked);
     } else if (historyFilter === 'archived') {
-      // Assuming an 'archived' property could be added to ResumeScanHistoryItem
-      // For now, this will show nothing as 'archived' isn't implemented.
       filtered = filtered.filter(item => (item as any).archived === true); 
     }
     return filtered;
@@ -333,7 +336,7 @@ export default function ResumeAnalyzerPage() {
                   placeholder="Paste the job description here... For better results, include 'Title: <Job Title>' and 'Company: <Company Name>' on separate lines if possible."
                   value={jobDescription}
                   onChange={(e) => setJobDescription(e.target.value)}
-                  rows={resumes.length > 0 || resumeFile || resumeText ? 10 + 14 : 10}
+                  rows={resumes.length > 0 || resumeFile || resumeText ? 10 + 14 : 10} // Dynamic rows calculation
                   className="border-input focus:ring-primary"
                 />
               </div>
@@ -361,128 +364,183 @@ export default function ResumeAnalyzerPage() {
           <p className="mt-2 text-muted-foreground">AI is working its magic... Please wait.</p>
         </div>
       )}
-
-      {results && !isLoading && (
+      
+      {/* DETAILED REPORT SECTION */}
+      {results && !isLoading && results.overallScore && results.detailedReport && (
         <Card className="shadow-xl mt-8">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle className="text-2xl font-bold flex items-center gap-2">
                 <CheckCircle className="h-7 w-7 text-primary" /> Analysis Report
               </CardTitle>
-              <CardDescription>Here's how your resume matches the job description.</CardDescription>
+              <CardDescription>Detailed breakdown of your resume against the job description.</CardDescription>
             </div>
-            <Button onClick={handleDownloadReport} variant="outline">
-              <Download className="mr-2 h-4 w-4" /> Download PDF
-            </Button>
+             <div className="flex gap-2">
+                <Button onClick={handleDownloadReport} variant="outline">
+                  <Download className="mr-2 h-4 w-4" /> Download PDF
+                </Button>
+            </div>
           </CardHeader>
-          <CardContent className="space-y-6">
-            {results.score && (
-              <Card className="bg-secondary/30">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2"><FileText className="h-6 w-6 text-primary"/> Match Score</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="text-center">
-                    <p className="text-6xl font-bold text-primary">{results.score.matchScore}%</p>
-                    <p className="text-muted-foreground">Overall Alignment</p>
-                  </div>
-                  <Progress value={results.score.matchScore} className="w-full h-3 [&>div]:bg-primary" />
+          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Left Sidebar for Scores & Actions */}
+            <div className="md:col-span-1 space-y-6 p-4 border-r border-border">
+                <ScoreCircle score={results.overallScore.matchScore} size="xl" label="Match Rate" />
+                <Button onClick={handleUploadAndRescan} className="w-full bg-blue-600 hover:bg-blue-700 text-white">Upload & Rescan</Button>
+                <Button onClick={handlePowerEdit} variant="outline" className="w-full">Power Edit</Button>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
-                    <div>
-                      <h4 className="font-semibold text-green-600">Relevant Keywords Found:</h4>
-                      {results.score.relevantKeywords.length > 0 ? (
-                        <ul className="list-disc list-inside text-sm text-muted-foreground">
-                          {results.score.relevantKeywords.slice(0,5).map(kw => <li key={kw}>{kw}</li>)}
-                          {results.score.relevantKeywords.length > 5 && <li>...and {results.score.relevantKeywords.length - 5} more</li>}
-                        </ul>
-                      ) : <p className="text-sm text-muted-foreground">No specific relevant keywords highlighted by AI.</p>}
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-red-600">Missing Keywords:</h4>
-                       {results.score.missingKeywords.length > 0 ? (
-                        <ul className="list-disc list-inside text-sm text-muted-foreground">
-                          {results.score.missingKeywords.slice(0,5).map(kw => <li key={kw}>{kw}</li>)}
-                           {results.score.missingKeywords.length > 5 && <li>...and {results.score.missingKeywords.length - 5} more</li>}
-                        </ul>
-                      ) : <p className="text-sm text-muted-foreground">No critical missing keywords identified by AI. Good job!</p>}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            <Accordion type="single" collapsible className="w-full" defaultValue="item-1">
-              {results.analysis && (
-                <AccordionItem value="item-1">
-                  <AccordionTrigger className="text-lg font-semibold hover:text-primary">Detailed Analysis</AccordionTrigger>
-                  <AccordionContent className="space-y-3 p-1">
-                    <p><strong className="text-primary">Matching Skills:</strong> {results.analysis.matchingSkills.join(', ') || 'N/A'}</p>
-                    <p><strong className="text-primary">Missing Skills for Job:</strong> {results.analysis.missingSkills.join(', ') || 'N/A'}</p>
-                    <h4 className="font-semibold mt-2 text-primary">Resume Highlights:</h4>
-                    <p className="text-sm text-muted-foreground whitespace-pre-line">{results.analysis.resumeHighlights || 'N/A'}</p>
-                    <h4 className="font-semibold mt-2 text-primary">Job Description Key Points:</h4>
-                    <p className="text-sm text-muted-foreground whitespace-pre-line">{results.analysis.jobDescriptionHighlights || 'N/A'}</p>
-                  </AccordionContent>
-                </AccordionItem>
-              )}
-
-              {results.improvements && results.improvements.improvedResumeSections.length > 0 && (
-                <AccordionItem value="item-2">
-                  <AccordionTrigger className="text-lg font-semibold hover:text-primary">Improvement Suggestions</AccordionTrigger>
-                  <AccordionContent className="space-y-4 p-1">
-                    {results.improvements.improvedResumeSections.map(section => (
-                      <div key={section.sectionTitle}>
-                        <h4 className="font-semibold text-md text-primary flex items-center gap-2"><Lightbulb className="h-5 w-5"/>{section.sectionTitle}</h4>
-                        <ul className="list-disc list-inside ml-4 space-y-1 text-sm text-muted-foreground">
-                          {section.suggestedImprovements.map((sugg, i) => <li key={i}>{sugg}</li>)}
-                        </ul>
-                      </div>
-                    ))}
-                  </AccordionContent>
-                </AccordionItem>
-              )}
-               {results.improvements && results.improvements.improvedResumeSections.length === 0 && (
-                 <AccordionItem value="item-2">
-                    <AccordionTrigger className="text-lg font-semibold hover:text-primary">Improvement Suggestions</AccordionTrigger>
-                    <AccordionContent className="p-1">
-                        <Alert>
-                            <Lightbulb className="h-4 w-4" />
-                            <AlertTitle>Great Job!</AlertTitle>
-                            <AlertDescription>
-                                The AI found no specific improvement suggestions for your resume based on this job description. It seems to be well-aligned!
-                            </AlertDescription>
-                        </Alert>
-                    </AccordionContent>
-                 </AccordionItem>
-               )}
-              {results.skillSuggestions && results.skillSuggestions.suggestedSkills.length > 0 && (
-                <AccordionItem value="item-3">
-                  <AccordionTrigger className="text-lg font-semibold hover:text-primary">Dynamic Skill Suggestions</AccordionTrigger>
-                  <AccordionContent className="space-y-3 p-1">
-                    <p className="text-sm text-muted-foreground">Based on the job description, consider adding these skills to your profile or resume:</p>
-                    {results.skillSuggestions.suggestedSkills.map((skillRec: SuggestedSkillFromAI) => (
-                      <Card key={skillRec.skill} className="bg-secondary/30 p-3">
-                        <div className="flex justify-between items-start gap-2">
-                          <div>
-                            <h4 className="font-semibold text-foreground">{skillRec.skill}</h4>
-                            <p className="text-xs text-muted-foreground">Relevance: <span className="text-primary font-bold">{skillRec.relevanceScore}%</span></p>
-                          </div>
-                          <Button size="sm" variant="outline" onClick={() => handleAddSkillToProfile(skillRec.skill)}>
-                             <PlusCircleIcon className="mr-1 h-4 w-4" /> Add to Profile (Mock)
-                          </Button>
+                <div className="space-y-3">
+                    {(
+                        [
+                            {label: "Searchability", score: results.detailedReport.searchabilityScore},
+                            {label: "Recruiter Tips", score: results.detailedReport.recruiterTipsScore},
+                            {label: "Formatting", score: results.detailedReport.formattingScore},
+                            {label: "Highlights", score: results.detailedReport.highlightsScore},
+                            {label: "Hard Skills", score: results.detailedReport.hardSkillsScore},
+                            {label: "Soft Skills", score: results.detailedReport.softSkillsScore},
+                        ] as {label: string; score?: number}[]
+                    ).map(cat => cat.score !== undefined && (
+                        <div key={cat.label}>
+                            <div className="flex justify-between text-sm mb-1">
+                                <span className="font-medium text-muted-foreground">{cat.label}</span>
+                                <span className="font-semibold text-primary">{cat.score}%</span>
+                            </div>
+                            <Progress value={cat.score} className="h-2 [&>div]:bg-primary" />
                         </div>
-                        <p className="text-sm text-muted-foreground mt-1 italic">Reasoning: {skillRec.reasoning}</p>
-                      </Card>
                     ))}
-                  </AccordionContent>
-                </AccordionItem>
-              )}
-            </Accordion>
+                </div>
+            </div>
+
+            {/* Right Main Content for Details */}
+            <div className="md:col-span-2 space-y-6 p-4">
+                {/* Searchability Section */}
+                <Card>
+                    <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Search className="h-5 w-5 text-primary"/>Searchability</CardTitle></CardHeader>
+                    <CardContent className="space-y-2">
+                        {[
+                            { label: "Contact Info", present: results.detailedReport.searchabilityDetails.hasEmail && results.detailedReport.searchabilityDetails.hasPhoneNumber, details: [
+                                { item: "Email Present", checked: results.detailedReport.searchabilityDetails.hasEmail },
+                                { item: "Phone Number Present", checked: results.detailedReport.searchabilityDetails.hasPhoneNumber },
+                            ]},
+                            { label: "Job Title Match", present: results.detailedReport.searchabilityDetails.jobTitleMatchesJD, details: [
+                                { item: "Job title aligns with description", checked: results.detailedReport.searchabilityDetails.jobTitleMatchesJD }
+                            ]},
+                            { label: "Section Headings", present: results.detailedReport.searchabilityDetails.hasWorkExperienceSection && results.detailedReport.searchabilityDetails.hasEducationSection, details: [
+                                { item: "Work Experience Section Found", checked: results.detailedReport.searchabilityDetails.hasWorkExperienceSection },
+                                { item: "Education Section Found", checked: results.detailedReport.searchabilityDetails.hasEducationSection },
+                            ]},
+                        ].map(section => (
+                            <div key={section.label} className="py-2 border-b last:border-b-0">
+                                <div className="flex justify-between items-center">
+                                    <h4 className="font-medium text-foreground">{section.label}</h4>
+                                    <Tooltip><TooltipTrigger asChild><Info className="h-4 w-4 text-muted-foreground cursor-help"/></TooltipTrigger><TooltipContent><p>Details for {section.label.toLowerCase()}</p></TooltipContent></Tooltip>
+                                </div>
+                                <ul className="mt-1 space-y-0.5">
+                                {section.details.map(detail => (
+                                    <li key={detail.item} className="flex items-center text-sm">
+                                        {detail.checked ? <CheckCircle className="h-4 w-4 text-green-500 mr-2 shrink-0"/> : <XCircle className="h-4 w-4 text-red-500 mr-2 shrink-0"/>}
+                                        <span className={cn(detail.checked ? "text-muted-foreground" : "text-red-700 dark:text-red-400")}>{detail.item}</span>
+                                    </li>
+                                ))}
+                                </ul>
+                            </div>
+                        ))}
+                    </CardContent>
+                </Card>
+
+                {/* Recruiter Tips Section */}
+                 {results.detailedReport.recruiterTips.length > 0 && (
+                    <Card>
+                        <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Lightbulb className="h-5 w-5 text-primary"/>Recruiter Tips</CardTitle></CardHeader>
+                        <CardContent className="space-y-2">
+                            {results.detailedReport.recruiterTips.map((tip, idx) => (
+                                <div key={idx} className="py-2 border-b last:border-b-0">
+                                    <div className="flex justify-between items-center">
+                                        <h4 className="font-medium text-foreground">{tip.category}</h4>
+                                         <Tooltip><TooltipTrigger asChild><Info className="h-4 w-4 text-muted-foreground cursor-help"/></TooltipTrigger><TooltipContent><p>{tip.suggestion || tip.finding}</p></TooltipContent></Tooltip>
+                                    </div>
+                                    <div className="flex items-center text-sm mt-1">
+                                        {tip.status === 'positive' && <CheckCircle className="h-4 w-4 text-green-500 mr-2 shrink-0"/>}
+                                        {tip.status === 'neutral' && <Info className="h-4 w-4 text-blue-500 mr-2 shrink-0"/>}
+                                        {tip.status === 'negative' && <XCircle className="h-4 w-4 text-red-500 mr-2 shrink-0"/>}
+                                        <span className={cn(tip.status === 'negative' ? "text-red-700 dark:text-red-400" : "text-muted-foreground")}>{tip.finding}</span>
+                                    </div>
+                                    {tip.suggestion && tip.status !== 'positive' && <p className="text-xs text-blue-600 dark:text-blue-400 mt-0.5 pl-6">Suggestion: {tip.suggestion}</p>}
+                                </div>
+                            ))}
+                        </CardContent>
+                    </Card>
+                 )}
+
+                {/* Formatting Details Section */}
+                {results.detailedReport.formattingDetails.length > 0 && (
+                    <Card>
+                        <CardHeader><CardTitle className="text-lg flex items-center gap-2"><FileText className="h-5 w-5 text-primary"/>Formatting</CardTitle></CardHeader>
+                        <CardContent className="space-y-2">
+                            {results.detailedReport.formattingDetails.map((item, idx) =>(
+                                <div key={idx} className="py-2 border-b last:border-b-0">
+                                     <div className="flex justify-between items-center">
+                                        <h4 className="font-medium text-foreground">{item.aspect}</h4>
+                                        <Tooltip><TooltipTrigger asChild><Info className="h-4 w-4 text-muted-foreground cursor-help"/></TooltipTrigger><TooltipContent><p>{item.feedback}</p></TooltipContent></Tooltip>
+                                    </div>
+                                    <div className="flex items-center text-sm mt-1">
+                                        {item.status === 'positive' && <CheckCircle className="h-4 w-4 text-green-500 mr-2 shrink-0"/>}
+                                        {item.status === 'neutral' && <Info className="h-4 w-4 text-blue-500 mr-2 shrink-0"/>}
+                                        {item.status === 'negative' && <XCircle className="h-4 w-4 text-red-500 mr-2 shrink-0"/>}
+                                        <span className={cn(item.status === 'negative' ? "text-red-700 dark:text-red-400" : "text-muted-foreground")}>{item.feedback}</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </CardContent>
+                    </Card>
+                )}
+                
+                {/* Existing Accordions for Improvements and Skills - can be refactored or kept */}
+                <Accordion type="single" collapsible className="w-full" defaultValue="item-improvements">
+                  {results.improvements && results.improvements.improvedResumeSections.length > 0 && (
+                    <AccordionItem value="item-improvements">
+                      <AccordionTrigger className="text-lg font-semibold hover:text-primary">Improvement Suggestions</AccordionTrigger>
+                      <AccordionContent className="space-y-4 p-1">
+                        {results.improvements.improvedResumeSections.map(section => (
+                          <div key={section.sectionTitle}>
+                            <h4 className="font-semibold text-md text-primary flex items-center gap-2"><Lightbulb className="h-5 w-5"/>{section.sectionTitle}</h4>
+                            <ul className="list-disc list-inside ml-4 space-y-1 text-sm text-muted-foreground">
+                              {section.suggestedImprovements.map((sugg, i) => <li key={i}>{sugg}</li>)}
+                            </ul>
+                          </div>
+                        ))}
+                      </AccordionContent>
+                    </AccordionItem>
+                  )}
+                  {results.skillSuggestions && results.skillSuggestions.suggestedSkills.length > 0 && (
+                    <AccordionItem value="item-skill-suggestions">
+                      <AccordionTrigger className="text-lg font-semibold hover:text-primary">Dynamic Skill Suggestions</AccordionTrigger>
+                      <AccordionContent className="space-y-3 p-1">
+                        <p className="text-sm text-muted-foreground">Based on the job description, consider adding these skills to your profile or resume:</p>
+                        {results.skillSuggestions.suggestedSkills.map((skillRec: SuggestedSkillFromAI) => (
+                          <Card key={skillRec.skill} className="bg-secondary/30 p-3">
+                            <div className="flex justify-between items-start gap-2">
+                              <div>
+                                <h4 className="font-semibold text-foreground">{skillRec.skill}</h4>
+                                <p className="text-xs text-muted-foreground">Relevance: <span className="text-primary font-bold">{skillRec.relevanceScore}%</span></p>
+                              </div>
+                              <Button size="sm" variant="outline" onClick={() => handleAddSkillToProfile(skillRec.skill)}>
+                                 <PlusCircleIcon className="mr-1 h-4 w-4" /> Add to Profile (Mock)
+                              </Button>
+                            </div>
+                            <p className="text-sm text-muted-foreground mt-1 italic">Reasoning: {skillRec.reasoning}</p>
+                          </Card>
+                        ))}
+                      </AccordionContent>
+                    </AccordionItem>
+                  )}
+                </Accordion>
+
+            </div>
           </CardContent>
         </Card>
       )}
 
+      {/* Scan History Section */}
       <Card className="shadow-xl mt-12">
          <CardHeader>
           <CardTitle className="text-2xl font-bold tracking-tight flex items-center gap-2">
