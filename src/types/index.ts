@@ -1,4 +1,5 @@
 
+
 export type UserRole = 'admin' | 'manager' | 'user';
 
 export type Gender = 'Male' | 'Female' | 'Prefer not to say';
@@ -77,18 +78,21 @@ export type JobApplicationStatus = 'Saved' | 'Applied' | 'Interviewing' | 'Offer
 
 export interface JobApplication {
   id: string;
+  tenantId: string;
+  userId: string; // User who owns this application tracker entry
   companyName: string;
   jobTitle: string;
   status: JobApplicationStatus;
   dateApplied: string;
   notes?: string;
   jobDescription?: string;
-  resumeUsed?: string; // or a reference to a resume profile
-  location?: string; // Added based on new UI
+  resumeUsed?: string; // Reference to a ResumeProfile id
+  location?: string;
 }
 
 export interface AlumniProfile {
   id: string;
+  tenantId: string; // Tenant this alumni belongs to (e.g., which university/org)
   name: string;
   profilePictureUrl?: string;
   currentJobTitle: string;
@@ -97,7 +101,7 @@ export interface AlumniProfile {
   university: string;
   skills: string[];
   email: string;
-  role?: UserRole; 
+  role?: UserRole; // Role within the platform for THIS tenant
   interests?: string[];
   offersHelpWith?: SupportArea[];
   appointmentCoinCost?: number;
@@ -105,27 +109,33 @@ export interface AlumniProfile {
 
 export interface Activity {
   id: string;
+  tenantId: string;
   timestamp: string;
   description: string;
-  userId?: string; // Optional: if tracking specific user activity
+  userId?: string; // User who performed the activity
 }
 
 export interface CommunityPost {
   id: string;
+  tenantId: string;
   userId: string;
   userName: string;
   userAvatar?: string;
   timestamp: string;
-  content?: string; // Make content optional for poll/event/request
+  content?: string;
   type: 'text' | 'poll' | 'event' | 'request';
   tags?: string[];
   pollOptions?: { option: string, votes: number }[];
   eventDate?: string;
   eventLocation?: string;
+  eventTitle?: string; // Added for event type
+  assignedTo?: string; // Added for request type
+  status?: 'open' | 'assigned' | 'completed'; // Added for request type
 }
 
 export interface FeatureRequest {
   id: string;
+  tenantId: string; // Which tenant made the request (or 'platform' for global)
   userId: string;
   userName: string;
   timestamp: string;
@@ -136,6 +146,7 @@ export interface FeatureRequest {
 
 export interface GalleryEvent {
   id: string;
+  tenantId: string;
   title: string;
   date: string;
   imageUrl: string;
@@ -145,75 +156,86 @@ export interface GalleryEvent {
 
 export interface JobOpening {
   id: string;
+  tenantId: string;
   title: string;
   company: string;
   location: string;
   description: string;
   datePosted: string;
   type: 'Full-time' | 'Part-time' | 'Internship' | 'Contract' | 'Mentorship';
-  postedByAlumniId: string;
+  postedByAlumniId: string; // User ID of the alumni who posted
   alumniName: string; // Denormalized for easy display
 }
 
 export interface UserProfile {
   id: string;
-  role: UserRole;
+  tenantId: string; // The tenant this user belongs to
+  role: UserRole; // Role within the specific tenant context
   name: string;
   dateOfBirth?: string; // ISO string e.g. "1990-01-01"
   gender?: Gender;
-  email: string;
+  email: string; // Used for login, likely globally unique
   mobileNumber?: string;
   currentAddress?: string; // Paragraph
-  
+
   graduationYear?: string; // e.g., "2020"
   degreeProgram?: DegreeProgram;
   department?: string;
-  
-  currentJobTitle?: string; // already exists in sample data, ensure type consistency
+
+  currentJobTitle?: string;
   currentOrganization?: string;
   industry?: Industry;
   workLocation?: string; // City, Country
   linkedInProfile?: string; // URL
   yearsOfExperience?: string; // e.g., "5" or "5+"
-  
-  skills?: string[]; // Kept as string array, good for checkboxes/tags
-  
+
+  skills?: string[];
+
+  // Tenant-specific engagement settings
   areasOfSupport?: SupportArea[];
   timeCommitment?: TimeCommitment;
   preferredEngagementMode?: EngagementMode;
   otherComments?: string; // Paragraph
-  
+
   lookingForSupportType?: SupportTypeSought;
   helpNeededDescription?: string; // Paragraph
-  
-  shareProfileConsent?: boolean;
-  featureInSpotlightConsent?: boolean;
 
-  // Existing fields, ensure they fit or are adapted
+  shareProfileConsent?: boolean; // Consent within the tenant
+  featureInSpotlightConsent?: boolean; // Consent within the tenant
+
   profilePictureUrl?: string;
   resumeText?: string; // Store the main resume text
   careerInterests?: string;
-  bio?: string; // already exists
+  bio?: string;
 }
 
 export interface ResumeProfile {
   id: string;
-  name: string; // e.g., "Resume for Tech Roles", "Creative Portfolio Resume"
+  tenantId: string;
+  userId: string; // User who owns this resume
+  name: string; // e.g., "Resume for Tech Roles"
   resumeText: string;
   lastAnalyzed?: string;
-  // Add more metadata as needed
 }
 
 export type Appointment = {
   id: string;
-  title: string;
-  dateTime: string;
-  withUser: string; // User ID or name
-  status: 'Pending' | 'Confirmed' | 'Cancelled';
+  tenantId: string;
+  requesterUserId: string; // User who requested the appointment
+  alumniUserId: string; // Alumni being booked
+  title: string; // Purpose of meeting
+  dateTime: string; // ISO String
+  status: 'Pending' | 'Confirmed' | 'Cancelled' | 'Completed'; // Added Completed
+  meetingLink?: string; // For confirmed online meetings
+  location?: string; // For in-person meetings
+  notes?: string; // From requester or alumni
+  costInCoins?: number; // Coins deducted upon confirmation
 };
 
 export type WalletTransaction = {
   id: string;
+  tenantId: string;
+  userId: string;
   date: string;
   description: string;
   amount: number; // positive for credit, negative for debit
@@ -221,6 +243,8 @@ export type WalletTransaction = {
 };
 
 export type Wallet = {
+  tenantId: string;
+  userId: string;
   coins: number;
   transactions: WalletTransaction[];
 };
@@ -231,9 +255,13 @@ export type PreferredTimeSlot = typeof PreferredTimeSlots[number];
 
 export interface ResumeScanHistoryItem {
   id: string;
-  resumeName: string;
+  tenantId: string;
+  userId: string;
+  resumeId: string; // Link to the ResumeProfile used
+  resumeName: string; // Denormalized
   jobTitle: string;
   companyName: string;
+  jobDescriptionText?: string; // Store the JD used for the scan
   scanDate: string; // ISO string
   matchScore?: number;
   reportUrl?: string; // Link to analysis report if available
@@ -242,3 +270,15 @@ export interface ResumeScanHistoryItem {
 // Kanban column IDs for Job Tracker
 export type KanbanColumnId = 'Saved' | 'Applied' | 'Interview' | 'Offer';
 export const JOB_APPLICATION_STATUSES: JobApplicationStatus[] = ['Saved', 'Applied', 'Interviewing', 'Offer', 'Rejected'];
+
+// Tenant Information
+export interface Tenant {
+  id: string;
+  name: string;
+  domain?: string; // Optional: for subdomain-based tenancy
+  settings?: {
+    allowPublicSignup: boolean;
+    // Add other tenant-specific settings
+  };
+  createdAt: string;
+}

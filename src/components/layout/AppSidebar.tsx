@@ -1,17 +1,18 @@
 "use client";
 
 import { Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarSeparator, SidebarGroup, SidebarGroupLabel } from "@/components/ui/sidebar";
-import { Aperture, BarChart2, Briefcase, CalendarDays, FileText, GalleryVerticalEnd, GitFork, Home, Layers3, MessageSquare, Settings, ShieldQuestion, User, Users, Wallet, Zap } from "lucide-react";
+import { Aperture, BarChart2, Briefcase, CalendarDays, FileText, GalleryVerticalEnd, GitFork, Home, Layers3, MessageSquare, Settings, ShieldQuestion, User, Users, Wallet, Zap, Building2 } from "lucide-react"; // Added Building2 for tenant
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { sampleUserProfile } from "@/lib/sample-data"; // Import user profile to get role and tenant
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: Home },
   { href: "/resume-analyzer", label: "Resume Analyzer", icon: Zap },
   { href: "/my-resumes", label: "My Resumes", icon: Layers3 },
   { href: "/job-tracker", label: "Job Tracker", icon: Briefcase },
-  { 
-    label: "Alumni Network", 
+  {
+    label: "Alumni Network",
     icon: Users,
     subItems: [
       { href: "/alumni-connect", label: "Search Alumni", icon: Users },
@@ -20,6 +21,7 @@ const navItems = [
   },
   { href: "/job-board", label: "Job Board", icon: Aperture },
   { href: "/community-feed", label: "Community Feed", icon: MessageSquare },
+  { href: "/events", label: "Events Registration", icon: CalendarDays }, // Added Events
   { href: "/gallery", label: "Event Gallery", icon: GalleryVerticalEnd },
   { href: "/activity-log", label: "Activity Log", icon: BarChart2 },
   { href: "/profile", label: "My Profile", icon: User },
@@ -32,19 +34,34 @@ const utilityItems = [
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
+const adminItems = [
+   { href: "/admin/tenants", label: "Tenant Management", icon: Building2 },
+   // Add other admin-specific routes here
+];
+
+
 export function AppSidebar() {
   const pathname = usePathname();
+  const currentUser = sampleUserProfile; // Get current user details
 
   const renderMenuItem = (item: any, isSubItem = false) => {
-    const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
+    const isActive = pathname === item.href || (item.href && item.href !== "/dashboard" && pathname.startsWith(item.href));
     return (
       <SidebarMenuItem key={item.href || item.label}>
-        <Link href={item.href} passHref legacyBehavior>
-          <SidebarMenuButton isActive={isActive} size={isSubItem ? "sm" : "default"} className="w-full justify-start">
-            <item.icon className={`h-5 w-5 ${isActive ? "text-sidebar-primary-foreground" : "text-sidebar-foreground/80"}`} />
-            <span className={isActive ? "text-sidebar-primary-foreground" : ""}>{item.label}</span>
-          </SidebarMenuButton>
-        </Link>
+         {item.href ? (
+           <Link href={item.href} passHref legacyBehavior>
+            <SidebarMenuButton isActive={isActive} size={isSubItem ? "sm" : "default"} className="w-full justify-start">
+              <item.icon className={`h-5 w-5 ${isActive ? "text-sidebar-primary-foreground" : "text-sidebar-foreground/80"}`} />
+              <span className={`${isActive ? "text-sidebar-primary-foreground" : ""} group-data-[collapsible=icon]:hidden`}>{item.label}</span>
+            </SidebarMenuButton>
+           </Link>
+         ) : (
+           // Handle group headers without links
+           <SidebarMenuButton size={isSubItem ? "sm" : "default"} className="w-full justify-start cursor-default hover:bg-transparent">
+              <item.icon className="h-5 w-5 text-sidebar-foreground/80" />
+              <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
+           </SidebarMenuButton>
+         )}
       </SidebarMenuItem>
     );
   };
@@ -59,13 +76,15 @@ export function AppSidebar() {
       </SidebarHeader>
       <SidebarContent className="p-2">
         <SidebarMenu>
-          {navItems.map((item) => 
+          {navItems.map((item) =>
             item.subItems ? (
               <SidebarGroup key={item.label} className="p-0">
-                <SidebarMenuButton className="w-full justify-start">
+                {/* Render the group header itself */}
+                 <SidebarMenuButton size="default" className="w-full justify-start cursor-default hover:bg-transparent">
                    <item.icon className="h-5 w-5 text-sidebar-foreground/80" />
                    <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
-                </SidebarMenuButton>
+                 </SidebarMenuButton>
+                {/* Render sub-items indented */}
                 <div className="pl-4 group-data-[collapsible=icon]:hidden">
                   {item.subItems.map(subItem => renderMenuItem(subItem, true))}
                 </div>
@@ -82,15 +101,35 @@ export function AppSidebar() {
             {utilityItems.map(item => renderMenuItem(item))}
           </SidebarMenu>
         </SidebarGroup>
+
+        {/* Admin Section */}
+        {currentUser.role === 'admin' && (
+          <>
+            <SidebarSeparator className="my-4" />
+            <SidebarGroup className="p-0">
+              <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden text-xs text-sidebar-foreground/60 px-2">Admin</SidebarGroupLabel>
+              <SidebarMenu>
+                {adminItems.map(item => renderMenuItem(item))}
+              </SidebarMenu>
+            </SidebarGroup>
+          </>
+        )}
       </SidebarContent>
       <SidebarFooter className="p-4 border-t border-sidebar-border group-data-[collapsible=icon]:justify-center">
         <div className="flex items-center gap-2 group-data-[collapsible=icon]:hidden">
-          <img src="https://picsum.photos/seed/useravatar/32/32" alt="User" className="w-8 h-8 rounded-full" data-ai-hint="person face" />
+          <img src={currentUser.profilePictureUrl || `https://avatar.vercel.sh/${currentUser.email}.png`} alt={currentUser.name} className="w-8 h-8 rounded-full" data-ai-hint="person face" />
           <div>
-            <p className="text-sm font-medium text-sidebar-foreground">Alex Taylor</p>
-            <p className="text-xs text-sidebar-foreground/70">alex.taylor@example.com</p>
+            <p className="text-sm font-medium text-sidebar-foreground">{currentUser.name}</p>
+            {/* Display Tenant ID or Name */}
+            <p className="text-xs text-sidebar-foreground/70 flex items-center gap-1">
+              <Building2 className="h-3 w-3"/> Tenant: {currentUser.tenantId}
+            </p>
           </div>
         </div>
+         {/* Icon-only view for footer */}
+         <div className="hidden items-center gap-2 group-data-[collapsible=icon]:flex">
+           <img src={currentUser.profilePictureUrl || `https://avatar.vercel.sh/${currentUser.email}.png`} alt={currentUser.name} className="w-8 h-8 rounded-full" data-ai-hint="person face" />
+         </div>
       </SidebarFooter>
     </Sidebar>
   );

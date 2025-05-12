@@ -18,25 +18,41 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-
-const initialResumes: ResumeProfile[] = [
-  { id: 'resume1', name: "Software Engineer Focused", resumeText: "This is a resume focused on software engineering roles...", lastAnalyzed: "2024-07-15" },
-  { id: 'resume2', name: "Product Manager Application", resumeText: "A resume tailored for product management positions...", lastAnalyzed: "2024-07-10" },
-  { id: 'resume3', name: "General Tech Resume", resumeText: "A general purpose resume for various tech roles.", lastAnalyzed: "2024-06-20" },
-];
+import { sampleResumeProfiles, sampleUserProfile } from "@/lib/sample-data"; // Import sample resumes
 
 export default function MyResumesPage() {
-  const [resumes, setResumes] = useState<ResumeProfile[]>(initialResumes);
+  // Filter resumes for the current user's tenant
+  const [resumes, setResumes] = useState<ResumeProfile[]>(
+    sampleResumeProfiles.filter(r => r.tenantId === sampleUserProfile.tenantId && r.userId === sampleUserProfile.id)
+  );
   const { toast } = useToast();
 
   const handleDeleteResume = (resumeId: string) => {
     setResumes(currentResumes => currentResumes.filter(r => r.id !== resumeId));
+    // In a real app, also delete from backend / database
     toast({ title: "Resume Deleted", description: "The resume profile has been removed." });
   };
-  
+
   // Placeholder for future "Add New Resume" functionality
   const handleAddNewResume = () => {
-    toast({ title: "Feature Coming Soon", description: "Adding new resume profiles will be available in a future update."});
+     // Mock adding a new resume
+    const newResume: ResumeProfile = {
+      id: `resume-${Date.now()}`,
+      tenantId: sampleUserProfile.tenantId,
+      userId: sampleUserProfile.id,
+      name: `New Resume ${resumes.length + 1}`,
+      resumeText: "Paste your new resume text here...",
+      lastAnalyzed: undefined,
+    };
+    setResumes(currentResumes => [newResume, ...currentResumes]);
+    toast({ title: "New Resume Added", description: "A new resume profile has been created. Click Edit to add content."});
+  };
+
+   const handleEditResume = (resumeId: string) => {
+    // In a real app, this would navigate to an edit page or open a modal
+    toast({ title: "Edit Action (Mock)", description: `Navigating to edit page for resume ${resumeId}.` });
+    // Example navigation (replace with actual routing if needed):
+    // router.push(`/my-resumes/edit/${resumeId}`);
   };
 
 
@@ -75,7 +91,7 @@ export default function MyResumesPage() {
             </CardHeader>
             <CardContent className="flex-grow">
               <p className="text-sm text-muted-foreground line-clamp-3">
-                {resume.resumeText.substring(0, 150)}...
+                {resume.resumeText?.substring(0, 150) || "No content yet."}...
               </p>
             </CardContent>
             <CardFooter className="flex justify-end space-x-2 border-t pt-4 mt-auto">
@@ -84,7 +100,7 @@ export default function MyResumesPage() {
                   <Eye className="h-4 w-4" />
                 </Button>
               </Link>
-              <Button variant="outline" size="sm" title="Edit (Coming Soon)" onClick={() => toast({title: "Edit Coming Soon"})}>
+              <Button variant="outline" size="sm" title="Edit" onClick={() => handleEditResume(resume.id)}>
                 <Edit3 className="h-4 w-4" />
               </Button>
               <AlertDialog>
