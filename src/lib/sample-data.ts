@@ -1,5 +1,6 @@
 
-import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem, Appointment, Wallet, ResumeProfile, Tenant, Badge, BlogPost, ReferralHistoryItem, GamificationRule, UserStatus } from '@/types';
+
+import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem, Appointment, Wallet, ResumeProfile, Tenant, Badge, BlogPost, ReferralHistoryItem, GamificationRule, UserStatus, SurveyResponse } from '@/types';
 import { AreasOfSupport, AppointmentStatuses } from '@/types'; // Import AppointmentStatuses
 
 const SAMPLE_TENANT_ID = 'tenant-1'; // Define a default tenant ID for sample data
@@ -362,4 +363,47 @@ export const sampleXpRules: GamificationRule[] = [
     { actionId: 'community_comment', description: 'Comment on a Post', xpPoints: 5 },
     { actionId: 'successful_referral', description: 'Successful Referral Signup', xpPoints: 50 },
     { actionId: 'daily_login', description: 'Daily Login', xpPoints: 10 },
+];
+
+// Sample Survey Responses for Messenger Management
+export const sampleSurveyResponses: SurveyResponse[] = [
+    {
+        id: 'resp1',
+        userId: 'alumni1',
+        userName: 'Alice Wonderland',
+        surveyId: 'initialFeedbackSurvey',
+        surveyName: 'Initial User Feedback',
+        responseDate: new Date(Date.now() - 86400000 * 1).toISOString(),
+        data: {
+            experience: 'amazing',
+            loved_feature: 'Resume Analyzer accuracy',
+            referral_likelihood: 'very_likely'
+        }
+    },
+    {
+        id: 'resp2',
+        userId: 'alumni2',
+        userName: 'Bob The Builder',
+        surveyId: 'initialFeedbackSurvey',
+        surveyName: 'Initial User Feedback',
+        responseDate: new Date(Date.now() - 86400000 * 2).toISOString(),
+        data: {
+            experience: 'okay',
+            improvement_suggestion: 'More filter options in Alumni Connect',
+            referral_likelihood: 'likely'
+        }
+    },
+    {
+        id: 'resp3',
+        userId: 'alumni3',
+        userName: 'Charlie Brown',
+        surveyId: 'initialFeedbackSurvey',
+        surveyName: 'Initial User Feedback',
+        responseDate: new Date(Date.now() - 86400000 * 3).toISOString(),
+        data: {
+            experience: 'needs_improvement',
+            frustration_details: 'The job board sometimes loads slowly.',
+            referral_likelihood: 'neutral'
+        }
+    }
 ];

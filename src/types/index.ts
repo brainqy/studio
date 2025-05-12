@@ -8,6 +8,7 @@
 
 
 
+
 export type UserRole = 'admin' | 'manager' | 'user';
 export type UserStatus = 'active' | 'inactive' | 'pending' | 'suspended';
 
@@ -376,4 +377,15 @@ export interface SurveyStep {
   nextStepId?: string; // Default next step if not specified by option or after input/dropdown
   variableName?: string; // Key to store the user's answer
   isLastStep?: boolean;
+}
+
+// For Messenger Management page
+export interface SurveyResponse {
+  id: string;
+  userId: string;
+  userName: string;
+  surveyId: string;
+  surveyName: string;
+  responseDate: string; // ISO string
+  data: Record<string, any>; // The collected survey data (e.g., { loved_feature: 'Analyzer', referral_likelihood: 'very_likely' })
 }

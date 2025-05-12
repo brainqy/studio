@@ -1,10 +1,11 @@
 
 
 
+
 "use client";
 
 import { Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarSeparator, SidebarGroup, SidebarGroupLabel } from "@/components/ui/sidebar";
-import { Aperture, Award, BarChart2, BookOpen, Briefcase, Building2, CalendarDays, FileText, GalleryVerticalEnd, GitFork, Gift, History, Home, Layers3, ListChecks, MessageSquare, Settings, ShieldAlert, ShieldQuestion, User, Users, Wallet, Zap, UserCog } from "lucide-react"; // Added History, ListChecks, UserCog, ShieldAlert
+import { Aperture, Award, BarChart2, BookOpen, Briefcase, Building2, CalendarDays, FileText, GalleryVerticalEnd, GitFork, Gift, History, Home, Layers3, ListChecks, MessageSquare, Settings, ShieldAlert, ShieldQuestion, User, Users, Wallet, Zap, UserCog, BotMessageSquare } from "lucide-react"; // Added History, ListChecks, UserCog, ShieldAlert, BotMessageSquare
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { sampleUserProfile } from "@/lib/sample-data"; // Import user profile to get role and tenant
@@ -55,7 +56,7 @@ const adminItems = [
    { href: "/admin/user-management", label: "User Management", icon: UserCog },
    { href: "/admin/gamification-rules", label: "Gamification Rules", icon: ListChecks },
    { href: "/admin/content-moderation", label: "Content Moderation", icon: ShieldAlert },
-   // Add other admin-specific routes here
+   { href: "/admin/messenger-management", label: "Messenger Mgt.", icon: BotMessageSquare },
 ];
 
 
