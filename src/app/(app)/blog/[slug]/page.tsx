@@ -13,6 +13,7 @@ import { ArrowLeft } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label'; // Added import for Label
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import type { CommunityComment, BlogPost } from '@/types'; // Assuming CommunityComment is defined
@@ -187,3 +188,4 @@ export default function BlogPostPage() {
     </div>
   );
 }
+
