@@ -20,8 +20,8 @@ import { Textarea } from "@/components/ui/textarea";
 // Mock survey definitions for selection
 const mockSurveyDefinitions = [
     { id: 'initialFeedbackSurvey', name: 'Initial User Feedback' },
-    { id: 'profileCompletionSurvey', name: 'Profile Completion Nudge' },
-    { id: 'featureUsageSurvey', name: 'New Feature Usage Feedback' },
+    { id: 'profileCompletionSurvey', name: 'Profile Completion Survey' }, // Added new survey
+    // { id: 'featureUsageSurvey', name: 'New Feature Usage Feedback' }, // Can add more predefined surveys here
 ];
 
 export default function MessengerManagementPage() {
@@ -59,17 +59,19 @@ export default function MessengerManagementPage() {
         toast({ title: "Error", description: "Survey name cannot be empty.", variant: "destructive" });
         return;
     }
-    // Mock creation
-    mockSurveyDefinitions.push({ id: `survey-${Date.now()}`, name: newSurveyName });
-    toast({ title: "Survey Created (Mock)", description: `Survey "${newSurveyName}" has been added.` });
+    // Mock creation - In a real app, this would save to a backend and potentially involve more complex step definition UI
+    const newSurvey = { id: `survey-${Date.now()}`, name: newSurveyName, description: newSurveyDescription, steps: [] /* Mock empty steps */ };
+    mockSurveyDefinitions.push({id: newSurvey.id, name: newSurvey.name}); // Add to local list for selection
+    toast({ title: "Survey Created (Mock)", description: `Survey "${newSurveyName}" has been added. Full step definition UI is conceptual.` });
     setNewSurveyName('');
     setNewSurveyDescription('');
     setIsCreateSurveyOpen(false);
   };
   
   const incompleteProfileUsers = useMemo(() => {
+    // This logic would need to be more sophisticated if based on the new detailed profile survey
     return surveyResponses
-        .filter(sr => sr.data.experience === 'needs_improvement') 
+        .filter(sr => sr.surveyId === 'initialFeedbackSurvey' && sr.data.experience === 'needs_improvement') 
         .map(sr => ({ id: sr.userId, name: sr.userName, reason: "Indicated 'Needs Improvement' in feedback" }))
         .slice(0, 5); 
   }, [surveyResponses]);
@@ -77,8 +79,8 @@ export default function MessengerManagementPage() {
   // Statistics Calculation
   const totalResponses = surveyResponses.length;
   const totalSurveysDeployed = mockSurveyDefinitions.length;
-  const usersFlaggedForIncompleteProfile = incompleteProfileUsers.length;
-  const positiveFeedbackCount = surveyResponses.filter(sr => sr.data.experience === 'amazing').length;
+  const usersFlaggedForIncompleteProfile = incompleteProfileUsers.length; // This remains tied to the old survey for now
+  const positiveFeedbackCount = surveyResponses.filter(sr => sr.surveyId === 'initialFeedbackSurvey' && sr.data.experience === 'amazing').length;
 
 
   return (
@@ -102,27 +104,27 @@ export default function MessengerManagementPage() {
         </Card>
         <Card className="shadow-md">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Surveys Deployed</CardTitle>
+                <CardTitle className="text-sm font-medium">Surveys Available</CardTitle>
                 <ListFilter className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
                 <div className="text-2xl font-bold">{totalSurveysDeployed}</div>
-                <p className="text-xs text-muted-foreground">Currently active</p>
+                <p className="text-xs text-muted-foreground">Predefined & custom</p>
             </CardContent>
         </Card>
          <Card className="shadow-md">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Positive Feedback</CardTitle>
+                <CardTitle className="text-sm font-medium">Positive Feedback (Initial Survey)</CardTitle>
                 <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
                 <div className="text-2xl font-bold">{positiveFeedbackCount}</div>
-                <p className="text-xs text-muted-foreground">Users reported 'amazing' experience</p>
+                <p className="text-xs text-muted-foreground">Reported 'amazing' experience</p>
             </CardContent>
         </Card>
         <Card className="shadow-md">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Profile Nudges Sent</CardTitle>
+                <CardTitle className="text-sm font-medium">Profile Nudges (Initial Survey)</CardTitle>
                 <BarChart3 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -142,7 +144,7 @@ export default function MessengerManagementPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label htmlFor="active-survey">Active Survey</Label>
+              <Label htmlFor="active-survey">Active Survey for Floating Messenger</Label>
               <Select value={activeSurveyId} onValueChange={setActiveSurveyId}>
                 <SelectTrigger id="active-survey">
                   <SelectValue placeholder="Select a survey to activate" />
@@ -158,13 +160,13 @@ export default function MessengerManagementPage() {
             <Dialog open={isCreateSurveyOpen} onOpenChange={setIsCreateSurveyOpen}>
               <DialogTrigger asChild>
                 <Button variant="outline" className="w-full">
-                  <PlusCircle className="mr-2 h-4 w-4" /> Create New Survey (Mock)
+                  <PlusCircle className="mr-2 h-4 w-4" /> Create New Survey (Mock UI)
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Create New Survey</DialogTitle>
-                  <CardDescription>Define a new survey for the messenger. (Full step definition is mocked)</CardDescription>
+                  <CardDescription>Define a new survey. (Full step definition UI is conceptual for this demo)</CardDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                   <div>
@@ -175,32 +177,33 @@ export default function MessengerManagementPage() {
                     <Label htmlFor="new-survey-desc">Survey Description (Optional)</Label>
                     <Textarea id="new-survey-desc" value={newSurveyDescription} onChange={(e) => setNewSurveyDescription(e.target.value)} />
                   </div>
+                   <p className="text-sm text-muted-foreground">In a full implementation, this dialog would allow adding/editing survey steps with types (bot message, user input, options, etc.), branching logic, and variable names for data collection.</p>
                 </div>
                 <DialogFooter>
                   <DialogClose asChild><Button variant="ghost">Cancel</Button></DialogClose>
-                  <Button onClick={handleCreateNewSurvey}>Create Survey</Button>
+                  <Button onClick={handleCreateNewSurvey}>Create Survey Shell</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
           </CardContent>
         </Card>
         
-        {/* Incomplete Profiles Card */}
+        {/* Potentially Incomplete Profiles Card (Based on old survey logic for now) */}
         <Card className="shadow-lg lg:col-span-2">
             <CardHeader>
-                <CardTitle className="flex items-center gap-2"><ListFilter className="h-5 w-5"/>Potentially Incomplete Profiles (from Surveys)</CardTitle>
-                <CardDescription>Users who might need to complete their profiles, based on survey feedback. (Conceptual)</CardDescription>
+                <CardTitle className="flex items-center gap-2"><ListFilter className="h-5 w-5"/>Profile Completion Insights (Conceptual)</CardTitle>
+                <CardDescription>Analysis of responses from the 'Profile Completion Survey' would go here. (Currently shows mock data based on initial feedback survey).</CardDescription>
             </CardHeader>
             <CardContent>
                 {incompleteProfileUsers.length === 0 ? (
-                    <p className="text-muted-foreground text-center py-4">No users flagged from surveys for incomplete profiles.</p>
+                    <p className="text-muted-foreground text-center py-4">No users flagged from *initial* surveys for incomplete profiles.</p>
                 ) : (
                     <ul className="space-y-2">
                         {incompleteProfileUsers.map(user => (
                             <li key={user.id} className="flex justify-between items-center p-2 border rounded-md">
                                 <div>
                                     <p className="font-medium">{user.name} <span className="text-xs text-muted-foreground">({user.id})</span></p>
-                                    <p className="text-xs text-muted-foreground">Reason: {user.reason}</p>
+                                    <p className="text-xs text-muted-foreground">Reason: {user.reason} (from initial feedback)</p>
                                 </div>
                                 <Button variant="outline" size="sm" asChild>
                                     <Link href={`/admin/user-management?userId=${user.id}`}>View User</Link>
@@ -209,6 +212,7 @@ export default function MessengerManagementPage() {
                         ))}
                     </ul>
                 )}
+                 <p className="text-sm text-muted-foreground mt-4">Further development needed to process and display insights from the detailed 'Profile Completion Survey'.</p>
             </CardContent>
         </Card>
       </div>

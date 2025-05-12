@@ -12,11 +12,14 @@
 
 
 
+
 export type UserRole = 'admin' | 'manager' | 'user';
 export type UserStatus = 'active' | 'inactive' | 'pending' | 'suspended';
 
 
-export type Gender = 'Male' | 'Female' | 'Prefer not to say';
+export const Genders = ['Male', 'Female', 'Prefer not to say'] as const;
+export type Gender = typeof Genders[number];
+
 
 export const DegreePrograms = [
   "Bachelor of Technology (B.Tech)",
@@ -395,6 +398,7 @@ export interface SurveyStep {
   options?: SurveyOption[]; // For userOptions
   dropdownOptions?: { label: string; value: string }[]; // For userDropdown
   placeholder?: string; // For userInput
+  inputType?: 'text' | 'textarea' | 'email' | 'tel' | 'url' | 'date'; // Added inputType for userInput
   nextStepId?: string; // Default next step if not specified by option or after input/dropdown
   variableName?: string; // Key to store the user's answer
   isLastStep?: boolean;
