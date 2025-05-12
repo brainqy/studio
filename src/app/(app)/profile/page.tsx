@@ -22,6 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"; // Added Tooltip
 
 const profileSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -154,7 +155,7 @@ export default function ProfilePage() {
     toast({ title: "Profile Updated", description: "Your profile information has been saved." });
   };
   
-  const renderSectionHeader = (title: string, icon: React.ElementType) => {
+  const renderSectionHeader = (title: string, icon: React.ElementType, tooltipText?: string) => {
     const IconComponent = icon;
     return (
       <>
@@ -162,6 +163,16 @@ export default function ProfilePage() {
         <div className="flex items-center gap-2 mb-4">
           <IconComponent className="h-6 w-6 text-primary" />
           <h2 className="text-xl font-semibold">{title}</h2>
+          {tooltipText && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="max-w-xs">{tooltipText}</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
         </div>
       </>
     );
@@ -170,6 +181,7 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-8">
+    <TooltipProvider>
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight text-foreground">My Profile</h1>
         {!isEditing && (
@@ -182,7 +194,17 @@ export default function ProfilePage() {
 
       <Card className="shadow-lg">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Sparkles className="h-6 w-6 text-primary"/>Profile Completion</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Sparkles className="h-6 w-6 text-primary"/>Profile Completion
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Complete your profile to unlock more features and improve your recommendations.</p>
+              </TooltipContent>
+            </Tooltip>
+            </CardTitle>
         </CardHeader>
         <CardContent>
           <Progress value={profileCompletion} className="w-full h-3 [&>div]:bg-primary" />
@@ -330,7 +352,7 @@ export default function ProfilePage() {
               </div>
 
               {/* Section 4: Alumni Engagement & Support Interests */}
-              {renderSectionHeader("Alumni Engagement & Support Interests", Handshake)}
+              {renderSectionHeader("Alumni Engagement & Support Interests", Handshake, "Indicate how you'd like to engage with the alumni community and what support you can offer.")}
               <div className="space-y-4">
                 <Label className="flex items-center gap-1 text-md"><Users className="h-4 w-4 text-muted-foreground"/>Areas Where You Can Support</Label>
                 <Controller
@@ -389,7 +411,7 @@ export default function ProfilePage() {
               </div>
 
               {/* Section 5: Help You’re Looking For (Optional) */}
-              {renderSectionHeader("Help You’re Looking For (Optional)", HelpCircle)}
+              {renderSectionHeader("Help You’re Looking For (Optional)", HelpCircle, "Let others know if you are seeking specific support or guidance from the alumni network.")}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-1">
                   <Label htmlFor="lookingForSupportType">Type of Support You Are Looking For</Label>
@@ -409,7 +431,7 @@ export default function ProfilePage() {
               </div>
 
               {/* Section 6: Visibility & Consent */}
-              {renderSectionHeader("Visibility & Consent", CheckSquare)}
+              {renderSectionHeader("Visibility & Consent", CheckSquare, "Manage how your profile information is shared within the platform.")}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label>Can we share your profile with other alumni for relevant collaboration?</Label>
@@ -447,7 +469,17 @@ export default function ProfilePage() {
                 <Controller name="careerInterests" control={control} render={({ field }) => <Input id="careerInterests" placeholder="e.g., AI, Fintech, SaaS" {...field} />} />
               </div>
               <div className="space-y-1">
-                <Label htmlFor="resumeText" className="flex items-center gap-1"><User className="h-4 w-4 text-muted-foreground"/>Main Resume Text (for AI features)</Label>
+                <Label htmlFor="resumeText" className="flex items-center gap-1">
+                  <User className="h-4 w-4 text-muted-foreground"/>Main Resume Text
+                  <Tooltip>
+                      <TooltipTrigger asChild>
+                        <HelpCircle className="h-3 w-3 text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="max-w-xs">This text will be used by AI features like Resume Analysis and Personalized Recommendations.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                </Label>
                 <Controller name="resumeText" control={control} render={({ field }) => <Textarea id="resumeText" rows={8} placeholder="Paste your primary resume text here. This will be used for personalized recommendations." {...field} />} />
               </div>
             </CardContent>
@@ -466,6 +498,7 @@ export default function ProfilePage() {
           </Card>
         </fieldset>
       </form>
+    </TooltipProvider>
     </div>
   );
 }

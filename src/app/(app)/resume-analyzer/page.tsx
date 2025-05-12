@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, type FormEvent, useEffect, useMemo } from 'react';
@@ -11,16 +10,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ArrowRight, Download, FileText, Lightbulb, Loader2, Sparkles, UploadCloud, Search, Star, Trash2, BarChart, Clock, Bookmark, CheckCircle, History, Zap } from "lucide-react"; // Added History and Zap
+import { ArrowRight, Download, FileText, Lightbulb, Loader2, Sparkles, UploadCloud, Search, Star, Trash2, BarChart, Clock, Bookmark, CheckCircle, History, Zap, HelpCircle } from "lucide-react"; // Added HelpCircle
 import { analyzeResumeAndJobDescription, type AnalyzeResumeAndJobDescriptionOutput } from '@/ai/flows/analyze-resume-and-job-description';
 import { calculateMatchScore, type CalculateMatchScoreOutput } from '@/ai/flows/calculate-match-score';
-import { suggestResumeImprovements, type SuggestResumeImprovementsOutput } from '@/ai/flows/suggest-resume-improvements'; // Corrected import path
+import { suggestResumeImprovements, type SuggestResumeImprovementsOutput } from '@/ai/flows/suggest-resume-improvements';
 import { useToast } from '@/hooks/use-toast';
 import { sampleResumeScanHistory as initialScanHistory, sampleResumeProfiles, sampleUserProfile } from '@/lib/sample-data';
 import type { ResumeScanHistoryItem, ResumeProfile } from '@/types';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"; // Added Tooltip
 
 interface AnalysisResults {
   analysis: AnalyzeResumeAndJobDescriptionOutput | null;
@@ -225,6 +225,7 @@ export default function ResumeAnalyzerPage() {
 
   return (
     <div className="space-y-8">
+    <TooltipProvider>
       <Card className="shadow-xl">
         <CardHeader>
           <CardTitle className="text-3xl font-bold tracking-tight flex items-center gap-2">
@@ -236,7 +237,17 @@ export default function ResumeAnalyzerPage() {
           <CardContent className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-3">
-                 <Label htmlFor="resume-select" className="text-lg font-medium">Select Existing Resume</Label>
+                 <div className="flex items-center gap-2">
+                   <Label htmlFor="resume-select" className="text-lg font-medium">Select Existing Resume</Label>
+                   <Tooltip>
+                      <TooltipTrigger asChild>
+                        <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Choose a resume you've previously saved or analyzed.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                 </div>
                  <select
                     id="resume-select"
                     value={selectedResumeId || ''}
@@ -283,7 +294,17 @@ export default function ResumeAnalyzerPage() {
                 />
               </div>
               <div className="space-y-3">
-                <Label htmlFor="job-description-area" className="text-lg font-medium">Job Description</Label>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="job-description-area" className="text-lg font-medium">Job Description</Label>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="max-w-xs">Paste the full job description here. For best results, ensure the job title and company name are included. You can add them on separate lines like "Title: Software Engineer" and "Company: Tech Corp" if not present.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
                 <Textarea
                   id="job-description-area"
                   placeholder="Paste the job description here... For better results, include 'Title: <Job Title>' and 'Company: <Company Name>' on separate lines if possible."
@@ -493,6 +514,7 @@ export default function ResumeAnalyzerPage() {
              </div>
         </CardContent>
       </Card>
+    </TooltipProvider>
     </div>
   );
 }

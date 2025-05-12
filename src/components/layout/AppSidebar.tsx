@@ -1,14 +1,8 @@
 
-
-
-
-
-
-
 "use client";
 
 import { Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarSeparator, SidebarGroup, SidebarGroupLabel } from "@/components/ui/sidebar";
-import { Aperture, Award, BarChart2, BookOpen, Briefcase, Building2, CalendarDays, FileText, GalleryVerticalEnd, GitFork, Gift, Handshake, History, Home, Layers3, ListChecks, MessageSquare, Settings, ShieldAlert, ShieldQuestion, User, Users, Wallet, Zap, UserCog, BotMessageSquare, Target, Users2 } from "lucide-react"; // Added Users2 for Affiliate Management
+import { Aperture, Award, BarChart2, BookOpen, Briefcase, Building2, CalendarDays, FileText, GalleryVerticalEnd, GitFork, Gift, Handshake, History, Home, Layers3, ListChecks, MessageSquare, Settings, ShieldAlert, ShieldQuestion, User, Users, Wallet, Zap, UserCog, BotMessageSquare, Target, Users2, BookText } from "lucide-react"; // Added BookText
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { sampleUserProfile } from "@/lib/sample-data"; // Import user profile to get role and tenant
@@ -40,6 +34,7 @@ const utilityItems = [
   { href: "/wallet", label: "Digital Wallet", icon: Wallet },
   { href: "/feature-requests", label: "Feature Requests", icon: ShieldQuestion },
   { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/documentation", label: "Documentation", icon: BookText }, // Added Documentation
 ];
 
 // New Gamification Section

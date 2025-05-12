@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Award, Star, PlusCircle, Edit3, Trash2, ListChecks } from "lucide-react";
+import { Award, Star, PlusCircle, Edit3, Trash2, ListChecks, HelpCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Badge, GamificationRule } from "@/types";
 import { sampleBadges as initialBadges, sampleXpRules as initialXpRules } from "@/lib/sample-data";
@@ -17,6 +17,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import * as LucideIcons from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"; // Added Tooltip
 
 type IconName = keyof typeof LucideIcons;
 
@@ -153,6 +154,7 @@ export default function GamificationRulesPage() {
   }
 
   return (
+    <TooltipProvider>
     <div className="space-y-8">
       <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
         <ListChecks className="h-8 w-8" /> Gamification Rules
@@ -265,28 +267,53 @@ export default function GamificationRulesPage() {
           </DialogHeader>
           <form onSubmit={handleBadgeSubmit(onBadgeFormSubmit)} className="space-y-4 py-4">
             <div>
-              <Label htmlFor="badge-name">Badge Name</Label>
+              <Label htmlFor="badge-name" className="flex items-center gap-1">Badge Name
+                <Tooltip>
+                  <TooltipTrigger asChild><HelpCircle className="h-3 w-3 text-muted-foreground cursor-help" /></TooltipTrigger>
+                  <TooltipContent><p>A short, descriptive name for the badge.</p></TooltipContent>
+                </Tooltip>
+              </Label>
               <Controller name="name" control={badgeControl} render={({ field }) => <Input id="badge-name" {...field} />} />
               {badgeErrors.name && <p className="text-sm text-destructive mt-1">{badgeErrors.name.message}</p>}
             </div>
             <div>
-              <Label htmlFor="badge-description">Description</Label>
+              <Label htmlFor="badge-description" className="flex items-center gap-1">Description
+                <Tooltip>
+                  <TooltipTrigger asChild><HelpCircle className="h-3 w-3 text-muted-foreground cursor-help" /></TooltipTrigger>
+                  <TooltipContent><p>What this badge represents and how it's earned.</p></TooltipContent>
+                </Tooltip>
+              </Label>
               <Controller name="description" control={badgeControl} render={({ field }) => <Textarea id="badge-description" {...field} />} />
                {badgeErrors.description && <p className="text-sm text-destructive mt-1">{badgeErrors.description.message}</p>}
             </div>
              <div>
-              <Label htmlFor="badge-icon">Icon Name (from Lucide)</Label>
+              <Label htmlFor="badge-icon" className="flex items-center gap-1">Icon Name (from Lucide)
+                <Tooltip>
+                  <TooltipTrigger asChild><HelpCircle className="h-3 w-3 text-muted-foreground cursor-help" /></TooltipTrigger>
+                  <TooltipContent><p>Enter a valid icon name from lucide.dev/icons. Example: UserCheck, Award.</p></TooltipContent>
+                </Tooltip>
+              </Label>
               <Controller name="icon" control={badgeControl} render={({ field }) => <Input id="badge-icon" placeholder="e.g., UserCheck, Award" {...field} />} />
               {badgeErrors.icon && <p className="text-sm text-destructive mt-1">{badgeErrors.icon.message}</p>}
               <p className="text-xs text-muted-foreground mt-1">Enter a valid icon name from <a href="https://lucide.dev/icons/" target="_blank" rel="noopener noreferrer" className="underline">lucide.dev/icons</a>.</p>
             </div>
             <div>
-              <Label htmlFor="badge-xpReward">XP Reward</Label>
+              <Label htmlFor="badge-xpReward" className="flex items-center gap-1">XP Reward
+                <Tooltip>
+                  <TooltipTrigger asChild><HelpCircle className="h-3 w-3 text-muted-foreground cursor-help" /></TooltipTrigger>
+                  <TooltipContent><p>Optional XP points awarded when this badge is earned.</p></TooltipContent>
+                </Tooltip>
+              </Label>
               <Controller name="xpReward" control={badgeControl} render={({ field }) => <Input id="badge-xpReward" type="number" min="0" {...field} />} />
                {badgeErrors.xpReward && <p className="text-sm text-destructive mt-1">{badgeErrors.xpReward.message}</p>}
             </div>
             <div>
-              <Label htmlFor="badge-triggerCondition">Trigger Condition</Label>
+              <Label htmlFor="badge-triggerCondition" className="flex items-center gap-1">Trigger Condition
+                <Tooltip>
+                  <TooltipTrigger asChild><HelpCircle className="h-3 w-3 text-muted-foreground cursor-help" /></TooltipTrigger>
+                  <TooltipContent><p>Describe the specific action or achievement that earns this badge.</p></TooltipContent>
+                </Tooltip>
+              </Label>
               <Controller name="triggerCondition" control={badgeControl} render={({ field }) => <Textarea id="badge-triggerCondition" placeholder="Describe how this badge is earned..." {...field} />} />
                {badgeErrors.triggerCondition && <p className="text-sm text-destructive mt-1">{badgeErrors.triggerCondition.message}</p>}
             </div>
@@ -308,18 +335,33 @@ export default function GamificationRulesPage() {
           </DialogHeader>
            <form onSubmit={handleXpRuleSubmit(onXpRuleFormSubmit)} className="space-y-4 py-4">
              <div>
-               <Label htmlFor="xp-actionId">Action ID</Label>
+               <Label htmlFor="xp-actionId" className="flex items-center gap-1">Action ID
+                 <Tooltip>
+                    <TooltipTrigger asChild><HelpCircle className="h-3 w-3 text-muted-foreground cursor-help" /></TooltipTrigger>
+                    <TooltipContent><p>A unique system identifier for the action (e.g., profile_complete). Cannot be changed after creation.</p></TooltipContent>
+                 </Tooltip>
+               </Label>
                <Controller name="actionId" control={xpRuleControl} render={({ field }) => <Input id="xp-actionId" placeholder="e.g., profile_complete" {...field} disabled={!!editingXpRule} />} />
                {xpRuleErrors.actionId && <p className="text-sm text-destructive mt-1">{xpRuleErrors.actionId.message}</p>}
                {!editingXpRule && <p className="text-xs text-muted-foreground mt-1">Unique identifier for the action (cannot be changed later).</p>}
              </div>
              <div>
-               <Label htmlFor="xp-description">Description</Label>
+               <Label htmlFor="xp-description" className="flex items-center gap-1">Description
+                <Tooltip>
+                    <TooltipTrigger asChild><HelpCircle className="h-3 w-3 text-muted-foreground cursor-help" /></TooltipTrigger>
+                    <TooltipContent><p>User-friendly description of the action (e.g., Complete Your Profile).</p></TooltipContent>
+                 </Tooltip>
+               </Label>
                <Controller name="description" control={xpRuleControl} render={({ field }) => <Input id="xp-description" placeholder="e.g., Complete Your Profile" {...field} />} />
                 {xpRuleErrors.description && <p className="text-sm text-destructive mt-1">{xpRuleErrors.description.message}</p>}
              </div>
              <div>
-               <Label htmlFor="xp-xpPoints">XP Points Awarded</Label>
+               <Label htmlFor="xp-xpPoints" className="flex items-center gap-1">XP Points Awarded
+                 <Tooltip>
+                    <TooltipTrigger asChild><HelpCircle className="h-3 w-3 text-muted-foreground cursor-help" /></TooltipTrigger>
+                    <TooltipContent><p>The number of experience points awarded when this action is completed.</p></TooltipContent>
+                 </Tooltip>
+               </Label>
                <Controller name="xpPoints" control={xpRuleControl} render={({ field }) => <Input id="xp-xpPoints" type="number" min="0" {...field} />} />
                 {xpRuleErrors.xpPoints && <p className="text-sm text-destructive mt-1">{xpRuleErrors.xpPoints.message}</p>}
              </div>
@@ -332,5 +374,6 @@ export default function GamificationRulesPage() {
        </Dialog>
 
     </div>
+    </TooltipProvider>
   );
 }

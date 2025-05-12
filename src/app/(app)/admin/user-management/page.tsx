@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { UserCog, PlusCircle, Edit3, Trash2, UploadCloud, DownloadCloud, ChevronDown, Search } from "lucide-react";
+import { UserCog, PlusCircle, Edit3, Trash2, UploadCloud, DownloadCloud, ChevronDown, Search, HelpCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { UserProfile, UserRole, UserStatus } from "@/types";
 import { samplePlatformUsers } from "@/lib/sample-data"; // Using sampleAlumni as mock users
@@ -19,6 +19,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format } from "date-fns";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"; // Added Tooltip
 
 const userSchema = z.object({
   id: z.string().optional(),
@@ -139,6 +140,7 @@ export default function UserManagementPage() {
 
 
   return (
+    <TooltipProvider>
     <div className="space-y-8">
       <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
         <UserCog className="h-8 w-8" /> User Management
@@ -157,15 +159,30 @@ export default function UserManagementPage() {
             />
           </div>
           <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-            <Button onClick={openNewUserDialog} className="bg-primary hover:bg-primary/90 text-primary-foreground">
-              <PlusCircle className="mr-2 h-5 w-5" /> Create User
-            </Button>
-            <Button variant="outline" onClick={() => toast({ title: "Mock Action", description: "User upload initiated." })}>
-              <UploadCloud className="mr-2 h-5 w-5" /> Upload Users
-            </Button>
-            <Button variant="outline" onClick={() => toast({ title: "Mock Action", description: "User download initiated." })}>
-              <DownloadCloud className="mr-2 h-5 w-5" /> Download Users
-            </Button>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button onClick={openNewUserDialog} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                        <PlusCircle className="mr-2 h-5 w-5" /> Create User
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent><p>Manually add a new user to the platform.</p></TooltipContent>
+            </Tooltip>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button variant="outline" onClick={() => toast({ title: "Mock Action", description: "User upload initiated." })}>
+                        <UploadCloud className="mr-2 h-5 w-5" /> Upload Users
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent><p>Bulk upload users via CSV file (mocked feature).</p></TooltipContent>
+            </Tooltip>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button variant="outline" onClick={() => toast({ title: "Mock Action", description: "User download initiated." })}>
+                        <DownloadCloud className="mr-2 h-5 w-5" /> Download Users
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent><p>Download a list of current users in CSV format (mocked feature).</p></TooltipContent>
+            </Tooltip>
           </div>
         </CardHeader>
         <CardContent>
@@ -310,5 +327,6 @@ export default function UserManagementPage() {
         </DialogContent>
       </Dialog>
     </div>
+    </TooltipProvider>
   );
 }
