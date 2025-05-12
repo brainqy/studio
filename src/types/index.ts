@@ -72,7 +72,6 @@ export const SupportTypesSought = [
   "Higher Education Guidance",
   "Startup Advice",
   "Relocation Help",
-  "General Networking",
 ] as const;
 export type SupportTypeSought = typeof SupportTypesSought[number];
 
@@ -201,18 +200,18 @@ export interface Badge {
 export interface BlogPost {
   id: string;
   tenantId?: string | 'platform'; 
-  userId: string; // Added userId for user-created blogs
-  userName: string; // Added userName for user-created blogs
-  userAvatar?: string; // Added userAvatar for user-created blogs
+  userId: string; 
+  userName: string; 
+  userAvatar?: string; 
   title: string;
   slug: string; 
-  author: string; // Will be same as userName for user blogs, or "Platform Team"
+  author: string; 
   date: string; 
   imageUrl?: string;
   content: string; 
   excerpt: string;
   tags?: string[];
-  comments?: CommunityComment[]; // Added for blog comments
+  comments?: CommunityComment[]; 
 }
 
 export interface UserProfile {
@@ -257,6 +256,7 @@ export interface UserProfile {
   resumeText?: string; 
   careerInterests?: string;
   bio?: string;
+  interests?: string[];
 
   xpPoints?: number;
   dailyStreak?: number; 
@@ -274,7 +274,7 @@ export interface ResumeProfile {
   tenantId: string;
   userId: string; 
   name: string; 
-  resumeText: string;
+  resumeText: string; // Could be stringified JSON of ResumeBuilderData or plain text
   lastAnalyzed?: string;
 }
 
@@ -400,7 +400,7 @@ export interface SurveyResponse {
   userId: string;
   userName: string;
   surveyId: string;
-  surveyName: string;
+  surveyName?: string; // Optional, can be derived
   responseDate: string; 
   data: Record<string, any>; 
 }
@@ -471,10 +471,10 @@ export interface ResumeExperienceEntry {
   jobTitle: string;
   company: string;
   location: string;
-  startDate: string;
-  endDate: string;
+  startDate: string; // Consider using YYYY-MM format
+  endDate: string;   // Consider using YYYY-MM format or "Present"
   isCurrent?: boolean;
-  responsibilities: string; // Changed to string for simplicity, can be split by newlines
+  responsibilities: string; // Store as a single string, use newlines for bullets
 }
 
 export interface ResumeEducationEntry {
@@ -484,7 +484,7 @@ export interface ResumeEducationEntry {
   university: string;
   location: string;
   graduationYear: string;
-  details?: string; // Changed to string
+  details?: string; // Store as a single string, use newlines for bullets
 }
 
 export interface ResumeBuilderData {
@@ -506,10 +506,10 @@ export type ResumeBuilderStep = 'header' | 'experience' | 'education' | 'skills'
 
 export const RESUME_BUILDER_STEPS: { id: ResumeBuilderStep; title: string; description?: string; mainHeading?: string; }[] = [
   { id: 'header', title: 'Header', description: "Let's start with your contact information.", mainHeading: "Contact Information" },
+  { id: 'summary', title: 'Summary', description: "Write a compelling professional summary.", mainHeading: "Professional Summary" },
   { id: 'experience', title: 'Experience', description: "Add details about your work experience.", mainHeading: "Work Experience" },
   { id: 'education', title: 'Education', description: "Tell us about your education.", mainHeading: "Education & Training" },
   { id: 'skills', title: 'Skills', description: "Showcase your skills.", mainHeading: "Skills & Expertise" },
-  { id: 'summary', title: 'Summary', description: "Write a compelling summary.", mainHeading: "Professional Summary" },
-  { id: 'additional-details', title: 'Additional Details', description: "Include any additional relevant details.", mainHeading: "Additional Information" },
+  { id: 'additional-details', title: 'Additional Info', description: "Include any other relevant details like awards or languages.", mainHeading: "Additional Information" },
   { id: 'finalize', title: 'Finalize', description: "Review and finalize your resume.", mainHeading: "Review & Finalize" },
 ];

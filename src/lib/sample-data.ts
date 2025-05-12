@@ -227,6 +227,7 @@ export const sampleUserProfile: UserProfile = {
   featureInSpotlightConsent: true,
   bio: 'Enthusiastic software developer passionate about creating innovative solutions. With 5 years in the field, I have honed my skills in JavaScript, React, and Node.js, primarily focusing on building scalable web applications. My experience at Tech Startup Inc. involved leading front-end development for key projects and mentoring junior developers. I am always keen to learn new technologies and contribute to impactful products. Outside of work, I enjoy hiking and exploring new tech trends.',
   profilePictureUrl: 'https://picsum.photos/seed/alexuser/200/200',
+  interests: ['Coding', 'AI Ethics', 'Sci-fi Novels'],
   resumeText: `Alex Taylor (User)
   Email: user@example.com | LinkedIn: linkedin.com/in/alexuser | Mobile: +15551234567
 
@@ -528,6 +529,7 @@ export const sampleSurveyResponses: SurveyResponse[] = [
         userId: 'alumni3',
         userName: 'Charlie Brown',
         surveyId: 'initialFeedbackSurvey',
+        surveyName: 'Initial User Feedback', // Added name for consistency
         responseDate: new Date(Date.now() - 86400000 * 3).toISOString(),
         data: {
             experience: 'needs_improvement',

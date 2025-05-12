@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -8,7 +7,7 @@ import { FilePlus2, FileText, Wand2, CheckCircle, ChevronLeft, ChevronRight, Dow
 import type { ResumeBuilderData, ResumeBuilderStep, ResumeHeaderData, ResumeExperienceEntry, ResumeEducationEntry } from "@/types";
 import { RESUME_BUILDER_STEPS } from "@/types";
 import { useToast } from "@/hooks/use-toast";
-import { sampleUserProfile, sampleResumeTemplates } from "@/lib/sample-data";
+import { sampleUserProfile, sampleResumeTemplates, sampleResumeProfiles } from "@/lib/sample-data";
 import StepHeaderForm from "@/components/features/resume-builder/StepHeaderForm";
 import StepExperienceForm from "@/components/features/resume-builder/StepExperienceForm";
 import StepEducationForm from "@/components/features/resume-builder/StepEducationForm";
@@ -20,6 +19,7 @@ import ResumePreview from "@/components/features/resume-builder/ResumePreview";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import ResumeBuilderStepper from "@/components/features/resume-builder/ResumeBuilderStepper";
+import type { ResumeProfile } from "@/types"; // Added ResumeProfile import
 
 const initialResumeData: ResumeBuilderData = {
   header: {
@@ -73,13 +73,6 @@ export default function ResumeBuilderPage() {
       setCurrentStepIndex(stepIndex);
     }
   };
-
-  const updateResumeData = (section: keyof ResumeBuilderData, data: any) => {
-    setResumeData(prev => ({
-      ...prev,
-      [section]: data,
-    }));
-  };
   
   const updateHeaderData = (data: Partial<ResumeHeaderData>) => {
     setResumeData(prev => ({ ...prev, header: { ...prev.header, ...data } }));
@@ -110,14 +103,14 @@ export default function ResumeBuilderPage() {
     switch (currentStep) {
       case 'header':
         return <StepHeaderForm data={resumeData.header} onUpdate={updateHeaderData} />;
+      case 'summary':
+        return <StepSummaryForm data={resumeData.summary} onUpdate={updateSummaryData}/>;
       case 'experience':
         return <StepExperienceForm data={resumeData.experience} onUpdate={updateExperienceData} />;
       case 'education':
         return <StepEducationForm data={resumeData.education} onUpdate={updateEducationData}/>;
       case 'skills':
         return <StepSkillsForm data={resumeData.skills} onUpdate={updateSkillsData}/>;
-      case 'summary':
-        return <StepSummaryForm data={resumeData.summary} onUpdate={updateSummaryData}/>;
       case 'additional-details':
         return <StepAdditionalDetailsForm data={resumeData.additionalDetails || {}} onUpdate={updateAdditionalDetailsData}/>;
       case 'finalize':
@@ -216,4 +209,3 @@ export default function ResumeBuilderPage() {
     </div>
   );
 }
-

@@ -1,4 +1,3 @@
-
 "use client";
 
 import type React from 'react';
@@ -8,6 +7,7 @@ import type { ResumeBuilderData } from "@/types";
 import { DownloadCloud, Save, Eye } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import { sampleResumeProfiles, sampleUserProfile } from '@/lib/sample-data';
+import type { ResumeProfile } from '@/types'; // Added import
 
 interface StepFinalizeProps {
   resumeData: ResumeBuilderData;

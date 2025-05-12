@@ -1,4 +1,3 @@
-
 "use client";
 
 import type React from 'react';
@@ -10,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import type { ResumeEducationEntry } from "@/types";
 import { PlusCircle, Trash2 } from "lucide-react";
 import { graduationYears } from '@/lib/sample-data';
-import { DegreePrograms } from '@/types'; // Changed import path
+import { DegreePrograms } from '@/types'; 
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 
 
