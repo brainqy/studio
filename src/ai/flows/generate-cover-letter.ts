@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview Generates a personalized cover letter based on user profile and job description.
@@ -10,7 +11,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-export const GenerateCoverLetterInputSchema = z.object({
+const GenerateCoverLetterInputSchema = z.object({
   userProfileText: z.string().describe('A summary of the user\'s profile, including key skills, experience, and bio.'),
   jobDescriptionText: z.string().describe('The full text of the job description the user is applying for.'),
   companyName: z.string().describe('The name of the company to address the cover letter to.'),
@@ -20,7 +21,7 @@ export const GenerateCoverLetterInputSchema = z.object({
 });
 export type GenerateCoverLetterInput = z.infer<typeof GenerateCoverLetterInputSchema>;
 
-export const GenerateCoverLetterOutputSchema = z.object({
+const GenerateCoverLetterOutputSchema = z.object({
   generatedCoverLetterText: z.string().describe('The generated cover letter text.'),
 });
 export type GenerateCoverLetterOutput = z.infer<typeof GenerateCoverLetterOutputSchema>;

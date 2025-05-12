@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview Generates a new resume variant based on existing resume text and user preferences.
@@ -10,7 +11,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-export const GenerateResumeVariantInputSchema = z.object({
+const GenerateResumeVariantInputSchema = z.object({
   baseResumeText: z.string().describe('The original resume text to be adapted.'),
   targetRole: z.string().describe('The desired job title or role for the new resume variant.'),
   targetIndustry: z.string().optional().describe('The target industry for the new resume variant.'),
@@ -20,7 +21,7 @@ export const GenerateResumeVariantInputSchema = z.object({
 });
 export type GenerateResumeVariantInput = z.infer<typeof GenerateResumeVariantInputSchema>;
 
-export const GenerateResumeVariantOutputSchema = z.object({
+const GenerateResumeVariantOutputSchema = z.object({
   generatedResumeText: z.string().describe('The newly generated resume text.'),
   // Optional: Could add a brief summary of changes made by the AI
   // summaryOfChanges: z.string().optional().describe('A brief summary of how the resume was adapted.'),
