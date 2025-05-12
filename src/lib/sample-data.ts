@@ -1,4 +1,4 @@
-import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem, Appointment, Wallet, ResumeProfile } from '@/types';
+import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem, Appointment, Wallet, ResumeProfile, Tenant } from '@/types';
 import { AreasOfSupport } from '@/types';
 
 const SAMPLE_TENANT_ID = 'tenant-1'; // Define a default tenant ID for sample data
@@ -72,7 +72,7 @@ export const sampleAlumni: AlumniProfile[] = [
     university: 'Commerce College',
     skills: ['SEO', 'Content Marketing', 'Social Media', 'PPC Advertising'],
     email: "diana.prince@example.com",
-    role: 'admin',
+    role: 'admin', // Example Admin
     interests: ['Yoga', 'Creative Writing', 'Digital Trends'],
     offersHelpWith: [AreasOfSupport[2], AreasOfSupport[5], AreasOfSupport[9]], // Job Referrals, Sponsorship, Volunteering
     appointmentCoinCost: 20,
@@ -109,80 +109,67 @@ export const sampleJobOpenings: JobOpening[] = [
   { id: 'job3', tenantId: SAMPLE_TENANT_ID, title: 'Project Manager - Mentorship Program', company: 'Self-Employed (Mentorship)', postedByAlumniId: 'alumni2', alumniName: 'Bob The Builder', description: 'Looking to mentor aspiring Product Managers. Part-time commitment.', datePosted: '2024-07-05', location: 'Remote', type: 'Mentorship' },
 ];
 
+// Default sample user profile - CAN BE MODIFIED FOR TESTING ROLES
 export const sampleUserProfile: UserProfile = {
   id: 'currentUser',
   tenantId: SAMPLE_TENANT_ID,
-  role: 'user', // Default role for the sample user
-  name: 'Alex Taylor',
-  email: 'alex.taylor@example.com',
-  dateOfBirth: '1995-08-15',
-  gender: 'Male',
-  mobileNumber: '+15551234567',
-  currentAddress: '123 Main St, Anytown, CA, USA',
+  role: 'admin', // <= CHANGED TO ADMIN
+  name: 'Alex Taylor (Admin)', // Added "(Admin)" to name for clarity during testing
+  email: 'admin@example.com', // Changed email for admin context
+  dateOfBirth: '1990-05-20',
+  gender: 'Prefer not to say',
+  mobileNumber: '+15559876543',
+  currentAddress: 'Admin HQ, Anytown, CA, USA',
 
-  graduationYear: '2023',
-  degreeProgram: 'Bachelor of Science (B.Sc)',
-  department: 'Computer Science',
+  graduationYear: '2012',
+  degreeProgram: 'Master of Business Administration (MBA)',
+  department: 'Business Administration',
 
-  currentJobTitle: 'Aspiring Full-Stack Developer',
-  currentOrganization: 'Tech Solutions Inc. (Internship)',
+  currentJobTitle: 'Platform Administrator',
+  currentOrganization: 'ResumeMatch AI Platform',
   industry: 'IT/Software',
-  workLocation: 'Anytown, USA',
-  linkedInProfile: 'https://linkedin.com/in/alextaylor',
-  yearsOfExperience: '1',
+  workLocation: 'Remote',
+  linkedInProfile: 'https://linkedin.com/in/adminprofile',
+  yearsOfExperience: '10+',
 
-  skills: ['JavaScript', 'React', 'Node.js', 'Python', 'SQL'],
+  skills: ['System Administration', 'User Management', 'Cloud Infrastructure', 'Security'],
 
-  areasOfSupport: ['Mentoring Students', 'Sharing Job Referrals'],
-  timeCommitment: '1-2 hours',
+  // Admins might not engage in the same way, but keeping structure
+  areasOfSupport: ['Organizing Alumni Events'],
+  timeCommitment: 'Occasionally, when needed',
   preferredEngagementMode: 'Online',
-  otherComments: 'Eager to contribute to the alumni community!',
+  otherComments: 'Overseeing platform operations.',
 
-  lookingForSupportType: 'Career Mentoring',
-  helpNeededDescription: 'Looking for guidance on breaking into the AI/ML field.',
+  lookingForSupportType: undefined, // Admins likely don't seek support via this form
+  helpNeededDescription: '',
 
-  shareProfileConsent: true,
+  shareProfileConsent: false, // Admins might default to less visibility
   featureInSpotlightConsent: false,
 
-  bio: 'Aspiring full-stack developer with a keen interest in AI and web technologies. Eager to learn and contribute to innovative projects.',
-  profilePictureUrl: 'https://picsum.photos/seed/alextaylor/200/200',
-  resumeText: `Alex Taylor
-alex.taylor@example.com | (555) 123-4567 | linkedin.com/in/alextaylor | github.com/alextaylor
-
-Summary
-Highly motivated and results-oriented aspiring Full-Stack Developer with a strong foundation in JavaScript, React, Node.js, and Python. Passionate about creating intuitive user experiences and leveraging AI for innovative solutions. Proven ability to learn quickly and collaborate effectively in team environments.
-
-Education
-B.S. in Computer Science | State University | Graduated May 2023
-Relevant Coursework: Data Structures, Algorithms, Web Development, Database Management, Introduction to AI
-
-Projects
-ResumeMatch AI (Personal Project)
-  - Developed a conceptual AI-powered resume analysis tool using Next.js and Genkit.
-  - Implemented features for resume upload, job description input, and match score calculation.
-E-commerce Platform (Capstone Project)
-  - Built a full-stack e-commerce website with React, Node.js, Express, and MongoDB.
-  - Features included product listings, shopping cart, user authentication, and order processing.
-
-Skills
-Programming Languages: JavaScript, Python, Java, HTML, CSS
-Frameworks/Libraries: React, Node.js, Express, Next.js, Tailwind CSS
-Databases: MongoDB, SQL (PostgreSQL, MySQL)
-Tools: Git, Docker, VS Code, Figma
-Other: RESTful APIs, Agile Methodologies, Problem-Solving
-
-Experience
-Software Engineering Intern | Tech Solutions Inc. | Summer 2022
-  - Assisted in developing new features for a client-facing web application using React and Node.js.
-  - Participated in daily stand-ups, sprint planning, and code reviews.
-  - Contributed to bug fixing and improving application performance.
-`,
-  careerInterests: 'Full-stack development, AI/ML engineering, UI/UX design collaboration'
+  bio: 'Experienced platform administrator ensuring the smooth operation of ResumeMatch AI.',
+  profilePictureUrl: 'https://picsum.photos/seed/admintaylor/200/200',
+  resumeText: `Admin User Profile
+  Email: admin@example.com
+  Role: Platform Administrator
+  
+  Responsible for managing tenants, users, and overall system health.
+  
+  Key Responsibilities:
+  - Tenant onboarding and configuration
+  - User account management and role assignment
+  - Monitoring system performance and logs
+  - Overseeing feature deployments
+  - Managing platform settings and integrations
+  
+  Skills: System Administration, User Support, Database Management, Cloud Services (AWS/GCP), Security Best Practices.
+  `,
+  careerInterests: 'Platform Scalability, DevOps, AI Ethics'
 };
 
 export const sampleAppointments: Appointment[] = [
     { id: 'appt1', tenantId: SAMPLE_TENANT_ID, requesterUserId: 'currentUser', alumniUserId: 'alumni1', title: 'Mentorship Session with Alice W.', dateTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3).toISOString(), withUser: 'Alice Wonderland', status: 'Confirmed', costInCoins: 10, meetingLink: 'https://zoom.us/j/1234567890' },
     { id: 'appt2', tenantId: SAMPLE_TENANT_ID, requesterUserId: 'currentUser', alumniUserId: 'alumni2', title: 'Networking Call with Bob B.', dateTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 5).toISOString(), withUser: 'Bob The Builder', status: 'Pending', costInCoins: 15 },
+    { id: 'appt3', tenantId: SAMPLE_TENANT_ID, requesterUserId: 'alumni3', alumniUserId: 'currentUser', title: 'Incoming Request: Career Advice', dateTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString(), withUser: 'Charlie Brown', status: 'Pending', costInCoins: 10 }, // Example of incoming request
 ];
 
 export const sampleWalletBalance: Wallet = {
@@ -244,6 +231,12 @@ export const sampleResumeScanHistory: ResumeScanHistoryItem[] = [
   },
 ];
 
-
 // Graduation years for dropdown
 export const graduationYears = Array.from({ length: 26 }, (_, i) => (2025 - i).toString());
+
+// Sample Tenants
+export const sampleTenants: Tenant[] = [
+  { id: 'tenant-1', name: 'Default University', createdAt: new Date().toISOString(), settings: { allowPublicSignup: true } },
+  { id: 'tenant-2', name: 'Corporate Partner Inc.', createdAt: new Date(Date.now() - 86400000 * 5).toISOString(), settings: { allowPublicSignup: false } },
+  { id: 'tenant-3', name: 'Community College', createdAt: new Date(Date.now() - 86400000 * 10).toISOString(), settings: { allowPublicSignup: true } },
+];
