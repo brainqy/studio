@@ -1,3 +1,5 @@
+
+
 "use client";
 
 import { useState, type FormEvent, useEffect, useMemo } from 'react';
@@ -12,10 +14,10 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ArrowRight, Download, FileText, Lightbulb, Loader2, Sparkles, UploadCloud, Search, Star, Trash2, BarChart, Clock, Bookmark, CheckCircle, History, Zap } from "lucide-react"; // Added History and Zap
 import { analyzeResumeAndJobDescription, type AnalyzeResumeAndJobDescriptionOutput } from '@/ai/flows/analyze-resume-and-job-description';
 import { calculateMatchScore, type CalculateMatchScoreOutput } from '@/ai/flows/calculate-match-score';
-import { suggestResumeImprovements, type SuggestResumeImprovementsOutput } from '@/ai/flows/suggestResumeImprovements';
+import { suggestResumeImprovements, type SuggestResumeImprovementsOutput } from '@/ai/flows/suggest-resume-improvements'; // Corrected import path
 import { useToast } from '@/hooks/use-toast';
-import { sampleResumeScanHistory as initialScanHistory, sampleResumeProfiles, sampleUserProfile } from '@/lib/sample-data'; 
-import type { ResumeScanHistoryItem, ResumeProfile } from '@/types'; 
+import { sampleResumeScanHistory as initialScanHistory, sampleResumeProfiles, sampleUserProfile } from '@/lib/sample-data';
+import type { ResumeScanHistoryItem, ResumeProfile } from '@/types';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -89,7 +91,7 @@ export default function ResumeAnalyzerPage() {
     if (selectedResume) {
       setResumeText(selectedResume.resumeText);
       toast({ title: "Resume Loaded", description: `Loaded content for ${selectedResume.name}.`});
-    } else if (!resumeFile) { 
+    } else if (!resumeFile) {
         setResumeText('');
     }
    }, [selectedResumeId, resumes, toast, resumeFile]);
@@ -99,7 +101,7 @@ export default function ResumeAnalyzerPage() {
     const file = event.target.files?.[0];
     if (file) {
       setResumeFile(file);
-      setSelectedResumeId(null); 
+      setSelectedResumeId(null);
       if (file.type === "text/plain") {
         const reader = new FileReader();
         reader.onload = (e) => setResumeText(e.target?.result as string);
@@ -146,8 +148,8 @@ export default function ResumeAnalyzerPage() {
         userId: sampleUserProfile.id,
         resumeId: currentResumeProfile?.id || (resumeFile ? `file-${resumeFile.name}` : 'pasted-text'),
         resumeName: currentResumeProfile?.name || resumeFile?.name || 'Pasted Resume',
-        jobTitle: jobTitleMatch, 
-        companyName: companyMatch, 
+        jobTitle: jobTitleMatch,
+        companyName: companyMatch,
         jobDescriptionText: jobDescription,
         scanDate: new Date().toISOString(),
         matchScore: scoreRes.matchScore,
@@ -196,7 +198,7 @@ export default function ResumeAnalyzerPage() {
   };
 
   const filteredScanHistory = useMemo(() => {
-    let filtered = [...scanHistory]; 
+    let filtered = [...scanHistory];
     if (historyFilter === 'highest') {
       filtered.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
     } else if (historyFilter === 'starred') {
@@ -205,7 +207,7 @@ export default function ResumeAnalyzerPage() {
       // This assumes an 'archived' property might exist, or it filters out everything if not.
       // For now, let's assume 'archived' is not a feature and it returns empty for this filter.
       // If 'archived' becomes a feature, this filter needs to be adjusted.
-      filtered = filtered.filter(item => (item as any).archived === true); 
+      filtered = filtered.filter(item => (item as any).archived === true);
     }
     // No 'all' specific filtering needed, as it uses the full `scanHistory`
     return filtered;
@@ -216,7 +218,7 @@ export default function ResumeAnalyzerPage() {
     const uniqueResumes = new Set(scanHistory.map(s => s.resumeId)).size;
     const maxScore = scanHistory.reduce((max, s) => Math.max(max, s.matchScore || 0), 0);
     // Define "Improvement" as number of scans with score >= 80% (example)
-    const improvement = scanHistory.filter(s => (s.matchScore || 0) >= 80).length; 
+    const improvement = scanHistory.filter(s => (s.matchScore || 0) >= 80).length;
     return { totalScans, uniqueResumes, maxScore, improvement };
   }, [scanHistory]);
 
@@ -226,7 +228,7 @@ export default function ResumeAnalyzerPage() {
       <Card className="shadow-xl">
         <CardHeader>
           <CardTitle className="text-3xl font-bold tracking-tight flex items-center gap-2">
-            <Zap className="h-8 w-8 text-primary" /> Resume Analyzer 
+            <Zap className="h-8 w-8 text-primary" /> Resume Analyzer
           </CardTitle>
           <CardDescription>Upload your resume and paste a job description to get an AI-powered analysis and match score.</CardDescription>
         </CardHeader>
@@ -287,7 +289,7 @@ export default function ResumeAnalyzerPage() {
                   placeholder="Paste the job description here... For better results, include 'Title: <Job Title>' and 'Company: <Company Name>' on separate lines if possible."
                   value={jobDescription}
                   onChange={(e) => setJobDescription(e.target.value)}
-                  rows={resumes.length > 0 || resumeFile || resumeText ? 10 + 14 : 10} 
+                  rows={resumes.length > 0 || resumeFile || resumeText ? 10 + 14 : 10}
                   className="border-input focus:ring-primary"
                 />
               </div>
@@ -415,7 +417,7 @@ export default function ResumeAnalyzerPage() {
         </Card>
       )}
 
-      {/* Resume Scan History Section */}
+      {/* Resume Scan History Section - Moved here as per request */}
       <Card className="shadow-xl mt-12">
          <CardHeader>
           <CardTitle className="text-2xl font-bold tracking-tight flex items-center gap-2">
@@ -429,7 +431,7 @@ export default function ResumeAnalyzerPage() {
                   { title: "Total Scans", value: summaryStats.totalScans },
                   { title: "Unique Resumes", value: summaryStats.uniqueResumes },
                   { title: "Maximum Score", value: `${summaryStats.maxScore}%` },
-                  { title: "Improvement", value: summaryStats.improvement }, 
+                  { title: "High Scoring (>80%)", value: summaryStats.improvement }, // Changed label
                 ].map(stat => (
                   <Card key={stat.title} className="border shadow-sm">
                       <CardContent className="p-4 text-center">
@@ -442,10 +444,10 @@ export default function ResumeAnalyzerPage() {
 
              <Tabs defaultValue="all" onValueChange={(value) => setHistoryFilter(value as 'all' | 'highest' | 'starred' | 'archived')} className="mb-4">
               <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
-                <TabsTrigger value="highest">View Highest Match</TabsTrigger>
-                <TabsTrigger value="starred">View Starred</TabsTrigger>
                 <TabsTrigger value="all">View All</TabsTrigger>
-                <TabsTrigger value="archived">View Archived</TabsTrigger>
+                <TabsTrigger value="highest">Highest Match</TabsTrigger>
+                <TabsTrigger value="starred">Starred</TabsTrigger>
+                <TabsTrigger value="archived">Archived</TabsTrigger>
               </TabsList>
             </Tabs>
 
@@ -458,17 +460,21 @@ export default function ResumeAnalyzerPage() {
                              <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-yellow-500 self-start mt-1" onClick={() => handleToggleBookmark(item.id)}>
                                  <Star className={cn("h-5 w-5", item.bookmarked && "fill-yellow-400 text-yellow-500")} />
                              </Button>
-                             <ScoreCircle score={item.matchScore || 0} size="lg" />
+                             {item.matchScore !== undefined && <ScoreCircle score={item.matchScore} size="sm" />}
                              <div className="flex-1 space-y-0.5">
-                                <h4 className="font-semibold text-md text-foreground">{item.jobTitle || 'Default Job Title'}</h4>
-                                <p className="text-sm text-muted-foreground">Resume: {item.resumeName || 'Resume snippet'}</p>
-                                <p className="text-sm text-muted-foreground truncate max-w-xs">Job Description: {item.jobDescriptionText?.substring(0, 50) || 'Job Description'}...</p>
+                                <h4 className="font-semibold text-md text-foreground">{item.jobTitle || 'Job Title Missing'} at {item.companyName || 'Company Missing'}</h4>
+                                <p className="text-sm text-muted-foreground">Resume: {item.resumeName || 'Unknown Resume'}</p>
+                                {/* Optional: Display a snippet of JD if needed */}
+                                {/* <p className="text-xs text-muted-foreground truncate max-w-xs">JD: {item.jobDescriptionText?.substring(0, 40) || 'N/A'}...</p> */}
                              </div>
                             <div className="flex flex-col items-end space-y-1 self-start">
-                                <Button variant="destructive" size="sm" onClick={() => handleDeleteScan(item.id)} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
-                                    Delete
+                               <p className="text-xs text-muted-foreground">{format(new Date(item.scanDate), 'MMM dd, yyyy')}</p>
+                                {item.reportUrl && <Button variant="link" size="sm" className="p-0 h-auto text-xs" onClick={() => toast({title: "View Report (Mock)", description: `Opening report for ${item.jobTitle}`})}>View Report</Button>}
+                                <Button variant="outline" size="sm" onClick={() => handleDeleteScan(item.id)} className="mt-1">
+                                  <Trash2 className="h-3 w-3"/>
                                 </Button>
-                                <p className="text-xs text-muted-foreground mt-1">{format(new Date(item.scanDate), 'MMM dd, yyyy')}</p>
+                                {/* Add Archive button later if needed */}
+                                {/* <Button variant="outline" size="sm" className="mt-1">Archive</Button> */}
                             </div>
                          </Card>
                     ))
