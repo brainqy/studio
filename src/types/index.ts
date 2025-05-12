@@ -4,6 +4,7 @@
 
 
 
+
 export type UserRole = 'admin' | 'manager' | 'user';
 export type UserStatus = 'active' | 'inactive' | 'pending' | 'suspended';
 
@@ -346,5 +347,3 @@ export interface GamificationRule {
     description: string; // User-friendly description e.g., "Complete Your Profile", "Analyze a Resume"
     xpPoints: number;
 }
-
-```

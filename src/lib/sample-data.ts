@@ -1,3 +1,4 @@
+
 import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem, Appointment, Wallet, ResumeProfile, Tenant, Badge, BlogPost, ReferralHistoryItem, GamificationRule, UserStatus } from '@/types';
 import { AreasOfSupport, AppointmentStatuses } from '@/types'; // Import AppointmentStatuses
 
@@ -353,5 +354,3 @@ export const sampleXpRules: GamificationRule[] = [
     { actionId: 'successful_referral', description: 'Successful Referral Signup', xpPoints: 50 },
     { actionId: 'daily_login', description: 'Daily Login', xpPoints: 10 },
 ];
-
-```
