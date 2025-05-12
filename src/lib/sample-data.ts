@@ -1,4 +1,4 @@
-import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem, Appointment, Wallet, ResumeProfile, Tenant } from '@/types';
+import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem, Appointment, Wallet, ResumeProfile, Tenant, Badge, BlogPost } from '@/types';
 import { AreasOfSupport } from '@/types';
 
 const SAMPLE_TENANT_ID = 'tenant-1'; // Define a default tenant ID for sample data
@@ -84,6 +84,8 @@ export const sampleActivities: Activity[] = [
   { id: 'act2', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(), description: 'Analyzed resume for "Senior Product Manager" role at Innovate LLC.' },
   { id: 'act3', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), description: 'Connected with Alice Wonderland.' },
   { id: 'act4', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(), description: 'Tracked new job application for "Data Scientist" at Data Corp.' },
+  { id: 'act5', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(), description: 'Earned the "Profile Pro" badge.' },
+  { id: 'act6', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), description: 'Posted in Community Feed: "Interview Tips?".' },
 ];
 
 export const sampleCommunityPosts: CommunityPost[] = [
@@ -163,7 +165,13 @@ export const sampleUserProfile: UserProfile = {
   
   Skills: System Administration, User Support, Database Management, Cloud Services (AWS/GCP), Security Best Practices.
   `,
-  careerInterests: 'Platform Scalability, DevOps, AI Ethics'
+  careerInterests: 'Platform Scalability, DevOps, AI Ethics',
+
+  // Gamification Data for Admin (Could be less relevant, but included for consistency)
+  xpPoints: 5000,
+  dailyStreak: 15,
+  referralCode: 'ADMINREF123',
+  earnedBadges: ['admin-master', 'profile-pro', 'early-adopter'],
 };
 
 export const sampleAppointments: Appointment[] = [
@@ -180,6 +188,7 @@ export const sampleWalletBalance: Wallet = {
         { id: 'txn1', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', date: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(), description: 'Reward for profile completion', amount: 50, type: 'credit' },
         { id: 'txn2', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', date: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString(), description: 'Used for premium report', amount: -20, type: 'debit' },
         { id: 'txn3', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', date: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), description: 'Appointment booking fee (Alice W.)', amount: -10, type: 'debit' },
+        { id: 'txn4', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', date: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(), description: 'Daily login bonus', amount: 5, type: 'credit' },
     ]
 };
 
@@ -239,4 +248,54 @@ export const sampleTenants: Tenant[] = [
   { id: 'tenant-1', name: 'Default University', createdAt: new Date().toISOString(), settings: { allowPublicSignup: true } },
   { id: 'tenant-2', name: 'Corporate Partner Inc.', createdAt: new Date(Date.now() - 86400000 * 5).toISOString(), settings: { allowPublicSignup: false } },
   { id: 'tenant-3', name: 'Community College', createdAt: new Date(Date.now() - 86400000 * 10).toISOString(), settings: { allowPublicSignup: true } },
+];
+
+// Sample Badges
+export const sampleBadges: Badge[] = [
+    { id: 'profile-pro', name: 'Profile Pro', description: 'Completed 100% of your profile.', icon: 'UserCheck', achieved: true },
+    { id: 'early-adopter', name: 'Early Adopter', description: 'Joined within the first month of launch.', icon: 'Award', achieved: true },
+    { id: 'networker', name: 'Networker', description: 'Made 10+ alumni connections.', icon: 'Users', achieved: false },
+    { id: 'analyzer-ace', name: 'Analyzer Ace', description: 'Analyzed 5+ resumes.', icon: 'Zap', achieved: false },
+    { id: 'contributor', name: 'Contributor', description: 'Posted 5+ times in the community feed.', icon: 'MessageSquare', achieved: false },
+    { id: 'admin-master', name: 'Admin Master', description: 'Successfully managed platform settings.', icon: 'ShieldCheck', achieved: true }, // Admin only badge example
+];
+
+// Sample Blog Posts
+export const sampleBlogPosts: BlogPost[] = [
+  {
+    id: 'blog1',
+    tenantId: 'platform', // Global post
+    title: 'Mastering the AI Resume Analysis',
+    slug: 'mastering-ai-resume-analysis',
+    author: 'ResumeMatch AI Team',
+    date: '2024-07-20T10:00:00Z',
+    imageUrl: 'https://picsum.photos/seed/blogai/800/400',
+    content: 'Learn how to leverage our AI analysis tool to its full potential. Understand match scores, keyword analysis, and how to use suggestions effectively...\n\n *Detailed content goes here*',
+    excerpt: 'Learn how to leverage our AI analysis tool to its full potential. Understand match scores, keyword analysis...',
+    tags: ['resume', 'ai', 'jobsearch'],
+  },
+  {
+    id: 'blog2',
+    tenantId: SAMPLE_TENANT_ID, // Tenant-specific post
+    title: 'Networking Success Stories from State University Alumni',
+    slug: 'state-uni-networking-success',
+    author: 'Alumni Relations (State University)',
+    date: '2024-07-15T14:30:00Z',
+    imageUrl: 'https://picsum.photos/seed/blognetwork/800/400',
+    content: 'Hear inspiring stories from fellow alumni who found opportunities through the ResumeMatch AI network. Discover tips for effective networking...\n\n *Detailed content goes here*',
+    excerpt: 'Hear inspiring stories from fellow alumni who found opportunities through the ResumeMatch AI network...',
+    tags: ['networking', 'career', 'success stories'],
+  },
+  {
+    id: 'blog3',
+    tenantId: 'platform',
+    title: 'The Power of Mentorship: Connecting Generations',
+    slug: 'power-of-mentorship',
+    author: 'ResumeMatch AI Team',
+    date: '2024-07-10T09:00:00Z',
+    imageUrl: 'https://picsum.photos/seed/blogmentor/800/400',
+    content: 'Explore the benefits of both being a mentor and finding a mentor within our community. How our platform facilitates these connections...\n\n *Detailed content goes here*',
+    excerpt: 'Explore the benefits of both being a mentor and finding a mentor within our community...',
+    tags: ['mentorship', 'community', 'connections'],
+  },
 ];

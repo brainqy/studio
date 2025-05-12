@@ -1,7 +1,7 @@
 "use client";
 
 import { Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarSeparator, SidebarGroup, SidebarGroupLabel } from "@/components/ui/sidebar";
-import { Aperture, BarChart2, Briefcase, CalendarDays, FileText, GalleryVerticalEnd, GitFork, Home, Layers3, MessageSquare, Settings, ShieldQuestion, User, Users, Wallet, Zap, Building2 } from "lucide-react"; // Added Building2 for tenant
+import { Aperture, Award, BarChart2, BookOpen, Briefcase, Building2, CalendarDays, FileText, GalleryVerticalEnd, GitFork, Gift, Home, Layers3, MessageSquare, Settings, ShieldQuestion, User, Users, Wallet, Zap } from "lucide-react"; // Added Building2, Award, Gift, BookOpen
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { sampleUserProfile } from "@/lib/sample-data"; // Import user profile to get role and tenant
@@ -33,6 +33,18 @@ const utilityItems = [
   { href: "/feature-requests", label: "Feature Requests", icon: ShieldQuestion },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
+
+// New Gamification Section
+const gamificationItems = [
+  { href: "/gamification", label: "Rewards & Badges", icon: Award },
+  { href: "/referrals", label: "Referrals", icon: Gift },
+];
+
+// New Blog Section
+const blogItems = [
+  { href: "/blog", label: "Blog", icon: BookOpen },
+];
+
 
 const adminItems = [
    { href: "/admin/tenants", label: "Tenant Management", icon: Building2 },
@@ -94,6 +106,17 @@ export function AppSidebar() {
             )
           )}
         </SidebarMenu>
+
+         {/* Gamification Section */}
+        <SidebarSeparator className="my-4" />
+         <SidebarGroup className="p-0">
+          <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden text-xs text-sidebar-foreground/60 px-2">Engagement</SidebarGroupLabel>
+          <SidebarMenu>
+            {gamificationItems.map(item => renderMenuItem(item))}
+            {blogItems.map(item => renderMenuItem(item))}
+          </SidebarMenu>
+        </SidebarGroup>
+
         <SidebarSeparator className="my-4" />
          <SidebarGroup className="p-0">
           <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden text-xs text-sidebar-foreground/60 px-2">Utilities</SidebarGroupLabel>

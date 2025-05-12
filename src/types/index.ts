@@ -1,6 +1,7 @@
 
 
 
+
 export type UserRole = 'admin' | 'manager' | 'user';
 
 export type Gender = 'Male' | 'Female' | 'Prefer not to say';
@@ -168,6 +169,27 @@ export interface JobOpening {
   alumniName: string; // Denormalized for easy display
 }
 
+export interface Badge {
+  id: string;
+  name: string;
+  description: string;
+  icon: string; // Lucide icon name or URL
+  achieved: boolean; // Indicates if the current user has achieved this badge
+}
+
+export interface BlogPost {
+  id: string;
+  tenantId?: string | 'platform'; // Optional tenant ID, 'platform' for global posts
+  title: string;
+  slug: string; // For URL routing
+  author: string; // User name or "Platform Team"
+  date: string; // ISO String
+  imageUrl?: string;
+  content: string; // Can be Markdown or HTML
+  excerpt: string;
+  tags?: string[];
+}
+
 export interface UserProfile {
   id: string;
   tenantId: string; // The tenant this user belongs to
@@ -208,7 +230,14 @@ export interface UserProfile {
   resumeText?: string; // Store the main resume text
   careerInterests?: string;
   bio?: string;
+
+  // Gamification fields
+  xpPoints?: number;
+  dailyStreak?: number; // Number of consecutive days active
+  referralCode?: string;
+  earnedBadges?: string[]; // Array of Badge IDs
 }
+
 
 export interface ResumeProfile {
   id: string;
