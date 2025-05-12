@@ -5,6 +5,7 @@
 
 
 
+
 export type UserRole = 'admin' | 'manager' | 'user';
 export type UserStatus = 'active' | 'inactive' | 'pending' | 'suspended';
 
@@ -246,6 +247,10 @@ export interface UserProfile {
   // Gamification fields
   xpPoints?: number;
   dailyStreak?: number; // Number of consecutive days active
+  longestStreak?: number;
+  totalActiveDays?: number;
+  // Represents activity for the last 7 days, where index 0 is 6 days ago, index 6 is today.
+  weeklyActivity?: boolean[];
   referralCode?: string;
   earnedBadges?: string[]; // Array of Badge IDs
 }

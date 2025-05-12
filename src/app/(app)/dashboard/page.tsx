@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -8,18 +9,31 @@ import AdminDashboard from "@/components/dashboards/AdminDashboard";
 import ManagerDashboard from "@/components/dashboards/ManagerDashboard";
 import UserDashboard from "@/components/dashboards/UserDashboard";
 import { Skeleton } from "@/components/ui/skeleton"; // For loading state
+import DailyStreakPopup from "@/components/features/DailyStreakPopup"; // Import the new popup
 
 export default function DashboardPage() {
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showStreakPopup, setShowStreakPopup] = useState(false);
 
   useEffect(() => {
     // Simulate fetching user role
-    // In a real app, this would come from an auth context or API call
     const role = sampleUserProfile.role; 
     setUserRole(role);
     setIsLoading(false);
+
+    // Logic to show streak popup once per day
+    const today = new Date().toISOString().split('T')[0];
+    const popupShownKey = `dailyStreakPopupShown_${today}`;
+    if (!localStorage.getItem(popupShownKey)) {
+      setShowStreakPopup(true);
+      localStorage.setItem(popupShownKey, 'true');
+    }
   }, []);
+
+  const handleCloseStreakPopup = () => {
+    setShowStreakPopup(false);
+  };
 
   if (isLoading) {
     return (
@@ -39,13 +53,26 @@ export default function DashboardPage() {
     );
   }
 
-  switch (userRole) {
-    case 'admin':
-      return <AdminDashboard />;
-    case 'manager':
-      return <ManagerDashboard />;
-    case 'user':
-    default:
-      return <UserDashboard />;
-  }
+  const renderDashboard = () => {
+    switch (userRole) {
+      case 'admin':
+        return <AdminDashboard />;
+      case 'manager':
+        return <ManagerDashboard />;
+      case 'user':
+      default:
+        return <UserDashboard />;
+    }
+  };
+
+  return (
+    <>
+      {renderDashboard()}
+      <DailyStreakPopup 
+        isOpen={showStreakPopup} 
+        onClose={handleCloseStreakPopup} 
+        userProfile={sampleUserProfile} 
+      />
+    </>
+  );
 }

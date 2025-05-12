@@ -176,7 +176,13 @@ export const sampleUserProfile: UserProfile = {
   `,
   careerInterests: 'Platform Scalability, DevOps, AI Ethics',
   xpPoints: 5000,
-  dailyStreak: 15,
+  dailyStreak: 29, // Current streak from image
+  longestStreak: 47, // Longest streak from image
+  totalActiveDays: 882, // Total active days from image
+  // Example: 5 active days ending today (Wednesday in the image)
+  // Assuming today is the 5th element in the array if it represents current week (Mon-Sun or Sun-Sat)
+  // Let's make last 5 true, 2 false before that: [F, F, T, T, T, T, T] for 7 days (last element is today)
+  weeklyActivity: [false, false, true, true, true, true, true],
   referralCode: 'ADMINREF123',
   earnedBadges: ['admin-master', 'profile-pro', 'early-adopter'],
 };
@@ -204,6 +210,7 @@ export const samplePlatformUsers: UserProfile[] = [
     skills: alumni.skills,
     xpPoints: Math.floor(Math.random() * 5000),
     dailyStreak: Math.floor(Math.random() * 30),
+    weeklyActivity: Array(7).fill(false).map(() => Math.random() > 0.5), // Random weekly activity
   }))
 ];
 
