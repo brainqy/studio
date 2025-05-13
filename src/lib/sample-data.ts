@@ -189,10 +189,10 @@ export const sampleFeatureRequests: FeatureRequest[] = [
   { id: 'fr2', tenantId: SAMPLE_TENANT_ID, userId: 'user101', userName: 'Maria Hill', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 72).toISOString(), title: 'Dark mode for the dashboard', description: 'A dark theme option would be easier on the eyes.', status: 'In Progress' },
 ];
 
-export let sampleGalleryEvents: GalleryEvent[] = [ // Changed to let for admin modifications
-  { id: 'event1', tenantId: SAMPLE_TENANT_ID, title: 'Annual Alumni Meet 2023', date: '2023-10-15T10:00:00Z', imageUrl: 'https://picsum.photos/seed/event1/600/400', description: 'A wonderful evening connecting with fellow alumni.' , dataAiHint: 'conference networking'},
-  { id: 'event2', tenantId: SAMPLE_TENANT_ID, title: 'Tech Talk Series: AI Today', date: '2024-03-22T10:00:00Z', imageUrl: 'https://picsum.photos/seed/event2/600/400', description: 'Insightful talks on the future of Artificial Intelligence.' , dataAiHint: 'presentation seminar'},
-  { id: 'event3', tenantId: SAMPLE_TENANT_ID, title: 'Campus Job Fair Spring 2024', date: '2024-04-10T10:00:00Z', imageUrl: 'https://picsum.photos/seed/event3/600/400', description: 'Connecting students with top employers.', dataAiHint: 'job fair students' },
+export let sampleGalleryEvents: GalleryEvent[] = [
+  { id: 'event1', tenantId: SAMPLE_TENANT_ID, title: 'Annual Alumni Meet 2023', date: '2023-10-15T10:00:00Z', imageUrls: ['https://picsum.photos/seed/event1/600/400', 'https://picsum.photos/seed/event1-extra1/600/400'], description: 'A wonderful evening connecting with fellow alumni.' , dataAiHint: 'conference networking'},
+  { id: 'event2', tenantId: SAMPLE_TENANT_ID, title: 'Tech Talk Series: AI Today', date: '2024-03-22T10:00:00Z', imageUrls: ['https://picsum.photos/seed/event2/600/400'], description: 'Insightful talks on the future of Artificial Intelligence.' , dataAiHint: 'presentation seminar'},
+  { id: 'event3', tenantId: SAMPLE_TENANT_ID, title: 'Campus Job Fair Spring 2024', date: '2024-04-10T10:00:00Z', imageUrls: ['https://picsum.photos/seed/event3/600/400', 'https://picsum.photos/seed/event3-extra2/600/400', 'https://picsum.photos/seed/event3-extra3/600/400'], description: 'Connecting students with top employers.', dataAiHint: 'job fair students' },
 ];
 
 export const sampleJobOpenings: JobOpening[] = [
@@ -1335,7 +1335,7 @@ export let samplePlatformSettings: PlatformSettings = {
   maintenanceMode: false,
   // Community
   communityFeedEnabled: true,
-  autoModeratePosts: true, // Simplified from profanity filter level
+  autoModeratePosts: true, 
   // Job Board
   jobBoardEnabled: true,
   maxJobPostingDays: 30,
@@ -1355,8 +1355,16 @@ export let samplePlatformSettings: PlatformSettings = {
   defaultAppointmentCost: 10,
   featureRequestsEnabled: true,
   // Tenant Customization Abilities
-  allowTenantCustomBranding: true,
-  allowTenantEmailCustomization: false,
+  allowTenantCustomBranding: true, 
+  allowTenantEmailCustomization: false, 
   // Default visibility
   defaultProfileVisibility: 'alumni_only',
+  // New settings
+  maxResumeUploadsPerUser: 5,
+  defaultTheme: 'light',
+  enablePublicProfilePages: false,
+  sessionTimeoutMinutes: 60,
+  maxEventRegistrationsPerUser: 3,
+  globalAnnouncement: 'Welcome to the new and improved ResumeMatch AI platform!',
+  pointsForAffiliateSignup: 50,
 };

@@ -26,7 +26,7 @@ const galleryEventSchema = z.object({
   id: z.string().optional(),
   title: z.string().min(3, "Title must be at least 3 characters"),
   date: z.date({ required_error: "Event date is required." }),
-  imageUrl: z.string().url("Must be a valid URL"),
+  imageUrls: z.string().min(1, "At least one image URL is required (comma-separated if multiple)."), // Changed from imageUrl
   description: z.string().optional(),
   dataAiHint: z.string().optional(),
   isPlatformGlobal: z.boolean().default(false),
@@ -35,7 +35,6 @@ const galleryEventSchema = z.object({
 type GalleryEventFormData = z.infer<typeof galleryEventSchema>;
 
 export default function GalleryManagementPage() {
-  // Note: In a real app, events would be filtered by current admin's tenant or platform-wide
   const [events, setEvents] = useState<GalleryEvent[]>(sampleGalleryEvents);
   const [isFormDialogOpen, setIsFormDialogOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<GalleryEvent | null>(null);
@@ -62,10 +61,14 @@ export default function GalleryManagementPage() {
 
   const onSubmitForm = (data: GalleryEventFormData) => {
     const eventData: GalleryEvent = {
-      ...data,
+      title: data.title,
+      date: data.date.toISOString(),
+      imageUrls: data.imageUrls.split(',').map(url => url.trim()).filter(url => url), // Split comma-separated string
+      description: data.description,
+      dataAiHint: data.dataAiHint,
       id: editingEvent ? editingEvent.id : `gallery-${Date.now()}`,
-      tenantId: data.isPlatformGlobal ? 'platform' : (currentUser.tenantId || SAMPLE_TENANT_ID), // Assign to current admin's tenant or platform
-      date: data.date.toISOString(), // Ensure date is ISO string
+      tenantId: data.isPlatformGlobal ? 'platform' : (currentUser.tenantId || SAMPLE_TENANT_ID),
+      isPlatformGlobal: data.isPlatformGlobal,
     };
 
     if (editingEvent) {
@@ -76,21 +79,21 @@ export default function GalleryManagementPage() {
       toast({ title: "Gallery Event Created", description: `Event "${data.title}" has been added.` });
     }
     setIsFormDialogOpen(false);
-    reset({ title: '', imageUrl: '', description: '', dataAiHint: '', isPlatformGlobal: false });
+    reset({ title: '', imageUrls: '', description: '', dataAiHint: '', isPlatformGlobal: false });
     setEditingEvent(null);
   };
 
   const openNewEventDialog = () => {
     setEditingEvent(null);
-    reset({ title: '', imageUrl: '', description: '', dataAiHint: '', isPlatformGlobal: false });
+    reset({ title: '', imageUrls: '', description: '', dataAiHint: '', isPlatformGlobal: false });
     setIsFormDialogOpen(true);
   };
 
   const openEditEventDialog = (event: GalleryEvent) => {
     setEditingEvent(event);
     setValue('title', event.title);
-    setValue('date', parseISO(event.date)); // Parse ISO string back to Date object
-    setValue('imageUrl', event.imageUrl);
+    setValue('date', parseISO(event.date));
+    setValue('imageUrls', event.imageUrls.join(', ')); // Join array to comma-separated string for textarea
     setValue('description', event.description || '');
     setValue('dataAiHint', event.dataAiHint || '');
     setValue('isPlatformGlobal', event.tenantId === 'platform');
@@ -140,16 +143,23 @@ export default function GalleryManagementPage() {
               {errors.date && <p className="text-sm text-destructive mt-1">{errors.date.message}</p>}
             </div>
             <div>
-              <Label htmlFor="event-imageUrl">Image URL</Label>
-              <Controller name="imageUrl" control={control} render={({ field }) => <Input id="event-imageUrl" type="url" placeholder="https://example.com/image.jpg" {...field} />} />
-              {errors.imageUrl && <p className="text-sm text-destructive mt-1">{errors.imageUrl.message}</p>}
+              <Label htmlFor="event-imageUrls">Image URLs (comma-separated)</Label>
+              <Controller name="imageUrls" control={control} render={({ field }) => 
+                <Textarea 
+                  id="event-imageUrls" 
+                  placeholder="https://example.com/image1.jpg, https://example.com/image2.jpg" 
+                  {...field} 
+                  rows={3}
+                />
+              } />
+              {errors.imageUrls && <p className="text-sm text-destructive mt-1">{errors.imageUrls.message}</p>}
             </div>
             <div>
               <Label htmlFor="event-description">Description (Optional)</Label>
               <Controller name="description" control={control} render={({ field }) => <Textarea id="event-description" rows={3} {...field} />} />
             </div>
             <div>
-              <Label htmlFor="event-dataAiHint">AI Hint for Image (Optional)</Label>
+              <Label htmlFor="event-dataAiHint">AI Hint for Images (Optional)</Label>
               <Controller name="dataAiHint" control={control} render={({ field }) => <Input id="event-dataAiHint" placeholder="e.g., conference students" {...field} />} />
             </div>
             <div className="flex items-center space-x-2">
@@ -193,7 +203,11 @@ export default function GalleryManagementPage() {
                   <TableRow key={event.id}>
                     <TableCell>
                       <div className="w-16 h-10 relative rounded overflow-hidden">
-                         <Image src={event.imageUrl} alt={event.title} layout="fill" objectFit="cover" data-ai-hint={event.dataAiHint || "event photo"} />
+                         {event.imageUrls && event.imageUrls.length > 0 ? (
+                            <Image src={event.imageUrls[0]} alt={event.title} layout="fill" objectFit="cover" data-ai-hint={event.dataAiHint || "event photo"} />
+                         ) : (
+                            <div className="w-full h-full bg-muted flex items-center justify-center text-xs text-muted-foreground">No Image</div>
+                         )}
                       </div>
                     </TableCell>
                     <TableCell className="font-medium">{event.title}</TableCell>

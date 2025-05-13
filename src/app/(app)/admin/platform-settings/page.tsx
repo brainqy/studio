@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -7,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Settings, ShieldAlert, Server, Users, Briefcase, Zap, Handshake, Gift, Target, MessageSquare, ListChecks, Palette, Columns, HelpCircle, Coins, Settings2 } from "lucide-react";
+import { Settings, ShieldAlert, Server, Users, Briefcase, Zap, Handshake, Gift, Target, MessageSquare, ListChecks, Palette, Columns, HelpCircle, Coins, Settings2, UploadCloud, SunMoon, UserCheck, Clock as ClockIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { PlatformSettings, ProfileVisibility } from "@/types";
 import { samplePlatformSettings, sampleUserProfile } from "@/lib/sample-data";
@@ -39,6 +40,13 @@ const settingsSchema = z.object({
   allowTenantCustomBranding: z.boolean(),
   allowTenantEmailCustomization: z.boolean(),
   defaultProfileVisibility: z.enum(['public', 'alumni_only', 'private']),
+  maxResumeUploadsPerUser: z.coerce.number().min(1).max(50).default(5),
+  defaultTheme: z.enum(['light', 'dark']).default('light'),
+  enablePublicProfilePages: z.boolean().default(false),
+  sessionTimeoutMinutes: z.coerce.number().min(5).max(1440).default(60), // 5 mins to 24 hours
+  maxEventRegistrationsPerUser: z.coerce.number().min(1).max(100).optional(),
+  globalAnnouncement: z.string().max(500).optional(),
+  pointsForAffiliateSignup: z.coerce.number().min(0).optional(),
 });
 
 type SettingsFormData = z.infer<typeof settingsSchema>;
@@ -71,12 +79,11 @@ export default function PlatformSettingsPage() {
   }
 
   const onSubmit = (data: SettingsFormData) => {
-    const updatedSettings: PlatformSettings = { ...data };
-    // In a real app, save this to backend:
+    const updatedSettings: PlatformSettings = { ...currentSettings, ...data }; // Merge to keep fields not in form
     Object.assign(samplePlatformSettings, updatedSettings); 
-    setCurrentSettings(updatedSettings); // Update local state to reflect saved changes
+    setCurrentSettings(updatedSettings);
     toast({ title: "Settings Saved", description: "Platform settings have been updated successfully." });
-    reset(updatedSettings); // Reset form with new defaults to clear dirty state
+    reset(updatedSettings); 
   };
 
   const renderSettingRow = (id: keyof SettingsFormData, label: string, controlElement: React.ReactNode, description?: string, error?: string) => (
@@ -120,6 +127,16 @@ export default function PlatformSettingsPage() {
                 </Select>
               )} />, "Set the default visibility for new user profiles."
             )}
+            {renderSettingRow("maxResumeUploadsPerUser", "Max Resumes per User", <Controller name="maxResumeUploadsPerUser" control={control} render={({ field }) => <Input type="number" {...field} />} />, "Max number of resume profiles a user can create.", errors.maxResumeUploadsPerUser?.message)}
+            {renderSettingRow("defaultTheme", "Default Theme", <Controller name="defaultTheme" control={control} render={({ field }) => (
+                <Select onValueChange={field.onChange} value={field.value}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent><SelectItem value="light">Light</SelectItem><SelectItem value="dark">Dark</SelectItem></SelectContent>
+                </Select>
+            )} />, "Set the default theme for new users.")}
+            {renderSettingRow("enablePublicProfilePages", "Enable Public Profile Pages", <Controller name="enablePublicProfilePages" control={control} render={({ field }) => <Switch checked={field.value} onCheckedChange={field.onChange} />} />, "Allow users to have publicly accessible profile URLs.")}
+            {renderSettingRow("sessionTimeoutMinutes", "Session Timeout (Minutes)", <Controller name="sessionTimeoutMinutes" control={control} render={({ field }) => <Input type="number" {...field} />} />, "Duration of inactivity before users are logged out.", errors.sessionTimeoutMinutes?.message)}
+             {renderSettingRow("globalAnnouncement", "Global Announcement", <Controller name="globalAnnouncement" control={control} render={({ field }) => <Textarea {...field} placeholder="Enter a brief announcement for all users" />} />, "Display a banner or message across the platform.", errors.globalAnnouncement?.message)}
           </CardContent>
         </Card>
 
@@ -157,6 +174,7 @@ export default function PlatformSettingsPage() {
             {renderSettingRow("xpForNewPost", "XP Awarded for New Community Post", <Controller name="xpForNewPost" control={control} render={({ field }) => <Input type="number" {...field} />} />, "Points for creating a new post in community feed.", errors.xpForNewPost?.message)}
             {renderSettingRow("referralsEnabled", "Enable Referral Program", <Controller name="referralsEnabled" control={control} render={({ field }) => <Switch checked={field.value} onCheckedChange={field.onChange} />} />)}
             {renderSettingRow("affiliateProgramEnabled", "Enable Affiliate Program", <Controller name="affiliateProgramEnabled" control={control} render={({ field }) => <Switch checked={field.value} onCheckedChange={field.onChange} />} />)}
+            {renderSettingRow("pointsForAffiliateSignup", "Points for Affiliate Signup", <Controller name="pointsForAffiliateSignup" control={control} render={({ field }) => <Input type="number" min="0" {...field} />} />, "XP or Coins awarded to referrer on successful signup.", errors.pointsForAffiliateSignup?.message)}
             {renderSettingRow("featureRequestsEnabled", "Enable Feature Request Submissions", <Controller name="featureRequestsEnabled" control={control} render={({ field }) => <Switch checked={field.value} onCheckedChange={field.onChange} />} />)}
           </CardContent>
         </Card>
@@ -170,6 +188,7 @@ export default function PlatformSettingsPage() {
              {renderSettingRow("defaultAppointmentCost", "Default Appointment Cost (Coins)", 
                 <Controller name="defaultAppointmentCost" control={control} render={({ field }) => <Input type="number" min="0" {...field} />} />, 
                 "Default coin cost for booking an appointment with alumni.", errors.defaultAppointmentCost?.message)}
+             {renderSettingRow("maxEventRegistrationsPerUser", "Max Event Registrations per User", <Controller name="maxEventRegistrationsPerUser" control={control} render={({ field }) => <Input type="number" min="1" {...field} />} />, "Limit how many events a user can register for (optional).", errors.maxEventRegistrationsPerUser?.message)}
           </CardContent>
         </Card>
 

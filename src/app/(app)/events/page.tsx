@@ -18,12 +18,8 @@ const sampleEvents: GalleryEvent[] = [ // Using GalleryEvent which now includes 
     date: '2024-10-25T18:00:00',
     location: 'Grand Ballroom, University Center',
     description: 'Join us for an evening of networking, reconnecting with old friends, and making new connections. Hors d\'oeuvres and refreshments will be served.',
-    imageUrl: 'https://picsum.photos/seed/networkevent/600/300',
+    imageUrls: ['https://picsum.photos/seed/networkevent/600/300'],
     dataAiHint: "networking event people",
-    // Add status and capacity if needed in GalleryEvent type or extend it
-    // status: 'upcoming' as 'upcoming' | 'past' | 'full',
-    // attendees: 120,
-    // capacity: 200,
   },
   {
     id: 'event102',
@@ -32,11 +28,8 @@ const sampleEvents: GalleryEvent[] = [ // Using GalleryEvent which now includes 
     date: '2024-11-15T14:00:00',
     location: 'Online (Zoom Webinar)',
     description: 'Explore the latest advancements in AI and how they are shaping the future of various industries. Led by industry experts and distinguished alumni.',
-    imageUrl: 'https://picsum.photos/seed/techevent/600/300',
+    imageUrls: ['https://picsum.photos/seed/techevent/600/300'],
     dataAiHint: "tech workshop computer",
-    // status: 'upcoming' as 'upcoming' | 'past' | 'full',
-    // attendees: 85,
-    // capacity: 100,
   },
     {
     id: 'event103',
@@ -45,11 +38,8 @@ const sampleEvents: GalleryEvent[] = [ // Using GalleryEvent which now includes 
     date: '2024-05-10T19:00:00',
     location: 'The Regent Hotel',
     description: 'A look back at our successful annual charity gala. Thank you to all attendees and sponsors!',
-    imageUrl: 'https://picsum.photos/seed/galaevent/600/300',
+    imageUrls: ['https://picsum.photos/seed/galaevent/600/300'],
     dataAiHint: "gala dinner formal",
-    // status: 'past' as 'upcoming' | 'past' | 'full',
-    // attendees: 250,
-    // capacity: 250,
   }
 ];
 
@@ -63,7 +53,6 @@ interface RegistrableEvent extends GalleryEvent {
 // Add status, attendees, capacity back to sample data for display logic
 const displayEvents: RegistrableEvent[] = sampleEvents.map((event, index) => ({
     ...event,
-    // Assigning sample status/capacity based on index for variety
     status: index === 2 ? 'past' : (index === 1 ? 'upcoming' : 'upcoming'),
     attendees: index === 2 ? 250 : (index === 1 ? 98 : 120),
     capacity: index === 2 ? 250 : (index === 1 ? 100 : 200),
@@ -75,7 +64,6 @@ export default function EventsPage() {
 
   const handleRegister = (eventId: string, eventTitle: string) => {
     toast({ title: "Registration Successful (Mock)", description: `You have registered for ${eventTitle}. Check your email for confirmation.`});
-    // In a real app, update registration status, likely filtered by tenant
   };
 
   return (
@@ -100,13 +88,19 @@ export default function EventsPage() {
           {displayEvents.map((event) => (
             <Card key={event.id} className={`shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col ${event.status === 'past' ? 'opacity-70' : ''}`}>
               <div className="relative w-full h-48 overflow-hidden rounded-t-lg">
-                <Image
-                    src={event.imageUrl}
-                    alt={event.title}
-                    layout="fill"
-                    objectFit="cover"
-                    data-ai-hint={event.dataAiHint}
-                />
+                {event.imageUrls && event.imageUrls.length > 0 ? (
+                  <Image
+                      src={event.imageUrls[0]}
+                      alt={event.title}
+                      layout="fill"
+                      objectFit="cover"
+                      data-ai-hint={event.dataAiHint}
+                  />
+                ) : (
+                  <div className="w-full h-full bg-muted flex items-center justify-center text-sm text-muted-foreground">
+                    No Image
+                  </div>
+                )}
                 {event.status === 'past' && (
                     <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                         <span className="text-white text-xl font-bold transform -rotate-12 border-2 border-white p-2">PAST EVENT</span>
@@ -118,7 +112,6 @@ export default function EventsPage() {
                 <CardDescription className="flex items-center gap-1 text-sm">
                   <CalendarCheck2 className="h-4 w-4" /> {new Date(event.date).toLocaleString('en-US', { dateStyle: 'full', timeStyle: 'short' })}
                 </CardDescription>
-                {/* Location might not always be present in GalleryEvent, handle optional */}
                 {event.location && (
                     <CardDescription className="flex items-center gap-1 text-sm">
                         <MapPin className="h-4 w-4" /> {event.location}
@@ -161,4 +154,3 @@ export default function EventsPage() {
     </div>
   );
 }
-

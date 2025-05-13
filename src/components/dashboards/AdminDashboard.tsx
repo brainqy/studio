@@ -2,10 +2,10 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { BarChart, Users, Settings, Activity } from "lucide-react";
+import { BarChart, Users, Settings, Activity, Building2, FileText, MessageSquare, Zap as ZapIcon } from "lucide-react"; // Added Building2, FileText, MessageSquare, ZapIcon
 import { useEffect, useState } from "react";
 import WelcomeTourDialog from '@/components/features/WelcomeTourDialog';
-import { adminDashboardTourSteps } from "@/lib/sample-data";
+import { adminDashboardTourSteps, sampleTenants, sampleCommunityPosts } from "@/lib/sample-data"; // Added sampleTenants, sampleCommunityPosts
 // import { ResponsiveContainer, BarChart as RechartsBarChart, XAxis, YAxis, Tooltip, Legend, Bar } from 'recharts'; // Example chart import
 
 // Sample data for charts (replace with actual data fetching)
@@ -56,6 +56,46 @@ export default function AdminDashboard() {
           </Card>
           <Card className="shadow-lg">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Tenants</CardTitle>
+              <Building2 className="h-5 w-5 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{sampleTenants.length}</div>
+              <p className="text-xs text-muted-foreground">+1 new this month</p>
+            </CardContent>
+          </Card>
+          <Card className="shadow-lg">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Resumes Analyzed</CardTitle>
+              <FileText className="h-5 w-5 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">5,789</div>
+              <p className="text-xs text-muted-foreground">+200 this week</p>
+            </CardContent>
+          </Card>
+           <Card className="shadow-lg">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Community Posts</CardTitle>
+              <MessageSquare className="h-5 w-5 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{sampleCommunityPosts.length}</div>
+              <p className="text-xs text-muted-foreground">+15 new today</p>
+            </CardContent>
+          </Card>
+          <Card className="shadow-lg">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">AI Features Usage</CardTitle>
+              <ZapIcon className="h-5 w-5 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">12,500+</div>
+              <p className="text-xs text-muted-foreground">Total AI interactions</p>
+            </CardContent>
+          </Card>
+          <Card className="shadow-lg">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Platform Activity</CardTitle>
               <Activity className="h-5 w-5 text-primary" />
             </CardHeader>
@@ -67,7 +107,7 @@ export default function AdminDashboard() {
           <Card className="shadow-lg">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Feature Requests</CardTitle>
-              <Users className="h-5 w-5 text-primary" />
+              <Users className="h-5 w-5 text-primary" /> 
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">25 Pending</div>

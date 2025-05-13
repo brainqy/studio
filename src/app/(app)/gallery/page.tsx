@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -28,13 +29,19 @@ export default function GalleryPage() {
           {sampleGalleryEvents.map((event) => (
             <Card key={event.id} className="shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden">
               <div className="aspect-video relative w-full">
-                <Image 
-                    src={event.imageUrl} 
-                    alt={event.title} 
-                    layout="fill" 
-                    objectFit="cover"
-                    data-ai-hint={event.dataAiHint || "event photo"}
-                />
+                {event.imageUrls && event.imageUrls.length > 0 ? (
+                  <Image 
+                      src={event.imageUrls[0]} 
+                      alt={event.title} 
+                      layout="fill" 
+                      objectFit="cover"
+                      data-ai-hint={event.dataAiHint || "event photo"}
+                  />
+                ) : (
+                  <div className="w-full h-full bg-muted flex items-center justify-center text-sm text-muted-foreground">
+                    No Image
+                  </div>
+                )}
               </div>
               <CardHeader>
                 <CardTitle className="text-lg">{event.title}</CardTitle>

@@ -168,11 +168,11 @@ export interface GalleryEvent {
   tenantId: string;
   title: string;
   date: string; 
-  imageUrl: string;
+  imageUrls: string[]; // Changed from imageUrl: string to string[]
   description?: string;
-  dataAiHint?: string;
+  dataAiHint?: string; // Applies to the first image or general event
   isPlatformGlobal?: boolean; 
-  location?: string; // Added from events page
+  location?: string; 
 }
 
 export interface JobOpening {
@@ -775,4 +775,12 @@ export interface PlatformSettings {
   allowTenantEmailCustomization: boolean; 
   // Default visibility for new user profiles
   defaultProfileVisibility: ProfileVisibility;
+  // New platform settings
+  maxResumeUploadsPerUser: number;
+  defaultTheme: 'light' | 'dark';
+  enablePublicProfilePages: boolean;
+  sessionTimeoutMinutes: number;
+  maxEventRegistrationsPerUser?: number; // Optional: max events a user can register for
+  globalAnnouncement?: string; // A platform-wide announcement text
+  pointsForAffiliateSignup?: number; // Points awarded to referrer for a successful affiliate signup
 }
