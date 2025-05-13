@@ -4,26 +4,53 @@ import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Brain, Mic, MessageSquare, Users, Zap, Tag, Lightbulb, CheckSquare as CheckSquareIcon, Code, Puzzle, BookCopy, ListFilter, Info, Share2, RefreshCw, History, Check, X, Star as StarIcon, UserCircle, CalendarDays, ThumbsUp, ShieldCheck, Edit3 as EditIcon, ShieldAlert, PlusCircle } from "lucide-react";
+import { Brain, Mic, MessageSquare, Users, Zap, Tag, Lightbulb, CheckSquare as CheckSquareIcon, Code, Puzzle, BookCopy, ListFilter, Info, Share2, RefreshCw, History, Check, X, Star as StarIcon, UserCircle, CalendarDays, ThumbsUp, ShieldCheck, Edit3 as EditIcon, ShieldAlert, PlusCircle, Textarea as TextareaIcon } from "lucide-react"; // Added PlusCircle
 import { sampleInterviewQuestions, sampleUserProfile, sampleMockInterviewSessions, sampleCommunityPosts } from "@/lib/sample-data";
 import type { InterviewQuestion, InterviewQuestionCategory, MockInterviewSession, CommunityPost, InterviewQuestionDifficulty } from "@/types";
+import { ALL_CATEGORIES, ALL_DIFFICULTIES } from "@/types"; // Import ALL_DIFFICULTIES
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose, DialogTrigger } from "@/components/ui/dialog"; // Added DialogTrigger, DialogClose
 import { format, parseISO } from "date-fns";
 import ScoreCircle from '@/components/ui/score-circle';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox"; 
 import { cn } from "@/lib/utils"; 
 import { Badge } from "@/components/ui/badge";
+import { useForm, Controller } from "react-hook-form"; // Added useForm, Controller
+import { zodResolver } from "@hookform/resolvers/zod"; // Added zodResolver
+import * as z from "zod"; // Added z
+import { Textarea } from "@/components/ui/textarea"; // Added Textarea
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; // Added Select components
 
-const ALL_CATEGORIES: InterviewQuestionCategory[] = ['Common', 'Behavioral', 'Technical', 'Coding', 'Role-Specific', 'Analytical', 'HR'];
+const questionFormSchema = z.object({
+  question: z.string().min(10, "Question text must be at least 10 characters."),
+  category: z.enum(ALL_CATEGORIES as [InterviewQuestionCategory, ...InterviewQuestionCategory[]]),
+  difficulty: z.enum(ALL_DIFFICULTIES as [InterviewQuestionDifficulty, ...InterviewQuestionDifficulty[]]),
+  isMCQ: z.boolean().default(false),
+  mcqOptions: z.array(z.string().min(1, "Option cannot be empty.")).optional(),
+  correctAnswer: z.string().optional(),
+  answerOrTip: z.string().min(10, "Answer/Tip must be at least 10 characters."),
+  tags: z.string().optional(),
+}).refine(data => {
+  if (data.isMCQ) {
+    return data.mcqOptions && data.mcqOptions.length >= 2 && data.correctAnswer && data.mcqOptions.includes(data.correctAnswer);
+  }
+  return true;
+}, {
+  message: "For MCQ, provide at least 2 options and ensure the correct answer is one of the options.",
+  path: ["mcqOptions"], // Or a more general path if needed
+});
+
+type QuestionFormData = z.infer<typeof questionFormSchema>;
+
 
 export default function InterviewPreparationPage() {
+  const [allQuestions, setAllQuestions] = useState<InterviewQuestion[]>(sampleInterviewQuestions);
   const [selectedCategories, setSelectedCategories] = useState<InterviewQuestionCategory[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedMcqAnswers, setSelectedMcqAnswers] = useState<Record<string, string>>({});
@@ -33,13 +60,39 @@ export default function InterviewPreparationPage() {
   const currentUser = sampleUserProfile;
   const [selectedQuestionIds, setSelectedQuestionIds] = useState<Set<string>>(new Set()); 
   
+  const [isCreateQuestionDialogOpen, setIsCreateQuestionDialogOpen] = useState(false);
+  const [mcqOptionInputs, setMcqOptionInputs] = useState<string[]>(['', '']); // For new question form
+
+  const { control: questionFormControl, handleSubmit: handleQuestionFormSubmit, reset: resetQuestionForm, watch: watchQuestionForm, setValue: setQuestionFormValue, formState: { errors: questionFormErrors } } = useForm<QuestionFormData>({
+    resolver: zodResolver(questionFormSchema),
+    defaultValues: {
+      isMCQ: false,
+      mcqOptions: ['', ''],
+      difficulty: 'Medium',
+      category: 'Common',
+    }
+  });
+
+  const isMCQSelected = watchQuestionForm("isMCQ");
+
+  useEffect(() => {
+    if (isMCQSelected) {
+      // Ensure there are at least two mcqOptionInputs if none or one exists
+      if (mcqOptionInputs.length < 2) {
+        setMcqOptionInputs(['', '']);
+        setQuestionFormValue('mcqOptions', ['', '']);
+      }
+    }
+  }, [isMCQSelected, mcqOptionInputs.length, setQuestionFormValue]);
+
+
   const userInterviewHistory = useMemo(() => {
     return sampleMockInterviewSessions.filter(session => session.userId === currentUser.id);
   }, [currentUser.id]);
 
 
   const filteredQuestions = useMemo(() => {
-    return sampleInterviewQuestions.filter(q => {
+    return allQuestions.filter(q => { // Changed from sampleInterviewQuestions to allQuestions
       if (!q.isMCQ || !q.mcqOptions || !q.correctAnswer) return false; 
       if (q.approved === false && currentUser.role !== 'admin') return false;
 
@@ -51,7 +104,7 @@ export default function InterviewPreparationPage() {
                             (q.mcqOptions && q.mcqOptions.some(opt => opt.toLowerCase().includes(searchTerm.toLowerCase())));
       return matchesCategory && matchesSearch;
     });
-  }, [selectedCategories, searchTerm, currentUser.role]);
+  }, [selectedCategories, searchTerm, currentUser.role, allQuestions]);
   
   const handleMcqSelection = (questionId: string, selectedOption: string) => {
     setSelectedMcqAnswers(prev => ({...prev, [questionId]: selectedOption}));
@@ -80,7 +133,7 @@ export default function InterviewPreparationPage() {
   };
 
   const handleCreateQuiz = () => {
-    const questionsForQuiz = sampleInterviewQuestions.filter(q => selectedQuestionIds.has(q.id));
+    const questionsForQuiz = allQuestions.filter(q => selectedQuestionIds.has(q.id));
     if (questionsForQuiz.length === 0) {
         toast({title: "No Questions Selected", description: "Please select questions to include in the quiz.", variant: "destructive"});
         return;
@@ -131,6 +184,54 @@ export default function InterviewPreparationPage() {
     toast({ title: "Shared to Feed!", description: "Your mock interview reflection has been posted."});
   };
 
+  const onQuestionSubmit = (data: QuestionFormData) => {
+    const newQuestion: InterviewQuestion = {
+      id: `iq-${Date.now()}`,
+      question: data.question,
+      category: data.category,
+      difficulty: data.difficulty,
+      isMCQ: data.isMCQ,
+      mcqOptions: data.isMCQ ? data.mcqOptions : undefined,
+      correctAnswer: data.isMCQ ? data.correctAnswer : undefined,
+      answerOrTip: data.answerOrTip,
+      tags: data.tags?.split(',').map(tag => tag.trim()).filter(tag => tag),
+      createdBy: currentUser.id, 
+      approved: false, // New questions default to unapproved
+      rating: 0, 
+      comments: 'Awaiting admin review.'
+    };
+    setAllQuestions(prev => [newQuestion, ...prev]);
+    // In a real app, sampleInterviewQuestions would also be updated if it's the source of truth
+    sampleInterviewQuestions.unshift(newQuestion);
+    toast({ title: "Question Created", description: "Your question has been submitted for review." });
+    setIsCreateQuestionDialogOpen(false);
+    resetQuestionForm({ isMCQ: false, mcqOptions: ['', ''], difficulty: 'Medium', category: 'Common' });
+    setMcqOptionInputs(['', '']);
+  };
+
+  const addMcqOptionInput = () => {
+    setMcqOptionInputs(prev => [...prev, '']);
+    const currentMcqOptions = watchQuestionForm('mcqOptions') || [];
+    setQuestionFormValue('mcqOptions', [...currentMcqOptions, '']);
+  };
+
+  const removeMcqOptionInput = (index: number) => {
+    if (mcqOptionInputs.length <= 2) {
+      toast({ title: "Minimum Options", description: "MCQ must have at least two options.", variant: "destructive" });
+      return;
+    }
+    setMcqOptionInputs(prev => prev.filter((_, i) => i !== index));
+    const currentMcqOptions = watchQuestionForm('mcqOptions') || [];
+    setQuestionFormValue('mcqOptions', currentMcqOptions.filter((_, i) => i !== index));
+  };
+
+  const handleMcqOptionChange = (index: number, value: string) => {
+    const updatedInputs = [...mcqOptionInputs];
+    updatedInputs[index] = value;
+    setMcqOptionInputs(updatedInputs);
+    setQuestionFormValue('mcqOptions', updatedInputs);
+  };
+
 
   return (
     <div className="space-y-8">
@@ -141,11 +242,16 @@ export default function InterviewPreparationPage() {
           </h1>
           <CardDescription>Explore multiple-choice questions and expert tips. Select categories to filter.</CardDescription>
         </div>
-         <Button variant="default" size="lg" asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
-            <Link href="/ai-mock-interview">
-               <Mic className="mr-2 h-5 w-5" /> Start AI Mock Interview
-            </Link>
-        </Button>
+         <div className="flex gap-2">
+             <Button onClick={() => setIsCreateQuestionDialogOpen(true)} variant="outline">
+              <PlusCircle className="mr-2 h-4 w-4" /> Create Question
+            </Button>
+            <Button variant="default" size="lg" asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                <Link href="/ai-mock-interview">
+                <Mic className="mr-2 h-5 w-5" /> Start AI Mock Interview
+                </Link>
+            </Button>
+         </div>
       </div>
 
       <Card className="shadow-md">
@@ -179,6 +285,90 @@ export default function InterviewPreparationPage() {
         </CardContent>
       </Card>
       
+      {/* Dialog for Creating New Question */}
+      <Dialog open={isCreateQuestionDialogOpen} onOpenChange={setIsCreateQuestionDialogOpen}>
+        <DialogContent className="sm:max-w-lg max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle className="text-xl">Create New Interview Question</DialogTitle>
+            <DialogDescription>Contribute to the question bank. Your submission will be reviewed.</DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="max-h-[60vh] pr-6 pl-1 py-4">
+            <form onSubmit={handleQuestionFormSubmit(onQuestionSubmit)} className="space-y-4">
+              <div>
+                <Label htmlFor="q-text">Question Text *</Label>
+                <Controller name="question" control={questionFormControl} render={({ field }) => <Textarea id="q-text" {...field} rows={3} />} />
+                {questionFormErrors.question && <p className="text-sm text-destructive mt-1">{questionFormErrors.question.message}</p>}
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="q-category">Category *</Label>
+                  <Controller name="category" control={questionFormControl} render={({ field }) => (
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger id="q-category"><SelectValue placeholder="Select category" /></SelectTrigger>
+                      <SelectContent>{ALL_CATEGORIES.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}</SelectContent>
+                    </Select>
+                  )} />
+                </div>
+                <div>
+                  <Label htmlFor="q-difficulty">Difficulty *</Label>
+                  <Controller name="difficulty" control={questionFormControl} render={({ field }) => (
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger id="q-difficulty"><SelectValue placeholder="Select difficulty" /></SelectTrigger>
+                      <SelectContent>{ALL_DIFFICULTIES.map(diff => <SelectItem key={diff} value={diff}>{diff}</SelectItem>)}</SelectContent>
+                    </Select>
+                  )} />
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Controller name="isMCQ" control={questionFormControl} render={({ field }) => <Checkbox id="q-isMCQ" checked={field.value} onCheckedChange={field.onChange} />} />
+                <Label htmlFor="q-isMCQ" className="font-normal">Is this a Multiple Choice Question?</Label>
+              </div>
+              {isMCQSelected && (
+                <div className="space-y-3 pl-2 border-l-2 border-primary/50">
+                  <Label>MCQ Options (at least 2 required)</Label>
+                  {mcqOptionInputs.map((opt, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <Input 
+                        placeholder={`Option ${index + 1}`} 
+                        value={opt}
+                        onChange={(e) => handleMcqOptionChange(index, e.target.value)}
+                        className="flex-grow"
+                      />
+                       {mcqOptionInputs.length > 2 && (
+                         <Button type="button" variant="ghost" size="icon" onClick={() => removeMcqOptionInput(index)} className="text-destructive hover:bg-destructive/10">
+                           <Trash2 className="h-4 w-4" />
+                         </Button>
+                       )}
+                    </div>
+                  ))}
+                   {questionFormErrors.mcqOptions && <p className="text-sm text-destructive mt-1">{questionFormErrors.mcqOptions.message || questionFormErrors.mcqOptions.root?.message}</p>}
+                  <Button type="button" variant="outline" size="sm" onClick={addMcqOptionInput}>Add Option</Button>
+                  <div>
+                    <Label htmlFor="q-correctAnswer">Correct Answer * (must match one of the options)</Label>
+                    <Controller name="correctAnswer" control={questionFormControl} render={({ field }) => <Input id="q-correctAnswer" {...field} placeholder="Type the exact correct option text" />} />
+                    {questionFormErrors.correctAnswer && <p className="text-sm text-destructive mt-1">{questionFormErrors.correctAnswer.message}</p>}
+                  </div>
+                </div>
+              )}
+              <div>
+                <Label htmlFor="q-answerOrTip">Answer Explanation / Tip *</Label>
+                <Controller name="answerOrTip" control={questionFormControl} render={({ field }) => <Textarea id="q-answerOrTip" {...field} rows={4} placeholder="Provide a concise explanation or tip."/>} />
+                {questionFormErrors.answerOrTip && <p className="text-sm text-destructive mt-1">{questionFormErrors.answerOrTip.message}</p>}
+              </div>
+              <div>
+                <Label htmlFor="q-tags">Tags (Optional, comma-separated)</Label>
+                <Controller name="tags" control={questionFormControl} render={({ field }) => <Input id="q-tags" {...field} placeholder="e.g., javascript, problem-solving"/>} />
+              </div>
+               <DialogFooter className="mt-4">
+                <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
+                <Button type="submit">Submit Question</Button>
+              </DialogFooter>
+            </form>
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
+
+
       <Card className="shadow-lg">
         <CardHeader className="flex flex-row justify-between items-center">
           <div>

@@ -1,13 +1,10 @@
 
 
-
 export type UserRole = 'admin' | 'manager' | 'user';
 export type UserStatus = 'active' | 'inactive' | 'pending' | 'suspended';
 
-
 export const Genders = ['Male', 'Female', 'Prefer not to say'] as const;
 export type Gender = typeof Genders[number];
-
 
 export const DegreePrograms = [
   "Bachelor of Technology (B.Tech)",
@@ -52,7 +49,6 @@ export const AreasOfSupport = [
   "Volunteering for Campus Activities",
 ] as const;
 export type SupportArea = typeof AreasOfSupport[number];
-
 
 export const TimeCommitments = [
   "1-2 hours",
@@ -273,7 +269,6 @@ export interface UserProfile extends AlumniProfile { // Extend AlumniProfile for
   affiliateCode?: string; 
   pastInterviewSessions?: string[]; // IDs of MockInterviewSession
 }
-
 
 export interface ResumeProfile {
   id: string;
@@ -520,8 +515,11 @@ export const RESUME_BUILDER_STEPS: { id: ResumeBuilderStep; title: string; descr
   { id: 'finalize', title: 'Finalize', description: "Review and finalize your resume.", mainHeading: "Review & Finalize" },
 ];
 
-export type InterviewQuestionCategory = 'Behavioral' | 'Technical' | 'Role-Specific' | 'Common' | 'Analytical' | 'HR' | 'Coding';
-export type InterviewQuestionDifficulty = 'Easy' | 'Medium' | 'Hard';
+export const ALL_CATEGORIES = ['Common', 'Behavioral', 'Technical', 'Coding', 'Role-Specific', 'Analytical', 'HR'] as const;
+export type InterviewQuestionCategory = typeof ALL_CATEGORIES[number];
+
+export const ALL_DIFFICULTIES = ['Easy', 'Medium', 'Hard'] as const;
+export type InterviewQuestionDifficulty = typeof ALL_DIFFICULTIES[number];
 
 export interface InterviewQuestion {
   id: string;
@@ -538,7 +536,6 @@ export interface InterviewQuestion {
   createdBy?: string; // User ID or name
   approved?: boolean; // For admin moderation
 }
-
 
 export interface BlogGenerationSettings {
   generationIntervalHours: number;
@@ -621,7 +618,6 @@ export interface GenerateOverallInterviewFeedbackInput {
   jobDescription?: string;
   evaluatedAnswers: { questionText: string; userAnswer: string; feedback: string; score: number }[];
 }
-
 
 export type MockInterviewStepId = 'setup' | 'interview' | 'feedback';
 export const MOCK_INTERVIEW_STEPS: { id: MockInterviewStepId; title: string; description: string }[] = [
