@@ -12,17 +12,17 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from "@/components/ui/checkbox";
 import type { GenerateMockInterviewQuestionsInput, InterviewQuestionCategory } from '@/types';
-import { Brain, Timer, ListFilter } from 'lucide-react'; // Added ListFilter for categories
+import { Brain, Timer, ListFilter } from 'lucide-react'; 
 
 const ALL_QUESTION_CATEGORIES: InterviewQuestionCategory[] = ['Common', 'Behavioral', 'Technical', 'Coding', 'Role-Specific', 'Analytical', 'HR'];
 
 const setupSchema = z.object({
   topic: z.string().min(3, "Topic must be at least 3 characters long."),
   jobDescription: z.string().optional(),
-  numQuestions: z.coerce.number().min(1).max(10).default(5),
+  numQuestions: z.coerce.number().min(1, "Must request at least 1 question.").max(20, "Cannot request more than 20 questions.").default(5), // Updated numQuestions schema
   difficulty: z.enum(['easy', 'medium', 'hard']).default('medium'),
   timerPerQuestion: z.coerce.number().min(0).max(300).optional().default(0),
-  questionCategories: z.array(z.string()).optional(), // Array of selected category strings
+  questionCategories: z.array(z.string()).optional(), 
 });
 
 type SetupFormData = z.infer<typeof setupSchema>;
@@ -81,23 +81,22 @@ export default function StepSetup({ onSetupComplete, isLoading }: StepSetupProps
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div>
-          <Label htmlFor="numQuestions">Number of Questions</Label>
+          <Label htmlFor="numQuestions">Number of Questions (1-20)</Label>
           <Controller
             name="numQuestions"
             control={control}
             render={({ field }) => (
-              <Select onValueChange={(value) => field.onChange(Number(value))} value={String(field.value)}>
-                <SelectTrigger id="numQuestions">
-                  <SelectValue placeholder="Select number" />
-                </SelectTrigger>
-                <SelectContent>
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
-                    <SelectItem key={num} value={String(num)}>{num}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Input 
+                id="numQuestions" 
+                type="number" 
+                min="1" 
+                max="20" 
+                {...field} 
+                onChange={e => field.onChange(parseInt(e.target.value, 10))}
+              />
             )}
           />
+          {errors.numQuestions && <p className="text-sm text-destructive mt-1">{errors.numQuestions.message}</p>}
         </div>
         <div>
           <Label htmlFor="difficulty">Difficulty Level</Label>

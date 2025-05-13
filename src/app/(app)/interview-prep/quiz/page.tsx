@@ -1,22 +1,23 @@
 
 "use client";
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
-import { AlertCircle, Bookmark, Check, ChevronLeft, ChevronRight, Clock, Send, X, PieChart, BarChart2, ListChecks } from 'lucide-react';
-import { sampleInterviewQuestions, sampleMockInterviewSessions, sampleCreatedQuizzes } from '@/lib/sample-data'; // Added sampleCreatedQuizzes
-import type { InterviewQuestion, InterviewQuestionCategory, MockInterviewSession } from '@/types'; // Added MockInterviewSession
+import { AlertCircle, Bookmark, Check, ChevronLeft, ChevronRight, Clock, Send, X, PieChart, BarChart2, ListChecks, Maximize, Minimize, Info } from 'lucide-react';
+import { sampleInterviewQuestions, sampleCreatedQuizzes } from '@/lib/sample-data'; 
+import type { InterviewQuestion, MockInterviewSession } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell, Tooltip as RechartsTooltip, Legend as RechartsLegend, BarChart as RechartsBarChart, XAxis, YAxis, CartesianGrid, Bar } from 'recharts';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle as DialogUITitle, DialogDescription as DialogUIDescription, DialogFooter as DialogUIFooter, DialogClose } from '@/components/ui/dialog'; // Renamed to avoid conflict
 
-const QUIZ_TIME_SECONDS_PER_QUESTION = 90; // 1.5 minutes per question, adjust as needed
+const QUIZ_TIME_SECONDS_PER_QUESTION = 90; 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8442FF', '#FF42A5', '#42FFA5'];
 
 
@@ -43,22 +44,33 @@ export default function QuizPage() {
   const [quizResults, setQuizResults] = useState<QuizResults | null>(null);
   const [markedForReview, setMarkedForReview] = useState<Set<string>>(new Set());
   const [totalQuizTime, setTotalQuizTime] = useState(0);
+  
+  const [quizMetadata, setQuizMetadata] = useState<Pick<MockInterviewSession, 'topic' | 'description' | 'difficulty'> | null>(null);
+  const [showStartQuizDialog, setShowStartQuizDialog] = useState(false);
+  const [quizStarted, setQuizStarted] = useState(false);
+  const [isFullScreen, setIsFullScreen] = useState(false);
+  const quizContainerRef = useRef<HTMLDivElement>(null);
+
 
   useEffect(() => {
     const questionIdsParam = searchParams.get('questions');
     const quizIdParam = searchParams.get('quizId');
     let loadedQuestions: InterviewQuestion[] = [];
+    let loadedMetadata: Pick<MockInterviewSession, 'topic' | 'description' | 'difficulty'> | null = null;
 
     if (quizIdParam) {
         const foundQuiz = sampleCreatedQuizzes.find(q => q.id === quizIdParam);
-        if (foundQuiz && foundQuiz.questions) {
-            loadedQuestions = foundQuiz.questions.map(q => {
-                const fullQuestion = sampleInterviewQuestions.find(sq => sq.id === q.id);
-                return fullQuestion || q; // Fallback to quiz question data if full not found
-            }).filter(q => q.isMCQ && q.mcqOptions && q.mcqOptions.length > 0 && q.approved !== false) as InterviewQuestion[];
-             if (loadedQuestions.length === 0) {
+        if (foundQuiz) {
+            loadedMetadata = { topic: foundQuiz.topic, description: foundQuiz.description, difficulty: foundQuiz.difficulty };
+            if (foundQuiz.questions) {
+              loadedQuestions = foundQuiz.questions.map(qRef => {
+                  const fullQuestion = sampleInterviewQuestions.find(sq => sq.id === qRef.id);
+                  return fullQuestion || { ...qRef, isMCQ: true, mcqOptions: ['Option A', 'Option B'], correctAnswer: 'Option A', answerOrTip: 'Default Tip' }; // Basic fallback
+              }).filter(q => q.isMCQ && q.mcqOptions && q.mcqOptions.length > 0 && q.approved !== false) as InterviewQuestion[];
+            }
+            if (loadedQuestions.length === 0) {
                 toast({title: "Invalid Quiz", description: `Quiz "${foundQuiz.topic}" has no usable MCQ questions.`, variant: "destructive", duration: 5000});
-             }
+            }
         } else {
             toast({title: "Quiz Not Found", description: "The specified quiz ID could not be found.", variant: "destructive", duration: 5000});
         }
@@ -68,32 +80,36 @@ export default function QuizPage() {
        if (loadedQuestions.length === 0) {
           toast({title: "No Valid Questions", description: "None of the selected questions are valid for a quiz (must be MCQ, approved, with options).", variant: "destructive", duration: 5000});
        }
+       loadedMetadata = { topic: 'Custom Quiz', description: `Quiz with ${loadedQuestions.length} selected questions.` };
     } else {
-      // Fallback: if no specific questions or quizId, load some default approved MCQs
-      loadedQuestions = sampleInterviewQuestions.filter(q => q.isMCQ && q.mcqOptions && q.mcqOptions.length > 0 && q.approved !== false).slice(0,10); // Max 10 for default
+      loadedQuestions = sampleInterviewQuestions.filter(q => q.isMCQ && q.mcqOptions && q.mcqOptions.length > 0 && q.approved !== false).slice(0,10); 
       if (loadedQuestions.length === 0) {
          toast({title: "No Default Questions", description: "No default questions available for a quiz.", variant: "destructive", duration: 5000});
       }
+      loadedMetadata = { topic: 'General Knowledge Quiz', description: 'A quick quiz with default questions.' };
     }
     
-    if (loadedQuestions.length === 0) {
+    if (loadedQuestions.length === 0 && !quizIdParam && !questionIdsParam) { // Avoid redirect if params were there but yielded no questions
         router.push('/interview-prep');
         return;
     }
     setQuestions(loadedQuestions);
+    setQuizMetadata(loadedMetadata);
+    if(loadedQuestions.length > 0) setShowStartQuizDialog(true); // Show dialog only if questions are loaded
+
     const calculatedTotalTime = loadedQuestions.length * QUIZ_TIME_SECONDS_PER_QUESTION;
     setTotalQuizTime(calculatedTotalTime);
-    setTimeLeft(calculatedTotalTime);
+    // Timer starts after dialog confirmation
   }, [searchParams, router, toast]);
 
   useEffect(() => {
-    if (quizSubmitted || questions.length === 0 || totalQuizTime === 0) return;
+    if (!quizStarted || quizSubmitted || questions.length === 0 || totalQuizTime === 0) return;
 
     const timer = setInterval(() => {
       setTimeLeft(prevTime => {
         if (prevTime <= 1) {
           clearInterval(timer);
-          handleSubmitQuiz(true); // Auto-submit when time runs out
+          handleSubmitQuiz(true); 
           return 0;
         }
         return prevTime - 1;
@@ -101,7 +117,15 @@ export default function QuizPage() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [quizSubmitted, questions, totalQuizTime]);
+  }, [quizStarted, quizSubmitted, questions, totalQuizTime]);
+  
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullScreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
 
   const currentQuestion = useMemo(() => questions[currentQuestionIndex], [questions, currentQuestionIndex]);
 
@@ -136,8 +160,11 @@ export default function QuizPage() {
 
 
   const handleSubmitQuiz = (autoSubmitted = false) => {
-    if (quizSubmitted) return; // Prevent multiple submissions
+    if (quizSubmitted) return; 
     setQuizSubmitted(true);
+    if (isFullScreen && document.fullscreenElement) {
+      document.exitFullscreen();
+    }
 
     let score = 0;
     const categoryStats: Record<string, { correct: number; total: number }> = {};
@@ -187,6 +214,24 @@ export default function QuizPage() {
     const secs = seconds % 60;
     return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
+  
+  const startQuiz = () => {
+    setShowStartQuizDialog(false);
+    setQuizStarted(true);
+    setTimeLeft(totalQuizTime); // Start timer
+  };
+
+  const toggleFullScreen = () => {
+    if (!quizContainerRef.current) return;
+    if (!document.fullscreenElement) {
+      quizContainerRef.current.requestFullscreen().catch(err => {
+        toast({ title: "Fullscreen Error", description: `Could not enter fullscreen: ${err.message}`, variant: "destructive" });
+      });
+    } else {
+      document.exitFullscreen();
+    }
+  };
+
 
   if (questions.length === 0 && !quizSubmitted) {
     return (
@@ -203,6 +248,30 @@ export default function QuizPage() {
     );
   }
   
+  if (!quizStarted && quizMetadata) {
+    return (
+      <Dialog open={showStartQuizDialog} onOpenChange={(open) => { if(!open) router.push('/interview-prep')}}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogUITitle className="text-2xl">{quizMetadata.topic}</DialogUITitle>
+            <DialogUIDescription className="text-sm text-muted-foreground">
+              {quizMetadata.description || `Ready to start this quiz?`}
+            </DialogUIDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-2">
+            <p className="flex items-center gap-2"><ListChecks className="h-5 w-5 text-primary"/> {questions.length} questions</p>
+            <p className="flex items-center gap-2"><Clock className="h-5 w-5 text-primary"/> Time limit: {formatTime(totalQuizTime)}</p>
+            {quizMetadata.difficulty && <p className="flex items-center gap-2"><Info className="h-5 w-5 text-primary"/> Difficulty: {quizMetadata.difficulty}</p>}
+          </div>
+          <DialogUIFooter>
+            <Button variant="outline" onClick={() => router.push('/interview-prep')}>Cancel</Button>
+            <Button onClick={startQuiz} className="bg-primary hover:bg-primary/90">Start Quiz</Button>
+          </DialogUIFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+  
   if (quizSubmitted && quizResults) {
     const categoryChartData = Object.entries(quizResults.categoryStats).map(([name, data]) => ({
         name,
@@ -213,7 +282,7 @@ export default function QuizPage() {
     }));
 
     return (
-      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] p-4 space-y-6">
+      <div className="flex flex-col items-center justify-center min-h-screen p-4 space-y-6 bg-secondary/50 dark:bg-background">
         <Card className="w-full max-w-2xl text-center p-6 shadow-xl">
           <CardHeader>
             <CardTitle className="text-3xl font-bold mb-2 text-primary">Quiz Complete!</CardTitle>
@@ -304,13 +373,18 @@ export default function QuizPage() {
   const optionLetters = ['A', 'B', 'C', 'D', 'E', 'F'];
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-slate-900">
+    <div ref={quizContainerRef} className={cn("flex flex-col min-h-screen", isFullScreen ? "bg-background" : "bg-slate-50 dark:bg-slate-900")}>
       <header className="bg-card shadow-sm p-3 sticky top-0 z-10 border-b">
         <div className="container mx-auto flex flex-wrap justify-between items-center gap-2">
-          <h1 className="text-lg font-semibold text-foreground">Quiz: {currentQuestion.category}</h1>
-          <div className="flex items-center gap-2 px-2.5 py-1 rounded-md bg-destructive text-destructive-foreground font-mono text-md tracking-wider">
-            <Clock className="h-4 w-4" />
-            {formatTime(timeLeft)}
+          <h1 className="text-lg font-semibold text-foreground truncate max-w-[calc(100%-180px)]" title={quizMetadata?.topic || 'Quiz'}>{quizMetadata?.topic || 'Quiz'}: {currentQuestion.category}</h1>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={toggleFullScreen} title={isFullScreen ? "Exit Fullscreen" : "Enter Fullscreen"}>
+              {isFullScreen ? <Minimize className="h-4 w-4"/> : <Maximize className="h-4 w-4"/>}
+            </Button>
+            <div className="flex items-center gap-2 px-2.5 py-1 rounded-md bg-destructive text-destructive-foreground font-mono text-md tracking-wider">
+              <Clock className="h-4 w-4" />
+              {formatTime(timeLeft)}
+            </div>
           </div>
         </div>
       </header>

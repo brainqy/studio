@@ -5,9 +5,9 @@ import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Brain, Mic, MessageSquare, Users, Zap, Tag, Lightbulb, CheckSquare as CheckSquareIcon, Code, Puzzle, BookCopy, ListFilter, Info, Share2, RefreshCw, History, Check, X, Star as StarIcon, UserCircle, CalendarDays, ThumbsUp, ShieldCheck, Edit3 as EditIcon, ShieldAlert, PlusCircle, Textarea as TextareaIcon, ChevronLeft, ChevronRight, ListChecks as ListChecksIcon, ChevronDown } from "lucide-react";
+import { Brain, Mic, MessageSquare, Users, Zap, Tag, Lightbulb, CheckSquare as CheckSquareIcon, Code, Puzzle, BookCopy, ListFilter, Info, Share2, RefreshCw, History, Check, X, Star as StarIcon, UserCircle, CalendarDays, ThumbsUp, ShieldCheck, Edit3 as EditIcon, ShieldAlert, PlusCircle, Textarea as TextareaIcon, ChevronLeft, ChevronRight, ListChecks as ListChecksIcon, ChevronDown, MessageCircle as CommentIcon, ThumbsDown, Send } from "lucide-react"; // Added icons
 import { sampleInterviewQuestions, sampleUserProfile, sampleMockInterviewSessions, sampleCreatedQuizzes } from "@/lib/sample-data";
-import type { InterviewQuestion, InterviewQuestionCategory, MockInterviewSession, CommunityPost, InterviewQuestionDifficulty } from "@/types";
+import type { InterviewQuestion, InterviewQuestionCategory, MockInterviewSession, CommunityPost, InterviewQuestionDifficulty, InterviewQuestionUserComment } from "@/types";
 import { ALL_CATEGORIES, ALL_DIFFICULTIES } from "@/types";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
@@ -16,7 +16,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose, DialogTrigger } from "@/components/ui/dialog";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, formatDistanceToNow } from "date-fns";
 import ScoreCircle from '@/components/ui/score-circle';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -28,6 +28,8 @@ import * as z from "zod";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useRouter } from 'next/navigation'; 
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"; // Added Avatar
+import { Trash2 } from 'lucide-react';
 
 const questionFormSchema = z.object({
   question: z.string().min(10, "Question text must be at least 10 characters."),
@@ -50,6 +52,11 @@ const questionFormSchema = z.object({
 
 type QuestionFormData = z.infer<typeof questionFormSchema>;
 
+const commentFormSchema = z.object({
+  commentText: z.string().min(1, "Comment cannot be empty").max(280, "Comment is too long."),
+});
+type CommentFormData = z.infer<typeof commentFormSchema>;
+
 const ITEMS_PER_PAGE = 10; 
 
 export default function InterviewPreparationPage() {
@@ -67,6 +74,11 @@ export default function InterviewPreparationPage() {
 
   const [isCreateQuestionDialogOpen, setIsCreateQuestionDialogOpen] = useState(false);
   const [mcqOptionInputs, setMcqOptionInputs] = useState<string[]>(['', '']);
+  
+  const [commentingOnQuestionId, setCommentingOnQuestionId] = useState<string | null>(null);
+  const { control: commentFormControl, handleSubmit: handleCommentSubmit, reset: resetCommentForm, formState: {errors: commentFormErrors} } = useForm<CommentFormData>({
+    resolver: zodResolver(commentFormSchema),
+  });
 
   const { control: questionFormControl, handleSubmit: handleQuestionFormSubmit, reset: resetQuestionForm, watch: watchQuestionForm, setValue: setQuestionFormValue, formState: { errors: questionFormErrors } } = useForm<QuestionFormData>({
     resolver: zodResolver(questionFormSchema),
@@ -94,7 +106,6 @@ export default function InterviewPreparationPage() {
   }, [currentUser.id]);
   
   const createdQuizzes = useMemo(() => {
-    // For now, using sampleCreatedQuizzes. In a real app, this would be fetched or managed state.
     return sampleCreatedQuizzes;
   }, []);
 
@@ -152,7 +163,30 @@ export default function InterviewPreparationPage() {
         toast({title: "No Questions Selected", description: "Please select questions to include in the quiz.", variant: "destructive"});
         return;
     }
-    router.push(`/interview-prep/quiz?questions=${questionIdsToPass.join(',')}`);
+    // For a real implementation, might open a dialog here to name the quiz & add description
+    const newQuizTopic = `Custom Quiz (${new Date().toLocaleDateString()})`;
+    const newQuizDescription = `A custom quiz created with ${questionIdsToPass.length} selected questions.`;
+    
+    // Add to sampleCreatedQuizzes (mock)
+    const newQuizId = `quiz-custom-${Date.now()}`;
+    sampleCreatedQuizzes.push({
+        id: newQuizId,
+        userId: currentUser.id,
+        topic: newQuizTopic,
+        description: newQuizDescription,
+        questions: questionIdsToPass.map(id => ({id, questionText: allQuestions.find(q => q.id === id)?.question || 'N/A'})),
+        answers: [],
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+    });
+    toast({title: "Quiz Created (Mock)", description: `"${newQuizTopic}" has been created. Starting quiz...`});
+    router.push(`/interview-prep/quiz?quizId=${newQuizId}`);
+  };
+  
+  const handleEditQuiz = (quizId: string) => {
+    toast({ title: "Edit Quiz (Mock)", description: `Editing functionality for quiz ID ${quizId} is not yet fully implemented.` });
+    // Placeholder: Could navigate to a quiz editing page or open a dialog
+    // router.push(`/interview-prep/quiz/edit/${quizId}`); 
   };
 
   const handleStartPredefinedQuiz = (quizId: string) => {
@@ -215,7 +249,9 @@ export default function InterviewPreparationPage() {
       tags: data.tags?.split(',').map(tag => tag.trim()).filter(tag => tag),
       createdBy: currentUser.id,
       approved: false,
-      rating: 0,
+      rating: 0, // Initialize rating
+      ratingsCount: 0,
+      userComments: [], // Initialize comments
       comments: 'Awaiting admin review.'
     };
     setAllQuestions(prev => [newQuestion, ...prev]);
@@ -254,6 +290,68 @@ export default function InterviewPreparationPage() {
       setCurrentPage(newPage);
     }
   };
+  
+  const onCommentSubmit = (data: CommentFormData, questionId: string) => {
+    const newComment: InterviewQuestionUserComment = {
+      id: `qcomment-${Date.now()}`,
+      userId: currentUser.id,
+      userName: currentUser.name,
+      comment: data.commentText,
+      timestamp: new Date().toISOString(),
+    };
+
+    setAllQuestions(prevQs => prevQs.map(q => 
+      q.id === questionId ? { ...q, userComments: [...(q.userComments || []), newComment] } : q
+    ));
+    // Update sampleInterviewQuestions if you want this to persist across refreshes (mock persistence)
+    const questionIndex = sampleInterviewQuestions.findIndex(q => q.id === questionId);
+    if (questionIndex !== -1) {
+      sampleInterviewQuestions[questionIndex].userComments = [
+        ...(sampleInterviewQuestions[questionIndex].userComments || []),
+        newComment,
+      ];
+    }
+
+    toast({ title: "Comment Added", description: "Your comment has been posted." });
+    resetCommentForm({ commentText: '' });
+    setCommentingOnQuestionId(null); // Close comment input after submit
+  };
+  
+  const handleRateQuestion = (questionId: string, rating: number) => {
+    setAllQuestions(prevQs => prevQs.map(q => {
+      if (q.id === questionId) {
+        const existingUserRatingIndex = q.userRatings?.findIndex(r => r.userId === currentUser.id);
+        let newUserRatings = [...(q.userRatings || [])];
+        if (existingUserRatingIndex !== undefined && existingUserRatingIndex > -1) {
+          newUserRatings[existingUserRatingIndex] = { userId: currentUser.id, rating };
+        } else {
+          newUserRatings.push({ userId: currentUser.id, rating });
+        }
+        const totalRatingSum = newUserRatings.reduce((sum, r) => sum + r.rating, 0);
+        const newAverageRating = newUserRatings.length > 0 ? parseFloat((totalRatingSum / newUserRatings.length).toFixed(1)) : 0;
+        
+        return { ...q, userRatings: newUserRatings, rating: newAverageRating, ratingsCount: newUserRatings.length };
+      }
+      return q;
+    }));
+    // Update sample data for mock persistence
+     const questionIndex = sampleInterviewQuestions.findIndex(q => q.id === questionId);
+    if (questionIndex !== -1) {
+      const qToUpdate = sampleInterviewQuestions[questionIndex];
+      const existingUserRatingIndex = qToUpdate.userRatings?.findIndex(r => r.userId === currentUser.id);
+      let newUserRatings = [...(qToUpdate.userRatings || [])];
+        if (existingUserRatingIndex !== undefined && existingUserRatingIndex > -1) {
+          newUserRatings[existingUserRatingIndex] = { userId: currentUser.id, rating };
+        } else {
+          newUserRatings.push({ userId: currentUser.id, rating });
+        }
+      qToUpdate.userRatings = newUserRatings;
+      qToUpdate.rating = parseFloat((newUserRatings.reduce((sum, r) => sum + r.rating, 0) / newUserRatings.length).toFixed(1));
+      qToUpdate.ratingsCount = newUserRatings.length;
+    }
+    toast({ title: "Rating Submitted", description: `You rated this question ${rating} stars.` });
+  };
+
 
   return (
     <div className="space-y-8">
@@ -443,7 +541,9 @@ export default function InterviewPreparationPage() {
                           {q.mcqOptions!.map((option, index) => (
                             <div key={index} className="flex items-center space-x-2 p-2 rounded hover:bg-primary/5 cursor-pointer">
                               <RadioGroupItem value={option} id={`${q.id}-opt-${index}`} />
-                              <Label htmlFor={`${q.id}-opt-${index}`} className="font-normal cursor-pointer flex-1">{option}</Label>
+                              <Label htmlFor={`${q.id}-opt-${index}`} className="font-normal cursor-pointer flex-1">
+                                <span className="font-semibold mr-1.5">{optionLetters[index]}.</span>{option}
+                              </Label>
                             </div>
                           ))}
                         </RadioGroup>
@@ -469,16 +569,65 @@ export default function InterviewPreparationPage() {
                         ))}
                       </div>
                     )}
-                    <div className="mt-3 text-xs text-muted-foreground space-y-1 border-t pt-3">
-                        {q.rating !== undefined && (
-                          <div className="flex items-center gap-1">
-                            <span className="font-medium">User Rating:</span>
+                    {/* User Rating and Comments Section */}
+                    <div className="mt-3 pt-3 border-t">
+                      <div className="flex justify-between items-center mb-2">
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                           <StarIcon className={cn("h-4 w-4", q.rating && q.rating > 0 ? "text-yellow-400 fill-yellow-400" : "text-gray-300")}/> 
+                           {q.rating?.toFixed(1) || 'N/A'} ({q.ratingsCount || 0} ratings)
+                           <span className="mx-1">|</span>
+                           <CommentIcon className="h-4 w-4"/> {q.userComments?.length || 0} Comments
+                        </div>
+                        {/* Rate Question Buttons */}
+                        <div className="flex gap-1">
                             {[1,2,3,4,5].map(star => (
-                                <StarIcon key={star} className={cn("h-3.5 w-3.5", q.rating! >= star ? "text-yellow-400 fill-yellow-400" : "text-gray-300")}/>
+                                <Button key={star} variant="ghost" size="icon" className="h-6 w-6 p-0" onClick={() => handleRateQuestion(q.id, star)}>
+                                    <StarIcon className={cn("h-4 w-4", q.userRatings?.find(r=>r.userId === currentUser.id)?.rating === star ? "text-yellow-500 fill-yellow-500" : (q.rating && q.rating >= star ? "text-yellow-400 fill-yellow-400/70" : "text-gray-300 hover:text-yellow-400" ))}/>
+                                </Button>
                             ))}
-                            ({q.rating}/5)
-                          </div>
-                        )}
+                        </div>
+                      </div>
+
+                      {/* Existing Comments */}
+                      {q.userComments && q.userComments.length > 0 && (
+                        <ScrollArea className="max-h-40 mb-2 pr-2">
+                        <div className="space-y-2">
+                          {q.userComments.map(comment => (
+                            <div key={comment.id} className="flex items-start space-x-2 text-xs p-2 bg-background rounded">
+                              <Avatar className="h-6 w-6"><AvatarImage src={`https://avatar.vercel.sh/${comment.userId}.png`} /><AvatarFallback>{comment.userName.substring(0,1)}</AvatarFallback></Avatar>
+                              <div>
+                                <span className="font-semibold text-foreground">{comment.userName}</span> <span className="text-muted-foreground">({formatDistanceToNow(parseISO(comment.timestamp), {addSuffix: true})})</span>:
+                                <p className="text-muted-foreground">{comment.comment}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        </ScrollArea>
+                      )}
+                      
+                      {/* Add Comment Form */}
+                      <form onSubmit={commentFormControl.handleSubmit(data => onCommentSubmit(data, q.id))} className="flex items-center gap-2 mt-2">
+                         <Controller
+                            name="commentText"
+                            control={commentFormControl}
+                            defaultValue=""
+                            render={({ field }) => (
+                                <Textarea 
+                                    {...field} 
+                                    placeholder="Add a comment..." 
+                                    rows={1} 
+                                    className="flex-grow min-h-[36px] text-xs"
+                                    onFocus={() => setCommentingOnQuestionId(q.id)} // For other focus logic if needed
+                                />
+                            )}
+                         />
+                         <Button type="submit" size="sm" variant="outline" disabled={!!commentFormErrors.commentText || !commentFormControl.formState.dirtyFields.commentText}><Send className="h-3.5 w-3.5"/></Button>
+                      </form>
+                       {commentFormErrors.commentText && <p className="text-xs text-destructive mt-1">{commentFormErrors.commentText.message}</p>}
+                    </div>
+
+
+                    <div className="mt-3 text-xs text-muted-foreground space-y-1 border-t pt-3">
                         {q.createdBy && <p><span className="font-medium">Created By:</span> {q.createdBy === 'system' ? 'ResumeMatch AI' : q.createdBy}</p>}
                          {currentUser.role === 'admin' && q.comments && <p className="italic"><span className="font-medium">Admin Notes:</span> {q.comments}</p>}
                          {currentUser.role === 'admin' && (
@@ -551,8 +700,14 @@ export default function InterviewPreparationPage() {
                         {quiz.difficulty && ` • Difficulty: ${quiz.difficulty}`}
                         {quiz.questionCategories && quiz.questionCategories.length > 0 && ` • Categories: ${quiz.questionCategories.join(', ')}`}
                       </p>
+                      {quiz.description && <p className="text-sm text-muted-foreground mt-1 italic">{quiz.description}</p>}
                     </div>
-                    <Button size="sm" variant="default" onClick={() => handleStartPredefinedQuiz(quiz.id)}>Start Quiz</Button>
+                    <div className="flex gap-2 mt-2 sm:mt-0">
+                        <Button size="sm" variant="outline" onClick={() => handleEditQuiz(quiz.id)}>
+                           <EditIcon className="mr-1 h-3 w-3"/> Edit
+                        </Button>
+                        <Button size="sm" variant="default" onClick={() => handleStartPredefinedQuiz(quiz.id)}>Start Quiz</Button>
+                    </div>
                   </div>
                 </Card>
               ))}
@@ -645,4 +800,3 @@ export default function InterviewPreparationPage() {
     </div>
   );
 }
-

@@ -1,5 +1,5 @@
 
-import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem, Appointment, Wallet, ResumeProfile, Tenant, Badge, BlogPost, ReferralHistoryItem, GamificationRule, UserStatus, SurveyResponse, Affiliate, AffiliateClick, AffiliateSignup, AffiliateStatus, SurveyStep, ResumeTemplate, TourStep, CommunityComment, InterviewQuestion, InterviewQuestionCategory, BlogGenerationSettings, MockInterviewSession, InterviewQuestionDifficulty } from '@/types';
+import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem, Appointment, Wallet, ResumeProfile, Tenant, Badge, BlogPost, ReferralHistoryItem, GamificationRule, UserStatus, SurveyResponse, Affiliate, AffiliateClick, AffiliateSignup, AffiliateStatus, SurveyStep, ResumeTemplate, TourStep, CommunityComment, InterviewQuestion, InterviewQuestionCategory, BlogGenerationSettings, MockInterviewSession, InterviewQuestionDifficulty, InterviewQuestionUserComment } from '@/types';
 import { AreasOfSupport, AppointmentStatuses, Genders, DegreePrograms, Industries, TimeCommitments, EngagementModes, SupportTypesSought } from '@/types'; // Import AppointmentStatuses and other const arrays
 
 const SAMPLE_TENANT_ID = 'tenant-1'; // Define a default tenant ID for sample data
@@ -32,7 +32,6 @@ export const sampleAlumni: AlumniProfile[] = [
     offersHelpWith: [AreasOfSupport[0], AreasOfSupport[2], AreasOfSupport[4]], 
     appointmentCoinCost: 10,
     xpPoints: 2500,
-    bio: 'Passionate about AI and cloud computing. Graduated in 2015 from State University. Currently working as a Senior Software Engineer at Google, focusing on large-scale distributed systems. My expertise lies in Java, Python, and Machine Learning. I enjoy mentoring students and discussing career paths in tech.',
   },
   {
     id: 'alumni2',
@@ -52,7 +51,6 @@ export const sampleAlumni: AlumniProfile[] = [
     offersHelpWith: [AreasOfSupport[1], AreasOfSupport[3], AreasOfSupport[8]], 
     appointmentCoinCost: 15,
     xpPoints: 1800,
-    bio: 'Focused on user-centric product development. Class of 2018 from Tech Institute. As a Product Manager at Microsoft, I drive product strategy and execution for consumer-facing applications. Skilled in Agile methodologies and UX research. I enjoy discussing product strategy and career development in product roles.',
   },
   {
     id: 'alumni3',
@@ -72,7 +70,6 @@ export const sampleAlumni: AlumniProfile[] = [
     offersHelpWith: [AreasOfSupport[0], AreasOfSupport[7]], 
     appointmentCoinCost: 10,
     xpPoints: 1200,
-    bio: 'Exploring large-scale data and its implications. Alumnus of 2017 from State University. Currently a Data Scientist at Facebook, specializing in statistical modeling and data visualization using R and Python. Interested in discussing data ethics and applications of big data.',
   },
   {
     id: 'alumni4',
@@ -92,7 +89,6 @@ export const sampleAlumni: AlumniProfile[] = [
     offersHelpWith: [AreasOfSupport[2], AreasOfSupport[5], AreasOfSupport[9]], 
     appointmentCoinCost: 20,
     xpPoints: 5000,
-    bio: 'Specializing in digital marketing strategies. Graduated 2016 from Commerce College. As a Marketing Lead at Amazon, I oversee digital campaigns and content strategy. My skills include SEO, content marketing, and social media advertising. Available for discussions on marketing careers and digital trends.',
   },
 ];
 
@@ -250,7 +246,7 @@ export const sampleUserProfile: UserProfile = {
   Experience:
   Software Developer, Tech Startup Inc. (Jan 2020 - Present)
   - Developed and maintained front-end components using React and TypeScript.
-  - Built RESTful APIs with Node.js and Express.
+  - Built RESTful APIs with Node.js and Express.js.
   - Collaborated with cross-functional teams to deliver high-quality software products.
   - Mentored 2 junior developers, improving team productivity by 15%.
   
@@ -906,8 +902,13 @@ export const sampleInterviewQuestions: InterviewQuestion[] = [
     answerOrTip: "The best approach is to use the STAR method (Situation, Task, Action, Result) and focus on what you learned and how you improved.",
     tags: ['failure', 'learning'],
     difficulty: 'Medium',
-    rating: 4,
-    comments: "Standard behavioral question, good for assessing self-awareness.",
+    rating: 4.2, // Average rating
+    ratingsCount: 15,
+    userComments: [
+        { id: 'uc1-1', userId: 'alumni2', userName: 'Bob The Builder', comment: 'Good standard question. The tip is helpful!', timestamp: new Date(Date.now() - 86400000 * 1).toISOString()},
+        { id: 'uc1-2', userId: 'alumni3', userName: 'Charlie Brown', comment: 'Could use a more complex failure example in options.', timestamp: new Date(Date.now() - 86400000 * 2).toISOString()}
+    ],
+    comments: "Standard behavioral question, good for assessing self-awareness.", // Admin comment
     createdBy: "system",
     approved: true,
   },
@@ -926,7 +927,9 @@ export const sampleInterviewQuestions: InterviewQuestion[] = [
     answerOrTip: "Focus on professional and constructive approaches. Highlight your communication, empathy, and problem-solving skills.",
     tags: ['teamwork', 'conflict'],
     difficulty: 'Medium',
-    rating: 5,
+    rating: 4.8,
+    ratingsCount: 22,
+    userComments: [],
     comments: "Assesses conflict resolution and interpersonal skills.",
     createdBy: "system",
     approved: true,
@@ -946,7 +949,9 @@ export const sampleInterviewQuestions: InterviewQuestion[] = [
     answerOrTip: "Key differences: Abstract classes can have constructors and member variable implementations; interfaces cannot (traditionally). A class can implement multiple interfaces but inherit only one class (or abstract class).",
     tags: ['oop', 'programming'],
     difficulty: 'Medium',
-    rating: 4,
+    rating: 4.0,
+    ratingsCount: 10,
+    userComments: [{id: 'uc3-1', userId: 'currentUser', userName: 'Alex Taylor (User)', comment: 'The options are a bit tricky, good test!', timestamp: new Date().toISOString()}],
     comments: "Fundamental OOP concept.",
     createdBy: "adminUser1",
     approved: true,
@@ -966,7 +971,9 @@ export const sampleInterviewQuestions: InterviewQuestion[] = [
     answerOrTip: "A good answer outlines a structured product development process: research, definition, prioritization, execution, and measurement.",
     tags: ['product management', 'design'],
     difficulty: 'Hard',
-    rating: 5,
+    rating: 4.5,
+    ratingsCount: 18,
+    userComments: [],
     comments: "Tests understanding of product lifecycle.",
     createdBy: "adminUser2",
     approved: true,
@@ -986,7 +993,10 @@ export const sampleInterviewQuestions: InterviewQuestion[] = [
     answerOrTip: "Connect your skills, experience, and career goals to the specific requirements of the role and the company's mission. Show genuine enthusiasm.",
     tags: ['motivation', 'fit'],
     difficulty: 'Easy',
-    rating: 3,
+    rating: 3.9,
+    ratingsCount: 30,
+    userComments: [],
+    comments: "Good for screening initial interest.",
     createdBy: "system",
     approved: true,
   },
@@ -1005,10 +1015,12 @@ export const sampleInterviewQuestions: InterviewQuestion[] = [
     answerOrTip: "Show ambition for growth that aligns with the company's potential opportunities. Express interest in developing skills and taking on more responsibility.",
     tags: ['career goals'],
     difficulty: 'Easy',
-    rating: 3,
-    createdBy: "system",
-    approved: false, // Example of an unapproved question
+    rating: 3.5,
+    ratingsCount: 12,
+    userComments: [],
     comments: "Needs review for phrasing.",
+    createdBy: "system",
+    approved: false, 
   },
   {
     id: 'iq7',
@@ -1025,7 +1037,10 @@ export const sampleInterviewQuestions: InterviewQuestion[] = [
     answerOrTip: "Key principles: Client-Server, Stateless, Cacheable, Uniform Interface (resource identification, manipulation through representations, self-descriptive messages, HATEOAS), Layered System, Code on Demand (optional).",
     tags: ['api', 'backend'],
     difficulty: 'Hard',
-    rating: 5,
+    rating: 4.7,
+    ratingsCount: 9,
+    userComments: [],
+    comments: "Crucial for backend roles.",
     createdBy: "adminUser1",
     approved: true,
   },
@@ -1044,7 +1059,9 @@ export const sampleInterviewQuestions: InterviewQuestion[] = [
     answerOrTip: "Use the STAR method. Be specific about the goal, your actions, and the quantifiable result or impact.",
     tags: ['achievement', 'goals'],
     difficulty: 'Medium',
-    rating: 4,
+    rating: 4.1,
+    ratingsCount: 17,
+    userComments: [],
     createdBy: "system",
     approved: true,
   },
@@ -1058,7 +1075,9 @@ export const sampleInterviewQuestions: InterviewQuestion[] = [
     answerOrTip: "PUSH is not a standard HTTP method. Common methods include GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS.",
     tags: ['http', 'api', 'mcq'],
     difficulty: 'Easy',
-    rating: 3,
+    rating: 3.8,
+    ratingsCount: 25,
+    userComments: [],
     createdBy: "system",
     approved: true,
   },
@@ -1072,7 +1091,9 @@ export const sampleInterviewQuestions: InterviewQuestion[] = [
     answerOrTip: "A delay on the critical path directly translates to a delay in the project completion date by the same amount, assuming no other changes.",
     tags: ['project management', 'analytical', 'mcq'],
     difficulty: 'Medium',
-    rating: 4,
+    rating: 4.3,
+    ratingsCount: 13,
+    userComments: [],
     createdBy: "adminUser2",
     approved: true,
   },
@@ -1091,7 +1112,9 @@ export const sampleInterviewQuestions: InterviewQuestion[] = [
     answerOrTip: "Describe specific strategies you use (e.g., prioritization, time management, mindfulness, seeking support). Give a brief example if possible.",
     tags: ['stress management', 'soft skills'],
     difficulty: 'Medium',
-    rating: 4,
+    rating: 4.0,
+    ratingsCount: 19,
+    userComments: [],
     createdBy: "system",
     approved: true,
   },
@@ -1110,7 +1133,9 @@ export const sampleInterviewQuestions: InterviewQuestion[] = [
     answerOrTip: "Common solutions include `str.split('').reverse().join('')` or a loop. Discuss time/space complexity (O(n) for both in most JS engines).",
     tags: ['javascript', 'string manipulation', 'algorithms'],
     difficulty: 'Easy',
-    rating: 3,
+    rating: 3.7,
+    ratingsCount: 28,
+    userComments: [],
     createdBy: "system",
     approved: true,
   },
@@ -1129,7 +1154,9 @@ export const sampleInterviewQuestions: InterviewQuestion[] = [
     answerOrTip: "Big O notation describes the upper bound of an algorithm's time or space complexity in relation to input size. O(n) is linear (e.g., iterating an array), O(log n) is logarithmic (e.g., binary search on a sorted array).",
     tags: ['data structures', 'algorithms', 'complexity'],
     difficulty: 'Medium',
-    rating: 4,
+    rating: 4.6,
+    ratingsCount: 11,
+    userComments: [],
     createdBy: "adminUser1",
     approved: true,
   },
@@ -1192,41 +1219,41 @@ export const sampleMockInterviewSessions: MockInterviewSession[] = [
   }
 ];
 
-export const sampleCreatedQuizzes: MockInterviewSession[] = [
+export const sampleCreatedQuizzes: MockInterviewSession[] = [ // Using MockInterviewSession as a base for Quizzes
   {
     id: 'quiz-java-basics',
     userId: 'system', // Indicates a system-generated or admin-created quiz
     topic: 'Java Basics Quiz',
+    description: "Test your fundamental knowledge of Java programming concepts. Covers data types, OOP, and common library functions.",
     questions: sampleInterviewQuestions.filter(q => q.tags?.includes('java') && q.isMCQ).slice(0, 5).map(q => ({ id: q.id, questionText: q.question, category: q.category, difficulty: q.difficulty })),
-    answers: [],
+    answers: [], // Not applicable for quiz template
     status: 'pending', // This status could indicate it's a template/available quiz
     createdAt: new Date(Date.now() - 86400000 * 10).toISOString(), // Created 10 days ago
     questionCategories: ['Technical', 'Coding'],
     difficulty: 'Easy',
-    jobDescription: "A quick quiz to test fundamental Java knowledge.", // Optional description
   },
   {
     id: 'quiz-behavioral-common',
     userId: 'system',
     topic: 'Common Behavioral Questions',
+    description: "Practice how you'd respond to frequently asked behavioral interview questions. Focus on structuring your answers using STAR.",
     questions: sampleInterviewQuestions.filter(q => q.category === 'Behavioral' && q.isMCQ).slice(0, 7).map(q => ({ id: q.id, questionText: q.question, category: q.category, difficulty: q.difficulty })),
     answers: [],
     status: 'pending',
     createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
     questionCategories: ['Behavioral', 'Common'],
     difficulty: 'Medium',
-    jobDescription: "Practice common behavioral questions asked in many interviews."
   },
   {
     id: 'quiz-pm-roleplay',
     userId: 'currentUser', // Example of a user-created quiz
     topic: 'Product Manager Role Scenarios',
+    description: "A challenging quiz with scenario-based questions for aspiring Product Managers. Tests decision-making and prioritization skills.",
     questions: sampleInterviewQuestions.filter(q => q.category === 'Role-Specific' && q.tags?.includes('product management') && q.isMCQ).slice(0, 3).map(q => ({ id: q.id, questionText: q.question, category: q.category, difficulty: q.difficulty })),
     answers: [],
     status: 'pending',
     createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
     questionCategories: ['Role-Specific', 'Analytical'],
     difficulty: 'Hard',
-    jobDescription: "Challenging scenarios for aspiring Product Managers."
   },
 ];

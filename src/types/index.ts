@@ -1,5 +1,4 @@
 
-
 export type UserRole = 'admin' | 'manager' | 'user';
 export type UserStatus = 'active' | 'inactive' | 'pending' | 'suspended';
 
@@ -234,6 +233,7 @@ export interface UserProfile extends AlumniProfile {
   department?: string;
 
   currentJobTitle: string; 
+  company: string;
   currentOrganization?: string; 
   industry?: Industry;
   workLocation?: string; 
@@ -522,9 +522,22 @@ export type InterviewQuestionCategory = typeof ALL_CATEGORIES[number];
 export const ALL_DIFFICULTIES = ['Easy', 'Medium', 'Hard'] as const;
 export type InterviewQuestionDifficulty = typeof ALL_DIFFICULTIES[number];
 
+export interface InterviewQuestionUserComment {
+  id: string;
+  userId: string;
+  userName: string;
+  comment: string;
+  timestamp: string;
+}
+
+export interface InterviewQuestionUserRating {
+  userId: string;
+  rating: number; // 1-5
+}
+
 export interface InterviewQuestion {
   id: string;
-  category: InterviewQuestionCategory; // Ensure category is always present
+  category: InterviewQuestionCategory;
   question: string;
   answerOrTip: string; 
   tags?: string[];
@@ -532,8 +545,11 @@ export interface InterviewQuestion {
   mcqOptions?: string[]; 
   correctAnswer?: string; 
   difficulty?: InterviewQuestionDifficulty;
-  rating?: number; 
-  comments?: string; 
+  rating?: number; // Average rating
+  ratingsCount?: number; // Number of users who rated
+  userRatings?: InterviewQuestionUserRating[]; // Individual user ratings
+  comments?: string; // Admin comments
+  userComments?: InterviewQuestionUserComment[]; // User-submitted comments
   createdBy?: string; 
   approved?: boolean; 
 }
@@ -571,21 +587,32 @@ export interface GenerateOverallInterviewFeedbackOutput {
   finalTips: string[];
   overallScore: number; 
 }
-export interface MockInterviewSession {
+export interface MockInterviewSession { // Also used for Quizzes
   id: string;
   userId: string;
-  topic: string; 
-  jobDescription?: string; 
-  questions: MockInterviewQuestion[]; 
-  answers: MockInterviewAnswer[];
-  overallFeedback?: GenerateOverallInterviewFeedbackOutput; 
-  overallScore?: number; 
-  status: 'pending' | 'in-progress' | 'completed';
+  topic: string; // For AI mock interview topic, or Quiz name
+  description?: string; // For Quiz description
+  jobDescription?: string; // For AI mock interview context
+  questions: MockInterviewQuestion[]; // or QuizQuestion[] if made distinct
+  answers: MockInterviewAnswer[]; // For AI mock interview
+  overallFeedback?: GenerateOverallInterviewFeedbackOutput; // For AI mock interview
+  overallScore?: number; // For AI mock interview
+  status: 'pending' | 'in-progress' | 'completed'; // 'pending' can be for quiz templates
   createdAt: string;
-  timerPerQuestion?: number; 
-  questionCategories?: InterviewQuestionCategory[]; 
-  difficulty?: InterviewQuestionDifficulty;
+  timerPerQuestion?: number; // For AI mock interview / Quiz
+  questionCategories?: InterviewQuestionCategory[]; // For AI mock interview / Quiz
+  difficulty?: InterviewQuestionDifficulty; // For AI mock interview / Quiz
+  // Quiz specific fields, if MockInterviewSession is used for Quizzes:
+  userQuizAnswers?: Record<string, string>; // questionId: selectedOptionValue for quiz
+  quizScore?: number;
+  quizPercentage?: number;
+  quizTimeTaken?: number;
+  quizTotalTime?: number;
+  quizCategoryStats?: Record<string, { correct: number; total: number; accuracy: number }>;
+  quizAnsweredCount?: number;
+  quizMarkedForReviewCount?: number;
 }
+
 
 export interface GenerateMockInterviewQuestionsInput {
   topic: string;
