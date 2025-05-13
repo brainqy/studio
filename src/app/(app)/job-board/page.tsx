@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect, useMemo, type FormEvent } from "react";
@@ -102,6 +101,7 @@ export default function JobBoardPage() {
         datePosted: new Date().toISOString().split('T')[0],
         postedByAlumniId: currentUser.id,
         alumniName: currentUser.name,
+        tenantId: currentUser.tenantId, // Added tenantId
       };
       setOpenings(prev => [newOpening, ...prev]);
       toast({ title: "Opportunity Posted", description: `${data.title} at ${data.company} has been posted.` });
@@ -502,5 +502,3 @@ export default function JobBoardPage() {
     </div>
   );
 }
-
-```

@@ -611,9 +611,9 @@ export interface MockInterviewSession { // Also used for Quizzes
   userQuizAnswers?: Record<string, string>; // questionId: selectedOptionValue for quiz
   quizScore?: number;
   quizPercentage?: number;
-  quizTimeTaken?: number;
-  quizTotalTime?: number;
-  quizCategoryStats?: Record<string, { correct: number; total: number; accuracy: number }>;
+  quizTimeTaken?: number; // Time in seconds
+  quizTotalTime?: number; // Total allotted time in seconds
+  quizCategoryStats?: Record<string, { correct: number; total: number; accuracy: number }>; // Added for sectional analysis
   quizAnsweredCount?: number;
   quizMarkedForReviewCount?: number;
 }
@@ -732,5 +732,3 @@ export const PREDEFINED_INTERVIEW_TOPICS: string[] = ["Java", "Python", "DSA", "
 // New constant for specific practice focus areas/topics
 export const PRACTICE_FOCUS_AREAS = ["Java", "Python", "DSA", "Angular", "Javascript", "Microservices", "System Design", "Behavioral", "Product Management", "Data Science"] as const;
 export type PracticeFocusArea = typeof PRACTICE_FOCUS_AREAS[number];
-
-```
