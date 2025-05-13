@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -25,6 +26,7 @@ import { useState, useEffect } from 'react';
 import { getRecentPages } from '@/lib/recent-pages'; 
 import type { RecentPageItem } from '@/types'; 
 import { usePathname } from "next/navigation"; 
+import AnnouncementBanner from '@/components/features/AnnouncementBanner'; // Added import
 
 export function AppHeader() {
   const { toast } = useToast();
@@ -47,6 +49,7 @@ export function AppHeader() {
   return (
     <TooltipProvider>
       <header className="sticky top-0 z-10 border-b bg-card shadow-sm">
+        <AnnouncementBanner /> {/* Display announcements at the very top */}
         {/* Top row for main controls */}
         <div className="flex h-16 items-center gap-4 px-4 md:px-6">
           <SidebarTrigger />

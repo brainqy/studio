@@ -1,4 +1,5 @@
 
+
 export type UserRole = 'admin' | 'manager' | 'user';
 export type UserStatus = 'active' | 'inactive' | 'pending' | 'suspended';
 
@@ -163,6 +164,7 @@ export interface FeatureRequest {
   title: string;
   description: string;
   status: 'Pending' | 'In Progress' | 'Completed' | 'Rejected';
+  upvotes?: number; 
 }
 
 export interface GalleryEvent {
@@ -368,11 +370,6 @@ export interface Tenant {
   domain?: string; 
   settings?: TenantSettings;
   createdAt: string;
-  // Potential fields for aggregated stats (can be calculated dynamically too)
-  // totalUsers?: number;
-  // activeUsers?: number;
-  // resumesAnalyzedCount?: number;
-  // communityPostsCount?: number;
 }
 
 export type ReferralStatus = 'Pending' | 'Signed Up' | 'Reward Earned' | 'Expired';
@@ -774,4 +771,24 @@ export interface PlatformSettings {
   maxEventRegistrationsPerUser?: number; 
   globalAnnouncement?: string; 
   pointsForAffiliateSignup?: number; 
+}
+
+export const AnnouncementStatuses = ['Draft', 'Published', 'Archived'] as const;
+export type AnnouncementStatus = typeof AnnouncementStatuses[number];
+
+export const AnnouncementAudiences = ['All Users', 'Specific Tenant', 'Specific Role'] as const; // Add more as needed
+export type AnnouncementAudience = typeof AnnouncementAudiences[number];
+
+export interface Announcement {
+  id: string;
+  title: string;
+  content: string; // Rich text or Markdown
+  startDate: string; // ISO Date string
+  endDate?: string; // ISO Date string
+  audience: AnnouncementAudience;
+  audienceTarget?: string; // e.g., tenantId or roleName if audience is specific
+  status: AnnouncementStatus;
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string; // User ID of admin who created it
 }

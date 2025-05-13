@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -329,6 +330,7 @@ export default function AdminDashboard() {
             <Button asChild variant="outline"><Link href="/admin/platform-settings"><Settings className="mr-2 h-4 w-4"/>Platform Settings</Link></Button>
             <Button asChild variant="outline"><Link href="/admin/tenants"><Building2 className="mr-2 h-4 w-4"/>Manage Tenants</Link></Button>
             <Button asChild variant="outline"><Link href="/admin/content-moderation"><MessageSquare className="mr-2 h-4 w-4"/>Content Moderation</Link></Button>
+            <Button asChild variant="outline"><Link href="/admin/announcements"><Megaphone className="mr-2 h-4 w-4"/>Announcements</Link></Button>
             <Button asChild variant="outline"><Link href="/admin/gamification-rules"><ListChecks className="mr-2 h-4 w-4"/>Gamification Rules</Link></Button>
             <Button asChild variant="outline"><Link href="/admin/blog-settings"><FileText className="mr-2 h-4 w-4"/>Blog Settings</Link></Button>
             <Button asChild variant="outline"><Link href="/admin/analytics/user-activity"><TrendingUp className="mr-2 h-4 w-4"/>User Activity Analytics</Link></Button>
