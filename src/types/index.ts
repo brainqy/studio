@@ -555,8 +555,14 @@ export interface InterviewQuestion {
   comments?: string; // Admin comments
   userComments?: InterviewQuestionUserComment[]; // User-submitted comments
   createdBy?: string; 
-  approved?: boolean; 
+  approved?: boolean;
+  createdAt?: string; // Added for sorting by most recent
+  bookmarkedBy?: string[]; // Array of user IDs who bookmarked this
 }
+
+export type BankQuestionSortOrder = 'default' | 'highestRated' | 'mostRecent';
+export type BankQuestionFilterView = 'all' | 'myBookmarks' | 'needsApproval';
+
 
 export interface BlogGenerationSettings {
   generationIntervalHours: number;

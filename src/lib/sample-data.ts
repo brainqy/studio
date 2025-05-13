@@ -890,7 +890,7 @@ export const managerDashboardTourSteps: TourStep[] = [
   { title: "Event Management", description: "Approve event submissions and manage event logistics for your tenant or group." }
 ];
 
-export const sampleInterviewQuestions: InterviewQuestion[] = [
+export let sampleInterviewQuestions: InterviewQuestion[] = [
   {
     id: 'iq1',
     category: 'Behavioral',
@@ -906,15 +906,17 @@ export const sampleInterviewQuestions: InterviewQuestion[] = [
     answerOrTip: "The best approach is to use the STAR method (Situation, Task, Action, Result) and focus on what you learned and how you improved.",
     tags: ['failure', 'learning'],
     difficulty: 'Medium',
-    rating: 4.2, // Average rating
+    rating: 4.2, 
     ratingsCount: 15,
     userComments: [
         { id: 'uc1-1', userId: 'alumni2', userName: 'Bob The Builder', comment: 'Good standard question. The tip is helpful!', timestamp: new Date(Date.now() - 86400000 * 1).toISOString()},
         { id: 'uc1-2', userId: 'alumni3', userName: 'Charlie Brown', comment: 'Could use a more complex failure example in options.', timestamp: new Date(Date.now() - 86400000 * 2).toISOString()}
     ],
-    comments: "Standard behavioral question, good for assessing self-awareness.", // Admin comment
+    comments: "Standard behavioral question, good for assessing self-awareness.", 
     createdBy: "system",
     approved: true,
+    createdAt: new Date(Date.now() - 86400000 * 10).toISOString(),
+    bookmarkedBy: ['currentUser']
   },
   {
     id: 'iq2',
@@ -937,6 +939,8 @@ export const sampleInterviewQuestions: InterviewQuestion[] = [
     comments: "Assesses conflict resolution and interpersonal skills.",
     createdBy: "system",
     approved: true,
+    createdAt: new Date(Date.now() - 86400000 * 9).toISOString(),
+    bookmarkedBy: []
   },
   {
     id: 'iq3',
@@ -959,6 +963,8 @@ export const sampleInterviewQuestions: InterviewQuestion[] = [
     comments: "Fundamental OOP concept.",
     createdBy: "adminUser1",
     approved: true,
+    createdAt: new Date(Date.now() - 86400000 * 8).toISOString(),
+    bookmarkedBy: ['alumni1', 'currentUser']
   },
   {
     id: 'iq4',
@@ -981,6 +987,8 @@ export const sampleInterviewQuestions: InterviewQuestion[] = [
     comments: "Tests understanding of product lifecycle.",
     createdBy: "adminUser2",
     approved: true,
+    createdAt: new Date(Date.now() - 86400000 * 7).toISOString(),
+    bookmarkedBy: []
   },
   {
     id: 'iq5',
@@ -1003,6 +1011,8 @@ export const sampleInterviewQuestions: InterviewQuestion[] = [
     comments: "Good for screening initial interest.",
     createdBy: "system",
     approved: true,
+    createdAt: new Date(Date.now() - 86400000 * 6).toISOString(),
+    bookmarkedBy: ['currentUser']
   },
   {
     id: 'iq6',
@@ -1025,6 +1035,8 @@ export const sampleInterviewQuestions: InterviewQuestion[] = [
     comments: "Needs review for phrasing.",
     createdBy: "system",
     approved: false, 
+    createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
+    bookmarkedBy: []
   },
   {
     id: 'iq7',
@@ -1047,6 +1059,8 @@ export const sampleInterviewQuestions: InterviewQuestion[] = [
     comments: "Crucial for backend roles.",
     createdBy: "adminUser1",
     approved: true,
+    createdAt: new Date(Date.now() - 86400000 * 4).toISOString(),
+    bookmarkedBy: []
   },
   {
     id: 'iq8',
@@ -1068,6 +1082,8 @@ export const sampleInterviewQuestions: InterviewQuestion[] = [
     userComments: [],
     createdBy: "system",
     approved: true,
+    createdAt: new Date(Date.now() - 86400000 * 3).toISOString(),
+    bookmarkedBy: ['alumni2']
   },
   {
     id: 'mcq1',
@@ -1084,6 +1100,8 @@ export const sampleInterviewQuestions: InterviewQuestion[] = [
     userComments: [],
     createdBy: "system",
     approved: true,
+    createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+    bookmarkedBy: []
   },
   {
     id: 'mcq2',
@@ -1100,6 +1118,8 @@ export const sampleInterviewQuestions: InterviewQuestion[] = [
     userComments: [],
     createdBy: "adminUser2",
     approved: true,
+    createdAt: new Date(Date.now() - 86400000 * 1).toISOString(),
+    bookmarkedBy: ['currentUser']
   },
   {
     id: 'hr1',
@@ -1121,6 +1141,8 @@ export const sampleInterviewQuestions: InterviewQuestion[] = [
     userComments: [],
     createdBy: "system",
     approved: true,
+    createdAt: new Date().toISOString(),
+    bookmarkedBy: []
   },
   {
     id: 'coding1',
@@ -1142,6 +1164,8 @@ export const sampleInterviewQuestions: InterviewQuestion[] = [
     userComments: [],
     createdBy: "system",
     approved: true,
+    createdAt: new Date(Date.now() - 86400000 * 1.5).toISOString(),
+    bookmarkedBy: []
   },
   {
     id: 'coding2',
@@ -1163,6 +1187,8 @@ export const sampleInterviewQuestions: InterviewQuestion[] = [
     userComments: [],
     createdBy: "adminUser1",
     approved: true,
+    createdAt: new Date(Date.now() - 86400000 * 0.5).toISOString(),
+    bookmarkedBy: []
   },
 ];
 
