@@ -1,5 +1,4 @@
 
-
 import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem, Appointment, Wallet, ResumeProfile, Tenant, Badge, BlogPost, ReferralHistoryItem, GamificationRule, UserStatus, SurveyResponse, Affiliate, AffiliateClick, AffiliateSignup, AffiliateStatus, SurveyStep, ResumeTemplate, TourStep, CommunityComment, InterviewQuestion, InterviewQuestionCategory, BlogGenerationSettings, MockInterviewSession, InterviewQuestionDifficulty } from '@/types';
 import { AreasOfSupport, AppointmentStatuses, Genders, DegreePrograms, Industries, TimeCommitments, EngagementModes, SupportTypesSought } from '@/types'; // Import AppointmentStatuses and other const arrays
 
@@ -1191,4 +1190,43 @@ export const sampleMockInterviewSessions: MockInterviewSession[] = [
     questionCategories: ['Technical'],
     difficulty: 'Medium'
   }
+];
+
+export const sampleCreatedQuizzes: MockInterviewSession[] = [
+  {
+    id: 'quiz-java-basics',
+    userId: 'system', // Indicates a system-generated or admin-created quiz
+    topic: 'Java Basics Quiz',
+    questions: sampleInterviewQuestions.filter(q => q.tags?.includes('java') && q.isMCQ).slice(0, 5).map(q => ({ id: q.id, questionText: q.question, category: q.category, difficulty: q.difficulty })),
+    answers: [],
+    status: 'pending', // This status could indicate it's a template/available quiz
+    createdAt: new Date(Date.now() - 86400000 * 10).toISOString(), // Created 10 days ago
+    questionCategories: ['Technical', 'Coding'],
+    difficulty: 'Easy',
+    jobDescription: "A quick quiz to test fundamental Java knowledge.", // Optional description
+  },
+  {
+    id: 'quiz-behavioral-common',
+    userId: 'system',
+    topic: 'Common Behavioral Questions',
+    questions: sampleInterviewQuestions.filter(q => q.category === 'Behavioral' && q.isMCQ).slice(0, 7).map(q => ({ id: q.id, questionText: q.question, category: q.category, difficulty: q.difficulty })),
+    answers: [],
+    status: 'pending',
+    createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
+    questionCategories: ['Behavioral', 'Common'],
+    difficulty: 'Medium',
+    jobDescription: "Practice common behavioral questions asked in many interviews."
+  },
+  {
+    id: 'quiz-pm-roleplay',
+    userId: 'currentUser', // Example of a user-created quiz
+    topic: 'Product Manager Role Scenarios',
+    questions: sampleInterviewQuestions.filter(q => q.category === 'Role-Specific' && q.tags?.includes('product management') && q.isMCQ).slice(0, 3).map(q => ({ id: q.id, questionText: q.question, category: q.category, difficulty: q.difficulty })),
+    answers: [],
+    status: 'pending',
+    createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+    questionCategories: ['Role-Specific', 'Analytical'],
+    difficulty: 'Hard',
+    jobDescription: "Challenging scenarios for aspiring Product Managers."
+  },
 ];

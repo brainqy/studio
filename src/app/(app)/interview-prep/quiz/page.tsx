@@ -8,8 +8,8 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { AlertCircle, Bookmark, Check, ChevronLeft, ChevronRight, Clock, Send, X, PieChart, BarChart2, ListChecks } from 'lucide-react';
-import { sampleInterviewQuestions } from '@/lib/sample-data';
-import type { InterviewQuestion, InterviewQuestionCategory } from '@/types';
+import { sampleInterviewQuestions, sampleMockInterviewSessions, sampleCreatedQuizzes } from '@/lib/sample-data'; // Added sampleCreatedQuizzes
+import type { InterviewQuestion, InterviewQuestionCategory, MockInterviewSession } from '@/types'; // Added MockInterviewSession
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell, Tooltip as RechartsTooltip, Legend as RechartsLegend, BarChart as RechartsBarChart, XAxis, YAxis, CartesianGrid, Bar } from 'recharts';
@@ -45,18 +45,37 @@ export default function QuizPage() {
 
   useEffect(() => {
     const questionIdsParam = searchParams.get('questions');
-    let loadedQuestions: InterviewQuestion[];
+    const quizIdParam = searchParams.get('quizId');
+    let loadedQuestions: InterviewQuestion[] = [];
 
-    if (questionIdsParam) {
+    if (quizIdParam) {
+        const foundQuiz = sampleCreatedQuizzes.find(q => q.id === quizIdParam);
+        if (foundQuiz && foundQuiz.questions) {
+            loadedQuestions = foundQuiz.questions.map(q => {
+                const fullQuestion = sampleInterviewQuestions.find(sq => sq.id === q.id);
+                return fullQuestion || q; // Fallback to quiz question data if full not found
+            }).filter(q => q.isMCQ && q.mcqOptions && q.mcqOptions.length > 0 && q.approved !== false) as InterviewQuestion[];
+             if (loadedQuestions.length === 0) {
+                toast({title: "Invalid Quiz", description: `Quiz "${foundQuiz.topic}" has no usable MCQ questions.`, variant: "destructive", duration: 5000});
+             }
+        } else {
+            toast({title: "Quiz Not Found", description: "The specified quiz ID could not be found.", variant: "destructive", duration: 5000});
+        }
+    } else if (questionIdsParam) {
       const questionIds = questionIdsParam.split(',');
-      loadedQuestions = sampleInterviewQuestions.filter(q => questionIds.includes(q.id) && q.isMCQ && q.mcqOptions && q.mcqOptions.length > 0 && q.approved);
+      loadedQuestions = sampleInterviewQuestions.filter(q => questionIds.includes(q.id) && q.isMCQ && q.mcqOptions && q.mcqOptions.length > 0 && q.approved !== false);
+       if (loadedQuestions.length === 0) {
+          toast({title: "No Valid Questions", description: "None of the selected questions are valid for a quiz (must be MCQ, approved, with options).", variant: "destructive", duration: 5000});
+       }
     } else {
-      // Fallback: if no specific questions, load some default approved MCQs
-      loadedQuestions = sampleInterviewQuestions.filter(q => q.isMCQ && q.mcqOptions && q.mcqOptions.length > 0 && q.approved).slice(0,10); // Max 10 for default
+      // Fallback: if no specific questions or quizId, load some default approved MCQs
+      loadedQuestions = sampleInterviewQuestions.filter(q => q.isMCQ && q.mcqOptions && q.mcqOptions.length > 0 && q.approved !== false).slice(0,10); // Max 10 for default
+      if (loadedQuestions.length === 0) {
+         toast({title: "No Default Questions", description: "No default questions available for a quiz.", variant: "destructive", duration: 5000});
+      }
     }
     
     if (loadedQuestions.length === 0) {
-        toast({title: "No Valid Questions", description: "Could not load questions for the quiz. Please select MCQ questions from the bank.", variant: "destructive", duration: 5000});
         router.push('/interview-prep');
         return;
     }

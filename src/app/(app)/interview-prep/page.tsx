@@ -1,12 +1,11 @@
-
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Brain, Mic, MessageSquare, Users, Zap, Tag, Lightbulb, CheckSquare as CheckSquareIcon, Code, Puzzle, BookCopy, ListFilter, Info, Share2, RefreshCw, History, Check, X, Star as StarIcon, UserCircle, CalendarDays, ThumbsUp, ShieldCheck, Edit3 as EditIcon, ShieldAlert, PlusCircle, Textarea as TextareaIcon, ChevronLeft, ChevronRight } from "lucide-react"; // Added ChevronLeft, ChevronRight for pagination
-import { sampleInterviewQuestions, sampleUserProfile, sampleMockInterviewSessions, sampleCommunityPosts } from "@/lib/sample-data";
+import { Brain, Mic, MessageSquare, Users, Zap, Tag, Lightbulb, CheckSquare as CheckSquareIcon, Code, Puzzle, BookCopy, ListFilter, Info, Share2, RefreshCw, History, Check, X, Star as StarIcon, UserCircle, CalendarDays, ThumbsUp, ShieldCheck, Edit3 as EditIcon, ShieldAlert, PlusCircle, Textarea as TextareaIcon, ChevronLeft, ChevronRight, ListChecks as ListChecksIcon } from "lucide-react"; // Added ListChecksIcon
+import { sampleInterviewQuestions, sampleUserProfile, sampleMockInterviewSessions, sampleCommunityPosts, sampleCreatedQuizzes } from "@/lib/sample-data"; // Added sampleCreatedQuizzes
 import type { InterviewQuestion, InterviewQuestionCategory, MockInterviewSession, CommunityPost, InterviewQuestionDifficulty } from "@/types";
 import { ALL_CATEGORIES, ALL_DIFFICULTIES } from "@/types";
 import Link from "next/link";
@@ -27,7 +26,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useRouter } from 'next/navigation'; // Import useRouter for navigation
+import { useRouter } from 'next/navigation'; 
 
 const questionFormSchema = z.object({
   question: z.string().min(10, "Question text must be at least 10 characters."),
@@ -50,7 +49,7 @@ const questionFormSchema = z.object({
 
 type QuestionFormData = z.infer<typeof questionFormSchema>;
 
-const ITEMS_PER_PAGE = 10; // Number of questions per page
+const ITEMS_PER_PAGE = 10; 
 
 export default function InterviewPreparationPage() {
   const [allQuestions, setAllQuestions] = useState<InterviewQuestion[]>(sampleInterviewQuestions);
@@ -92,6 +91,11 @@ export default function InterviewPreparationPage() {
   const userInterviewHistory = useMemo(() => {
     return sampleMockInterviewSessions.filter(session => session.userId === currentUser.id);
   }, [currentUser.id]);
+  
+  const createdQuizzes = useMemo(() => {
+    // For now, using sampleCreatedQuizzes. In a real app, this would be fetched or managed state.
+    return sampleCreatedQuizzes;
+  }, []);
 
   const filteredQuestionsFromBank = useMemo(() => {
     return allQuestions.filter(q => {
@@ -141,14 +145,17 @@ export default function InterviewPreparationPage() {
     }
   };
 
-  const handleCreateQuiz = () => {
+  const handleCreateQuizFromSelection = () => {
     const questionIdsToPass = Array.from(selectedQuestionIds);
     if (questionIdsToPass.length === 0) {
         toast({title: "No Questions Selected", description: "Please select questions to include in the quiz.", variant: "destructive"});
         return;
     }
-    // Navigate to the quiz page, passing selected question IDs as query parameters
     router.push(`/interview-prep/quiz?questions=${questionIdsToPass.join(',')}`);
+  };
+
+  const handleStartPredefinedQuiz = (quizId: string) => {
+     router.push(`/interview-prep/quiz?quizId=${quizId}`);
   };
 
   const handleViewReport = (session: MockInterviewSession) => {
@@ -490,7 +497,7 @@ export default function InterviewPreparationPage() {
           )}
         </CardContent>
         <CardFooter className="flex flex-col items-center gap-4 pt-4 border-t">
-           <Button onClick={handleCreateQuiz} disabled={selectedQuestionIds.size === 0} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+           <Button onClick={handleCreateQuizFromSelection} disabled={selectedQuestionIds.size === 0} className="bg-primary hover:bg-primary/90 text-primary-foreground">
               <PlusCircle className="mr-2 h-4 w-4" /> Create Quiz from Selected ({selectedQuestionIds.size})
           </Button>
           {totalPages > 1 && (
@@ -519,6 +526,36 @@ export default function InterviewPreparationPage() {
             </div>
           )}
         </CardFooter>
+      </Card>
+
+      <Card className="shadow-lg">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><ListChecksIcon className="h-6 w-6 text-primary"/>Created Quizzes</CardTitle>
+          <CardDescription>Practice with quizzes created by you or the community.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {createdQuizzes.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">No quizzes created yet. Select questions from the bank to create one!</p>
+          ) : (
+            <div className="space-y-3">
+              {createdQuizzes.map(quiz => (
+                <Card key={quiz.id} className="p-4 bg-secondary/30 hover:shadow-md transition-shadow">
+                  <div className="flex flex-col sm:flex-row justify-between items-start gap-2">
+                    <div>
+                      <h4 className="font-semibold text-foreground">{quiz.topic}</h4>
+                      <p className="text-xs text-muted-foreground">
+                        {quiz.questions.length} Questions
+                        {quiz.difficulty && ` • Difficulty: ${quiz.difficulty}`}
+                        {quiz.questionCategories && quiz.questionCategories.length > 0 && ` • Categories: ${quiz.questionCategories.join(', ')}`}
+                      </p>
+                    </div>
+                    <Button size="sm" variant="default" onClick={() => handleStartPredefinedQuiz(quiz.id)}>Start Quiz</Button>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </CardContent>
       </Card>
 
       <Card className="shadow-lg">
