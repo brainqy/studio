@@ -24,18 +24,28 @@ AccordionItem.displayName = "AccordionItem"
 const AccordionTrigger = React.forwardRef<
   React.ElementRef<typeof AccordionPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Trigger>
->(({ className, children, ...props }, ref) => (
+>(({ className, children, asChild, ...props }, ref) => (
   <AccordionPrimitive.Header className="flex">
     <AccordionPrimitive.Trigger
       ref={ref}
+      asChild={asChild}
       className={cn(
-        "flex flex-1 items-center justify-between py-4 font-medium transition-all hover:underline [&[data-state=open]>svg]:rotate-180",
+        // Default styling is applied if not asChild.
+        // If asChild is true, the user's child component is responsible for its own full styling,
+        // though these classes will still be passed and can be merged or overridden.
+        "flex flex-1 items-center justify-between py-4 font-medium transition-all hover:underline",
+        // Chevron rotation styling is specific to when AccordionTrigger renders its own chevron.
+        // If asChild is true, the user must handle chevron rotation if they provide their own.
+        !asChild && "[&[data-state=open]>svg.accordion-chevron]:rotate-180",
         className
       )}
       {...props}
     >
       {children}
-      <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />
+      {/* Render ChevronDown only if not asChild. If asChild, user must provide it. */}
+      {!asChild && (
+        <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 accordion-chevron" />
+      )}
     </AccordionPrimitive.Trigger>
   </AccordionPrimitive.Header>
 ))

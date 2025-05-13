@@ -1,3 +1,4 @@
+
 "use client";
 
 import type React from 'react';
@@ -8,11 +9,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle as DialogUITitle, DialogDescription as DialogUIDescription, DialogFooter as DialogUIFooter, DialogClose } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Brain, Calendar, Users, ShieldAlert, Type, Languages, MessageSquare, CheckCircle, XCircle, Mic, ListChecks, Search, ChevronLeft, ChevronRight, Tag, Settings2, Puzzle, Lightbulb, Code, Eye, Edit3, Play, PlusCircle, Star as StarIcon, Send, Mail } from "lucide-react";
+import { Brain, Calendar, Users, ShieldAlert, Type, Languages, MessageSquare, CheckCircle, XCircle, Mic, ListChecks, Search, ChevronLeft, ChevronRight, Tag, Settings2, Puzzle, Lightbulb, Code, Eye, Edit3, Play, PlusCircle, Star as StarIcon, Send, Mail, ChevronDown } from "lucide-react"; // Added ChevronDown
 import { useToast } from "@/hooks/use-toast";
 import { sampleUserProfile, samplePracticeSessions, sampleInterviewQuestions, sampleCreatedQuizzes } from "@/lib/sample-data";
-import type { PracticeSession, InterviewQuestion, InterviewQuestionCategory, MockInterviewSession, PracticeFlowStage, PracticeSessionConfig, InterviewQuestionUserComment, InterviewQuestionDifficulty } from "@/types"; // Added PracticeFlowStage, PracticeSessionConfig
-import { ALL_CATEGORIES, PREDEFINED_INTERVIEW_TOPICS } from '@/types'; // Added PREDEFINED_INTERVIEW_TOPICS
+import type { PracticeSession, InterviewQuestion, InterviewQuestionCategory, MockInterviewSession, PracticeFlowStage, PracticeSessionConfig, InterviewQuestionUserComment, InterviewQuestionDifficulty } from "@/types";
+import { ALL_CATEGORIES, PREDEFINED_INTERVIEW_TOPICS } from '@/types';
 import { format, parseISO, isFuture as dateIsFuture } from "date-fns"; 
 import { cn } from "@/lib/utils";
 import { Input } from '@/components/ui/input';
@@ -77,6 +78,7 @@ export default function InterviewPracticeHubPage() {
   const [commentingQuestionId, setCommentingQuestionId] = useState<string | null>(null);
   const { control: commentFormControl, handleSubmit: handleCommentFormSubmit, reset: resetCommentForm, formState: { errors: commentFormErrors } } = useForm<CommentFormData>({
     resolver: zodResolver(commentFormSchema),
+    defaultValues: { commentText: '' }
   });
   
   const [ratingQuestionId, setRatingQuestionId] = useState<string | null>(null);
@@ -97,12 +99,12 @@ export default function InterviewPracticeHubPage() {
     reset: resetQuestionForm,
     setValue: setQuestionFormValue,
     watch: watchQuestionForm,
-    formState,
+    formState, // Keep formState to access errors via formState.errors
   } = useForm<QuestionFormData>({
     resolver: zodResolver(questionFormSchema),
     defaultValues: { isMCQ: false, mcqOptions: ["", "", "", ""], category: 'Common' }
   });
-  const questionFormErrors = formState.errors;
+  const questionFormErrors = formState.errors; // Access errors through formState.errors
   const isMCQSelected = watchQuestionForm("isMCQ");
 
 
@@ -560,34 +562,55 @@ export default function InterviewPracticeHubPage() {
                     paginatedBankQuestions.map(q => (
                     <Accordion key={q.id} type="single" collapsible className="border rounded-md mb-2 bg-card shadow-sm hover:shadow-md transition-shadow">
                         <AccordionItem value={`item-${q.id}`} className="border-b-0">
-                        <AccordionTrigger className="px-4 py-3 text-sm text-left hover:no-underline data-[state=open]:bg-secondary/50">
-                            <div className="flex items-start w-full">
-                            <Checkbox
+                        <AccordionTrigger asChild>
+                          <div
+                            className={cn(
+                              "flex w-full items-center justify-between rounded-t-md px-4 py-3 text-left text-sm font-medium",
+                              "hover:bg-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer",
+                              "data-[state=open]:bg-secondary/50 data-[state=open]:rounded-b-none"
+                            )}
+                          >
+                            <div className="flex items-start flex-1 gap-3">
+                              <Checkbox
                                 id={`select-q-${q.id}`}
                                 checked={selectedQuestionsForQuiz.has(q.id)}
                                 onCheckedChange={() => handleToggleQuestionForQuiz(q.id)}
-                                onClick={(e) => e.stopPropagation()} 
-                                className="mr-3 mt-1 flex-shrink-0"
+                                onClick={(e) => e.stopPropagation()}
+                                className="mt-1 flex-shrink-0"
                                 aria-label={`Select question: ${q.question}`}
-                            />
-                            <div className="flex-1">
+                              />
+                              <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-0.5">
-                                    {getCategoryIcon(q.category)}
-                                    <span className="font-medium text-foreground">{q.question}</span>
+                                  {getCategoryIcon(q.category)}
+                                  <span className="font-medium text-foreground">{q.question}</span>
                                 </div>
-                                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                                    <span>ID: {q.id}</span> | 
-                                    {q.difficulty && <Badge variant="outline" className="text-[10px] px-1 py-0">{q.difficulty}</Badge>}
-                                    {q.tags && q.tags.map(tag => <Badge key={tag} variant="secondary" className="text-[10px] px-1 py-0">{tag}</Badge>)}
+                                <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-wrap">
+                                  <span>ID: {q.id.substring(0,8)}...</span>
+                                  <span className="mx-1">|</span>
+                                  {q.difficulty && <Badge variant="outline" className="text-[10px] px-1 py-0">{q.difficulty}</Badge>}
+                                  {q.tags && q.tags.length > 0 && (<span className="mx-1 hidden sm:inline">|</span>)}
+                                  {q.tags?.slice(0,2).map(tag => <Badge key={tag} variant="secondary" className="text-[10px] px-1 py-0 hidden sm:inline-flex">{tag}</Badge>)}
                                 </div>
+                              </div>
                             </div>
-                            {(q.createdBy === currentUser.id || currentUser.role === 'admin') && (
-                                <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); openEditQuestionDialog(q); }} className="ml-2 h-7 w-7 flex-shrink-0"><Edit3 className="h-4 w-4"/></Button>
-                            )}
-                            {currentUser.role === 'admin' && (
-                                <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleDeleteQuestion(q.id); }} className="h-7 w-7 flex-shrink-0 text-destructive hover:bg-destructive/10"><XCircle className="h-4 w-4"/></Button>
-                            )}
+                            <div className="flex items-center gap-1 ml-2 flex-shrink-0">
+                              {(q.createdBy === currentUser.id || currentUser.role === 'admin') && (
+                                <Button asChild variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); }}>
+                                  <span onClick={(e) => {e.stopPropagation(); openEditQuestionDialog(q);}} >
+                                    <Edit3 className="h-4 w-4"/>
+                                  </span>
+                                </Button>
+                              )}
+                              {currentUser.role === 'admin' && (
+                                <Button asChild variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:bg-destructive/10" onClick={(e) => { e.stopPropagation(); }}>
+                                   <span onClick={(e) => {e.stopPropagation(); handleDeleteQuestion(q.id);}} >
+                                    <XCircle className="h-4 w-4"/>
+                                   </span>
+                                </Button>
+                              )}
+                              <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180" />
                             </div>
+                          </div>
                         </AccordionTrigger>
                         <AccordionContent className="px-4 pb-3 pt-1 space-y-3">
                             <div className="bg-primary/5 p-3 rounded-md">
@@ -629,7 +652,7 @@ export default function InterviewPracticeHubPage() {
                                                 <Input id={`comment-${q.id}`} placeholder="Add a public comment..." {...field} className="text-xs h-8 flex-grow"/>
                                             )}
                                          />
-                                         <Button type="submit" size="sm" variant="outline" disabled={!!commentFormErrors.commentText || !commentFormControl.formState.dirtyFields.commentText }><Send className="h-3.5 w-3.5"/></Button>
+                                         <Button type="submit" size="sm" variant="outline" disabled={!!commentFormErrors.commentText || !commentFormControl.getValues('commentText')?.trim() }><Send className="h-3.5 w-3.5"/></Button>
                                       </form>
                                        {commentFormErrors.commentText && <p className="text-xs text-destructive mt-1">{commentFormErrors.commentText.message}</p>}
                                     {q.userComments && q.userComments.length > 0 && (
@@ -823,4 +846,3 @@ export default function InterviewPracticeHubPage() {
     </div>
   );
 }
-
