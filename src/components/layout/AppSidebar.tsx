@@ -17,7 +17,7 @@ const navItems = [
       { href: "/ai-resume-writer", label: "AI Resume Writer", icon: Edit },
       { href: "/cover-letter-generator", label: "Cover Letter Generator", icon: FileType },
       { href: "/ai-mock-interview", label: "AI Mock Interview", icon: Mic }, 
-      { href: "/interview-prep/quiz", label: "Practice Quiz", icon: PuzzleIcon },
+      // Removed Practice Quiz
     ]
   },
   { href: "/my-resumes", label: "My Resumes", icon: Layers3 },
