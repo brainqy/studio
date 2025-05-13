@@ -2,7 +2,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { BarChart, Users, Settings, Activity, Building2, FileText, MessageSquare, Zap as ZapIcon, ShieldQuestion, UserPlus, Briefcase, Handshake, Mic, ListChecks, Clock, TrendingUp } from "lucide-react"; 
+import { BarChart, Users, Settings, Activity, Building2, FileText, MessageSquare, Zap as ZapIcon, ShieldQuestion, UserPlus, Briefcase, Handshake, Mic, ListChecks, Clock, TrendingUp, Megaphone } from "lucide-react"; 
 import { useEffect, useState, useMemo } from "react";
 import WelcomeTourDialog from '@/components/features/WelcomeTourDialog';
 import { 
@@ -19,6 +19,7 @@ import {
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import type { Tenant } from "@/types";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ResponsiveContainer, BarChart as RechartsBarChart, XAxis, YAxis, Tooltip, Legend, Bar as RechartsBar, CartesianGrid, LineChart, Line } from 'recharts';
 
 interface TenantActivityStats extends Tenant {
@@ -38,12 +39,21 @@ const mockTimeSpentData = {
     { name: "Alumni Connect", time: 700 },
     { name: "Profile Editing", time: 600 },
   ],
-  weeklyPlatformUsage: [
-    { week: "Week 1", hours: 150 },
-    { week: "Week 2", hours: 180 },
-    { week: "Week 3", hours: 165 },
-    { week: "Week 4", hours: 200 },
-  ],
+  // Unified platformUsageData, labels will change based on period selection
+  platformUsageData: {
+    weekly: [
+      { periodLabel: "Week 1", hours: 150 },
+      { periodLabel: "Week 2", hours: 180 },
+      { periodLabel: "Week 3", hours: 165 },
+      { periodLabel: "Week 4", hours: 200 },
+    ],
+    monthly: [
+      { periodLabel: "Jan", hours: 650 },
+      { periodLabel: "Feb", hours: 700 },
+      { periodLabel: "Mar", hours: 680 },
+      { periodLabel: "Apr", hours: 720 },
+    ],
+  },
   topUsersByTime: samplePlatformUsers.slice(0,5).map((user, idx) => ({
     name: user.name,
     time: Math.floor(Math.random() * 20) + 5, // Random hours between 5 and 25
@@ -53,6 +63,7 @@ const mockTimeSpentData = {
 
 export default function AdminDashboard() {
   const [showAdminTour, setShowAdminTour] = useState(false);
+  const [usagePeriod, setUsagePeriod] = useState<'weekly' | 'monthly'>('weekly');
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -121,6 +132,18 @@ export default function AdminDashboard() {
       <div className="space-y-8">
         <h1 className="text-3xl font-bold tracking-tight text-foreground">Admin Dashboard</h1>
         <p className="text-muted-foreground">Manage users, system settings, and view overall platform statistics.</p>
+
+        {/* Promotional Spotlight Card */}
+        <Card className="shadow-lg md:col-span-2 lg:col-span-4 bg-gradient-to-r from-primary/10 via-secondary/5 to-accent/10">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Megaphone className="h-5 w-5 text-primary"/>Promotional Spotlight</CardTitle>
+            <CardDescription>Feature new updates, offers, or important announcements here.</CardDescription>
+          </CardHeader>
+          <CardContent className="text-center py-10">
+            <p className="text-muted-foreground">Promotional content can be displayed here. This area can highlight new features, upcoming webinars, special offers for tenants, or platform achievements.</p>
+            <Button className="mt-4 bg-primary hover:bg-primary/90 text-primary-foreground">Learn More</Button>
+          </CardContent>
+        </Card>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <Card className="shadow-lg">
@@ -242,12 +265,20 @@ export default function AdminDashboard() {
                     <CardContent><p className="text-2xl font-bold text-primary">{mockTimeSpentData.averageSessionDuration} min</p></CardContent>
                 </Card>
                  <Card className="bg-secondary/30">
-                    <CardHeader className="pb-2"><CardTitle className="text-base">Total Weekly Usage</CardTitle></CardHeader>
+                    <CardHeader className="pb-2">
+                        <Tabs value={usagePeriod} onValueChange={(value) => setUsagePeriod(value as 'weekly' | 'monthly')} className="w-full">
+                            <TabsList className="grid w-full grid-cols-2 mb-2 h-8">
+                                <TabsTrigger value="weekly" className="text-xs py-1">Weekly</TabsTrigger>
+                                <TabsTrigger value="monthly" className="text-xs py-1">Monthly</TabsTrigger>
+                            </TabsList>
+                             <CardTitle className="text-base">Total {usagePeriod.charAt(0).toUpperCase() + usagePeriod.slice(1)} Platform Usage</CardTitle>
+                        </Tabs>
+                    </CardHeader>
                     <CardContent className="h-[100px]">
                         <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={mockTimeSpentData.weeklyPlatformUsage} margin={{ top: 5, right: 10, left: -25, bottom: 0 }}>
+                            <LineChart data={mockTimeSpentData.platformUsageData[usagePeriod]} margin={{ top: 5, right: 10, left: -25, bottom: 0 }}>
                                 <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.5}/>
-                                <XAxis dataKey="week" tick={{fontSize: 10}}/>
+                                <XAxis dataKey="periodLabel" tick={{fontSize: 10}}/>
                                 <YAxis tick={{fontSize: 10}}/>
                                 <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', fontSize: '12px', padding: '4px 8px' }}/>
                                 <Line type="monotone" dataKey="hours" stroke="hsl(var(--primary))" strokeWidth={2} dot={{r:3}}/>
@@ -300,7 +331,6 @@ export default function AdminDashboard() {
             <Button asChild variant="outline"><Link href="/admin/content-moderation"><MessageSquare className="mr-2 h-4 w-4"/>Content Moderation</Link></Button>
             <Button asChild variant="outline"><Link href="/admin/gamification-rules"><ListChecks className="mr-2 h-4 w-4"/>Gamification Rules</Link></Button>
             <Button asChild variant="outline"><Link href="/admin/blog-settings"><FileText className="mr-2 h-4 w-4"/>Blog Settings</Link></Button>
-             {/* Consider adding links to more detailed analytics pages if they exist */}
             <Button asChild variant="outline"><Link href="/admin/analytics/user-activity"><TrendingUp className="mr-2 h-4 w-4"/>User Activity Analytics</Link></Button>
           </CardContent>
         </Card>
