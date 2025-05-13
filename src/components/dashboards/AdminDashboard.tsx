@@ -2,7 +2,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { BarChart, Users, Settings, Activity, Building2, FileText, MessageSquare, Zap as ZapIcon, ShieldQuestion, UserPlus, Briefcase, Handshake, Mic, ListChecks } from "lucide-react"; 
+import { BarChart, Users, Settings, Activity, Building2, FileText, MessageSquare, Zap as ZapIcon, ShieldQuestion, UserPlus, Briefcase, Handshake, Mic, ListChecks, Clock, TrendingUp } from "lucide-react"; 
 import { useEffect, useState, useMemo } from "react";
 import WelcomeTourDialog from '@/components/features/WelcomeTourDialog';
 import { 
@@ -19,7 +19,7 @@ import {
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import type { Tenant } from "@/types";
-import { ResponsiveContainer, BarChart as RechartsBarChart, XAxis, YAxis, Tooltip, Legend, Bar as RechartsBar, CartesianGrid } from 'recharts';
+import { ResponsiveContainer, BarChart as RechartsBarChart, XAxis, YAxis, Tooltip, Legend, Bar as RechartsBar, CartesianGrid, LineChart, Line } from 'recharts';
 
 interface TenantActivityStats extends Tenant {
   userCount: number;
@@ -27,6 +27,29 @@ interface TenantActivityStats extends Tenant {
   communityPostsCount: number;
   jobApplicationsCount: number;
 }
+
+// Mock data for time spent stats
+const mockTimeSpentData = {
+  averageSessionDuration: 25.5, // minutes
+  topFeaturesByTime: [
+    { name: "Resume Analyzer", time: 1200 }, // minutes
+    { name: "Community Feed", time: 950 },
+    { name: "Job Tracker", time: 800 },
+    { name: "Alumni Connect", time: 700 },
+    { name: "Profile Editing", time: 600 },
+  ],
+  weeklyPlatformUsage: [
+    { week: "Week 1", hours: 150 },
+    { week: "Week 2", hours: 180 },
+    { week: "Week 3", hours: 165 },
+    { week: "Week 4", hours: 200 },
+  ],
+  topUsersByTime: samplePlatformUsers.slice(0,5).map((user, idx) => ({
+    name: user.name,
+    time: Math.floor(Math.random() * 20) + 5, // Random hours between 5 and 25
+  })).sort((a,b) => b.time - a.time),
+};
+
 
 export default function AdminDashboard() {
   const [showAdminTour, setShowAdminTour] = useState(false);
@@ -79,7 +102,7 @@ export default function AdminDashboard() {
   }, []);
   
   const chartData = tenantActivityData.map(tenant => ({
-      name: tenant.name.substring(0,15) + (tenant.name.length > 15 ? "..." : ""), // Shorten name for chart
+      name: tenant.name.substring(0,15) + (tenant.name.length > 15 ? "..." : ""), 
       Users: tenant.userCount,
       Resumes: tenant.resumesAnalyzed,
       Posts: tenant.communityPostsCount,
@@ -140,6 +163,9 @@ export default function AdminDashboard() {
               <p className="text-xs text-muted-foreground">+15 new today</p>
             </CardContent>
           </Card>
+        </div>
+        
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <Card className="shadow-lg">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Platform Activity</CardTitle>
@@ -202,6 +228,66 @@ export default function AdminDashboard() {
             </ResponsiveContainer>
           </CardContent>
         </Card>
+        
+        {/* Time Spent Statistics Section */}
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Clock className="h-5 w-5 text-primary"/>Time Spent Statistics</CardTitle>
+            <CardDescription>Insights into user engagement time.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <Card className="bg-secondary/30">
+                    <CardHeader className="pb-2"><CardTitle className="text-base">Avg. Session Duration</CardTitle></CardHeader>
+                    <CardContent><p className="text-2xl font-bold text-primary">{mockTimeSpentData.averageSessionDuration} min</p></CardContent>
+                </Card>
+                 <Card className="bg-secondary/30">
+                    <CardHeader className="pb-2"><CardTitle className="text-base">Total Weekly Usage</CardTitle></CardHeader>
+                    <CardContent className="h-[100px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={mockTimeSpentData.weeklyPlatformUsage} margin={{ top: 5, right: 10, left: -25, bottom: 0 }}>
+                                <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.5}/>
+                                <XAxis dataKey="week" tick={{fontSize: 10}}/>
+                                <YAxis tick={{fontSize: 10}}/>
+                                <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', fontSize: '12px', padding: '4px 8px' }}/>
+                                <Line type="monotone" dataKey="hours" stroke="hsl(var(--primary))" strokeWidth={2} dot={{r:3}}/>
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </CardContent>
+                </Card>
+                <Card className="bg-secondary/30 md:col-span-2 lg:col-span-1">
+                    <CardHeader className="pb-2"><CardTitle className="text-base">Top Users (Weekly)</CardTitle></CardHeader>
+                    <CardContent>
+                        <ul className="space-y-1 text-xs">
+                            {mockTimeSpentData.topUsersByTime.map(user => (
+                                <li key={user.name} className="flex justify-between">
+                                    <span>{user.name}</span>
+                                    <span className="font-semibold">{user.time} hrs</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </CardContent>
+                </Card>
+            </div>
+            <div>
+                <h4 className="font-semibold text-md mb-2">Most Used Features (by time)</h4>
+                <div className="space-y-2">
+                    {mockTimeSpentData.topFeaturesByTime.map(feature => (
+                        <div key={feature.name} className="text-sm">
+                            <div className="flex justify-between mb-0.5">
+                                <span>{feature.name}</span>
+                                <span className="text-muted-foreground">{Math.round(feature.time / 60)} hrs</span>
+                            </div>
+                            <div className="w-full bg-muted rounded-full h-1.5">
+                                <div className="bg-primary h-1.5 rounded-full" style={{width: `${(feature.time / mockTimeSpentData.topFeaturesByTime[0].time) * 100}%`}}></div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+          </CardContent>
+        </Card>
+
 
         <Card className="shadow-lg">
           <CardHeader>
@@ -214,9 +300,12 @@ export default function AdminDashboard() {
             <Button asChild variant="outline"><Link href="/admin/content-moderation"><MessageSquare className="mr-2 h-4 w-4"/>Content Moderation</Link></Button>
             <Button asChild variant="outline"><Link href="/admin/gamification-rules"><ListChecks className="mr-2 h-4 w-4"/>Gamification Rules</Link></Button>
             <Button asChild variant="outline"><Link href="/admin/blog-settings"><FileText className="mr-2 h-4 w-4"/>Blog Settings</Link></Button>
+             {/* Consider adding links to more detailed analytics pages if they exist */}
+            <Button asChild variant="outline"><Link href="/admin/analytics/user-activity"><TrendingUp className="mr-2 h-4 w-4"/>User Activity Analytics</Link></Button>
           </CardContent>
         </Card>
       </div>
     </>
   );
 }
+

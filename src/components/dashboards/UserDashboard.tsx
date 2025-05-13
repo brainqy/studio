@@ -3,7 +3,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { PieChart, Bar, Pie, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, Sector, LineChart as RechartsLineChart } from 'recharts';
-import { Activity, Briefcase, Users, Zap, FileText, CheckCircle, Clock, Target, CalendarClock, CalendarCheck2, History as HistoryIcon } from "lucide-react"; // Added CalendarCheck2 and HistoryIcon
+import { Activity, Briefcase, Users, Zap, FileText, CheckCircle, Clock, Target, CalendarClock, CalendarCheck2, History as HistoryIcon, Gift, ExternalLink } from "lucide-react"; // Added Gift, ExternalLink
 import { sampleJobApplications, sampleActivities, sampleAlumni, sampleUserProfile, sampleAppointments, userDashboardTourSteps, samplePracticeSessions } from "@/lib/sample-data"; 
 import type { PieSectorDataItem } from "recharts/types/polar/Pie";
 import { useState, useCallback, useEffect, useMemo } from "react";
@@ -15,6 +15,7 @@ import WelcomeTourDialog from '@/components/features/WelcomeTourDialog';
 import type { TourStep, Appointment, PracticeSession, Activity as ActivityType } from '@/types'; // Added ActivityType
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import Image from "next/image";
 
 
 const jobApplicationStatusData = sampleJobApplications.reduce((acc, curr) => {
@@ -179,6 +180,36 @@ export default function UserDashboard() {
       <div className="space-y-8">
         <h1 className="text-3xl font-bold tracking-tight text-foreground">User Dashboard</h1>
         
+        {/* Promotion Card - Can be hidden or shown based on business logic */}
+        <Card className="shadow-lg bg-gradient-to-r from-primary/80 via-primary to-accent/80 text-primary-foreground overflow-hidden">
+          <div className="flex flex-col md:flex-row items-center p-6 gap-6">
+            <div className="md:w-1/3 flex justify-center">
+              <Image 
+                src="https://picsum.photos/seed/promotion/300/200" 
+                alt="Promotional Offer" 
+                width={250} 
+                height={160} 
+                className="rounded-lg shadow-md object-cover"
+                data-ai-hint="promotion offer"
+              />
+            </div>
+            <div className="md:w-2/3 text-center md:text-left">
+              <h2 className="text-2xl font-bold mb-2">Unlock Premium Features!</h2>
+              <p className="text-sm opacity-90 mb-4">
+                Upgrade your ResumeMatch AI experience with advanced analytics, unlimited resume scans, priority support, and exclusive templates.
+              </p>
+              <Button 
+                variant="secondary" 
+                size="lg"
+                className="bg-secondary hover:bg-secondary/90 text-secondary-foreground"
+                onClick={() => toast({ title: "Upgrade Mock", description: "Premium feature page would open."})}
+              >
+                Learn More <ExternalLink className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </Card>
+
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <Card className="shadow-lg">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -378,3 +409,4 @@ export default function UserDashboard() {
     </>
   );
 }
+

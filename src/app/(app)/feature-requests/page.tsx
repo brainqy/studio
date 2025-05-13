@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { PlusCircle, ShieldQuestion, Lightbulb, Send, Edit3, CheckCircle, Zap } from "lucide-react";
+import { PlusCircle, ShieldQuestion, Lightbulb, Send, Edit3, CheckCircle, Zap, Clock, RefreshCw } from "lucide-react";
 import { sampleFeatureRequests, sampleUserProfile } from "@/lib/sample-data";
 import type { FeatureRequest } from "@/types";
 import { useToast } from "@/hooks/use-toast";
@@ -16,10 +16,11 @@ import { formatDistanceToNow } from 'date-fns';
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { cn } from "@/lib/utils";
 
 const featureRequestSchema = z.object({
-  title: z.string().min(5, "Title must be at least 5 characters"),
-  description: z.string().min(10, "Description must be at least 10 characters"),
+  title: z.string().min(5, "Title must be at least 5 characters").max(100, "Title too long"),
+  description: z.string().min(10, "Description must be at least 10 characters").max(1000, "Description too long"),
 });
 
 type FeatureRequestFormData = z.infer<typeof featureRequestSchema>;
@@ -36,7 +37,7 @@ export default function FeatureRequestsPage() {
   const onSubmitSuggestion = (data: FeatureRequestFormData) => {
     if (editingRequest) {
       setRequests(prevRequests => prevRequests.map(req => 
-        req.id === editingRequest.id ? { ...req, title: data.title, description: data.description } : req
+        req.id === editingRequest.id ? { ...req, title: data.title, description: data.description, timestamp: new Date().toISOString() } : req
       ));
       toast({ title: "Suggestion Updated", description: "Your feature request has been updated." });
     } else {
@@ -44,26 +45,28 @@ export default function FeatureRequestsPage() {
         id: String(Date.now()),
         userId: sampleUserProfile.id, 
         userName: sampleUserProfile.name,
+        userAvatar: sampleUserProfile.profilePictureUrl,
         timestamp: new Date().toISOString(),
         title: data.title,
         description: data.description,
         status: 'Pending',
+        upvotes: 0,
       };
       setRequests(prevRequests => [newRequest, ...prevRequests]);
       toast({ title: "Suggestion Submitted", description: "Thank you for your feedback!" });
     }
     setIsSuggestDialogOpen(false);
-    reset();
+    reset({ title: '', description: '' });
     setEditingRequest(null);
   };
 
-  const getStatusColor = (status: FeatureRequest['status']) => {
+  const getStatusStyles = (status: FeatureRequest['status']) => {
     switch (status) {
-      case 'Pending': return 'bg-yellow-100 text-yellow-700';
-      case 'In Progress': return 'bg-blue-100 text-blue-700';
-      case 'Completed': return 'bg-green-100 text-green-700';
-      case 'Rejected': return 'bg-red-100 text-red-700';
-      default: return 'bg-gray-100 text-gray-700';
+      case 'Pending': return { icon: Clock, color: 'text-yellow-600 bg-yellow-100 border-yellow-300' };
+      case 'In Progress': return { icon: RefreshCw, color: 'text-blue-600 bg-blue-100 border-blue-300' };
+      case 'Completed': return { icon: CheckCircle, color: 'text-green-600 bg-green-100 border-green-300' };
+      case 'Rejected': return { icon: ShieldAlert, color: 'text-red-600 bg-red-100 border-red-300' };
+      default: return { icon: ShieldQuestion, color: 'text-gray-600 bg-gray-100 border-gray-300' };
     }
   };
   
@@ -74,34 +77,53 @@ export default function FeatureRequestsPage() {
   };
 
   const openEditRequestDialog = (request: FeatureRequest) => {
+    if (request.userId !== sampleUserProfile.id || request.status !== 'Pending') {
+      toast({ title: "Cannot Edit", description: "You can only edit your own pending requests.", variant: "destructive"});
+      return;
+    }
     setEditingRequest(request);
     setValue('title', request.title);
     setValue('description', request.description);
     setIsSuggestDialogOpen(true);
   };
+  
+  const handleUpvote = (requestId: string) => {
+    setRequests(prevRequests =>
+      prevRequests.map(req =>
+        req.id === requestId ? { ...req, upvotes: (req.upvotes || 0) + 1 } : req
+      )
+    );
+    toast({ title: "Upvoted!", description: "Your vote has been counted." });
+  };
 
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Feature Requests</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
+            <Lightbulb className="h-8 w-8 text-primary" /> Feature Requests
+        </h1>
         <Button onClick={openNewRequestDialog} className="bg-primary hover:bg-primary/90 text-primary-foreground">
           <PlusCircle className="mr-2 h-5 w-5" /> Suggest New Feature
         </Button>
       </div>
+      <CardDescription>Share your ideas for improving ResumeMatch AI or vote on existing suggestions.</CardDescription>
 
       <Dialog open={isSuggestDialogOpen} onOpenChange={(isOpen) => {
         setIsSuggestDialogOpen(isOpen);
         if (!isOpen) {
-          reset();
+          reset({ title: '', description: '' });
           setEditingRequest(null);
         }
       }}>
-        <DialogContent className="sm:max-w-[525px]">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="text-2xl flex items-center gap-2">
-              <Lightbulb className="h-6 w-6 text-primary"/>
+              <Zap className="h-6 w-6 text-primary"/>
               {editingRequest ? "Edit Feature Suggestion" : "Suggest a New Feature"}
             </DialogTitle>
+            <CardDescription className="pt-1">
+              {editingRequest ? "Modify your existing suggestion." : "We value your input! Let us know what you'd like to see."}
+            </CardDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit(onSubmitSuggestion)} className="space-y-4 py-4">
             <div>
@@ -132,9 +154,9 @@ export default function FeatureRequestsPage() {
       </Dialog>
 
       {requests.length === 0 ? (
-         <Card className="text-center py-12 shadow-lg">
+         <Card className="text-center py-16 shadow-lg border-dashed border-2">
           <CardHeader>
-            <ShieldQuestion className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+            <ShieldQuestion className="h-20 w-20 text-muted-foreground mx-auto mb-4" />
             <CardTitle className="text-2xl">No Feature Requests Yet</CardTitle>
             <CardDescription>
               Have an idea to improve ResumeMatch AI? Be the first to suggest it!
@@ -142,37 +164,46 @@ export default function FeatureRequestsPage() {
           </CardHeader>
         </Card>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2">
-          {requests.map(request => (
-            <Card key={request.id} className="shadow-md hover:shadow-lg transition-shadow duration-300">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {requests.sort((a,b) => (b.upvotes || 0) - (a.upvotes || 0)).map(request => {
+            const statusInfo = getStatusStyles(request.status);
+            const StatusIcon = statusInfo.icon;
+            return (
+            <Card key={request.id} className="shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col">
               <CardHeader>
-                <div className="flex justify-between items-start">
-                  <CardTitle className="text-lg flex-1 mr-2">{request.title}</CardTitle>
-                  <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${getStatusColor(request.status)}`}>
-                    {request.status}
-                  </span>
-                </div>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className={cn(`px-2.5 py-1 text-xs font-semibold rounded-full flex items-center gap-1.5 border`, statusInfo.color)}>
+                        <StatusIcon className="h-3.5 w-3.5" />
+                        {request.status}
+                    </span>
+                    {request.userId === sampleUserProfile.id && request.status === 'Pending' && (
+                       <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary" onClick={() => openEditRequestDialog(request)}>
+                         <Edit3 className="h-4 w-4"/>
+                       </Button>
+                    )}
+                  </div>
+                <CardTitle className="text-lg line-clamp-2" title={request.title}>{request.title}</CardTitle>
                 <CardDescription className="text-xs">
                   Suggested by {request.userName} • {formatDistanceToNow(new Date(request.timestamp), { addSuffix: true })}
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground line-clamp-3">{request.description}</p>
+              <CardContent className="flex-grow">
+                <p className="text-sm text-muted-foreground line-clamp-4">{request.description}</p>
               </CardContent>
-              <CardFooter className="flex justify-between items-center">
-                 <Button variant="link" size="sm" className="p-0 h-auto text-primary hover:underline" onClick={() => toast({title: "View Details (Mock)", description: `Viewing details for "${request.title}"`})}>
-                    View Details
+              <CardFooter className="flex justify-between items-center border-t pt-3 mt-auto">
+                 <Button variant="outline" size="sm" onClick={() => handleUpvote(request.id)}>
+                    <ThumbsUp className="mr-2 h-4 w-4"/> Vote ({request.upvotes || 0})
                  </Button>
-                 {request.userId === sampleUserProfile.id && (
-                   <Button variant="outline" size="sm" onClick={() => openEditRequestDialog(request)}>
-                     <Edit3 className="mr-1 h-4 w-4"/> Edit
-                   </Button>
-                 )}
+                 <Button variant="link" size="sm" className="p-0 h-auto text-primary hover:underline" onClick={() => toast({title: "View Details (Mock)", description: `Viewing details for "${request.title}"`})}>
+                    View Details & Comments
+                 </Button>
               </CardFooter>
             </Card>
-          ))}
+          );
+        })}
         </div>
       )}
     </div>
   );
 }
+
