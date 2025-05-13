@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview Generates mock interview questions for a given topic or job description.
@@ -9,12 +10,12 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import type { GenerateMockInterviewQuestionsInput, GenerateMockInterviewQuestionsOutput, MockInterviewQuestion } from '@/types';
+import type { GenerateMockInterviewQuestionsInput, GenerateMockInterviewQuestionsOutput, MockInterviewQuestion, InterviewQuestionCategory } from '@/types';
 
 const MockInterviewQuestionSchema = z.object({
   id: z.string().describe("Unique identifier for the question."),
   questionText: z.string().describe("The text of the interview question."),
-  category: z.string().optional().describe("Category of the question (e.g., Behavioral, Technical, Situational).")
+  category: z.string().optional().describe("Category of the question (e.g., Behavioral, Technical, Situational, Analytical, HR).") // Updated description
 });
 
 const GenerateMockInterviewQuestionsInputSchema = z.object({
@@ -22,6 +23,8 @@ const GenerateMockInterviewQuestionsInputSchema = z.object({
   jobDescription: z.string().optional().describe('The full job description text to tailor questions to. If provided, questions will be more specific to the role.'),
   numQuestions: z.number().min(1).max(10).default(5).optional().describe('The desired number of questions to generate (default 5, max 10).'),
   difficulty: z.enum(['easy', 'medium', 'hard']).default('medium').optional().describe('The desired difficulty level of the questions (default medium).'),
+  timerPerQuestion: z.number().min(0).max(300).optional().describe('Optional: Suggested time in seconds for answering each question. 0 or undefined means no timer.'),
+  questionCategories: z.array(z.string()).optional().describe('Optional: Specific categories of questions to focus on (e.g., ["Technical", "Behavioral"]).'),
 });
 
 const GenerateMockInterviewQuestionsOutputSchema = z.object({
@@ -50,16 +53,26 @@ No specific job description provided. Generate general questions for the topic/r
 Number of Questions to Generate: {{{numQuestions}}}
 Difficulty Level: {{{difficulty}}}
 
+{{#if questionCategories.length}}
+Focus on generating questions from the following categories:
+{{#each questionCategories}}
+- {{{this}}}
+{{/each}}
+If not possible to generate all questions from these categories, supplement with other relevant types.
+{{else}}
+Include a mix of question types (e.g., Behavioral, Technical, Situational, Analytical, HR) if appropriate for the topic.
+{{/if}}
+
 Instructions:
 1.  Generate exactly {{{numQuestions}}} questions.
 2.  Ensure questions are appropriate for the specified difficulty level ({{{difficulty}}}).
 3.  If a job description is provided, tailor questions to the skills, responsibilities, and technologies mentioned in it.
 4.  If no job description, create general questions relevant to the {{{topic}}}.
-5.  Include a mix of question types (e.g., behavioral, technical, situational, problem-solving) if appropriate for the topic. Assign a category to each.
+5.  Assign a category to each question (e.g., Behavioral, Technical, Analytical, HR, Common, Role-Specific, Situational, Problem-Solving).
 6.  Each question should have a unique 'id' (e.g., "q1", "q2").
 7.  Ensure 'questionText' is clear and concise.
 
-Output strictly in the JSON format defined by the schema. Ensure each question has an 'id' and 'questionText'.
+Output strictly in the JSON format defined by the schema. Ensure each question has an 'id' and 'questionText', and a relevant 'category'.
 `,
 });
 

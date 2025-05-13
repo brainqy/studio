@@ -518,14 +518,18 @@ export const RESUME_BUILDER_STEPS: { id: ResumeBuilderStep; title: string; descr
   { id: 'finalize', title: 'Finalize', description: "Review and finalize your resume.", mainHeading: "Review & Finalize" },
 ];
 
-export type InterviewQuestionCategory = 'Behavioral' | 'Technical' | 'Role-Specific' | 'Common';
+export type InterviewQuestionCategory = 'Behavioral' | 'Technical' | 'Role-Specific' | 'Common' | 'Analytical' | 'HR';
 export interface InterviewQuestion {
   id: string;
   category: InterviewQuestionCategory;
   question: string;
-  answerOrTip: string;
+  answerOrTip: string; // For MCQs, this can be the explanation
   tags?: string[];
+  isMCQ?: boolean; // True if this is a Multiple Choice Question
+  mcqOptions?: string[]; // Array of option texts for MCQ
+  correctAnswer?: string; // The text of the correct MCQ option
 }
+
 
 export interface BlogGenerationSettings {
   generationIntervalHours: number;
@@ -538,7 +542,7 @@ export interface BlogGenerationSettings {
 export interface MockInterviewQuestion {
   id: string;
   questionText: string;
-  category?: string; 
+  category?: InterviewQuestionCategory; // Use the updated type
 }
 
 export interface MockInterviewAnswer {
@@ -566,6 +570,7 @@ export interface MockInterviewSession {
   status: 'pending' | 'in-progress' | 'completed';
   createdAt: string;
   timerPerQuestion?: number; // Optional: time in seconds per question
+  questionCategories?: InterviewQuestionCategory[]; // Store selected categories
 }
 
 export interface GenerateMockInterviewQuestionsInput {
@@ -574,6 +579,7 @@ export interface GenerateMockInterviewQuestionsInput {
   numQuestions?: number; 
   difficulty?: 'easy' | 'medium' | 'hard';
   timerPerQuestion?: number; // Optional: time in seconds per question
+  questionCategories?: InterviewQuestionCategory[]; // Added for selecting question types
 }
 export interface GenerateMockInterviewQuestionsOutput {
   questions: MockInterviewQuestion[];

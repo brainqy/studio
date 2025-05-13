@@ -10,15 +10,19 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import type { GenerateMockInterviewQuestionsInput } from '@/types';
-import { Brain, Timer } from 'lucide-react'; // Added Timer icon
+import { Checkbox } from "@/components/ui/checkbox";
+import type { GenerateMockInterviewQuestionsInput, InterviewQuestionCategory } from '@/types';
+import { Brain, Timer, ListFilter } from 'lucide-react'; // Added ListFilter for categories
+
+const ALL_QUESTION_CATEGORIES: InterviewQuestionCategory[] = ['Common', 'Behavioral', 'Technical', 'Role-Specific', 'Analytical', 'HR'];
 
 const setupSchema = z.object({
   topic: z.string().min(3, "Topic must be at least 3 characters long."),
   jobDescription: z.string().optional(),
   numQuestions: z.coerce.number().min(1).max(10).default(5),
   difficulty: z.enum(['easy', 'medium', 'hard']).default('medium'),
-  timerPerQuestion: z.coerce.number().min(0).max(300).optional().default(0), // 0 means no timer, max 5 minutes (300s)
+  timerPerQuestion: z.coerce.number().min(0).max(300).optional().default(0),
+  questionCategories: z.array(z.string()).optional(), // Array of selected category strings
 });
 
 type SetupFormData = z.infer<typeof setupSchema>;
@@ -29,7 +33,7 @@ interface StepSetupProps {
 }
 
 export default function StepSetup({ onSetupComplete, isLoading }: StepSetupProps) {
-  const { control, handleSubmit, formState: { errors } } = useForm<SetupFormData>({
+  const { control, handleSubmit, watch, setValue, formState: { errors } } = useForm<SetupFormData>({
     resolver: zodResolver(setupSchema),
     defaultValues: {
       topic: '',
@@ -37,13 +41,17 @@ export default function StepSetup({ onSetupComplete, isLoading }: StepSetupProps
       numQuestions: 5,
       difficulty: 'medium',
       timerPerQuestion: 0,
+      questionCategories: [],
     }
   });
+
+  const selectedCategories = watch("questionCategories", []);
 
   const onSubmit = (data: SetupFormData) => {
     const config: GenerateMockInterviewQuestionsInput = {
       ...data,
-      timerPerQuestion: data.timerPerQuestion === 0 ? undefined : data.timerPerQuestion, // Send undefined if timer is 0
+      timerPerQuestion: data.timerPerQuestion === 0 ? undefined : data.timerPerQuestion,
+      questionCategories: data.questionCategories as InterviewQuestionCategory[] | undefined,
     };
     onSetupComplete(config);
   };
@@ -136,6 +144,36 @@ export default function StepSetup({ onSetupComplete, isLoading }: StepSetupProps
           />
            {errors.timerPerQuestion && <p className="text-sm text-destructive mt-1">{errors.timerPerQuestion.message}</p>}
         </div>
+      </div>
+
+      <div>
+        <Label className="flex items-center gap-1 mb-2"><ListFilter className="h-4 w-4" /> Question Categories (Optional)</Label>
+        <Controller
+            name="questionCategories"
+            control={control}
+            render={({ field }) => (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 p-3 border rounded-md bg-secondary/30">
+                    {ALL_QUESTION_CATEGORIES.map((category) => (
+                    <div key={category} className="flex items-center space-x-2">
+                        <Checkbox
+                        id={`category-${category}`}
+                        checked={field.value?.includes(category)}
+                        onCheckedChange={(checked) => {
+                            const currentCategories = field.value || [];
+                            if (checked) {
+                            field.onChange([...currentCategories, category]);
+                            } else {
+                            field.onChange(currentCategories.filter((value) => value !== category));
+                            }
+                        }}
+                        />
+                        <Label htmlFor={`category-${category}`} className="font-normal text-sm cursor-pointer">{category}</Label>
+                    </div>
+                    ))}
+                </div>
+            )}
+        />
+        <p className="text-xs text-muted-foreground mt-1">Select specific question types or leave blank for a general mix.</p>
       </div>
       
       <Button type="submit" disabled={isLoading} className="w-full md:w-auto bg-primary hover:bg-primary/90 text-primary-foreground">

@@ -86,7 +86,7 @@ export const sampleAlumni: AlumniProfile[] = [
     email: "diana.prince.admin@example.com", 
     role: 'admin', 
     status: 'active',
-    lastLogin: new Date(Date.now() - 86400000 * 0.5).toISOString(), 
+    lastLogin: new Date(Date.now() - 0.5 * 86400000).toISOString(),
     interests: ['Yoga', 'Creative Writing', 'Digital Trends'],
     offersHelpWith: [AreasOfSupport[2], AreasOfSupport[5], AreasOfSupport[9]], 
     appointmentCoinCost: 20,
@@ -618,7 +618,7 @@ export const sampleAffiliateClicks: AffiliateClick[] = [
   { id: 'click1', affiliateId: 'currentUser', timestamp: new Date(Date.now() - 86400000 * 2).toISOString(), convertedToSignup: true },
   { id: 'click2', affiliateId: 'currentUser', timestamp: new Date(Date.now() - 86400000 * 1).toISOString(), convertedToSignup: false },
   { id: 'click3', affiliateId: 'affiliateuser1', timestamp: new Date(Date.now() - 86400000 * 3).toISOString(), convertedToSignup: true }, 
-  { id: 'click4', affiliateId: 'currentUser', timestamp: new Date(Date.now() - 86400000 * 0.5).toISOString(), convertedToSignup: false }, 
+  { id: 'click4', affiliateId: 'currentUser', timestamp: new Date(Date.now() - 0.5 * 86400000).toISOString(), convertedToSignup: false },
   { id: 'click5', affiliateId: 'affiliateuser1', timestamp: new Date(Date.now() - 86400000 * 4).toISOString(), convertedToSignup: false }, 
   { id: 'click6', affiliateId: 'affiliateuser2', timestamp: new Date(Date.now() - 86400000 * 1).toISOString(), convertedToSignup: false }, 
 ];
@@ -896,6 +896,33 @@ export const sampleInterviewQuestions: InterviewQuestion[] = [
   { id: 'iq6', category: 'Common', question: "Where do you see yourself in 5 years?", answerOrTip: "Show ambition but also realism. Align your long-term goals with opportunities for growth within the company or industry.", tags: ['career goals'] },
   { id: 'iq7', category: 'Technical', question: "What are the principles of RESTful API design?", answerOrTip: "Discuss statelessness, client-server architecture, cacheability, uniform interface (resources, HTTP verbs, URIs), layered system.", tags: ['api', 'backend'] },
   { id: 'iq8', category: 'Behavioral', question: "Give an example of a goal you reached and tell me how you achieved it.", answerOrTip: "Detail the steps you took, any obstacles you overcame, and the specific result. Quantify if possible.", tags: ['achievement', 'goals'] },
+  { 
+    id: 'mcq1', 
+    category: 'Technical', 
+    question: "Which of the following is NOT a valid HTTP method?", 
+    isMCQ: true, 
+    mcqOptions: ["GET", "POST", "PUSH", "DELETE"], 
+    correctAnswer: "PUSH", 
+    answerOrTip: "PUSH is not a standard HTTP method. Common methods include GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS.", 
+    tags: ['http', 'api', 'mcq'] 
+  },
+  { 
+    id: 'mcq2', 
+    category: 'Analytical', 
+    question: "A project's critical path is delayed by 2 days. What is the most likely impact on the project completion date?", 
+    isMCQ: true, 
+    mcqOptions: ["No impact", "Completion delayed by 1 day", "Completion delayed by 2 days", "Completion delayed by more than 2 days"], 
+    correctAnswer: "Completion delayed by 2 days", 
+    answerOrTip: "A delay on the critical path directly translates to a delay in the project completion date by the same amount, assuming no other changes.", 
+    tags: ['project management', 'analytical', 'mcq'] 
+  },
+  { 
+    id: 'hr1', 
+    category: 'HR', 
+    question: "How do you handle stress and pressure?", 
+    answerOrTip: "Provide specific examples of how you've managed stressful situations. Mention healthy coping mechanisms like prioritization, time management, taking short breaks, or exercise. Emphasize your ability to remain calm and productive.", 
+    tags: ['stress management', 'soft skills'] 
+  },
 ];
 
 export let sampleBlogGenerationSettings: BlogGenerationSettings = {
