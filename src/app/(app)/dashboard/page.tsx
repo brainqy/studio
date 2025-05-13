@@ -9,30 +9,72 @@ import AdminDashboard from "@/components/dashboards/AdminDashboard";
 import ManagerDashboard from "@/components/dashboards/ManagerDashboard";
 import UserDashboard from "@/components/dashboards/UserDashboard";
 import { Skeleton } from "@/components/ui/skeleton"; // For loading state
-import DailyStreakPopup from "@/components/features/DailyStreakPopup"; // Import the new popup
+import DailyStreakPopup from "@/components/features/DailyStreakPopup"; 
+import WelcomeTourDialog from '@/components/features/WelcomeTourDialog';
+import { userDashboardTourSteps, adminDashboardTourSteps, managerDashboardTourSteps } from "@/lib/sample-data";
 
 export default function DashboardPage() {
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showStreakPopup, setShowStreakPopup] = useState(false);
+  const [showWelcomeTour, setShowWelcomeTour] = useState(false);
+  const [tourSteps, setTourSteps] = useState<any[]>([]);
+  const [tourKey, setTourKey] = useState('');
+  const [tourTitle, setTourTitle] = useState('');
 
   useEffect(() => {
-    // Simulate fetching user role
     const role = sampleUserProfile.role; 
     setUserRole(role);
     setIsLoading(false);
 
-    // Logic to show streak popup once per day
     const today = new Date().toISOString().split('T')[0];
-    const popupShownKey = `dailyStreakPopupShown_${today}`;
-    if (typeof window !== 'undefined' && !localStorage.getItem(popupShownKey)) {
-      setShowStreakPopup(true);
-      localStorage.setItem(popupShownKey, 'true');
+    if (typeof window !== 'undefined') {
+      if (role === 'user') {
+        const popupShownKey = `dailyStreakPopupShown_${today}`;
+        if (!localStorage.getItem(popupShownKey)) {
+          setShowStreakPopup(true);
+          localStorage.setItem(popupShownKey, 'true');
+        }
+      }
+      
+      let currentTourKey = '';
+      let currentTourSteps: any[] = [];
+      let currentTourTitle = '';
+
+      if (role === 'admin') {
+        currentTourKey = 'adminDashboardTourSeen';
+        currentTourSteps = adminDashboardTourSteps;
+        currentTourTitle = "Welcome Admin!";
+      } else if (role === 'manager') {
+        currentTourKey = 'managerDashboardTourSeen';
+        currentTourSteps = managerDashboardTourSteps;
+        currentTourTitle = "Welcome Manager!";
+      } else { // user
+        currentTourKey = 'userDashboardTourSeen';
+        currentTourSteps = userDashboardTourSteps;
+        currentTourTitle = "Welcome to Your Dashboard!";
+      }
+      
+      setTourKey(currentTourKey);
+      setTourSteps(currentTourSteps);
+      setTourTitle(currentTourTitle);
+
+      const tourSeen = localStorage.getItem(currentTourKey);
+      if (!tourSeen) {
+        setShowWelcomeTour(true);
+      }
     }
   }, []);
 
   const handleCloseStreakPopup = () => {
     setShowStreakPopup(false);
+  };
+  
+  const handleCloseWelcomeTour = () => {
+    setShowWelcomeTour(false);
+    if (typeof window !== 'undefined' && tourKey) {
+      localStorage.setItem(tourKey, 'true');
+    }
   };
 
   if (isLoading) {
@@ -68,11 +110,20 @@ export default function DashboardPage() {
   return (
     <>
       {renderDashboard()}
-      {userRole === 'user' && sampleUserProfile && ( // Only show for 'user' role and if profile exists
+      {userRole === 'user' && sampleUserProfile && (
          <DailyStreakPopup 
           isOpen={showStreakPopup} 
           onClose={handleCloseStreakPopup} 
           userProfile={sampleUserProfile} 
+        />
+      )}
+      {tourSteps.length > 0 && tourKey && (
+         <WelcomeTourDialog
+          isOpen={showWelcomeTour}
+          onClose={handleCloseWelcomeTour}
+          tourKey={tourKey}
+          steps={tourSteps}
+          title={tourTitle}
         />
       )}
     </>

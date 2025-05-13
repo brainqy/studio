@@ -2,21 +2,31 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { BarChart, Users, Settings, Activity, Building2, FileText, MessageSquare, Zap as ZapIcon, ShieldQuestion, UserPlus, Briefcase, Handshake, Mic } from "lucide-react"; 
-import { useEffect, useState } from "react";
+import { BarChart, Users, Settings, Activity, Building2, FileText, MessageSquare, Zap as ZapIcon, ShieldQuestion, UserPlus, Briefcase, Handshake, Mic, ListChecks } from "lucide-react"; 
+import { useEffect, useState, useMemo } from "react";
 import WelcomeTourDialog from '@/components/features/WelcomeTourDialog';
-import { adminDashboardTourSteps, sampleTenants, sampleCommunityPosts, sampleJobApplications, sampleAlumni, sampleMockInterviewSessions } from "@/lib/sample-data"; 
-// import { ResponsiveContainer, BarChart as RechartsBarChart, XAxis, YAxis, Tooltip, Legend, Bar } from 'recharts'; // Example chart import
+import { 
+  adminDashboardTourSteps, 
+  sampleTenants, 
+  sampleCommunityPosts, 
+  sampleJobApplications, 
+  sampleAlumni, 
+  sampleMockInterviewSessions, 
+  sampleUserProfile,
+  sampleResumeScanHistory,
+  samplePlatformUsers
+} from "@/lib/sample-data"; 
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import type { Tenant } from "@/types";
+import { ResponsiveContainer, BarChart as RechartsBarChart, XAxis, YAxis, Tooltip, Legend, Bar as RechartsBar, CartesianGrid } from 'recharts';
 
-// Sample data for charts (replace with actual data fetching)
-const sampleUserActivityData = [
-  { name: 'Jan', activeUsers: 400, newSignups: 240 },
-  { name: 'Feb', activeUsers: 300, newSignups: 139 },
-  { name: 'Mar', activeUsers: 200, newSignups: 980 },
-  { name: 'Apr', activeUsers: 278, newSignups: 390 },
-  { name: 'May', activeUsers: 189, newSignups: 480 },
-  { name: 'Jun', activeUsers: 239, newSignups: 380 },
-];
+interface TenantActivityStats extends Tenant {
+  userCount: number;
+  resumesAnalyzed: number;
+  communityPostsCount: number;
+  jobApplicationsCount: number;
+}
 
 export default function AdminDashboard() {
   const [showAdminTour, setShowAdminTour] = useState(false);
@@ -29,6 +39,52 @@ export default function AdminDashboard() {
       }
     }
   }, []);
+
+  const platformStats = useMemo(() => {
+    const totalUsers = samplePlatformUsers.length;
+    const activeUsersToday = samplePlatformUsers.filter(u => u.lastLogin && new Date(u.lastLogin) >= new Date(Date.now() - 24 * 60 * 60 * 1000)).length;
+    const newSignupsThisWeek = samplePlatformUsers.filter(u => u.createdAt && new Date(u.createdAt) >= new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length;
+    const totalResumesAnalyzed = sampleResumeScanHistory.length;
+    const totalJobApplications = sampleJobApplications.length;
+    const totalCommunityPosts = sampleCommunityPosts.length;
+    const totalAlumniConnections = sampleAlumni.length * 5; // Mock
+    const totalMockInterviews = sampleMockInterviewSessions.length;
+
+    return {
+      totalUsers,
+      activeUsersToday,
+      newSignupsThisWeek,
+      totalResumesAnalyzed,
+      totalJobApplications,
+      totalCommunityPosts,
+      totalAlumniConnections,
+      totalMockInterviews,
+    };
+  }, []);
+
+  const tenantActivityData = useMemo((): TenantActivityStats[] => {
+    return sampleTenants.map(tenant => {
+      const usersInTenant = samplePlatformUsers.filter(u => u.tenantId === tenant.id);
+      const resumesAnalyzedInTenant = sampleResumeScanHistory.filter(s => s.tenantId === tenant.id);
+      const communityPostsInTenant = sampleCommunityPosts.filter(p => p.tenantId === tenant.id);
+      const jobApplicationsInTenant = sampleJobApplications.filter(j => j.tenantId === tenant.id);
+      return {
+        ...tenant,
+        userCount: usersInTenant.length,
+        resumesAnalyzed: resumesAnalyzedInTenant.length,
+        communityPostsCount: communityPostsInTenant.length,
+        jobApplicationsCount: jobApplicationsInTenant.length,
+      };
+    });
+  }, []);
+  
+  const chartData = tenantActivityData.map(tenant => ({
+      name: tenant.name.substring(0,15) + (tenant.name.length > 15 ? "..." : ""), // Shorten name for chart
+      Users: tenant.userCount,
+      Resumes: tenant.resumesAnalyzed,
+      Posts: tenant.communityPostsCount,
+  }));
+
 
   return (
     <>
@@ -50,8 +106,8 @@ export default function AdminDashboard() {
               <Users className="h-5 w-5 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">1,234</div>
-              <p className="text-xs text-muted-foreground">+50 from last week</p>
+              <div className="text-2xl font-bold">{platformStats.totalUsers}</div>
+              <p className="text-xs text-muted-foreground">+{platformStats.newSignupsThisWeek} new this week</p>
             </CardContent>
           </Card>
           <Card className="shadow-lg">
@@ -61,7 +117,7 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{sampleTenants.length}</div>
-              <p className="text-xs text-muted-foreground">+1 new this month</p>
+              <p className="text-xs text-muted-foreground">Active Tenants</p>
             </CardContent>
           </Card>
           <Card className="shadow-lg">
@@ -70,7 +126,7 @@ export default function AdminDashboard() {
               <FileText className="h-5 w-5 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">5,789</div>
+              <div className="text-2xl font-bold">{platformStats.totalResumesAnalyzed}</div>
               <p className="text-xs text-muted-foreground">+200 this week</p>
             </CardContent>
           </Card>
@@ -80,18 +136,8 @@ export default function AdminDashboard() {
               <MessageSquare className="h-5 w-5 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{sampleCommunityPosts.length}</div>
+              <div className="text-2xl font-bold">{platformStats.totalCommunityPosts}</div>
               <p className="text-xs text-muted-foreground">+15 new today</p>
-            </CardContent>
-          </Card>
-          <Card className="shadow-lg">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">AI Features Usage</CardTitle>
-              <ZapIcon className="h-5 w-5 text-primary" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">12,500+</div>
-              <p className="text-xs text-muted-foreground">Total AI interactions</p>
             </CardContent>
           </Card>
           <Card className="shadow-lg">
@@ -100,67 +146,37 @@ export default function AdminDashboard() {
               <Activity className="h-5 w-5 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">567 Active</div>
-              <p className="text-xs text-muted-foreground">In the last 24 hours</p>
+              <div className="text-2xl font-bold">{platformStats.activeUsersToday} Active Today</div>
+              <p className="text-xs text-muted-foreground">Users active in last 24 hours</p>
             </CardContent>
           </Card>
           <Card className="shadow-lg">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Feature Requests</CardTitle>
-              <ShieldQuestion className="h-5 w-5 text-primary" /> 
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">25 Pending</div>
-              <p className="text-xs text-muted-foreground">3 new this week</p>
-            </CardContent>
-          </Card>
-          <Card className="shadow-lg">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">System Status</CardTitle>
-              <Settings className="h-5 w-5 text-primary" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">Optimal</div>
-              <p className="text-xs text-muted-foreground">All services running</p>
-            </CardContent>
-          </Card>
-           <Card className="shadow-lg">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">New Signups (Weekly)</CardTitle>
-              <UserPlus className="h-5 w-5 text-primary" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">85</div>
-              <p className="text-xs text-muted-foreground">+12% from last week</p>
-            </CardContent>
-          </Card>
-           <Card className="shadow-lg">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Job Applications Tracked</CardTitle>
+              <CardTitle className="text-sm font-medium">Job Applications</CardTitle>
               <Briefcase className="h-5 w-5 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{sampleJobApplications.length}</div>
-              <p className="text-xs text-muted-foreground">Across all users</p>
+              <div className="text-2xl font-bold">{platformStats.totalJobApplications}</div>
+              <p className="text-xs text-muted-foreground">Total tracked applications</p>
             </CardContent>
           </Card>
            <Card className="shadow-lg">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Alumni Connections</CardTitle>
+              <CardTitle className="text-sm font-medium">Alumni Connections Made</CardTitle>
               <Handshake className="h-5 w-5 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{sampleAlumni.length * 5}</div> {/* Mock data */}
-              <p className="text-xs text-muted-foreground">Total connections made</p>
+              <div className="text-2xl font-bold">{platformStats.totalAlumniConnections}</div>
+              <p className="text-xs text-muted-foreground">Total platform connections</p>
             </CardContent>
           </Card>
            <Card className="shadow-lg">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Mock Interviews Done</CardTitle>
+              <CardTitle className="text-sm font-medium">Mock Interviews</CardTitle>
               <Mic className="h-5 w-5 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{sampleMockInterviewSessions.length}</div>
+              <div className="text-2xl font-bold">{platformStats.totalMockInterviews}</div>
               <p className="text-xs text-muted-foreground">Completed AI sessions</p>
             </CardContent>
           </Card>
@@ -168,38 +184,36 @@ export default function AdminDashboard() {
 
         <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle>User Activity Overview</CardTitle>
-            <CardDescription>Monthly active users and new signups.</CardDescription>
+            <CardTitle>Tenant Activity Overview</CardTitle>
+            <CardDescription>Key engagement metrics per tenant.</CardDescription>
           </CardHeader>
-          <CardContent className="h-[350px]">
-            {/* 
-            // Example of how a chart could be added. 
-            // For this placeholder, we'll just show a message.
-            <ResponsiveContainer width="100%" height="100%">
-              <RechartsBarChart data={sampleUserActivityData}>
-                <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" />
-                <YAxis stroke="hsl(var(--muted-foreground))" />
-                <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }} />
-                <Legend />
-                <Bar dataKey="activeUsers" fill="hsl(var(--chart-1))" name="Active Users" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="newSignups" fill="hsl(var(--chart-2))" name="New Signups" radius={[4, 4, 0, 0]} />
-              </RechartsBarChart>
-            </ResponsiveContainer> 
-            */}
-            <div className="flex items-center justify-center h-full">
-              <p className="text-muted-foreground">User activity chart would be displayed here.</p>
-            </div>
+          <CardContent className="h-[400px]">
+             <ResponsiveContainer width="100%" height="100%">
+                <RechartsBarChart data={chartData} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" angle={-30} textAnchor="end" height={70} interval={0} tick={{fontSize: 10}}/>
+                  <YAxis allowDecimals={false}/>
+                  <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }} />
+                  <Legend wrapperStyle={{fontSize: "12px"}}/>
+                  <RechartsBar dataKey="Users" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
+                  <RechartsBar dataKey="Resumes" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} name="Resumes Analyzed"/>
+                  <RechartsBar dataKey="Posts" fill="hsl(var(--chart-3))" radius={[4, 4, 0, 0]} name="Community Posts"/>
+                </RechartsBarChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
 
         <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
+            <CardTitle>Admin Quick Actions</CardTitle>
           </CardHeader>
-          <CardContent className="flex space-x-4">
-            <button className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90">Manage Users</button>
-            <button className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80">System Settings</button>
-            <button className="px-4 py-2 bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90">View Error Logs</button>
+          <CardContent className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            <Button asChild variant="outline"><Link href="/admin/user-management"><Users className="mr-2 h-4 w-4"/>Manage Users</Link></Button>
+            <Button asChild variant="outline"><Link href="/admin/platform-settings"><Settings className="mr-2 h-4 w-4"/>Platform Settings</Link></Button>
+            <Button asChild variant="outline"><Link href="/admin/tenants"><Building2 className="mr-2 h-4 w-4"/>Manage Tenants</Link></Button>
+            <Button asChild variant="outline"><Link href="/admin/content-moderation"><MessageSquare className="mr-2 h-4 w-4"/>Content Moderation</Link></Button>
+            <Button asChild variant="outline"><Link href="/admin/gamification-rules"><ListChecks className="mr-2 h-4 w-4"/>Gamification Rules</Link></Button>
+            <Button asChild variant="outline"><Link href="/admin/blog-settings"><FileText className="mr-2 h-4 w-4"/>Blog Settings</Link></Button>
           </CardContent>
         </Card>
       </div>

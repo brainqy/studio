@@ -1,3 +1,4 @@
+
 export type UserRole = 'admin' | 'manager' | 'user';
 export type UserStatus = 'active' | 'inactive' | 'pending' | 'suspended';
 
@@ -88,8 +89,8 @@ export interface JobApplication {
   resumeUsed?: string; 
   location?: string;
   reminderDate?: string; 
-  sourceJobOpeningId?: string; // Added to link to original job opening
-  applicationUrl?: string; // Added to store the application URL
+  sourceJobOpeningId?: string; 
+  applicationUrl?: string; 
 }
 
 export interface AlumniProfile {
@@ -110,13 +111,14 @@ export interface AlumniProfile {
   offersHelpWith?: SupportArea[];
   appointmentCoinCost?: number;
   xpPoints?: number; 
+  createdAt?: string; 
 }
 
 export interface Activity {
   id: string;
   tenantId: string;
   timestamp: string;
-  description: string; // Added description
+  description: string; 
   userId?: string; 
 }
 
@@ -168,11 +170,12 @@ export interface GalleryEvent {
   tenantId: string;
   title: string;
   date: string; 
-  imageUrls: string[]; // Changed from imageUrl: string to string[]
+  imageUrls: string[]; 
   description?: string;
-  dataAiHint?: string; // Applies to the first image or general event
+  dataAiHint?: string; 
   isPlatformGlobal?: boolean; 
   location?: string; 
+  approved?: boolean; // For manager approval if needed
 }
 
 export interface JobOpening {
@@ -273,6 +276,7 @@ export interface UserProfile extends AlumniProfile {
   affiliateCode?: string; 
   pastInterviewSessions?: string[]; 
   interviewCredits?: number;
+  createdAt?: string; // Added for tracking new signups
 }
 
 export interface ResumeProfile {
@@ -364,6 +368,11 @@ export interface Tenant {
   domain?: string; 
   settings?: TenantSettings;
   createdAt: string;
+  // Potential fields for aggregated stats (can be calculated dynamically too)
+  // totalUsers?: number;
+  // activeUsers?: number;
+  // resumesAnalyzedCount?: number;
+  // communityPostsCount?: number;
 }
 
 export type ReferralStatus = 'Pending' | 'Signed Up' | 'Reward Earned' | 'Expired';
@@ -548,15 +557,15 @@ export interface InterviewQuestion {
   mcqOptions?: string[]; 
   correctAnswer?: string; 
   difficulty?: InterviewQuestionDifficulty;
-  rating?: number; // Average rating
-  ratingsCount?: number; // Number of users who rated
-  userRatings?: InterviewQuestionUserRating[]; // Individual user ratings
-  comments?: string; // Admin comments
-  userComments?: InterviewQuestionUserComment[]; // User-submitted comments
+  rating?: number; 
+  ratingsCount?: number; 
+  userRatings?: InterviewQuestionUserRating[]; 
+  comments?: string; 
+  userComments?: InterviewQuestionUserComment[]; 
   createdBy?: string; 
   approved?: boolean;
-  createdAt?: string; // Added for sorting by most recent
-  bookmarkedBy?: string[]; // Array of user IDs who bookmarked this
+  createdAt?: string; 
+  bookmarkedBy?: string[]; 
 }
 
 export type BankQuestionSortOrder = 'default' | 'highestRated' | 'mostRecent';
@@ -596,28 +605,28 @@ export interface GenerateOverallInterviewFeedbackOutput {
   finalTips: string[];
   overallScore: number; 
 }
-export interface MockInterviewSession { // Also used for Quizzes
+export interface MockInterviewSession { 
   id: string;
   userId: string;
-  topic: string; // For AI mock interview topic, or Quiz name
-  description?: string; // For Quiz description
-  jobDescription?: string; // For AI mock interview context
-  questions: MockInterviewQuestion[]; // or QuizQuestion[] if made distinct
-  answers: MockInterviewAnswer[]; // For AI mock interview
-  overallFeedback?: GenerateOverallInterviewFeedbackOutput; // For AI mock interview
-  overallScore?: number; // For AI mock interview
-  status: 'pending' | 'in-progress' | 'completed'; // 'pending' can be for quiz templates
+  topic: string; 
+  description?: string; 
+  jobDescription?: string; 
+  questions: MockInterviewQuestion[]; 
+  answers: MockInterviewAnswer[]; 
+  overallFeedback?: GenerateOverallInterviewFeedbackOutput; 
+  overallScore?: number; 
+  status: 'pending' | 'in-progress' | 'completed'; 
   createdAt: string;
-  timerPerQuestion?: number; // For AI mock interview / Quiz
-  questionCategories?: InterviewQuestionCategory[]; // For AI mock interview / Quiz
-  difficulty?: InterviewQuestionDifficulty; // For AI mock interview / Quiz
-  // Quiz specific fields, if MockInterviewSession is used for Quizzes:
-  userQuizAnswers?: Record<string, string>; // questionId: selectedOptionValue for quiz
+  timerPerQuestion?: number; 
+  questionCategories?: InterviewQuestionCategory[]; 
+  difficulty?: InterviewQuestionDifficulty; 
+  
+  userQuizAnswers?: Record<string, string>; 
   quizScore?: number;
   quizPercentage?: number;
-  quizTimeTaken?: number; // Time in seconds
-  quizTotalTime?: number; // Total allotted time in seconds
-  quizCategoryStats?: Record<string, { correct: number; total: number; accuracy: number }>; // Added for sectional analysis
+  quizTimeTaken?: number; 
+  quizTotalTime?: number; 
+  quizCategoryStats?: Record<string, { correct: number; total: number; accuracy: number }>; 
   quizAnsweredCount?: number;
   quizMarkedForReviewCount?: number;
 }
@@ -662,54 +671,48 @@ export const MOCK_INTERVIEW_STEPS: { id: MockInterviewStepId; title: string; des
   { id: 'feedback', title: 'Get Feedback', description: 'Review your performance and AI suggestions.' },
 ];
 
-// Quiz Mode Specific Types
 export interface QuizSession {
   id: string;
   userId: string;
-  questions: InterviewQuestion[]; // The actual questions used in this quiz
-  userAnswers: Record<string, string>; // questionId: selectedOptionValue
-  score?: number; // Number of correct answers
-  percentage?: number; // Percentage score
-  startTime: string; // ISO DateTime string
-  endTime?: string; // ISO DateTime string
+  questions: InterviewQuestion[]; 
+  userAnswers: Record<string, string>; 
+  score?: number; 
+  percentage?: number; 
+  startTime: string; 
+  endTime?: string; 
   status: 'in-progress' | 'completed';
-  title?: string; // e.g., "Java Basics Quiz"
-  categoryStats?: Record<string, { correct: number; total: number; accuracy: number }>; // Added for sectional analysis
-  timeTaken?: number; // Time in seconds
-  totalQuizTime?: number; // Total allotted time in seconds
+  title?: string; 
+  categoryStats?: Record<string, { correct: number; total: number; accuracy: number }>; 
+  timeTaken?: number; 
+  totalQuizTime?: number; 
   answeredCount?: number;
   markedForReviewCount?: number;
 }
 
-// Practice Session Type (for the new practice hub)
 export type PracticeSessionStatus = 'SCHEDULED' | 'CANCELLED' | 'COMPLETED';
 export type PracticeSessionType = "friends" | "experts" | "ai"; 
 
 export type DialogStep = 
   | 'selectType' 
-  | 'selectTopics' // For experts/friends OR AI Question Categories (if not distinct)
-  | 'selectTimeSlot' // For experts/friends
-  | 'aiSetupBasic'   // New: AI Topic/Role & JD
-  | 'aiSetupAdvanced'// New: AI NumQ, Difficulty, Timer
-  | 'aiSetupCategories'; // New: AI Question Categories (can reuse selectTopics UI logic)
+  | 'selectTopics' 
+  | 'selectTimeSlot' 
+  | 'aiSetupBasic'   
+  | 'aiSetupAdvanced'
+  | 'aiSetupCategories'; 
 
 
 export interface PracticeSessionConfig {
   type: PracticeSessionType | null;
-  
-  // For expert/friends
-  topics: string[]; // General topics for session with expert/friend
+  topics: string[]; 
   dateTime: Date | null;
   friendEmail?: string;
   expertId?: string;
-  
-  // For AI Mock Interview configuration
-  aiTopicOrRole?: string; // Specific topic/role for AI interview
+  aiTopicOrRole?: string; 
   aiJobDescription?: string;
   aiNumQuestions?: number;
   aiDifficulty?: 'easy' | 'medium' | 'hard';
-  aiTimerPerQuestion?: number; // Time in seconds, 0 for no timer
-  aiQuestionCategories?: InterviewQuestionCategory[]; // Specific categories for AI questions
+  aiTimerPerQuestion?: number; 
+  aiQuestionCategories?: InterviewQuestionCategory[]; 
 }
 
 
@@ -718,11 +721,10 @@ export interface PracticeSession {
   userId: string;
   date: string; 
   category: "Practice with Friends" | "Practice with Experts" | "Practice with AI";
-  type: string; // This would be the specific topic/role for AI, or topics for expert/friend
+  type: string; 
   language: string; 
   status: PracticeSessionStatus;
   notes?: string; 
-  // AI Specific details if booked session is AI
   aiNumQuestions?: number;
   aiDifficulty?: 'easy' | 'medium' | 'hard';
   aiTimerPerQuestion?: number;
@@ -730,10 +732,7 @@ export interface PracticeSession {
 }
 
 export const PREDEFINED_INTERVIEW_TOPICS: string[] = ["Java", "Python", "DSA", "Angular", "Javascript", "Microservices", "System Design", "Behavioral", "Product Management", "Data Science", ...ALL_CATEGORIES];
-// Using string[] for PREDEFINED_INTERVIEW_TOPICS to allow flexibility for expert/friend sessions.
-// For AI Question Categories, we will use ALL_CATEGORIES (which is InterviewQuestionCategory[]).
 
-// New constant for specific practice focus areas/topics
 export const PRACTICE_FOCUS_AREAS = ["Java", "Python", "DSA", "Angular", "Javascript", "Microservices", "System Design", "Behavioral", "Product Management", "Data Science"] as const;
 export type PracticeFocusArea = typeof PRACTICE_FOCUS_AREAS[number];
 
@@ -749,38 +748,30 @@ export type ProfileVisibility = 'public' | 'alumni_only' | 'private';
 export interface PlatformSettings {
   platformName: string;
   maintenanceMode: boolean;
-  // Community
   communityFeedEnabled: boolean;
   autoModeratePosts: boolean; 
-  // Job Board
   jobBoardEnabled: boolean;
   maxJobPostingDays: number;
-  // Gamification
   gamificationEnabled: boolean;
   xpForLogin: number;
   xpForNewPost: number;
-  // AI Tools
   resumeAnalyzerEnabled: boolean;
   aiResumeWriterEnabled: boolean;
   coverLetterGeneratorEnabled: boolean;
   mockInterviewEnabled: boolean;
-  // Other Features
   referralsEnabled: boolean;
   affiliateProgramEnabled: boolean;
   alumniConnectEnabled: boolean;
   defaultAppointmentCost: number;
   featureRequestsEnabled: boolean;
-  // Tenant Customization Abilities (Global toggles for whether tenants *can* customize these)
   allowTenantCustomBranding: boolean; 
   allowTenantEmailCustomization: boolean; 
-  // Default visibility for new user profiles
   defaultProfileVisibility: ProfileVisibility;
-  // New platform settings
   maxResumeUploadsPerUser: number;
   defaultTheme: 'light' | 'dark';
   enablePublicProfilePages: boolean;
   sessionTimeoutMinutes: number;
-  maxEventRegistrationsPerUser?: number; // Optional: max events a user can register for
-  globalAnnouncement?: string; // A platform-wide announcement text
-  pointsForAffiliateSignup?: number; // Points awarded to referrer for a successful affiliate signup
+  maxEventRegistrationsPerUser?: number; 
+  globalAnnouncement?: string; 
+  pointsForAffiliateSignup?: number; 
 }

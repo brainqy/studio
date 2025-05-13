@@ -1,57 +1,37 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Building2, PlusCircle, Edit3, Trash2 } from "lucide-react";
+import { Building2, PlusCircle, Edit3, Trash2, ShieldAlert } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import type { Tenant } from "@/types"; // Assuming Tenant type exists
+import type { Tenant } from "@/types"; 
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-
-const tenantSchema = z.object({
-  name: z.string().min(3, "Tenant name must be at least 3 characters"),
-  allowPublicSignup: z.boolean().default(false),
-});
-
-type TenantFormData = z.infer<typeof tenantSchema>;
-
-// Sample tenant data - replace with actual data fetching
-const initialSampleTenants: Tenant[] = [
-  { id: 'tenant-1', name: 'Default University', createdAt: new Date().toISOString(), settings: { allowPublicSignup: true } },
-  { id: 'tenant-2', name: 'Corporate Partner Inc.', createdAt: new Date(Date.now() - 86400000 * 5).toISOString(), settings: { allowPublicSignup: false } },
-];
+import { sampleTenants, sampleUserProfile } from "@/lib/sample-data";
+import Link from "next/link";
 
 export default function TenantManagementPage() {
-  const [tenants, setTenants] = useState<Tenant[]>(initialSampleTenants);
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [tenants, setTenants] = useState<Tenant[]>(sampleTenants);
   const { toast } = useToast();
-  const { control, handleSubmit, reset, formState: { errors } } = useForm<TenantFormData>({
-    resolver: zodResolver(tenantSchema),
-    defaultValues: { name: '', allowPublicSignup: false }
-  });
+  const currentUser = sampleUserProfile;
 
-  const handleCreateTenantSubmit = (data: TenantFormData) => {
-    const newTenant: Tenant = {
-      id: `tenant-${Date.now()}`, // Simple ID generation for mock
-      name: data.name,
-      createdAt: new Date().toISOString(),
-      settings: { allowPublicSignup: data.allowPublicSignup },
-    };
-    setTenants(prev => [newTenant, ...prev]);
-    toast({ title: "Tenant Created", description: `Tenant "${data.name}" has been successfully created.` });
-    setIsCreateDialogOpen(false);
-    reset();
-  };
+  if (currentUser.role !== 'admin') {
+    return (
+        <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)]">
+            <ShieldAlert className="w-16 h-16 text-destructive mb-4" />
+            <h1 className="text-2xl font-bold text-foreground mb-2">Access Denied</h1>
+            <p className="text-muted-foreground">You do not have permission to view this page.</p>
+            <Button asChild className="mt-6">
+                <Link href="/dashboard">Go to Dashboard</Link>
+            </Button>
+        </div>
+    );
+  }
+
 
   const handleEditTenant = (tenantId: string) => {
-    toast({ title: "Action Mocked", description: `Editing tenant ${tenantId}...` });
+    toast({ title: "Action Mocked", description: `Editing tenant ${tenantId}... (This would typically navigate to a detailed tenant settings page or a more complex edit dialog).` });
   };
 
   const handleDeleteTenant = (tenantId: string) => {
@@ -65,53 +45,11 @@ export default function TenantManagementPage() {
         <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
           <Building2 className="h-8 w-8" /> Tenant Management
         </h1>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
+        <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
+            <Link href="/admin/tenant-onboarding">
               <PlusCircle className="mr-2 h-5 w-5" /> Create New Tenant
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Create New Tenant</DialogTitle>
-              <CardDescription>Enter the details for the new tenant.</CardDescription>
-            </DialogHeader>
-            <form onSubmit={handleSubmit(handleCreateTenantSubmit)} className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="tenant-name" className="text-right">
-                  Name
-                </Label>
-                <Controller
-                  name="name"
-                  control={control}
-                  render={({ field }) => <Input id="tenant-name" {...field} className="col-span-3" />}
-                />
-                {errors.name && <p className="text-sm text-destructive col-start-2 col-span-3">{errors.name.message}</p>}
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="allow-public-signup" className="text-right col-span-3">
-                  Allow Public Signup?
-                </Label>
-                 <Controller
-                  name="allowPublicSignup"
-                  control={control}
-                  render={({ field }) => (
-                    <Checkbox
-                      id="allow-public-signup"
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                      className="col-span-1 justify-self-center"
-                    />
-                  )}
-                />
-              </div>
-              <DialogFooter>
-                <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
-                <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground">Create Tenant</Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+            </Link>
+        </Button>
       </div>
       <CardDescription>Oversee and manage all tenants within the platform.</CardDescription>
 

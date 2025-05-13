@@ -1,8 +1,8 @@
 
 import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem, Appointment, Wallet, ResumeProfile, Tenant, Badge, BlogPost, ReferralHistoryItem, GamificationRule, UserStatus, SurveyResponse, Affiliate, AffiliateClick, AffiliateSignup, AffiliateStatus, SurveyStep, ResumeTemplate, TourStep, CommunityComment, InterviewQuestion, InterviewQuestionCategory, BlogGenerationSettings, MockInterviewSession, InterviewQuestionDifficulty, InterviewQuestionUserComment, PracticeSession, PracticeSessionStatus, JobApplicationStatus, KanbanColumnId, PlatformSettings } from '@/types';
-import { AreasOfSupport, AppointmentStatuses, Genders, DegreePrograms, Industries, TimeCommitments, EngagementModes, SupportTypesSought, JOB_APPLICATION_STATUSES, KANBAN_COLUMNS_CONFIG, PREDEFINED_INTERVIEW_TOPICS, PRACTICE_FOCUS_AREAS, ALL_CATEGORIES, ALL_DIFFICULTIES, MOCK_INTERVIEW_STEPS, RESUME_BUILDER_STEPS, PreferredTimeSlots } from '@/types'; // Import AppointmentStatuses and other const arrays
+import { AreasOfSupport, AppointmentStatuses, Genders, DegreePrograms, Industries, TimeCommitments, EngagementModes, SupportTypesSought, JOB_APPLICATION_STATUSES, KANBAN_COLUMNS_CONFIG, PREDEFINED_INTERVIEW_TOPICS, PRACTICE_FOCUS_AREAS, ALL_CATEGORIES, ALL_DIFFICULTIES, MOCK_INTERVIEW_STEPS, RESUME_BUILDER_STEPS, PreferredTimeSlots } from '@/types'; 
 
-export const SAMPLE_TENANT_ID = 'tenant-1'; // Define a default tenant ID for sample data
+export const SAMPLE_TENANT_ID = 'tenant-1'; 
 
 export let sampleJobApplications: JobApplication[] = [
   { id: '1', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', companyName: 'Tech Solutions Inc.', jobTitle: 'Software Engineer', status: 'Applied', dateApplied: '2024-07-01', notes: 'Applied via company portal.', location: 'Remote', resumeUsed: 'resume1', reminderDate: new Date(Date.now() + 86400000 * 7).toISOString(), applicationUrl: 'https://example.com/apply/job1' }, 
@@ -32,18 +32,19 @@ export const sampleAlumni: AlumniProfile[] = [
     offersHelpWith: [AreasOfSupport[0], AreasOfSupport[2], AreasOfSupport[4]], 
     appointmentCoinCost: 10,
     xpPoints: 2500,
+    createdAt: new Date(Date.now() - 86400000 * 365).toISOString(), // 1 year ago
   },
   {
     id: 'alumni2',
     tenantId: SAMPLE_TENANT_ID,
-    name: 'Bob The Builder',
+    name: 'Bob The Builder (Manager)',
     profilePictureUrl: 'https://picsum.photos/seed/bob/200/200',
     currentJobTitle: 'Product Manager',
     company: 'Microsoft',
     shortBio: 'Focused on user-centric product development. Class of 2018.',
     university: 'Tech Institute',
     skills: ['Product Management', 'Agile', 'UX Research', 'Roadmapping'],
-    email: "bob.builder@example.com",
+    email: "bob.builder.manager@example.com",
     role: 'manager',
     status: 'active',
     lastLogin: new Date(Date.now() - 86400000 * 2).toISOString(), 
@@ -51,6 +52,7 @@ export const sampleAlumni: AlumniProfile[] = [
     offersHelpWith: [AreasOfSupport[1], AreasOfSupport[3], AreasOfSupport[8]], 
     appointmentCoinCost: 15,
     xpPoints: 1800,
+    createdAt: new Date(Date.now() - 86400000 * 180).toISOString(), // 6 months ago
   },
   {
     id: 'alumni3',
@@ -70,6 +72,7 @@ export const sampleAlumni: AlumniProfile[] = [
     offersHelpWith: [AreasOfSupport[0], AreasOfSupport[7]], 
     appointmentCoinCost: 10,
     xpPoints: 1200,
+    createdAt: new Date(Date.now() - 86400000 * 500).toISOString(), // ~1.5 years ago
   },
   {
     id: 'alumni4',
@@ -89,6 +92,7 @@ export const sampleAlumni: AlumniProfile[] = [
     offersHelpWith: [AreasOfSupport[2], AreasOfSupport[5], AreasOfSupport[9]], 
     appointmentCoinCost: 20,
     xpPoints: 5000,
+    createdAt: new Date(Date.now() - 86400000 * 700).toISOString(), // ~2 years ago
   },
 ];
 
@@ -103,7 +107,7 @@ export const sampleActivities: Activity[] = [
   { id: 'act8', tenantId: SAMPLE_TENANT_ID, userId: 'alumni2', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString(), description: 'Commented on "Interview Tips?" post.' },
 ];
 
-export let sampleCommunityPosts: CommunityPost[] = [ // Changed to let for dynamic updates
+export let sampleCommunityPosts: CommunityPost[] = [ 
   { 
     id: 'post1', 
     tenantId: SAMPLE_TENANT_ID, 
@@ -191,15 +195,15 @@ export const sampleFeatureRequests: FeatureRequest[] = [
 ];
 
 export let sampleGalleryEvents: GalleryEvent[] = [
-  { id: 'event1', tenantId: SAMPLE_TENANT_ID, title: 'Annual Alumni Meet 2023', date: '2023-10-15T10:00:00Z', imageUrls: ['https://picsum.photos/seed/event1/600/400', 'https://picsum.photos/seed/event1-extra1/600/400'], description: 'A wonderful evening connecting with fellow alumni.' , dataAiHint: 'conference networking'},
-  { id: 'event2', tenantId: SAMPLE_TENANT_ID, title: 'Tech Talk Series: AI Today', date: '2024-03-22T10:00:00Z', imageUrls: ['https://picsum.photos/seed/event2/600/400'], description: 'Insightful talks on the future of Artificial Intelligence.' , dataAiHint: 'presentation seminar'},
-  { id: 'event3', tenantId: SAMPLE_TENANT_ID, title: 'Campus Job Fair Spring 2024', date: '2024-04-10T10:00:00Z', imageUrls: ['https://picsum.photos/seed/event3/600/400', 'https://picsum.photos/seed/event3-extra2/600/400', 'https://picsum.photos/seed/event3-extra3/600/400'], description: 'Connecting students with top employers.', dataAiHint: 'job fair students' },
+  { id: 'event1', tenantId: SAMPLE_TENANT_ID, title: 'Annual Alumni Meet 2023', date: '2023-10-15T10:00:00Z', imageUrls: ['https://picsum.photos/seed/event1/600/400', 'https://picsum.photos/seed/event1-extra1/600/400'], description: 'A wonderful evening connecting with fellow alumni.' , dataAiHint: 'conference networking', approved: true},
+  { id: 'event2', tenantId: SAMPLE_TENANT_ID, title: 'Tech Talk Series: AI Today', date: '2024-03-22T10:00:00Z', imageUrls: ['https://picsum.photos/seed/event2/600/400'], description: 'Insightful talks on the future of Artificial Intelligence.' , dataAiHint: 'presentation seminar', approved: true},
+  { id: 'event3', tenantId: SAMPLE_TENANT_ID, title: 'Campus Job Fair Spring 2024', date: '2024-04-10T10:00:00Z', imageUrls: ['https://picsum.photos/seed/event3/600/400', 'https://picsum.photos/seed/event3-extra2/600/400', 'https://picsum.photos/seed/event3-extra3/600/400'], description: 'Connecting students with top employers.', dataAiHint: 'job fair students', approved: false },
 ];
 
 export const sampleJobOpenings: JobOpening[] = [
   { id: 'job1', tenantId: SAMPLE_TENANT_ID, title: 'Junior Developer', company: 'Google', postedByAlumniId: 'alumni1', alumniName: 'Alice Wonderland', description: 'Exciting opportunity for recent graduates to join our engineering team. Key skills: Java, Python, Problem Solving.', datePosted: '2024-07-10', location: 'Mountain View, CA', type: 'Full-time', applicationLink: 'https://careers.google.com/jobs/results/' },
   { id: 'job2', tenantId: SAMPLE_TENANT_ID, title: 'Marketing Intern (Summer)', company: 'Amazon', postedByAlumniId: 'alumni4', alumniName: 'Diana Prince (Admin)', description: 'Gain hands-on experience in a fast-paced marketing environment. Focus on digital campaigns and market research.', datePosted: '2024-07-08', location: 'Seattle, WA', type: 'Internship', applicationLink: 'https://www.amazon.jobs/en/' },
-  { id: 'job3', tenantId: SAMPLE_TENANT_ID, title: 'Project Manager - Mentorship Program', company: 'Self-Employed (Mentorship)', postedByAlumniId: 'alumni2', alumniName: 'Bob The Builder', description: 'Looking to mentor aspiring Product Managers. Part-time commitment. Focus on agile methodologies and product strategy.', datePosted: '2024-07-05', location: 'Remote', type: 'Mentorship' },
+  { id: 'job3', tenantId: SAMPLE_TENANT_ID, title: 'Project Manager - Mentorship Program', company: 'Self-Employed (Mentorship)', postedByAlumniId: 'alumni2', alumniName: 'Bob The Builder (Manager)', description: 'Looking to mentor aspiring Product Managers. Part-time commitment. Focus on agile methodologies and product strategy.', datePosted: '2024-07-05', location: 'Remote', type: 'Mentorship' },
   { id: 'job-board-cloudnetics-01', tenantId: SAMPLE_TENANT_ID, title: 'Cloud Engineer', company: 'CloudNetics', postedByAlumniId: 'alumni1', alumniName: 'Alice Wonderland', description: 'Join our innovative cloud solutions team. Experience with AWS/Azure required.', datePosted: '2024-07-03', location: 'Boston, MA', type: 'Full-time', applicationLink: 'https://example.com/cloudnetics/apply' },
   { id: 'job-board-aifuture-02', tenantId: SAMPLE_TENANT_ID, title: 'Machine Learning Eng.', company: 'AI Future', postedByAlumniId: 'alumni3', alumniName: 'Charlie Brown', description: 'Work on cutting-edge ML projects. Strong Python and TensorFlow/PyTorch skills needed.', datePosted: '2024-07-14', location: 'Seattle, WA', type: 'Full-time' },
 ];
@@ -276,19 +280,36 @@ export const sampleUserProfile: UserProfile = {
   affiliateCode: 'AFFADMIN001',
   pastInterviewSessions: [], 
   interviewCredits: 10, 
+  createdAt: new Date(Date.now() - 86400000 * 1000).toISOString(), // ~3 years ago
 };
 
 
 export const samplePlatformUsers: UserProfile[] = [
   sampleUserProfile, 
-  ...sampleAlumni, 
+  ...sampleAlumni.map(alumni => ({...alumni, company: alumni.company, currentJobTitle: alumni.currentJobTitle, shortBio: alumni.shortBio, university: alumni.university, skills: alumni.skills, email: alumni.email, role: alumni.role || 'user', status: alumni.status || 'active', lastLogin: alumni.lastLogin, interests: alumni.interests, offersHelpWith: alumni.offersHelpWith, appointmentCoinCost: alumni.appointmentCoinCost, xpPoints: alumni.xpPoints, createdAt: alumni.createdAt || new Date().toISOString() })),
+  {
+    id: 'managerUser1',
+    tenantId: 'tenant-2', // Belongs to Corporate Partner Inc.
+    role: 'manager',
+    name: 'Manager Mike',
+    email: 'manager.mike@tenant2.com',
+    status: 'active',
+    lastLogin: new Date().toISOString(),
+    currentJobTitle: 'Engagement Lead',
+    company: 'Corporate Partner Inc.',
+    skills: ['Team Leadership', 'Project Management', 'Alumni Relations'],
+    bio: 'Leading engagement initiatives for Corporate Partner Inc. alumni.',
+    profilePictureUrl: 'https://picsum.photos/seed/managermike/200/200',
+    xpPoints: 3200,
+    createdAt: new Date(Date.now() - 86400000 * 90).toISOString(), // 3 months ago
+  } as UserProfile, // Added 'as UserProfile' to satisfy type
 ];
 
 
 export const sampleAppointments: Appointment[] = [
     { id: 'appt1', tenantId: SAMPLE_TENANT_ID, requesterUserId: 'currentUser', alumniUserId: 'alumni1', title: 'Mentorship Session with Alice W.', dateTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3).toISOString(), withUser: 'Alice Wonderland', status: 'Confirmed', costInCoins: 10, meetingLink: 'https://zoom.us/j/1234567890', reminderDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 2).toISOString() },
-    { id: 'appt2', tenantId: SAMPLE_TENANT_ID, requesterUserId: 'currentUser', alumniUserId: 'alumni2', title: 'Networking Call with Bob B.', dateTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 5).toISOString(), withUser: 'Bob The Builder', status: 'Pending', costInCoins: 15, reminderDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 4).toISOString() },
-    { id: 'appt3', tenantId: SAMPLE_TENANT_ID, requesterUserId: 'alumni3', alumniUserId: 'currentUser', title: 'Incoming Request: Career Advice', dateTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 0).toISOString(), withUser: 'Charlie Brown', status: 'Pending', costInCoins: 10, reminderDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 0).toISOString() }, // Reminder today
+    { id: 'appt2', tenantId: SAMPLE_TENANT_ID, requesterUserId: 'currentUser', alumniUserId: 'alumni2', title: 'Networking Call with Bob B.', dateTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 5).toISOString(), withUser: 'Bob The Builder (Manager)', status: 'Pending', costInCoins: 15, reminderDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 4).toISOString() },
+    { id: 'appt3', tenantId: SAMPLE_TENANT_ID, requesterUserId: 'alumni3', alumniUserId: 'currentUser', title: 'Incoming Request: Career Advice', dateTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 0).toISOString(), withUser: 'Charlie Brown', status: 'Pending', costInCoins: 10, reminderDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 0).toISOString() }, 
     { id: 'appt4', tenantId: SAMPLE_TENANT_ID, requesterUserId: 'currentUser', alumniUserId: 'alumni4', title: 'Discuss Marketing Strategy', dateTime: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(), withUser: 'Diana Prince (Admin)', status: 'Completed', costInCoins: 20 },
 ];
 
@@ -383,6 +404,20 @@ export const sampleResumeScanHistory: ResumeScanHistoryItem[] = [
     matchScore: 91,
     bookmarked: false,
   },
+   {
+    id: 'scan4',
+    tenantId: 'tenant-2', // Different tenant
+    userId: 'managerUser1',
+    resumeId: 'resumeTenant2-1',
+    resumeName: 'CorpStrategyResume.pdf',
+    jobTitle: 'Strategy Consultant',
+    companyName: 'McKinsey',
+    resumeTextSnapshot: "Strategic resume content...",
+    jobDescriptionText: "Consulting role description...",
+    scanDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
+    matchScore: 88,
+    bookmarked: false,
+  },
 ];
 
 export const graduationYears = Array.from({ length: 56 }, (_, i) => (2030 - i).toString());
@@ -455,7 +490,7 @@ export const sampleBadges: Badge[] = [
     { id: 'admin-master', name: 'Admin Master', description: 'Successfully managed platform settings.', icon: 'ShieldCheck', xpReward: 0, triggerCondition: 'User role is Admin' }, 
 ];
 
-export let sampleBlogPosts: BlogPost[] = [ // Changed to let for user blog creation
+export let sampleBlogPosts: BlogPost[] = [ 
   {
     id: 'blog1',
     tenantId: 'platform', 
@@ -475,7 +510,7 @@ export let sampleBlogPosts: BlogPost[] = [ // Changed to let for user blog creat
   {
     id: 'blog2',
     tenantId: SAMPLE_TENANT_ID, 
-    userId: 'alumni4', // Assuming Diana (admin) posted this for the tenant
+    userId: 'alumni4', 
     userName: 'Diana Prince (Admin)',
     userAvatar: 'https://picsum.photos/seed/diana/50/50',
     title: 'Networking Success Stories from State University Alumni',
@@ -541,7 +576,7 @@ export const sampleSurveyResponses: SurveyResponse[] = [
     {
         id: 'resp2',
         userId: 'alumni2',
-        userName: 'Bob The Builder',
+        userName: 'Bob The Builder (Manager)',
         surveyId: 'initialFeedbackSurvey',
         surveyName: 'Initial User Feedback',
         responseDate: new Date(Date.now() - 86400000 * 2).toISOString(),
@@ -556,7 +591,7 @@ export const sampleSurveyResponses: SurveyResponse[] = [
         userId: 'alumni3',
         userName: 'Charlie Brown',
         surveyId: 'initialFeedbackSurvey',
-        surveyName: 'Initial User Feedback', // Added name for consistency
+        surveyName: 'Initial User Feedback', 
         responseDate: new Date(Date.now() - 86400000 * 3).toISOString(),
         data: {
             experience: 'needs_improvement',
@@ -581,8 +616,8 @@ export const sampleAffiliates: Affiliate[] = [
   {
     id: 'affiliateuser2', 
     userId: 'alumni2',
-    name: 'Bob The Builder',
-    email: 'bob.builder@example.com',
+    name: 'Bob The Builder (Manager)',
+    email: 'bob.builder.manager@example.com',
     status: 'pending' as AffiliateStatus,
     affiliateCode: 'BOBAFF',
     commissionRate: 0.12,
@@ -880,11 +915,12 @@ export const adminDashboardTourSteps: TourStep[] = [
 ];
 
 export const managerDashboardTourSteps: TourStep[] = [
-  { title: "Manager Dashboard Insights", description: "Hello Manager! Monitor your team's engagement, manage projects, and track key metrics." },
-  { title: "Team Performance", description: "View analytics related to your team's activity and project progress." },
-  { title: "Mentorship Programs", description: "Oversee mentorship programs, assign mentors, and track mentee progress." },
-  { title: "Event Management", description: "Approve event submissions and manage event logistics for your tenant or group." }
+  { title: "Manager Dashboard Insights", description: "Hello Manager! Monitor your tenant's engagement, manage specific features, and track key metrics." },
+  { title: "Tenant User Activity", description: "View statistics on active users and feature usage within your tenant." },
+  { title: "Content Management", description: "Access tools to moderate community content and manage event submissions for your tenant." },
+  { title: "Engagement Tools", description: "Utilize features to foster engagement within your tenant's alumni network." }
 ];
+
 
 export let sampleInterviewQuestions: InterviewQuestion[] = [
   {
@@ -905,7 +941,7 @@ export let sampleInterviewQuestions: InterviewQuestion[] = [
     rating: 4.2, 
     ratingsCount: 15,
     userComments: [
-        { id: 'uc1-1', userId: 'alumni2', userName: 'Bob The Builder', comment: 'Good standard question. The tip is helpful!', timestamp: new Date(Date.now() - 86400000 * 1).toISOString()},
+        { id: 'uc1-1', userId: 'alumni2', userName: 'Bob The Builder (Manager)', comment: 'Good standard question. The tip is helpful!', timestamp: new Date(Date.now() - 86400000 * 1).toISOString()},
         { id: 'uc1-2', userId: 'alumni3', userName: 'Charlie Brown', comment: 'Could use a more complex failure example in options.', timestamp: new Date(Date.now() - 86400000 * 2).toISOString()}
     ],
     comments: "Standard behavioral question, good for assessing self-awareness.", 
@@ -955,7 +991,7 @@ export let sampleInterviewQuestions: InterviewQuestion[] = [
     difficulty: 'Medium',
     rating: 4.0,
     ratingsCount: 10,
-    userComments: [{id: 'uc3-1', userId: 'currentUser', userName: 'Alex Taylor (User)', comment: 'The options are a bit tricky, good test!', timestamp: new Date().toISOString()}],
+    userComments: [{id: 'uc3-1', userId: 'currentUser', userName: 'Alex Taylor (Admin)', comment: 'The options are a bit tricky, good test!', timestamp: new Date().toISOString()}],
     comments: "Fundamental OOP concept.",
     createdBy: "adminUser1",
     approved: true,
@@ -1190,7 +1226,7 @@ export let sampleInterviewQuestions: InterviewQuestion[] = [
 
 
 export let sampleBlogGenerationSettings: BlogGenerationSettings = {
-  generationIntervalHours: 24, // Default to once a day
+  generationIntervalHours: 24, 
   topics: ['Career Advice', 'Resume Writing Tips', 'Interview Skills', 'Networking Strategies', 'Industry Trends'],
   style: 'informative',
   lastGenerated: undefined,
@@ -1216,7 +1252,7 @@ export const sampleMockInterviewSessions: MockInterviewSession[] = [
     },
     overallScore: 80,
     status: 'completed',
-    createdAt: new Date(Date.now() - 86400000 * 3).toISOString(), // 3 days ago
+    createdAt: new Date(Date.now() - 86400000 * 3).toISOString(), 
     timerPerQuestion: 120,
     questionCategories: ['Behavioral'],
     difficulty: 'Medium'
@@ -1225,7 +1261,7 @@ export const sampleMockInterviewSessions: MockInterviewSession[] = [
     id: 'session-hist-2',
     userId: 'currentUser',
     topic: 'Data Analyst Role',
-    questions: sampleInterviewQuestions.slice(2, 3).map(q => ({ id: q.id, questionText: q.question, category: q.category, difficulty: q.difficulty })), // Only one question for this example
+    questions: sampleInterviewQuestions.slice(2, 3).map(q => ({ id: q.id, questionText: q.question, category: q.category, difficulty: q.difficulty })), 
     answers: [
       { questionId: 'iq3', questionText: sampleInterviewQuestions[2].question, userAnswer: 'An abstract class can have constructors and implemented methods, while an interface traditionally only defines a contract with method signatures and constants. A class can inherit from only one abstract class but implement multiple interfaces.', aiFeedback: 'Correct and comprehensive explanation of the key differences.', aiScore: 95, strengths: ["Technical accuracy", "Clarity"], areasForImprovement: ["None for this answer"] },
     ],
@@ -1238,23 +1274,23 @@ export const sampleMockInterviewSessions: MockInterviewSession[] = [
     },
     overallScore: 95,
     status: 'completed',
-    createdAt: new Date(Date.now() - 86400000 * 7).toISOString(), // 7 days ago
-    timerPerQuestion: 0, // No timer
+    createdAt: new Date(Date.now() - 86400000 * 7).toISOString(), 
+    timerPerQuestion: 0, 
     questionCategories: ['Technical'],
     difficulty: 'Medium'
   }
 ];
 
-export let sampleCreatedQuizzes: MockInterviewSession[] = [ // Using MockInterviewSession as a base for Quizzes // Made 'let' for edit
+export let sampleCreatedQuizzes: MockInterviewSession[] = [ 
   {
     id: 'quiz-java-basics',
-    userId: 'system', // Indicates a system-generated or admin-created quiz
+    userId: 'system', 
     topic: 'Java Basics Quiz',
     description: "Test your fundamental knowledge of Java programming concepts. Covers data types, OOP, and common library functions.",
     questions: sampleInterviewQuestions.filter(q => q.tags?.includes('java') && q.isMCQ).slice(0, 5).map(q => ({ id: q.id, questionText: q.question, category: q.category, difficulty: q.difficulty })),
-    answers: [], // Not applicable for quiz template
-    status: 'pending', // This status could indicate it's a template/available quiz
-    createdAt: new Date(Date.now() - 86400000 * 10).toISOString(), // Created 10 days ago
+    answers: [], 
+    status: 'pending', 
+    createdAt: new Date(Date.now() - 86400000 * 10).toISOString(), 
     questionCategories: ['Technical', 'Coding'],
     difficulty: 'Easy',
   },
@@ -1272,7 +1308,7 @@ export let sampleCreatedQuizzes: MockInterviewSession[] = [ // Using MockIntervi
   },
   {
     id: 'quiz-pm-roleplay',
-    userId: 'currentUser', // Example of a user-created quiz
+    userId: 'currentUser', 
     topic: 'Product Manager Role Scenarios',
     description: "A challenging quiz with scenario-based questions for aspiring Product Managers. Tests decision-making and prioritization skills.",
     questions: sampleInterviewQuestions.filter(q => q.category === 'Role-Specific' && q.tags?.includes('product management') && q.isMCQ).slice(0, 3).map(q => ({ id: q.id, questionText: q.question, category: q.category, difficulty: q.difficulty })),
@@ -1288,7 +1324,7 @@ export const samplePracticeSessions: PracticeSession[] = [
   {
     id: "ps1",
     userId: "currentUser",
-    date: new Date(Date.now() + 86400000 * 3).toISOString(), // 3 days from now
+    date: new Date(Date.now() + 86400000 * 3).toISOString(), 
     category: "Practice with Experts",
     type: "Angular",
     language: "English",
@@ -1298,7 +1334,7 @@ export const samplePracticeSessions: PracticeSession[] = [
   {
     id: "ps2",
     userId: "currentUser",
-    date: new Date(Date.now() + 86400000 * 7).toISOString(), // 7 days from now
+    date: new Date(Date.now() + 86400000 * 7).toISOString(), 
     category: "Practice with AI",
     type: "Java Backend",
     language: "English",
@@ -1312,7 +1348,7 @@ export const samplePracticeSessions: PracticeSession[] = [
   {
     id: "ps3",
     userId: "currentUser",
-    date: new Date(Date.now() - 86400000 * 2).toISOString(), // 2 days ago
+    date: new Date(Date.now() - 86400000 * 2).toISOString(), 
     category: "Practice with Friends",
     type: "Behavioral",
     language: "English",
@@ -1322,7 +1358,7 @@ export const samplePracticeSessions: PracticeSession[] = [
   {
     id: "ps4",
     userId: "currentUser",
-    date: new Date(Date.now() + 86400000 * 1).toISOString(), // Tomorrow
+    date: new Date(Date.now() + 86400000 * 1).toISOString(), 
     category: "Practice with Experts",
     type: "System Design",
     language: "English",
@@ -1334,33 +1370,25 @@ export const samplePracticeSessions: PracticeSession[] = [
 export let samplePlatformSettings: PlatformSettings = {
   platformName: "ResumeMatch AI",
   maintenanceMode: false,
-  // Community
   communityFeedEnabled: true,
   autoModeratePosts: true, 
-  // Job Board
   jobBoardEnabled: true,
   maxJobPostingDays: 30,
-  // Gamification
   gamificationEnabled: true,
   xpForLogin: 10,
   xpForNewPost: 20,
-  // AI Tools
   resumeAnalyzerEnabled: true,
   aiResumeWriterEnabled: true,
   coverLetterGeneratorEnabled: true,
   mockInterviewEnabled: true,
-  // Other Features
   referralsEnabled: true,
   affiliateProgramEnabled: true,
   alumniConnectEnabled: true,
   defaultAppointmentCost: 10,
   featureRequestsEnabled: true,
-  // Tenant Customization Abilities
   allowTenantCustomBranding: true, 
   allowTenantEmailCustomization: false, 
-  // Default visibility
   defaultProfileVisibility: 'alumni_only',
-  // New settings
   maxResumeUploadsPerUser: 5,
   defaultTheme: 'light',
   enablePublicProfilePages: false,
