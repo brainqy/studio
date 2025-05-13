@@ -1,18 +1,18 @@
-
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { BarChart, PieChart, LineChart as RechartsLineChart, Bar, Pie, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, Sector } from 'recharts';
-import { Activity, Briefcase, Users, Zap, FileText, CheckCircle, Clock, Target, CalendarClock } from "lucide-react";
-import { sampleJobApplications, sampleActivities, sampleAlumni, sampleUserProfile, sampleAppointments, userDashboardTourSteps } from "@/lib/sample-data"; // Added sampleAppointments & tour steps
+import { PieChart, Bar, Pie, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, Sector, LineChart as RechartsLineChart } from 'recharts';
+import { Activity, Briefcase, Users, Zap, FileText, CheckCircle, Clock, Target, CalendarClock, CalendarCheck2 } from "lucide-react"; // Added CalendarCheck2
+import { sampleJobApplications, sampleActivities, sampleAlumni, sampleUserProfile, sampleAppointments, userDashboardTourSteps, samplePracticeSessions } from "@/lib/sample-data"; 
 import type { PieSectorDataItem } from "recharts/types/polar/Pie";
 import { useState, useCallback, useEffect, useMemo } from "react";
-import { format, parseISO, isFuture, differenceInDays, isToday } from "date-fns"; // Added isToday
+import { format, parseISO, isFuture, differenceInDays, isToday, compareAsc } from "date-fns"; 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast"; 
 import WelcomeTourDialog from '@/components/features/WelcomeTourDialog';
-import type { TourStep } from '@/types';
+import type { TourStep, Appointment, PracticeSession } from '@/types';
+import { cn } from "@/lib/utils";
 
 
 const jobApplicationStatusData = sampleJobApplications.reduce((acc, curr) => {
@@ -128,6 +128,35 @@ export default function UserDashboard() {
       .slice(0, 5); 
   }, [user.id]);
 
+  const upcomingAppointmentsAndSessions = useMemo(() => {
+    const upcomingAppts = sampleAppointments
+      .filter(appt => (appt.requesterUserId === user.id || appt.alumniUserId === user.id) && appt.status === 'Confirmed' && isFuture(parseISO(appt.dateTime)))
+      .map(appt => ({
+        id: appt.id,
+        date: parseISO(appt.dateTime),
+        title: appt.title,
+        type: 'Appointment',
+        with: appt.withUser,
+        link: '/appointments'
+      }));
+
+    const upcomingPractice = samplePracticeSessions
+      .filter(ps => ps.userId === user.id && ps.status === 'SCHEDULED' && isFuture(parseISO(ps.date)))
+      .map(ps => ({
+        id: ps.id,
+        date: parseISO(ps.date),
+        title: ps.category,
+        type: ps.type,
+        with: ps.category.includes('AI') ? 'AI Coach' : ps.category.includes('Expert') ? 'Expert Mentor' : 'Friend',
+        link: '/interview-prep'
+      }));
+      
+    return [...upcomingAppts, ...upcomingPractice]
+      .sort((a, b) => compareAsc(a.date, b.date))
+      .slice(0, 5);
+  }, [user.id]);
+
+
   return (
     <>
       <WelcomeTourDialog
@@ -240,7 +269,7 @@ export default function UserDashboard() {
         <div className="grid gap-6 md:grid-cols-2">
           <Card className="shadow-lg">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2"><CalendarClock className="h-5 w-5 text-primary"/>Upcoming Reminders</CardTitle>
+              <CardTitle className="flex items-center gap-2"><CalendarClock className="h-5 w-5 text-primary"/>Upcoming Job App Reminders</CardTitle>
               <CardDescription>Follow-ups and deadlines for your job applications.</CardDescription>
             </CardHeader>
             <CardContent>
@@ -271,6 +300,41 @@ export default function UserDashboard() {
 
           <Card className="shadow-lg">
             <CardHeader>
+              <CardTitle className="flex items-center gap-2"><CalendarCheck2 className="h-5 w-5 text-primary"/>Upcoming Appointments &amp; Interviews</CardTitle>
+              <CardDescription>Your scheduled mentorship and practice sessions.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {upcomingAppointmentsAndSessions.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">No upcoming sessions.</p>
+              ) : (
+                <ul className="space-y-3">
+                  {upcomingAppointmentsAndSessions.map(item => (
+                    <li key={item.id} className="p-3 bg-secondary/50 rounded-md hover:bg-secondary/70 transition-colors">
+                      <Link href={item.link} className="block">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="text-sm font-medium text-foreground">{item.title}</p>
+                            <p className="text-xs text-muted-foreground">Type: {item.type}</p>
+                            <p className="text-xs text-muted-foreground">With: {item.with}</p>
+                            <p className="text-xs text-blue-600 dark:text-blue-400">
+                              Date: {format(item.date, 'MMM dd, yyyy, p')}
+                              {differenceInDays(item.date, new Date()) === 0 && " (Today!)"}
+                            </p>
+                          </div>
+                          <Button variant="ghost" size="sm" className="text-xs text-primary">View</Button>
+                        </div>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+
+        <Card className="shadow-lg">
+            <CardHeader>
               <CardTitle>Recent Activity</CardTitle>
               <CardDescription>Your latest interactions on the platform.</CardDescription>
             </CardHeader>
@@ -288,7 +352,6 @@ export default function UserDashboard() {
               </ul>
             </CardContent>
           </Card>
-        </div>
 
       </div>
     </>
