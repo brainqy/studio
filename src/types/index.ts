@@ -1,5 +1,6 @@
 
 
+
 export type UserRole = 'admin' | 'manager' | 'user';
 export type UserStatus = 'active' | 'inactive' | 'pending' | 'suspended';
 
@@ -676,13 +677,27 @@ export interface QuizSession {
 
 // Practice Session Type (for the new practice hub)
 export type PracticeSessionStatus = 'SCHEDULED' | 'CANCELLED' | 'COMPLETED';
+export type PracticeSessionType = "friends" | "experts" | "ai"; // Mirroring InterviewType
+export type PracticeFlowStage = 'idle' | 'selectType' | 'selectTopics' | 'selectTimeSlot';
+
+export interface PracticeSessionConfig {
+  type: PracticeSessionType | null;
+  topics: InterviewQuestionCategory[];
+  dateTime: Date | null;
+  friendEmail?: string;
+  expertId?: string; // Potentially to store selected expert ID
+}
+
 export interface PracticeSession {
   id: string;
   userId: string;
-  date: string; // ISO date string for the session
+  date: string; 
   category: "Practice with Friends" | "Practice with Experts" | "Practice with AI";
-  type: string; // e.g., "Angular", "Java", "Behavioral"
-  language: string; // e.g., "Angular", "Java", "English"
+  type: string; // This can be a comma-separated list of topics or a general description
+  language: string; 
   status: PracticeSessionStatus;
-  notes?: string; // Any additional notes or details
+  notes?: string; 
 }
+
+export const PREDEFINED_INTERVIEW_TOPICS: InterviewQuestionCategory[] = [...ALL_CATEGORIES];
+

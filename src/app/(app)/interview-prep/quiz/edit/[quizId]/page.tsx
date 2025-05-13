@@ -13,7 +13,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { sampleCreatedQuizzes, sampleInterviewQuestions, sampleUserProfile } from '@/lib/sample-data';
 import type { MockInterviewSession, InterviewQuestion, InterviewQuestionCategory } from '@/types';
-import { ALL_CATEGORIES } from '@/types';
+import { ALL_CATEGORIES, PREDEFINED_INTERVIEW_TOPICS } from '@/types';
 import { ChevronLeft, Save, PlusCircle, Trash2, ListFilter, Search, Tag, Users, Zap, Brain, Puzzle, MessageSquare, Lightbulb, Code } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
@@ -46,7 +46,29 @@ export default function EditQuizPage() {
       setDescription(quizToEdit.description || '');
       setQuizQuestions(initialQuestions);
       setOriginalQuizQuestions(initialQuestions); // Keep a copy of original
-    } else {
+    } else if (quizId === 'new') {
+      const questionIdsParam = new URLSearchParams(window.location.search).get('questions');
+      const questionIds = questionIdsParam ? questionIdsParam.split(',') : [];
+      const preselectedQuestions = sampleInterviewQuestions
+        .filter(q => questionIds.includes(q.id) && q.isMCQ && q.mcqOptions && q.correctAnswer)
+        .map(q => ({ id: q.id, questionText: q.question, category: q.category, difficulty: q.difficulty }));
+
+      setQuizDetails({ // Initialize a new quiz structure
+          id: `quiz-${Date.now()}`, // Temporary ID, real ID assigned on save
+          userId: sampleUserProfile.id,
+          topic: 'New Custom Quiz',
+          description: 'Describe your new quiz here.',
+          questions: preselectedQuestions,
+          answers: [],
+          status: 'pending',
+          createdAt: new Date().toISOString(),
+      });
+      setTopic('New Custom Quiz');
+      setDescription('Describe your new quiz here.');
+      setQuizQuestions(preselectedQuestions);
+      setOriginalQuizQuestions(preselectedQuestions);
+    }
+     else {
       toast({ title: "Quiz Not Found", description: "Could not find the quiz to edit.", variant: "destructive" });
       router.push('/interview-prep');
     }
@@ -99,16 +121,23 @@ export default function EditQuizPage() {
       topic,
       description,
       questions: quizQuestions,
+      userId: quizDetails.userId || sampleUserProfile.id, // Ensure userId is set
+      status: quizDetails.status || 'pending', // Ensure status is set
+      createdAt: quizDetails.createdAt || new Date().toISOString(), // Ensure createdAt is set
+      answers: quizDetails.answers || [], // Ensure answers is set
     };
 
     // Update in sampleCreatedQuizzes (mock persistence)
-    const quizIndex = sampleCreatedQuizzes.findIndex(q => q.id === quizId);
+    const quizIndex = sampleCreatedQuizzes.findIndex(q => q.id === updatedQuiz.id);
     if (quizIndex !== -1) {
       sampleCreatedQuizzes[quizIndex] = updatedQuiz;
+    } else {
+      // If it's a new quiz, add it
+      sampleCreatedQuizzes.push(updatedQuiz);
     }
 
-    toast({ title: "Quiz Updated", description: `Quiz "${topic}" has been saved.` });
-    router.push('/interview-prep'); // Or back to quiz details
+    toast({ title: "Quiz Saved", description: `Quiz "${topic}" has been saved.` });
+    router.push('/interview-prep'); 
   };
   
   const getCategoryIcon = (category: InterviewQuestionCategory) => {
@@ -138,7 +167,9 @@ export default function EditQuizPage() {
         <ChevronLeft className="mr-1 h-4 w-4" /> Back to Interview Prep
       </Button>
 
-      <h1 className="text-3xl font-bold tracking-tight text-foreground">Edit Quiz: {originalQuizQuestions.length > 0 ? quizDetails.topic : topic}</h1>
+      <h1 className="text-3xl font-bold tracking-tight text-foreground">
+        {quizId === 'new' ? 'Create New Quiz' : `Edit Quiz: ${quizDetails.topic}`}
+      </h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column: Quiz Details & Current Questions */}
@@ -258,9 +289,10 @@ export default function EditQuizPage() {
 
       <div className="mt-8 flex justify-end">
         <Button onClick={handleSaveChanges} size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground">
-          <Save className="mr-2 h-5 w-5" /> Save Quiz Changes
+          <Save className="mr-2 h-5 w-5" /> {quizId === 'new' ? 'Create Quiz' : 'Save Quiz Changes'}
         </Button>
       </div>
     </div>
   );
 }
+

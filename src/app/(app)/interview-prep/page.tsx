@@ -1,3 +1,4 @@
+
 "use client";
 
 import type React from 'react';
@@ -11,9 +12,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Brain, Calendar, Users, ShieldAlert, Type, Languages, MessageSquare, CheckCircle, XCircle, Mic, ListChecks, Search, ChevronLeft, ChevronRight, Tag, Settings2, Puzzle, Lightbulb, Code, Eye, Edit3, Play, PlusCircle, Star as StarIcon, Send, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { sampleUserProfile, samplePracticeSessions, sampleInterviewQuestions, sampleCreatedQuizzes } from "@/lib/sample-data";
-import type { PracticeSession, InterviewQuestion, InterviewQuestionCategory, MockInterviewSession } from "@/types";
-import { ALL_CATEGORIES } from '@/types';
-import { format, parseISO, isFuture as dateIsFuture } from "date-fns"; // Renamed isFuture to avoid conflict
+import type { PracticeSession, InterviewQuestion, InterviewQuestionCategory, MockInterviewSession, PracticeFlowStage, PracticeSessionConfig } from "@/types"; // Added PracticeFlowStage, PracticeSessionConfig
+import { ALL_CATEGORIES, PREDEFINED_INTERVIEW_TOPICS } from '@/types'; // Added PREDEFINED_INTERVIEW_TOPICS
+import { format, parseISO, isFuture as dateIsFuture } from "date-fns"; 
 import { cn } from "@/lib/utils";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -26,6 +27,8 @@ import { Badge } from '@/components/ui/badge';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import PracticeTopicSelection from '@/components/features/interview-prep/PracticeTopicSelection';
+import PracticeDateTimeSelector from '@/components/features/interview-prep/PracticeDateTimeSelector';
 
 
 type InterviewType = "friends" | "experts" | "ai";
@@ -50,7 +53,7 @@ type CommentFormData = z.infer<typeof commentFormSchema>;
 const friendEmailSchema = z.string().email("Please enter a valid email address.");
 
 
-export default function InterviewPracticeHubPage() { // Renamed component
+export default function InterviewPracticeHubPage() { 
   const [isInterviewTypeDialogOpen, setIsInterviewTypeDialogOpen] = useState(false);
   const [selectedInterviewType, setSelectedInterviewType] = useState<InterviewType | null>(null);
   const [friendEmail, setFriendEmail] = useState('');
@@ -80,6 +83,14 @@ export default function InterviewPracticeHubPage() { // Renamed component
   const [ratingQuestionId, setRatingQuestionId] = useState<string | null>(null);
   const [currentRating, setCurrentRating] = useState(0);
 
+  // New state for practice flow
+  const [currentPracticeFlowStage, setCurrentPracticeFlowStage] = useState<PracticeFlowStage>('idle');
+  const [practiceSessionConfig, setPracticeSessionConfig] = useState<PracticeSessionConfig>({
+    type: null,
+    topics: [],
+    dateTime: null,
+  });
+
 
   const {
     control: questionFormControl,
@@ -87,11 +98,11 @@ export default function InterviewPracticeHubPage() { // Renamed component
     reset: resetQuestionForm,
     setValue: setQuestionFormValue,
     watch: watchQuestionForm,
-    formState: { errors: questionFormErrors }
   } = useForm<QuestionFormData>({
     resolver: zodResolver(questionFormSchema),
     defaultValues: { isMCQ: false, mcqOptions: ["", "", "", ""], category: 'Common' }
   });
+  const questionFormErrors = questionFormControl.formState.errors; // Corrected access to errors
   const isMCQSelected = watchQuestionForm("isMCQ");
 
 
@@ -99,18 +110,26 @@ export default function InterviewPracticeHubPage() { // Renamed component
   const allUserSessions = practiceSessions; 
   const cancelledSessions = practiceSessions.filter(s => s.status === 'CANCELLED');
 
-  const handleStartPractice = () => {
+  const handleStartPracticeFlow = () => {
+    setCurrentPracticeFlowStage('selectType');
+    setSelectedInterviewType(null); // Reset previous selection
+    setFriendEmail('');
+    setFriendEmailError(null);
+    setPracticeSessionConfig({ type: null, topics: [], dateTime: null }); // Reset config
     setIsInterviewTypeDialogOpen(true);
   };
 
   const handleInterviewTypeSelect = (type: InterviewType) => {
     setSelectedInterviewType(type);
+    setPracticeSessionConfig(prev => ({ ...prev, type: type as PracticeSessionConfig['type'] }));
     setFriendEmail(''); // Reset email if type changes
     setFriendEmailError(null);
   };
-
+  
   const handleProceedWithInterviewType = () => {
-    if (selectedInterviewType === "friends") {
+    if (!practiceSessionConfig.type) return;
+
+    if (practiceSessionConfig.type === "friends") {
       if (!friendEmail.trim()) {
         setFriendEmailError("Please enter a friend's email to send an invitation.");
         return;
@@ -120,26 +139,21 @@ export default function InterviewPracticeHubPage() { // Renamed component
         setFriendEmailError(emailValidation.error.errors[0].message);
         return;
       }
-      // If email is valid and invitation "sent", then maybe proceed or just close.
-      // For now, the "Send Invitation" button handles the toast.
-      // This "Next" button might just close the dialog for "friends" if invitation is considered the main action.
-      toast({ title: "Practice with Friends Setup", description: "Invitation flow initiated (mock). You can close this dialog or proceed to other practice types." });
-      // setIsInterviewTypeDialogOpen(false); // Or keep open if "Next" is for something else.
-      // Don't automatically redirect or show "coming soon" yet.
-      return; 
+      setPracticeSessionConfig(prev => ({ ...prev, friendEmail }));
+      // Logic for sending invitation (mocked) then potentially moving to a waiting stage or closing
+      handleSendInvitation(); // This will show a toast
+      // We might close the dialog here and not proceed to topics/time for 'friends' for now
+      // Or, we could add a "scheduling with friend" step. For now, it ends here for friends.
+      setIsInterviewTypeDialogOpen(false);
+      setCurrentPracticeFlowStage('idle'); // Reset flow
+      return;
     }
 
+    // For AI or Experts
     setIsInterviewTypeDialogOpen(false);
-    if (selectedInterviewType === "ai") {
-      router.push("/ai-mock-interview");
-    } else if (selectedInterviewType === "experts") {
-      toast({ title: "Practice with Experts", description: "Connect with industry experts for mock interviews (Coming Soon!)." });
-    }
-    // Reset selection for next time
-    setSelectedInterviewType(null); 
-    setFriendEmail('');
-    setFriendEmailError(null);
+    setCurrentPracticeFlowStage('selectTopics');
   };
+
 
   const handleSendInvitation = () => {
     const emailValidation = friendEmailSchema.safeParse(friendEmail);
@@ -148,10 +162,47 @@ export default function InterviewPracticeHubPage() { // Renamed component
       return;
     }
     setFriendEmailError(null);
-    // Mock sending invitation
     toast({ title: "Invitation Sent (Mock)", description: `Invitation sent to ${friendEmail}. They will receive instructions on how to join.` });
-    // Optionally, clear email field or close dialog after sending
-    // setFriendEmail('');
+  };
+
+  const handleTopicsSubmit = (topics: InterviewQuestionCategory[]) => {
+    setPracticeSessionConfig(prev => ({ ...prev, topics }));
+    setCurrentPracticeFlowStage('selectTimeSlot');
+  };
+  
+  const handleDateTimeSubmit = (dateTime: Date) => {
+    setPracticeSessionConfig(prev => ({ ...prev, dateTime }));
+    // At this point, all config is gathered. Proceed to book or start.
+    handleBookPracticeSession({ ...practiceSessionConfig, dateTime }); // Pass the complete config
+  };
+
+  const handleBookPracticeSession = (config: PracticeSessionConfig) => {
+    if (!config.type || config.topics.length === 0 || !config.dateTime) {
+      toast({ title: "Booking Error", description: "Missing practice session details.", variant: "destructive"});
+      setCurrentPracticeFlowStage('idle');
+      return;
+    }
+
+    if (config.type === 'ai') {
+      // Redirect to AI Mock Interview page with necessary config
+      // For now, we'll just use the topic. AI mock interview page already handles number of questions, difficulty etc.
+      router.push(`/ai-mock-interview?topic=${encodeURIComponent(config.topics[0] || 'General')}&dateTime=${config.dateTime.toISOString()}`);
+    } else if (config.type === 'experts') {
+      // Mock booking with expert
+      const newSession: PracticeSession = {
+        id: `ps-expert-${Date.now()}`,
+        userId: currentUser.id,
+        date: config.dateTime.toISOString(),
+        category: "Practice with Experts",
+        type: config.topics.join(', ') || "General",
+        language: "English",
+        status: "SCHEDULED",
+        notes: `Scheduled expert session for topics: ${config.topics.join(', ')}.`,
+      };
+      setPracticeSessions(prev => [newSession, ...prev]);
+      toast({ title: "Expert Session Booked (Mock)", description: `Session for ${config.topics.join(', ')} on ${format(config.dateTime, 'PPp')} scheduled.` });
+    }
+    setCurrentPracticeFlowStage('idle'); // Reset flow
   };
 
   const handleCancelPracticeSession = (sessionId: string) => {
@@ -169,6 +220,7 @@ export default function InterviewPracticeHubPage() { // Renamed component
 
   const filteredBankQuestions = useMemo(() => {
     return allBankQuestions.filter(q => {
+      if (!q.isMCQ || !q.mcqOptions || !q.correctAnswer) return false; // Ensure it's a valid MCQ
       if (q.approved === false && currentUser.role !== 'admin') return false; 
       const matchesCategory = selectedBankCategories.length === 0 || selectedBankCategories.includes(q.category);
       const matchesSearch = bankSearchTerm === '' ||
@@ -196,12 +248,13 @@ export default function InterviewPracticeHubPage() { // Renamed component
     };
 
     if (editingQuestion) {
-      setAllBankQuestions(prev => prev.map(q => q.id === editingQuestion.id ? { ...editingQuestion, ...questionPayload } : q));
+      setAllBankQuestions(prev => prev.map(q => q.id === editingQuestion.id ? { ...editingQuestion, ...questionPayload, difficulty: data.difficulty || 'Medium' } : q));
       toast({ title: "Question Updated", description: "The interview question has been updated." });
     } else {
       const newQuestion: InterviewQuestion = {
         ...questionPayload,
         id: `iq-${Date.now()}`,
+        difficulty: data.difficulty || 'Medium',
         rating: 0,
         ratingsCount: 0,
         userComments: [],
@@ -210,7 +263,7 @@ export default function InterviewPracticeHubPage() { // Renamed component
       toast({ title: "Question Added", description: "New question added to the bank." });
     }
     setIsQuestionFormOpen(false);
-    resetQuestionForm({ isMCQ: false, mcqOptions: ["", "", "", ""], category: 'Common' });
+    resetQuestionForm({ isMCQ: false, mcqOptions: ["", "", "", ""], category: 'Common', difficulty: 'Medium' });
     setEditingQuestion(null);
   };
 
@@ -253,6 +306,8 @@ export default function InterviewPracticeHubPage() { // Renamed component
       return;
     }
     const questionIds = Array.from(selectedQuestionsForQuiz).join(',');
+    // This should eventually point to a new quiz creation page if it's more complex than just passing IDs
+    // For now, let's assume /interview-prep/quiz/edit/[quizId] handles `new` as quizId for creation
     router.push(`/interview-prep/quiz/edit/new?questions=${questionIds}`);
   };
   
@@ -343,6 +398,26 @@ export default function InterviewPracticeHubPage() { // Renamed component
     </Card>
   );
 
+
+  // Main render logic for the page
+  if (currentPracticeFlowStage === 'selectTopics' && practiceSessionConfig.type) {
+    return <PracticeTopicSelection
+              availableTopics={PREDEFINED_INTERVIEW_TOPICS}
+              onTopicsSelected={handleTopicsSubmit}
+              onBack={() => {setCurrentPracticeFlowStage('selectType'); setIsInterviewTypeDialogOpen(true);}}
+              practiceType={practiceSessionConfig.type}
+           />;
+  }
+
+  if (currentPracticeFlowStage === 'selectTimeSlot' && practiceSessionConfig.type) {
+    return <PracticeDateTimeSelector
+              onDateTimeSelected={handleDateTimeSubmit}
+              onBack={() => setCurrentPracticeFlowStage('selectTopics')}
+              practiceType={practiceSessionConfig.type}
+           />;
+  }
+
+  // Default view (idle state)
   return (
     <div className="space-y-8">
       <Card className="bg-secondary/30 shadow-lg">
@@ -353,8 +428,8 @@ export default function InterviewPracticeHubPage() { // Renamed component
               <h1 className="text-3xl font-bold tracking-tight text-foreground">INTERVIEW PREPARATION HUB</h1>
             </div>
             <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-                <Button size="lg" onClick={handleStartPractice} className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                    <Mic className="mr-2 h-5 w-5" /> Start Mock Interview
+                <Button size="lg" onClick={handleStartPracticeFlow} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                    <Mic className="mr-2 h-5 w-5" /> Start New Practice Session
                 </Button>
             </div>
           </div>
@@ -681,7 +756,7 @@ export default function InterviewPracticeHubPage() { // Renamed component
       </Dialog>
 
       <Dialog open={isInterviewTypeDialogOpen} onOpenChange={setIsInterviewTypeDialogOpen}>
-        <DialogContent className="sm:max-w-lg"> {/* Adjusted width for better layout */}
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogUITitle className="text-xl text-center font-semibold">Interview Type</DialogUITitle>
             <DialogUIDescription className="text-center text-muted-foreground">Select interview type here...</DialogUIDescription>
@@ -721,7 +796,7 @@ export default function InterviewPracticeHubPage() { // Renamed component
                         value={friendEmail}
                         onChange={(e) => {
                         setFriendEmail(e.target.value);
-                        if (friendEmailError) setFriendEmailError(null); // Clear error on change
+                        if (friendEmailError) setFriendEmailError(null); 
                         }}
                         className={cn("pl-10", friendEmailError && "border-destructive focus-visible:ring-destructive")}
                     />
@@ -738,7 +813,7 @@ export default function InterviewPracticeHubPage() { // Renamed component
             <DialogClose asChild>
               <Button variant="ghost">Cancel</Button>
             </DialogClose>
-            <Button onClick={handleProceedWithInterviewType} disabled={!selectedInterviewType || (selectedInterviewType === 'friends' && !friendEmail.trim() && !friendEmailError) } className="bg-primary hover:bg-primary/90 text-primary-foreground">
+            <Button onClick={handleProceedWithInterviewType} disabled={!selectedInterviewType || (selectedInterviewType === 'friends' && (!friendEmail.trim() || !!friendEmailError)) } className="bg-primary hover:bg-primary/90 text-primary-foreground">
               Next
             </Button>
           </DialogUIFooter>
@@ -747,3 +822,4 @@ export default function InterviewPracticeHubPage() { // Renamed component
     </div>
   );
 }
+
