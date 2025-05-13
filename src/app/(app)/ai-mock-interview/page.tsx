@@ -1,11 +1,10 @@
 
-
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Loader2, Bot, Maximize, Minimize, Settings2 } from "lucide-react"; // Added Maximize, Minimize
+import { Loader2, Bot, Maximize, Minimize, Settings2 } from "lucide-react"; 
 import { useToast } from '@/hooks/use-toast';
 import type { 
   MockInterviewStepId, 
@@ -26,6 +25,7 @@ import { generateMockInterviewQuestions } from '@/ai/flows/generate-mock-intervi
 import { evaluateInterviewAnswer } from '@/ai/flows/evaluate-interview-answer';
 import { generateOverallInterviewFeedback } from '@/ai/flows/generate-overall-interview-feedback';
 import { cn } from '@/lib/utils';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 
 export default function AiMockInterviewPage() {
@@ -38,10 +38,36 @@ export default function AiMockInterviewPage() {
 
   const { toast } = useToast();
   const currentUser = sampleUserProfile;
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
   const contentRef = useRef<HTMLDivElement>(null);
   const [isInterviewFullScreen, setIsInterviewFullScreen] = useState(false);
 
+  // Initialize interview from query params if present (redirected from hub)
+  useEffect(() => {
+    const topic = searchParams.get('topic');
+    if (topic && !session) { // Only if topic is present and session not already started
+      const jobDescription = searchParams.get('jobDescription') || undefined;
+      const numQuestions = parseInt(searchParams.get('numQuestions') || '5', 10);
+      const difficulty = (searchParams.get('difficulty') as GenerateMockInterviewQuestionsInput['difficulty']) || 'medium';
+      const timerPerQuestion = parseInt(searchParams.get('timerPerQuestion') || '0', 10);
+      const categoriesParam = searchParams.get('categories');
+      const questionCategories = categoriesParam ? categoriesParam.split(',') as GenerateMockInterviewQuestionsInput['questionCategories'] : undefined;
+
+      const initialConfig: GenerateMockInterviewQuestionsInput = {
+        topic,
+        jobDescription,
+        numQuestions,
+        difficulty,
+        timerPerQuestion: timerPerQuestion === 0 ? undefined : timerPerQuestion,
+        questionCategories,
+      };
+      handleSetupComplete(initialConfig);
+    }
+  }, [searchParams, session]); // Added session to dependency to prevent re-triggering
+
+  // Fullscreen logic
   useEffect(() => {
     const handleFullscreenChange = () => {
       setIsInterviewFullScreen(!!document.fullscreenElement);
@@ -49,7 +75,7 @@ export default function AiMockInterviewPage() {
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
-
+  
   const toggleInterviewFullScreen = () => {
     if (!contentRef.current) return;
     if (!document.fullscreenElement) {
@@ -61,12 +87,31 @@ export default function AiMockInterviewPage() {
     }
   };
 
+  // Auto-fullscreen when interview step starts and query param is set
+  useEffect(() => {
+    if (currentUiStepId === 'interview' && searchParams.get('autoFullScreen') === 'true' && !isInterviewFullScreen) {
+      if (contentRef.current && !document.fullscreenElement) {
+        contentRef.current.requestFullscreen().catch(err => {
+          // Silently fail or show a less intrusive notification if auto-fullscreen fails
+          console.warn("Auto-fullscreen failed:", err.message);
+        });
+      }
+    }
+  }, [currentUiStepId, searchParams, isInterviewFullScreen]);
+
 
   const handleSetupComplete = async (config: GenerateMockInterviewQuestionsInput) => {
     setIsLoading(true);
     setInterviewConfig(config);
     try {
       const { questions } = await generateMockInterviewQuestions(config);
+      if (questions.length === 0) {
+        toast({ title: "No Questions Generated", description: "The AI could not generate any questions for this topic. Please try adjusting your setup.", variant: "destructive", duration: 7000 });
+        setIsLoading(false);
+        setCurrentUiStepId('setup'); // Go back to setup
+        router.replace('/ai-mock-interview', undefined); // Clear query params
+        return;
+      }
       const newSession: MockInterviewSession = {
         id: `session-${Date.now()}`,
         userId: currentUser.id,
@@ -77,6 +122,8 @@ export default function AiMockInterviewPage() {
         status: 'in-progress',
         createdAt: new Date().toISOString(),
         timerPerQuestion: config.timerPerQuestion, 
+        difficulty: config.difficulty,
+        questionCategories: config.questionCategories,
       };
       setSession(newSession);
       setCurrentQuestionIndex(0);
@@ -142,6 +189,7 @@ export default function AiMockInterviewPage() {
     if (!session || !session.answers || session.answers.length === 0) {
       toast({ title: "Interview Not Completed", description: "No answers recorded to generate feedback.", variant: "destructive" });
       setCurrentUiStepId('setup'); 
+      router.replace('/ai-mock-interview', undefined); // Clear query params
       return;
     }
     setIsLoading(true); 
@@ -183,6 +231,7 @@ export default function AiMockInterviewPage() {
     if (isInterviewFullScreen && document.fullscreenElement) {
       document.exitFullscreen();
     }
+    router.replace('/ai-mock-interview', undefined); // Clear query params
   };
 
   const renderCurrentStep = () => {

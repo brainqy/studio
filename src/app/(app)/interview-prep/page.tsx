@@ -1,4 +1,3 @@
-
 "use client";
 
 import type React from 'react';
@@ -12,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Brain, Calendar, Users, ShieldAlert, Type, Languages, MessageSquare, CheckCircle, XCircle, Mic, ListChecks, Search, ChevronLeft, ChevronRight, Tag, Settings2, Puzzle, Lightbulb, Code, Eye, Edit3, Play, PlusCircle, Star as StarIcon, Send, Mail, ChevronDown, ListFilter, Bookmark as BookmarkIcon } from "lucide-react"; 
 import { useToast } from "@/hooks/use-toast";
 import { sampleUserProfile, samplePracticeSessions, sampleInterviewQuestions, sampleCreatedQuizzes } from "@/lib/sample-data";
-import type { PracticeSession, InterviewQuestion, InterviewQuestionCategory, MockInterviewSession, DialogStep, PracticeSessionConfig, InterviewQuestionUserComment, InterviewQuestionDifficulty, PracticeFocusArea, BankQuestionSortOrder, BankQuestionFilterView } from "@/types";
+import type { PracticeSession, InterviewQuestion, InterviewQuestionCategory, MockInterviewSession, DialogStep, PracticeSessionConfig, InterviewQuestionUserComment, InterviewQuestionDifficulty, PracticeFocusArea, BankQuestionSortOrder, BankQuestionFilterView, GenerateMockInterviewQuestionsInput } from '@/types';
 import { ALL_CATEGORIES, PREDEFINED_INTERVIEW_TOPICS, PRACTICE_FOCUS_AREAS } from '@/types';
 import { format, parseISO, isFuture as dateIsFuture } from "date-fns"; 
 import { cn } from "@/lib/utils";
@@ -158,12 +157,17 @@ export default function InterviewPracticeHubPage() {
         return;
       }
       setDialogStep('selectTopics'); // For experts
-    } else if (dialogStep === 'selectTopics') { // For Expert type
+    } else if (dialogStep === 'selectTopics') { // For Expert type or AI initial topics
       if (practiceSessionConfig.topics.length === 0) {
-        toast({ title: "Error", description: "Please select at least one topic for expert session.", variant: "destructive" });
+        toast({ title: "Error", description: "Please select at least one topic.", variant: "destructive" });
         return;
       }
-      setDialogStep('selectTimeSlot');
+      if (practiceSessionConfig.type === 'ai') { // AI flow specific step
+        setPracticeSessionConfig(prev => ({...prev, aiTopicOrRole: prev.topics.join(', ')})); // Use selected topics for AI main topic
+        setDialogStep('aiSetupBasic');
+      } else { // Expert flow
+        setDialogStep('selectTimeSlot');
+      }
     } else if (dialogStep === 'aiSetupBasic') {
       if (!practiceSessionConfig.aiTopicOrRole?.trim()) {
           toast({ title: "Error", description: "Please specify the AI interview topic/role.", variant: "destructive" });
@@ -181,10 +185,17 @@ export default function InterviewPracticeHubPage() {
     else if (dialogStep === 'selectTopics') setDialogStep('selectType');
     else if (dialogStep === 'aiSetupCategories') setDialogStep('aiSetupAdvanced');
     else if (dialogStep === 'aiSetupAdvanced') setDialogStep('aiSetupBasic');
-    else if (dialogStep === 'aiSetupBasic') setDialogStep('selectType');
+    else if (dialogStep === 'aiSetupBasic') {
+      if (practiceSessionConfig.type === 'ai' && practiceSessionConfig.topics.length > 0 && practiceSessionConfig.aiTopicOrRole === practiceSessionConfig.topics.join(', ')) {
+        // If AI topic was derived from 'selectTopics' step, go back there
+        setDialogStep('selectTopics');
+      } else {
+        setDialogStep('selectType');
+      }
+    }
   };
   
-  const handleFinalBookSession = () => { // Now for Expert or AI types
+  const handleFinalBookSession = () => { 
     if (!practiceSessionConfig.type) {
         toast({ title: "Booking Error", description: "Interview type not selected.", variant: "destructive"});
         return;
@@ -220,7 +231,7 @@ export default function InterviewPracticeHubPage() {
             timerPerQuestion: practiceSessionConfig.aiTimerPerQuestion === 0 ? undefined : practiceSessionConfig.aiTimerPerQuestion,
             questionCategories: practiceSessionConfig.aiQuestionCategories,
         };
-        // Construct query parameters string
+        
         const queryParams = new URLSearchParams();
         queryParams.append('topic', aiConfigPayload.topic);
         if(aiConfigPayload.jobDescription) queryParams.append('jobDescription', aiConfigPayload.jobDescription);
@@ -228,6 +239,7 @@ export default function InterviewPracticeHubPage() {
         if(aiConfigPayload.difficulty) queryParams.append('difficulty', aiConfigPayload.difficulty);
         if(aiConfigPayload.timerPerQuestion) queryParams.append('timerPerQuestion', String(aiConfigPayload.timerPerQuestion));
         if(aiConfigPayload.questionCategories && aiConfigPayload.questionCategories.length > 0) queryParams.append('categories', aiConfigPayload.questionCategories.join(','));
+        queryParams.append('autoFullScreen', 'true'); // Add fullscreen parameter
 
         router.push(`/ai-mock-interview?${queryParams.toString()}`);
     }
@@ -251,24 +263,20 @@ export default function InterviewPracticeHubPage() {
   const filteredBankQuestions = useMemo(() => {
     let questionsToFilter = [...allBankQuestions];
     
-    // Filter by view (Bookmarks, Needs Approval)
     if (bankFilterView === 'myBookmarks') {
       questionsToFilter = questionsToFilter.filter(q => q.bookmarkedBy?.includes(currentUser.id));
     } else if (bankFilterView === 'needsApproval' && currentUser.role === 'admin') {
       questionsToFilter = questionsToFilter.filter(q => q.approved === false);
-    } else { // 'all' or non-admin viewing 'needsApproval' (show all approved)
+    } else { 
       questionsToFilter = questionsToFilter.filter(q => q.approved !== false || currentUser.role === 'admin');
     }
 
-    // Filter by MCQ
     questionsToFilter = questionsToFilter.filter(q => q.isMCQ && q.mcqOptions && q.correctAnswer);
 
-    // Filter by category
     if (selectedBankCategories.length > 0) {
       questionsToFilter = questionsToFilter.filter(q => selectedBankCategories.includes(q.category));
     }
 
-    // Filter by search term
     if (bankSearchTerm.trim() !== '') {
       const searchTermLower = bankSearchTerm.toLowerCase();
       questionsToFilter = questionsToFilter.filter(q =>
@@ -277,7 +285,6 @@ export default function InterviewPracticeHubPage() {
       );
     }
     
-    // Sort
     if (bankSortOrder === 'highestRated') {
       questionsToFilter.sort((a, b) => (b.rating || 0) - (a.rating || 0));
     } else if (bankSortOrder === 'mostRecent') {
@@ -287,7 +294,6 @@ export default function InterviewPracticeHubPage() {
         return dateB - dateA;
       });
     }
-    // Default sort is implicit (current order after filters)
     
     return questionsToFilter;
   }, [allBankQuestions, selectedBankCategories, bankSearchTerm, currentUser.role, bankSortOrder, bankFilterView, currentUser.id]);
@@ -317,7 +323,7 @@ export default function InterviewPracticeHubPage() {
     } else {
       const newQuestion: InterviewQuestion = {
         ...questionPayload,
-        id: `iq-${Date.now()}`, // Ensure ID is unique
+        id: `iq-${Date.now()}`, 
         difficulty: data.difficulty || 'Medium',
         rating: 0,
         ratingsCount: 0,
@@ -436,7 +442,7 @@ export default function InterviewPracticeHubPage() {
         return q;
     }));
     const question = allBankQuestions.find(q=>q.id === questionId);
-    const isNowBookmarked = !question?.bookmarkedBy?.includes(currentUser.id); // Status after toggle
+    const isNowBookmarked = !question?.bookmarkedBy?.includes(currentUser.id); 
     toast({ title: isNowBookmarked ? "Question Bookmarked" : "Bookmark Removed" });
   };
 
@@ -613,7 +619,7 @@ export default function InterviewPracticeHubPage() {
                         type="single"
                         variant="outline"
                         value={bankFilterView}
-                        onValueChange={(value: BankQuestionFilterView) => { if(value) setBankFilterView(value);}} // ensure value is not empty string for single type
+                        onValueChange={(value: BankQuestionFilterView) => { if(value) setBankFilterView(value);}} 
                         className="flex flex-wrap gap-1 justify-start"
                     >
                         <ToggleGroupItem value="all" aria-label="All Questions" className="text-xs px-2 py-1 h-auto data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">All Questions</ToggleGroupItem>
@@ -647,7 +653,7 @@ export default function InterviewPracticeHubPage() {
                                 id={`select-q-${q.id}`}
                                 checked={selectedQuestionsForQuiz.has(q.id)}
                                 onCheckedChange={() => handleToggleQuestionForQuiz(q.id)}
-                                onClick={(e) => e.stopPropagation()}
+                                onClick={(e) => e.stopPropagation()} 
                                 className="mt-1 flex-shrink-0"
                                 aria-label={`Select question: ${q.question}`}
                               />
@@ -854,7 +860,7 @@ export default function InterviewPracticeHubPage() {
           <DialogHeader>
             <DialogUITitle className="text-xl text-center font-semibold">
               {dialogStep === 'selectType' && "Select Interview Type"}
-              {dialogStep === 'selectTopics' && "Select Practice Topics"}
+              {dialogStep === 'selectTopics' && `Select Practice Topics for ${practiceSessionConfig.type === 'ai' ? 'AI Interview' : 'Expert Session'}`}
               {dialogStep === 'selectTimeSlot' && "Choose Date & Time"}
               {dialogStep === 'aiSetupBasic' && "AI Interview: Basic Setup"}
               {dialogStep === 'aiSetupAdvanced' && "AI Interview: Advanced Options"}
@@ -862,7 +868,7 @@ export default function InterviewPracticeHubPage() {
             </DialogUITitle>
             <DialogUIDescription className="text-center text-muted-foreground">
               {dialogStep === 'selectType' && "How would you like to practice?"}
-              {dialogStep === 'selectTopics' && practiceSessionConfig.type !== 'ai' && `For your ${practiceSessionConfig.type} interview.`}
+              {dialogStep === 'selectTopics' && `For your ${practiceSessionConfig.type} interview.`}
               {dialogStep === 'selectTimeSlot' && `For your ${practiceSessionConfig.type} interview on ${practiceSessionConfig.topics.join(', ')}.`}
               {dialogStep === 'aiSetupBasic' && "Tell us about the role or topic for your AI mock interview."}
               {dialogStep === 'aiSetupAdvanced' && "Configure the number of questions, difficulty, and timer."}
@@ -876,7 +882,7 @@ export default function InterviewPracticeHubPage() {
                 <ToggleGroup
                   type="single"
                   value={practiceSessionConfig.type || ""}
-                  onValueChange={(value: PracticeSessionConfig['type']) => setPracticeSessionConfig(p => ({...p, type: value, friendEmail: ''}))}
+                  onValueChange={(value: PracticeSessionConfig['type']) => setPracticeSessionConfig(p => ({...p, type: value, friendEmail: '', topics: []}))} // Reset topics on type change
                   className="grid grid-cols-3 gap-2"
                 >
                   {(['friends', 'experts', 'ai'] as InterviewType[]).map(type => (
@@ -908,14 +914,16 @@ export default function InterviewPracticeHubPage() {
                 )}
               </>
             )}
-
-            {dialogStep === 'selectTopics' && practiceSessionConfig.type === 'experts' && (
+            
+            {/* This step is now for experts OR for AI initial topic selection */}
+            {dialogStep === 'selectTopics' && (practiceSessionConfig.type === 'experts' || practiceSessionConfig.type === 'ai') && (
               <PracticeTopicSelection
-                availableTopics={PRACTICE_FOCUS_AREAS as any} 
+                availableTopics={PREDEFINED_INTERVIEW_TOPICS} 
                 initialSelectedTopics={practiceSessionConfig.topics}
                 onSelectionChange={(selected) => setPracticeSessionConfig(p => ({...p, topics: selected}))}
               />
             )}
+
             {dialogStep === 'aiSetupBasic' && practiceSessionConfig.type === 'ai' && (
                 <div className="space-y-4">
                     <div>
@@ -958,8 +966,8 @@ export default function InterviewPracticeHubPage() {
                  </div>
             )}
              {dialogStep === 'aiSetupCategories' && practiceSessionConfig.type === 'ai' && (
-                <PracticeTopicSelection // Re-using component for AI categories
-                    availableTopics={ALL_CATEGORIES as any} // ALL_CATEGORIES is InterviewQuestionCategory[]
+                <PracticeTopicSelection 
+                    availableTopics={ALL_CATEGORIES as any} 
                     initialSelectedTopics={practiceSessionConfig.aiQuestionCategories || []}
                     onSelectionChange={(selected) => setPracticeSessionConfig(p => ({...p, aiQuestionCategories: selected as InterviewQuestionCategory[]}))}
                 />
@@ -990,24 +998,21 @@ export default function InterviewPracticeHubPage() {
               <Button variant="outline" onClick={handleDialogPreviousStep}>Back</Button>
             )}
             
-            {/* Next button logic */}
             {dialogStep === 'selectType' && (
               <Button onClick={handleDialogNextStep} disabled={!practiceSessionConfig.type || (practiceSessionConfig.type === 'friends' && (!practiceSessionConfig.friendEmail || !!friendEmailError))}>
                 {practiceSessionConfig.type === 'friends' ? "Send Invitation" : "Next"}
               </Button>
             )}
-            {dialogStep === 'selectTopics' && practiceSessionConfig.type === 'experts' && (
+            {dialogStep === 'selectTopics' && (practiceSessionConfig.type === 'experts' || practiceSessionConfig.type === 'ai') && (
                  <Button onClick={handleDialogNextStep} disabled={practiceSessionConfig.topics.length === 0}>Next</Button>
             )}
             {dialogStep === 'aiSetupBasic' && practiceSessionConfig.type === 'ai' && (
                  <Button onClick={handleDialogNextStep} disabled={!practiceSessionConfig.aiTopicOrRole?.trim()}>Next</Button>
             )}
              {dialogStep === 'aiSetupAdvanced' && practiceSessionConfig.type === 'ai' && (
-                 <Button onClick={handleDialogNextStep}>Next</Button> // No specific validation for this step
+                 <Button onClick={handleDialogNextStep}>Next</Button> 
             )}
 
-
-            {/* Final action buttons */}
             {dialogStep === 'selectTimeSlot' && practiceSessionConfig.type === 'experts' && ( 
               <Button onClick={handleFinalBookSession} disabled={!practiceSessionConfig.dateTime} className="bg-green-600 hover:bg-green-700 text-white">Book Expert Session</Button>
             )}
