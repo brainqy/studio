@@ -115,6 +115,7 @@ export interface Activity {
   id: string;
   tenantId: string;
   timestamp: string;
+  description: string; // Added description
   userId?: string; 
 }
 
@@ -170,6 +171,7 @@ export interface GalleryEvent {
   description?: string;
   dataAiHint?: string;
   isPlatformGlobal?: boolean; 
+  location?: string; // Added from events page
 }
 
 export interface JobOpening {
@@ -676,28 +678,53 @@ export interface QuizSession {
 export type PracticeSessionStatus = 'SCHEDULED' | 'CANCELLED' | 'COMPLETED';
 export type PracticeSessionType = "friends" | "experts" | "ai"; 
 
-export type DialogStep = 'selectType' | 'selectTopics' | 'selectTimeSlot';
+export type DialogStep = 
+  | 'selectType' 
+  | 'selectTopics' // For experts/friends OR AI Question Categories (if not distinct)
+  | 'selectTimeSlot' // For experts/friends
+  | 'aiSetupBasic'   // New: AI Topic/Role & JD
+  | 'aiSetupAdvanced'// New: AI NumQ, Difficulty, Timer
+  | 'aiSetupCategories'; // New: AI Question Categories (can reuse selectTopics UI logic)
+
 
 export interface PracticeSessionConfig {
   type: PracticeSessionType | null;
-  topics: string[]; // Changed from InterviewQuestionCategory[] to string[]
+  
+  // For expert/friends
+  topics: string[]; // General topics for session with expert/friend
   dateTime: Date | null;
   friendEmail?: string;
-  expertId?: string; 
+  expertId?: string;
+  
+  // For AI Mock Interview configuration
+  aiTopicOrRole?: string; // Specific topic/role for AI interview
+  aiJobDescription?: string;
+  aiNumQuestions?: number;
+  aiDifficulty?: 'easy' | 'medium' | 'hard';
+  aiTimerPerQuestion?: number; // Time in seconds, 0 for no timer
+  aiQuestionCategories?: InterviewQuestionCategory[]; // Specific categories for AI questions
 }
+
 
 export interface PracticeSession {
   id: string;
   userId: string;
   date: string; 
   category: "Practice with Friends" | "Practice with Experts" | "Practice with AI";
-  type: string; 
+  type: string; // This would be the specific topic/role for AI, or topics for expert/friend
   language: string; 
   status: PracticeSessionStatus;
   notes?: string; 
+  // AI Specific details if booked session is AI
+  aiNumQuestions?: number;
+  aiDifficulty?: 'easy' | 'medium' | 'hard';
+  aiTimerPerQuestion?: number;
+  aiQuestionCategories?: InterviewQuestionCategory[];
 }
 
-export const PREDEFINED_INTERVIEW_TOPICS: InterviewQuestionCategory[] = [...ALL_CATEGORIES];
+export const PREDEFINED_INTERVIEW_TOPICS: string[] = ["Java", "Python", "DSA", "Angular", "Javascript", "Microservices", "System Design", "Behavioral", "Product Management", "Data Science", ...ALL_CATEGORIES];
+// Using string[] for PREDEFINED_INTERVIEW_TOPICS to allow flexibility for expert/friend sessions.
+// For AI Question Categories, we will use ALL_CATEGORIES (which is InterviewQuestionCategory[]).
 
 // New constant for specific practice focus areas/topics
 export const PRACTICE_FOCUS_AREAS = ["Java", "Python", "DSA", "Angular", "Javascript", "Microservices", "System Design", "Behavioral", "Product Management", "Data Science"] as const;
