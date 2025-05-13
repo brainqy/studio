@@ -1,11 +1,11 @@
 
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Brain, Mic, MessageSquare, Users, Zap, Tag, Lightbulb, CheckSquare as CheckSquareIcon, Code, Puzzle, BookCopy, ListFilter, Info, Share2, RefreshCw, History, Check, X, Star as StarIcon, UserCircle, CalendarDays, ThumbsUp, ShieldCheck, Edit3 as EditIcon, ShieldAlert, PlusCircle, Textarea as TextareaIcon, ChevronLeft, ChevronRight, ListChecks as ListChecksIcon, ChevronDown, MessageCircle as CommentIcon, ThumbsDown, Send } from "lucide-react"; // Added icons
+import { Brain, Mic, MessageSquare, Users, Zap, Tag, Lightbulb, CheckSquare as CheckSquareIcon, Code, Puzzle, BookCopy, ListFilter, Info, Share2, RefreshCw, History, Check, X, Star as StarIcon, UserCircle, CalendarDays, ThumbsUp, ShieldCheck, Edit3 as EditIcon, ShieldAlert, PlusCircle, Textarea as TextareaIcon, ChevronLeft, ChevronRight, ListChecks as ListChecksIcon, ChevronDown, MessageCircle as CommentIcon, ThumbsDown, Send, Maximize, Minimize, Trash2 } from "lucide-react"; // Added icons
 import { sampleInterviewQuestions, sampleUserProfile, sampleMockInterviewSessions, sampleCreatedQuizzes } from "@/lib/sample-data";
 import type { InterviewQuestion, InterviewQuestionCategory, MockInterviewSession, CommunityPost, InterviewQuestionDifficulty, InterviewQuestionUserComment } from "@/types";
 import { ALL_CATEGORIES, ALL_DIFFICULTIES } from "@/types";
@@ -27,9 +27,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useRouter } from 'next/navigation'; 
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"; // Added Avatar
-import { Trash2 } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation'; 
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"; 
+
 
 const questionFormSchema = z.object({
   question: z.string().min(10, "Question text must be at least 10 characters."),
@@ -73,14 +73,23 @@ export default function InterviewPreparationPage() {
   const [selectedQuestionIds, setSelectedQuestionIds] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(1);
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [isCreateQuestionDialogOpen, setIsCreateQuestionDialogOpen] = useState(false);
   const [mcqOptionInputs, setMcqOptionInputs] = useState<string[]>(['', '']);
   
   const [commentingOnQuestionId, setCommentingOnQuestionId] = useState<string | null>(null);
-  const { control: commentFormControl, handleSubmit: handleCommentSubmit, reset: resetCommentForm, formState: {errors: commentFormErrors} } = useForm<CommentFormData>({
+  
+  const {
+    control: commentControl, // Renamed from commentFormControl to avoid confusion
+    handleSubmit: handleCommentSubmit,
+    reset: resetCommentForm,
+    formState: commentFormState, // Get the whole formState object
+  } = useForm<CommentFormData>({
     resolver: zodResolver(commentFormSchema),
+    mode: "onChange", // To update dirtyFields more reliably
   });
+
 
   const { control: questionFormControl, handleSubmit: handleQuestionFormSubmit, reset: resetQuestionForm, watch: watchQuestionForm, setValue: setQuestionFormValue, formState: { errors: questionFormErrors } } = useForm<QuestionFormData>({
     resolver: zodResolver(questionFormSchema),
@@ -108,12 +117,19 @@ export default function InterviewPreparationPage() {
   }, [currentUser.id]);
   
   const createdQuizzes = useMemo(() => {
-    return sampleCreatedQuizzes;
-  }, []);
+    const userQuizzes = sampleCreatedQuizzes.filter(quiz => quiz.userId === currentUser.id || quiz.userId === 'system');
+    return userQuizzes.map(quiz => {
+        const questionsForQuiz = quiz.questions
+            .map(qRef => allQuestions.find(fullQ => fullQ.id === qRef.id))
+            .filter(q => q !== undefined) as InterviewQuestion[];
+        return { ...quiz, questions: questionsForQuiz.map(q => ({id: q.id, questionText: q.question, category: q.category, difficulty: q.difficulty})) };
+    });
+  }, [currentUser.id, allQuestions]);
+
 
   const filteredQuestionsFromBank = useMemo(() => {
     return allQuestions.filter(q => {
-      if (!q.isMCQ || !q.mcqOptions || !q.correctAnswer) return false;
+      if (!q.isMCQ || !q.mcqOptions || !q.correctAnswer) return false; // Only MCQ for bank quiz creation
       if (q.approved === false && currentUser.role !== 'admin') return false;
 
       const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(q.category);
@@ -165,33 +181,46 @@ export default function InterviewPreparationPage() {
         toast({title: "No Questions Selected", description: "Please select questions to include in the quiz.", variant: "destructive"});
         return;
     }
-    // For a real implementation, might open a dialog here to name the quiz & add description
+    
     const newQuizTopic = `Custom Quiz (${new Date().toLocaleDateString()})`;
     const newQuizDescription = `A custom quiz created with ${questionIdsToPass.length} selected questions.`;
     
-    // Add to sampleCreatedQuizzes (mock)
     const newQuizId = `quiz-custom-${Date.now()}`;
+    const newQuizQuestions = questionIdsToPass.map(id => {
+        const q = allQuestions.find(fullQ => fullQ.id === id);
+        return { id: q!.id, questionText: q!.question, category: q!.category, difficulty: q!.difficulty };
+    });
+
+    // This adds to the in-memory sampleCreatedQuizzes. In a real app, this would be an API call.
     sampleCreatedQuizzes.push({
         id: newQuizId,
         userId: currentUser.id,
         topic: newQuizTopic,
         description: newQuizDescription,
-        questions: questionIdsToPass.map(id => ({id, questionText: allQuestions.find(q => q.id === id)?.question || 'N/A'})),
+        questions: newQuizQuestions,
         answers: [],
         status: 'pending',
         createdAt: new Date().toISOString(),
     });
-    toast({title: "Quiz Created (Mock)", description: `"${newQuizTopic}" has been created. Starting quiz...`});
+
+    toast({title: "Quiz Created", description: `"${newQuizTopic}" has been created and added to 'Created Quizzes'. Starting quiz...`});
     router.push(`/interview-prep/quiz?quizId=${newQuizId}`);
   };
   
   const handleEditQuiz = (quizId: string) => {
-    toast({ title: "Edit Quiz (Mock)", description: `Editing functionality for quiz ID ${quizId} is not yet fully implemented.` });
-    // Placeholder: Could navigate to a quiz editing page or open a dialog
-    // router.push(`/interview-prep/quiz/edit/${quizId}`); 
+    // This might navigate to a quiz editing page or open a more complex dialog.
+    // For this example, we'll just log it.
+    console.log("Attempting to edit quiz:", quizId);
+    toast({ title: "Edit Quiz (Mock)", description: `Editing for quiz ID ${quizId} would typically involve a dedicated interface.` });
+     // Example: router.push(`/interview-prep/quiz/edit/${quizId}`); 
   };
 
   const handleStartPredefinedQuiz = (quizId: string) => {
+     const quizToStart = createdQuizzes.find(q => q.id === quizId);
+     if (!quizToStart || quizToStart.questions.length === 0) {
+        toast({title: "Quiz Problem", description: "This quiz has no questions or could not be found.", variant: "destructive"});
+        return;
+     }
      router.push(`/interview-prep/quiz?quizId=${quizId}`);
   };
 
@@ -245,7 +274,7 @@ export default function InterviewPreparationPage() {
       category: data.category,
       difficulty: data.difficulty,
       isMCQ: data.isMCQ,
-      mcqOptions: data.isMCQ ? data.mcqOptions : undefined,
+      mcqOptions: data.isMCQ ? mcqOptionInputs.filter(opt => opt.trim() !== '') : undefined, // Use state for mcqOptions
       correctAnswer: data.isMCQ ? data.correctAnswer : undefined,
       answerOrTip: data.answerOrTip,
       tags: data.tags?.split(',').map(tag => tag.trim()).filter(tag => tag),
@@ -266,8 +295,6 @@ export default function InterviewPreparationPage() {
 
   const addMcqOptionInput = () => {
     setMcqOptionInputs(prev => [...prev, '']);
-    const currentMcqOptions = watchQuestionForm('mcqOptions') || [];
-    setQuestionFormValue('mcqOptions', [...currentMcqOptions, '']);
   };
 
   const removeMcqOptionInput = (index: number) => {
@@ -276,15 +303,13 @@ export default function InterviewPreparationPage() {
       return;
     }
     setMcqOptionInputs(prev => prev.filter((_, i) => i !== index));
-    const currentMcqOptions = watchQuestionForm('mcqOptions') || [];
-    setQuestionFormValue('mcqOptions', currentMcqOptions.filter((_, i) => i !== index));
   };
 
   const handleMcqOptionChange = (index: number, value: string) => {
     const updatedInputs = [...mcqOptionInputs];
     updatedInputs[index] = value;
     setMcqOptionInputs(updatedInputs);
-    setQuestionFormValue('mcqOptions', updatedInputs);
+    setQuestionFormValue('mcqOptions', updatedInputs.filter(opt => opt.trim() !== '')); // Sync with form state
   };
 
   const handlePageChange = (newPage: number) => {
@@ -508,7 +533,7 @@ export default function InterviewPreparationPage() {
               {paginatedQuestions.map((q) => (
                 <AccordionItem value={q.id} key={q.id} className="border rounded-lg bg-card overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                   <AccordionTrigger className="text-md text-left hover:no-underline data-[state=open]:bg-secondary/50 relative group py-3 px-4">
-                    <div className="flex flex-1 items-center justify-between group">
+                    <div className="flex flex-1 items-start justify-between group">
                         <div className="flex items-center gap-3 flex-1 min-w-0">
                             <Checkbox
                               id={`select-q-${q.id}`}
@@ -520,7 +545,7 @@ export default function InterviewPreparationPage() {
                                 setSelectedQuestionIds(newSelectedIds);
                               }}
                               onClick={(e) => e.stopPropagation()} 
-                              className="h-5 w-5 border-muted-foreground data-[state=checked]:bg-primary data-[state=checked]:border-primary shrink-0"
+                              className="h-5 w-5 border-muted-foreground data-[state=checked]:bg-primary data-[state=checked]:border-primary shrink-0 mt-0.5"
                               aria-label={`Select question: ${q.question}`}
                             />
                           {getCategoryIcon(q.category)}
@@ -608,10 +633,10 @@ export default function InterviewPreparationPage() {
                       )}
                       
                       {/* Add Comment Form */}
-                      <form onSubmit={commentFormControl.handleSubmit(data => onCommentSubmit(data, q.id))} className="flex items-center gap-2 mt-2">
+                      <form onSubmit={handleCommentSubmit(data => onCommentSubmit(data, q.id))} className="flex items-center gap-2 mt-2">
                          <Controller
                             name="commentText"
-                            control={commentFormControl}
+                            control={commentControl}
                             defaultValue=""
                             render={({ field }) => (
                                 <Textarea 
@@ -619,13 +644,13 @@ export default function InterviewPreparationPage() {
                                     placeholder="Add a comment..." 
                                     rows={1} 
                                     className="flex-grow min-h-[36px] text-xs"
-                                    onFocus={() => setCommentingOnQuestionId(q.id)} // For other focus logic if needed
+                                    onFocus={() => setCommentingOnQuestionId(q.id)} 
                                 />
                             )}
                          />
-                         <Button type="submit" size="sm" variant="outline" disabled={!!commentFormErrors.commentText || !commentFormControl.formState.dirtyFields.commentText}><Send className="h-3.5 w-3.5"/></Button>
+                         <Button type="submit" size="sm" variant="outline" disabled={!!commentFormState.errors.commentText || !commentFormState.dirtyFields?.commentText}><Send className="h-3.5 w-3.5"/></Button>
                       </form>
-                       {commentFormErrors.commentText && <p className="text-xs text-destructive mt-1">{commentFormErrors.commentText.message}</p>}
+                       {commentFormState.errors.commentText && <p className="text-xs text-destructive mt-1">{commentFormState.errors.commentText.message}</p>}
                     </div>
 
 
