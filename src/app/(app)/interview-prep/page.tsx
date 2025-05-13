@@ -6,20 +6,20 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle as DialogUITitle, DialogDescription as DialogUIDescription, DialogFooter as DialogUIFooter, DialogClose } from '@/components/ui/dialog'; // Renamed Dialog imports
+import { Dialog, DialogContent, DialogHeader, DialogTitle as DialogUITitle, DialogDescription as DialogUIDescription, DialogFooter as DialogUIFooter, DialogClose } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Brain, Calendar, Users, ShieldAlert, Type, Languages, MessageSquare, CheckCircle, XCircle, Mic, ListChecks, Search, ChevronLeft, ChevronRight, Tag, Settings2, Puzzle, Lightbulb, Code, Eye, Edit3, Play, PlusCircle, Star as StarIcon, Send } from "lucide-react";
+import { Brain, Calendar, Users, ShieldAlert, Type, Languages, MessageSquare, CheckCircle, XCircle, Mic, ListChecks, Search, ChevronLeft, ChevronRight, Tag, Settings2, Puzzle, Lightbulb, Code, Eye, Edit3, Play, PlusCircle, Star as StarIcon, Send, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { sampleUserProfile, samplePracticeSessions, sampleInterviewQuestions, sampleCreatedQuizzes } from "@/lib/sample-data";
 import type { PracticeSession, InterviewQuestion, InterviewQuestionCategory, MockInterviewSession } from "@/types";
 import { ALL_CATEGORIES } from '@/types';
-import { format, parseISO, isFuture } from "date-fns";
+import { format, parseISO, isFuture as dateIsFuture } from "date-fns"; // Renamed isFuture to avoid conflict
 import { cn } from "@/lib/utils";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Badge } from '@/components/ui/badge';
@@ -30,7 +30,6 @@ import * as z from 'zod';
 
 type InterviewType = "friends" | "experts" | "ai";
 
-// Schema for adding/editing a question
 const questionFormSchema = z.object({
   question: z.string().min(10, "Question text is too short.").max(500, "Question text is too long."),
   category: z.enum(ALL_CATEGORIES),
@@ -38,7 +37,7 @@ const questionFormSchema = z.object({
   mcqOptions: z.array(z.string()).optional(),
   correctAnswer: z.string().optional(),
   answerOrTip: z.string().min(10, "Answer/Tip is too short.").max(1000, "Answer/Tip is too long."),
-  tags: z.string().optional(), // Comma-separated
+  tags: z.string().optional(), 
   difficulty: z.enum(['Easy', 'Medium', 'Hard']).optional(),
 });
 type QuestionFormData = z.infer<typeof questionFormSchema>;
@@ -48,16 +47,19 @@ const commentFormSchema = z.object({
 });
 type CommentFormData = z.infer<typeof commentFormSchema>;
 
+const friendEmailSchema = z.string().email("Please enter a valid email address.");
 
-export default function InterviewPreparationPage() {
+
+export default function InterviewPracticeHubPage() { // Renamed component
   const [isInterviewTypeDialogOpen, setIsInterviewTypeDialogOpen] = useState(false);
   const [selectedInterviewType, setSelectedInterviewType] = useState<InterviewType | null>(null);
+  const [friendEmail, setFriendEmail] = useState('');
+  const [friendEmailError, setFriendEmailError] = useState<string | null>(null);
   const [practiceSessions, setPracticeSessions] = useState<PracticeSession[]>(samplePracticeSessions);
   const router = useRouter();
   const { toast } = useToast();
   const currentUser = sampleUserProfile;
 
-  // State for Question Bank
   const [allBankQuestions, setAllBankQuestions] = useState<InterviewQuestion[]>(sampleInterviewQuestions);
   const [selectedBankCategories, setSelectedBankCategories] = useState<InterviewQuestionCategory[]>([]);
   const [bankSearchTerm, setBankSearchTerm] = useState('');
@@ -65,14 +67,11 @@ export default function InterviewPreparationPage() {
   const [editingQuestion, setEditingQuestion] = useState<InterviewQuestion | null>(null);
   const [selectedQuestionsForQuiz, setSelectedQuestionsForQuiz] = useState<Set<string>>(new Set());
 
-  // State for Created Quizzes
   const [createdQuizzes, setCreatedQuizzes] = useState<MockInterviewSession[]>(sampleCreatedQuizzes);
 
-  // Pagination for Question Bank
   const [currentPage, setCurrentPage] = useState(1);
   const questionsPerPage = 10;
 
-  // State for comment form
   const [commentingQuestionId, setCommentingQuestionId] = useState<string | null>(null);
   const { control: commentFormControl, handleSubmit: handleCommentFormSubmit, reset: resetCommentForm, formState: { errors: commentFormErrors } } = useForm<CommentFormData>({
     resolver: zodResolver(commentFormSchema),
@@ -96,7 +95,7 @@ export default function InterviewPreparationPage() {
   const isMCQSelected = watchQuestionForm("isMCQ");
 
 
-  const upcomingSessions = practiceSessions.filter(s => s.status === 'SCHEDULED' && isFuture(parseISO(s.date)));
+  const upcomingSessions = practiceSessions.filter(s => s.status === 'SCHEDULED' && dateIsFuture(parseISO(s.date)));
   const allUserSessions = practiceSessions; 
   const cancelledSessions = practiceSessions.filter(s => s.status === 'CANCELLED');
 
@@ -106,18 +105,53 @@ export default function InterviewPreparationPage() {
 
   const handleInterviewTypeSelect = (type: InterviewType) => {
     setSelectedInterviewType(type);
+    setFriendEmail(''); // Reset email if type changes
+    setFriendEmailError(null);
   };
 
   const handleProceedWithInterviewType = () => {
+    if (selectedInterviewType === "friends") {
+      if (!friendEmail.trim()) {
+        setFriendEmailError("Please enter a friend's email to send an invitation.");
+        return;
+      }
+      const emailValidation = friendEmailSchema.safeParse(friendEmail);
+      if (!emailValidation.success) {
+        setFriendEmailError(emailValidation.error.errors[0].message);
+        return;
+      }
+      // If email is valid and invitation "sent", then maybe proceed or just close.
+      // For now, the "Send Invitation" button handles the toast.
+      // This "Next" button might just close the dialog for "friends" if invitation is considered the main action.
+      toast({ title: "Practice with Friends Setup", description: "Invitation flow initiated (mock). You can close this dialog or proceed to other practice types." });
+      // setIsInterviewTypeDialogOpen(false); // Or keep open if "Next" is for something else.
+      // Don't automatically redirect or show "coming soon" yet.
+      return; 
+    }
+
     setIsInterviewTypeDialogOpen(false);
     if (selectedInterviewType === "ai") {
       router.push("/ai-mock-interview");
-    } else if (selectedInterviewType === "friends") {
-      toast({ title: "Practice with Friends", description: "This feature is coming soon! You'll be able to invite friends for mock interviews." });
     } else if (selectedInterviewType === "experts") {
       toast({ title: "Practice with Experts", description: "Connect with industry experts for mock interviews (Coming Soon!)." });
     }
+    // Reset selection for next time
     setSelectedInterviewType(null); 
+    setFriendEmail('');
+    setFriendEmailError(null);
+  };
+
+  const handleSendInvitation = () => {
+    const emailValidation = friendEmailSchema.safeParse(friendEmail);
+    if (!emailValidation.success) {
+      setFriendEmailError(emailValidation.error.errors[0].message);
+      return;
+    }
+    setFriendEmailError(null);
+    // Mock sending invitation
+    toast({ title: "Invitation Sent (Mock)", description: `Invitation sent to ${friendEmail}. They will receive instructions on how to join.` });
+    // Optionally, clear email field or close dialog after sending
+    // setFriendEmail('');
   };
 
   const handleCancelPracticeSession = (sessionId: string) => {
@@ -135,7 +169,7 @@ export default function InterviewPreparationPage() {
 
   const filteredBankQuestions = useMemo(() => {
     return allBankQuestions.filter(q => {
-      if (q.approved === false && currentUser.role !== 'admin') return false; // Non-admins don't see unapproved
+      if (q.approved === false && currentUser.role !== 'admin') return false; 
       const matchesCategory = selectedBankCategories.length === 0 || selectedBankCategories.includes(q.category);
       const matchesSearch = bankSearchTerm === '' ||
                             q.question.toLowerCase().includes(bankSearchTerm.toLowerCase()) ||
@@ -157,7 +191,7 @@ export default function InterviewPreparationPage() {
         tags: data.tags?.split(',').map(t => t.trim()).filter(t => t) || [],
         mcqOptions: data.isMCQ ? data.mcqOptions?.filter(opt => opt.trim() !== "") : undefined,
         correctAnswer: data.isMCQ ? data.correctAnswer : undefined,
-        approved: currentUser.role === 'admin', // Auto-approve if admin creates
+        approved: currentUser.role === 'admin', 
         createdBy: currentUser.id,
     };
 
@@ -252,7 +286,6 @@ export default function InterviewPreparationPage() {
   };
 
   const handleRateQuestion = (questionId: string, rating: number) => {
-    // In real app, send rating to backend
     setAllBankQuestions(prevQs => prevQs.map(q => {
         if (q.id === questionId) {
             const existingRatingIndex = q.userRatings?.findIndex(r => r.userId === currentUser.id);
@@ -262,7 +295,6 @@ export default function InterviewPreparationPage() {
             } else {
                 newUserRatings.push({ userId: currentUser.id, rating });
             }
-            // Recalculate average rating
             const totalRatingSum = newUserRatings.reduce((sum, r) => sum + r.rating, 0);
             const newAvgRating = newUserRatings.length > 0 ? parseFloat((totalRatingSum / newUserRatings.length).toFixed(1)) : 0;
             return { ...q, userRatings: newUserRatings, rating: newAvgRating, ratingsCount: newUserRatings.length };
@@ -322,10 +354,7 @@ export default function InterviewPreparationPage() {
             </div>
             <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
                 <Button size="lg" onClick={handleStartPractice} className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                    <Mic className="mr-2 h-5 w-5" /> Start AI Mock Interview
-                </Button>
-                 <Button size="lg" variant="outline" onClick={() => toast({title: "Coming Soon!"})}>
-                    <Users className="mr-2 h-5 w-5" /> Practice with Others
+                    <Mic className="mr-2 h-5 w-5" /> Start Mock Interview
                 </Button>
             </div>
           </div>
@@ -336,7 +365,6 @@ export default function InterviewPreparationPage() {
         </CardContent>
       </Card>
 
-      {/* Practice Session Tabs */}
       <Tabs defaultValue="upcoming" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="upcoming">Upcoming Interviews</TabsTrigger>
@@ -376,7 +404,6 @@ export default function InterviewPreparationPage() {
       </Tabs>
 
 
-      {/* Created Quizzes Section */}
       <Card className="shadow-lg">
         <CardHeader className="flex flex-row justify-between items-center">
           <div>
@@ -417,7 +444,6 @@ export default function InterviewPreparationPage() {
       </Card>
 
 
-      {/* Question Bank Section */}
       <Card className="shadow-lg">
         <CardHeader className="flex flex-row justify-between items-center">
             <div>
@@ -454,7 +480,7 @@ export default function InterviewPreparationPage() {
                 </ToggleGroup>
             </div>
 
-            <ScrollArea className="h-[500px] pr-2 -mr-2"> {/* Negative margin to hide scrollbar visually if not needed */}
+            <ScrollArea className="h-[500px] pr-2 -mr-2"> 
                 {paginatedBankQuestions.length > 0 ? (
                     paginatedBankQuestions.map(q => (
                     <Accordion key={q.id} type="single" collapsible className="border rounded-md mb-2 bg-card shadow-sm hover:shadow-md transition-shadow">
@@ -517,7 +543,6 @@ export default function InterviewPreparationPage() {
                                 <Badge variant="destructive" className="mt-1">Needs Approval</Badge>
                             )}
 
-                            {/* Commenting & Rating Section (Collapsible or Modal) */}
                             {commentingQuestionId === q.id && (
                                 <div className="mt-2 space-y-2">
                                     <Label htmlFor={`comment-${q.id}`} className="text-xs">Your Comment:</Label>
@@ -529,7 +554,7 @@ export default function InterviewPreparationPage() {
                                                 <Input id={`comment-${q.id}`} placeholder="Add a public comment..." {...field} className="text-xs h-8 flex-grow"/>
                                             )}
                                          />
-                                         <Button type="submit" size="sm" variant="outline" disabled={!!commentFormErrors.commentText || !commentFormControl.formState.isDirty }><Send className="h-3.5 w-3.5"/></Button>
+                                         <Button type="submit" size="sm" variant="outline" disabled={!!commentFormErrors.commentText || !commentFormControl.formState.dirtyFields.commentText }><Send className="h-3.5 w-3.5"/></Button>
                                       </form>
                                        {commentFormErrors.commentText && <p className="text-xs text-destructive mt-1">{commentFormErrors.commentText.message}</p>}
                                     {q.userComments && q.userComments.length > 0 && (
@@ -565,7 +590,6 @@ export default function InterviewPreparationPage() {
                 )}
             </ScrollArea>
 
-            {/* Pagination for Question Bank */}
             {totalPages > 1 && (
                 <div className="flex justify-center items-center space-x-2 mt-4">
                     <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>
@@ -586,7 +610,6 @@ export default function InterviewPreparationPage() {
       </Card>
 
 
-      {/* Dialog for Adding/Editing Question */}
       <Dialog open={isQuestionFormOpen} onOpenChange={(isOpen) => { if (!isOpen) { setEditingQuestion(null); resetQuestionForm(); } setIsQuestionFormOpen(isOpen); }}>
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
@@ -657,33 +680,65 @@ export default function InterviewPreparationPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog for selecting interview type */}
       <Dialog open={isInterviewTypeDialogOpen} onOpenChange={setIsInterviewTypeDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg"> {/* Adjusted width for better layout */}
           <DialogHeader>
-            <DialogUITitle className="text-xl">Interview Type</DialogUITitle>
-            <DialogUIDescription>Select interview type here...</DialogUIDescription>
+            <DialogUITitle className="text-xl text-center font-semibold">Interview Type</DialogUITitle>
+            <DialogUIDescription className="text-center text-muted-foreground">Select interview type here...</DialogUIDescription>
           </DialogHeader>
-          <div className="py-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {(['friends', 'experts', 'ai'] as InterviewType[]).map(type => (
-              <Button
-                key={type}
-                variant={selectedInterviewType === type ? "default" : "outline"}
-                onClick={() => handleInterviewTypeSelect(type)}
-                className="h-20 text-sm flex flex-col items-center justify-center"
-              >
-                {type === 'friends' && <Users className="mb-1 h-5 w-5"/>}
-                {type === 'experts' && <Brain className="mb-1 h-5 w-5"/>}
-                {type === 'ai' && <Mic className="mb-1 h-5 w-5"/>}
-                Practice with {type.charAt(0).toUpperCase() + type.slice(1)}
-              </Button>
-            ))}
+          <div className="py-4 space-y-4">
+            <ToggleGroup
+              type="single"
+              value={selectedInterviewType || ""}
+              onValueChange={(value: InterviewType) => handleInterviewTypeSelect(value)}
+              className="grid grid-cols-3 gap-2"
+            >
+              {(['friends', 'experts', 'ai'] as InterviewType[]).map(type => (
+                <ToggleGroupItem
+                  key={type}
+                  value={type}
+                  aria-label={`Practice with ${type}`}
+                  className="h-20 text-sm flex flex-col items-center justify-center data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:shadow-md"
+                >
+                  {type === 'friends' && <Users className="mb-1 h-5 w-5"/>}
+                  {type === 'experts' && <Brain className="mb-1 h-5 w-5"/>}
+                  {type === 'ai' && <Mic className="mb-1 h-5 w-5"/>}
+                  Practice with {type.charAt(0).toUpperCase() + type.slice(1)}
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
+
+            {selectedInterviewType === 'friends' && (
+              <div className="pt-4 space-y-2">
+                <Label htmlFor="friendEmail" className="font-medium">Friend's Email</Label>
+                <div className="flex items-center gap-2">
+                   <div className="relative flex-grow">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        id="friendEmail"
+                        type="email"
+                        placeholder="Enter friend's email address"
+                        value={friendEmail}
+                        onChange={(e) => {
+                        setFriendEmail(e.target.value);
+                        if (friendEmailError) setFriendEmailError(null); // Clear error on change
+                        }}
+                        className={cn("pl-10", friendEmailError && "border-destructive focus-visible:ring-destructive")}
+                    />
+                   </div>
+                    <Button onClick={handleSendInvitation} className="bg-green-600 hover:bg-green-700 text-white">
+                        <Send className="mr-2 h-4 w-4"/> Send Invitation
+                    </Button>
+                </div>
+                {friendEmailError && <p className="text-sm text-destructive mt-1">{friendEmailError}</p>}
+              </div>
+            )}
           </div>
           <DialogUIFooter>
             <DialogClose asChild>
               <Button variant="ghost">Cancel</Button>
             </DialogClose>
-            <Button onClick={handleProceedWithInterviewType} disabled={!selectedInterviewType} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+            <Button onClick={handleProceedWithInterviewType} disabled={!selectedInterviewType || (selectedInterviewType === 'friends' && !friendEmail.trim() && !friendEmailError) } className="bg-primary hover:bg-primary/90 text-primary-foreground">
               Next
             </Button>
           </DialogUIFooter>
