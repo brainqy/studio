@@ -888,56 +888,193 @@ export const managerDashboardTourSteps: TourStep[] = [
 ];
 
 export const sampleInterviewQuestions: InterviewQuestion[] = [
-  { id: 'iq1', category: 'Behavioral', question: "Tell me about a time you failed.", answerOrTip: "Focus on what you learned and how you grew from the experience. Use the STAR method (Situation, Task, Action, Result).", tags: ['failure', 'learning'] },
-  { id: 'iq2', category: 'Behavioral', question: "Describe a situation where you had to work with a difficult team member.", answerOrTip: "Highlight your conflict resolution skills, empathy, and focus on achieving team goals despite interpersonal challenges.", tags: ['teamwork', 'conflict'] },
-  { id: 'iq3', category: 'Technical', question: "Explain the difference between an abstract class and an interface.", answerOrTip: "Discuss concepts like multiple inheritance, default implementations, and when to use each.", tags: ['oop', 'programming'] },
-  { id: 'iq4', category: 'Role-Specific', question: "How would you approach designing a new feature for our product? (For Product Managers)", answerOrTip: "Outline your process: user research, defining requirements, prioritization, working with dev/design, and measuring success.", tags: ['product management', 'design'] },
-  { id: 'iq5', category: 'Common', question: "Why are you interested in this role?", answerOrTip: "Connect your skills and career goals to the specific aspects of the job description and the company's mission.", tags: ['motivation', 'fit'] },
-  { id: 'iq6', category: 'Common', question: "Where do you see yourself in 5 years?", answerOrTip: "Show ambition but also realism. Align your long-term goals with opportunities for growth within the company or industry.", tags: ['career goals'] },
-  { id: 'iq7', category: 'Technical', question: "What are the principles of RESTful API design?", answerOrTip: "Discuss statelessness, client-server architecture, cacheability, uniform interface (resources, HTTP verbs, URIs), layered system.", tags: ['api', 'backend'] },
-  { id: 'iq8', category: 'Behavioral', question: "Give an example of a goal you reached and tell me how you achieved it.", answerOrTip: "Detail the steps you took, any obstacles you overcame, and the specific result. Quantify if possible.", tags: ['achievement', 'goals'] },
-  { 
-    id: 'mcq1', 
-    category: 'Technical', 
-    question: "Which of the following is NOT a valid HTTP method?", 
-    isMCQ: true, 
-    mcqOptions: ["GET", "POST", "PUSH", "DELETE"], 
-    correctAnswer: "PUSH", 
-    answerOrTip: "PUSH is not a standard HTTP method. Common methods include GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS.", 
-    tags: ['http', 'api', 'mcq'] 
+  {
+    id: 'iq1',
+    category: 'Behavioral',
+    question: "Tell me about a time you failed.",
+    isMCQ: true,
+    mcqOptions: [
+      "I've never truly failed; I see everything as a learning opportunity.",
+      "I prefer not to discuss failures as they are negative.",
+      "I once missed a critical deadline on Project X due to poor planning. I took responsibility, communicated proactively, and implemented a new system to prevent recurrence, successfully meeting subsequent deadlines.",
+      "My previous manager was always setting unrealistic goals, so failures were common in that team."
+    ],
+    correctAnswer: "I once missed a critical deadline on Project X due to poor planning. I took responsibility, communicated proactively, and implemented a new system to prevent recurrence, successfully meeting subsequent deadlines.",
+    answerOrTip: "The best approach is to use the STAR method (Situation, Task, Action, Result) and focus on what you learned and how you improved.",
+    tags: ['failure', 'learning']
   },
-  { 
-    id: 'mcq2', 
-    category: 'Analytical', 
-    question: "A project's critical path is delayed by 2 days. What is the most likely impact on the project completion date?", 
-    isMCQ: true, 
-    mcqOptions: ["No impact", "Completion delayed by 1 day", "Completion delayed by 2 days", "Completion delayed by more than 2 days"], 
-    correctAnswer: "Completion delayed by 2 days", 
-    answerOrTip: "A delay on the critical path directly translates to a delay in the project completion date by the same amount, assuming no other changes.", 
-    tags: ['project management', 'analytical', 'mcq'] 
+  {
+    id: 'iq2',
+    category: 'Behavioral',
+    question: "Describe a situation where you had to work with a difficult team member.",
+    isMCQ: true,
+    mcqOptions: [
+      "I avoided them as much as possible and did my work independently.",
+      "I confronted them publicly about their behavior to resolve it quickly.",
+      "I initiated a private conversation to understand their perspective, found common ground, and established clear communication protocols, which improved our collaboration.",
+      "I reported them to my manager immediately without trying to resolve it myself."
+    ],
+    correctAnswer: "I initiated a private conversation to understand their perspective, found common ground, and established clear communication protocols, which improved our collaboration.",
+    answerOrTip: "Focus on professional and constructive approaches. Highlight your communication, empathy, and problem-solving skills.",
+    tags: ['teamwork', 'conflict']
   },
-  { 
-    id: 'hr1', 
-    category: 'HR', 
-    question: "How do you handle stress and pressure?", 
-    answerOrTip: "Provide specific examples of how you've managed stressful situations. Mention healthy coping mechanisms like prioritization, time management, taking short breaks, or exercise. Emphasize your ability to remain calm and productive.", 
-    tags: ['stress management', 'soft skills'] 
+  {
+    id: 'iq3',
+    category: 'Technical',
+    question: "Explain the difference between an abstract class and an interface.",
+    isMCQ: true,
+    mcqOptions: [
+      "Abstract classes can have constructors, interfaces cannot.",
+      "A class can implement multiple abstract classes but only inherit from one interface.",
+      "Interfaces can contain implemented methods, abstract classes cannot.",
+      "Both are primarily used for achieving 100% abstraction."
+    ],
+    correctAnswer: "Abstract classes can have constructors, interfaces cannot.",
+    answerOrTip: "Key differences: Abstract classes can have constructors and member variable implementations; interfaces cannot (traditionally). A class can implement multiple interfaces but inherit only one class (or abstract class).",
+    tags: ['oop', 'programming']
+  },
+  {
+    id: 'iq4',
+    category: 'Role-Specific',
+    question: "How would you approach designing a new feature for our product? (For Product Managers)",
+    isMCQ: true,
+    mcqOptions: [
+      "Start coding immediately based on my gut feeling for what users want.",
+      "Conduct user research, define clear requirements, prioritize based on impact/effort, work with design/dev, and define success metrics.",
+      "Ask the engineering team to build whatever they think is cool and technically feasible.",
+      "Copy a similar feature from a competitor's product directly."
+    ],
+    correctAnswer: "Conduct user research, define clear requirements, prioritize based on impact/effort, work with design/dev, and define success metrics.",
+    answerOrTip: "A good answer outlines a structured product development process: research, definition, prioritization, execution, and measurement.",
+    tags: ['product management', 'design']
+  },
+  {
+    id: 'iq5',
+    category: 'Common',
+    question: "Why are you interested in this role?",
+    isMCQ: true,
+    mcqOptions: [
+      "I need a job, and this one was available.",
+      "The salary and benefits are attractive.",
+      "This role aligns perfectly with my skills in X and Y, and I'm excited about [Company Mission/Product] because [Specific Reason]. I believe I can contribute Z.",
+      "My friend works here and said it's a good place to work."
+    ],
+    correctAnswer: "This role aligns perfectly with my skills in X and Y, and I'm excited about [Company Mission/Product] because [Specific Reason]. I believe I can contribute Z.",
+    answerOrTip: "Connect your skills, experience, and career goals to the specific requirements of the role and the company's mission. Show genuine enthusiasm.",
+    tags: ['motivation', 'fit']
+  },
+  {
+    id: 'iq6',
+    category: 'Common',
+    question: "Where do you see yourself in 5 years?",
+    isMCQ: true,
+    mcqOptions: [
+      "Running this company.",
+      "I haven't thought that far ahead.",
+      "I see myself growing within a role like this, taking on more responsibility, developing expertise in [Relevant Area], and contributing to significant projects for the company.",
+      "Probably at a different company in a higher position."
+    ],
+    correctAnswer: "I see myself growing within a role like this, taking on more responsibility, developing expertise in [Relevant Area], and contributing to significant projects for the company.",
+    answerOrTip: "Show ambition for growth that aligns with the company's potential opportunities. Express interest in developing skills and taking on more responsibility.",
+    tags: ['career goals']
+  },
+  {
+    id: 'iq7',
+    category: 'Technical',
+    question: "What are the principles of RESTful API design?",
+    isMCQ: true,
+    mcqOptions: [
+      "Stateful, Client-Server, Uniform Interface, Cacheable.",
+      "Stateless, Client-Server, Uniform Interface, Cacheable, Layered System.",
+      "Monolithic architecture, Tight Coupling, RPC-style calls.",
+      "Always use XML for data exchange and SOAP protocols."
+    ],
+    correctAnswer: "Stateless, Client-Server, Uniform Interface, Cacheable, Layered System.",
+    answerOrTip: "Key principles: Client-Server, Stateless, Cacheable, Uniform Interface (resource identification, manipulation through representations, self-descriptive messages, HATEOAS), Layered System, Code on Demand (optional).",
+    tags: ['api', 'backend']
+  },
+  {
+    id: 'iq8',
+    category: 'Behavioral',
+    question: "Give an example of a goal you reached and tell me how you achieved it.",
+    isMCQ: true,
+    mcqOptions: [
+      "I wanted to get a promotion, so I worked hard.",
+      "My goal was to improve team efficiency by 15%. I identified bottlenecks in our workflow, proposed a new process using [Tool/Method], trained the team, and we achieved a 20% efficiency gain in 3 months.",
+      "I set a personal goal to read more books, but I didn't really track it.",
+      "We had a team goal, but someone else mostly did the work."
+    ],
+    correctAnswer: "My goal was to improve team efficiency by 15%. I identified bottlenecks in our workflow, proposed a new process using [Tool/Method], trained the team, and we achieved a 20% efficiency gain in 3 months.",
+    answerOrTip: "Use the STAR method. Be specific about the goal, your actions, and the quantifiable result or impact.",
+    tags: ['achievement', 'goals']
+  },
+  {
+    id: 'mcq1',
+    category: 'Technical',
+    question: "Which of the following is NOT a valid HTTP method?",
+    isMCQ: true,
+    mcqOptions: ["GET", "POST", "PUSH", "DELETE"],
+    correctAnswer: "PUSH",
+    answerOrTip: "PUSH is not a standard HTTP method. Common methods include GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS.",
+    tags: ['http', 'api', 'mcq']
+  },
+  {
+    id: 'mcq2',
+    category: 'Analytical',
+    question: "A project's critical path is delayed by 2 days. What is the most likely impact on the project completion date?",
+    isMCQ: true,
+    mcqOptions: ["No impact", "Completion delayed by 1 day", "Completion delayed by 2 days", "Completion delayed by more than 2 days"],
+    correctAnswer: "Completion delayed by 2 days",
+    answerOrTip: "A delay on the critical path directly translates to a delay in the project completion date by the same amount, assuming no other changes.",
+    tags: ['project management', 'analytical', 'mcq']
+  },
+  {
+    id: 'hr1',
+    category: 'HR',
+    question: "How do you handle stress and pressure?",
+    isMCQ: true,
+    mcqOptions: [
+        "I avoid stressful situations as much as possible.",
+        "I tend to get overwhelmed but eventually get through it.",
+        "I prioritize tasks, break them into manageable steps, focus on what I can control, and take short breaks to stay effective. For example, during Project Y's tight deadline...",
+        "I don't really experience stress; I thrive under pressure."
+    ],
+    correctAnswer: "I prioritize tasks, break them into manageable steps, focus on what I can control, and take short breaks to stay effective. For example, during Project Y's tight deadline...",
+    answerOrTip: "Describe specific strategies you use (e.g., prioritization, time management, mindfulness, seeking support). Give a brief example if possible.",
+    tags: ['stress management', 'soft skills']
   },
   {
     id: 'coding1',
     category: 'Coding',
     question: "Write a function to reverse a string in JavaScript.",
-    answerOrTip: "Common approaches include using split('').reverse().join(''), or iterating through the string and building the reversed string. Discuss time and space complexity.",
+    isMCQ: true,
+    mcqOptions: [
+        "str.split('').reverse().join('')",
+        "for (let i = 0; i < str.length; i++) newStr += str[str.length - 1 - i];",
+        "str.reverse()",
+        "Array.from(str).sort().join('')"
+    ],
+    correctAnswer: "str.split('').reverse().join('')",
+    answerOrTip: "Common solutions include `str.split('').reverse().join('')` or a loop. Discuss time/space complexity (O(n) for both in most JS engines).",
     tags: ['javascript', 'string manipulation', 'algorithms']
   },
   {
     id: 'coding2',
     category: 'Coding',
     question: "Explain Big O notation and provide an example of O(n) and O(log n).",
-    answerOrTip: "Big O notation describes the limiting behavior of a function when the argument tends towards a particular value or infinity. O(n) - linear search in an unsorted array. O(log n) - binary search in a sorted array.",
+    isMCQ: true,
+    mcqOptions: [
+        "It measures exact execution time. O(n) is fast, O(log n) is slow.",
+        "It describes the worst-case time or space complexity as input size grows. O(n): linear search. O(log n): binary search.",
+        "It's only used for sorting algorithms. O(n) example: bubble sort. O(log n) example: merge sort.",
+        "Big O is about optimizing code for specific hardware."
+    ],
+    correctAnswer: "It describes the worst-case time or space complexity as input size grows. O(n): linear search. O(log n): binary search.",
+    answerOrTip: "Big O notation describes the upper bound of an algorithm's time or space complexity in relation to input size. O(n) is linear (e.g., iterating an array), O(log n) is logarithmic (e.g., binary search on a sorted array).",
     tags: ['data structures', 'algorithms', 'complexity']
   },
 ];
+
 
 export let sampleBlogGenerationSettings: BlogGenerationSettings = {
   generationIntervalHours: 24, // Default to once a day
@@ -945,4 +1082,3 @@ export let sampleBlogGenerationSettings: BlogGenerationSettings = {
   style: 'informative',
   lastGenerated: undefined,
 };
-
