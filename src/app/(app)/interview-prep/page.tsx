@@ -1,4 +1,3 @@
-
 "use client";
 
 import type React from 'react';
@@ -102,9 +101,9 @@ export default function InterviewPracticeHubPage() {
     formState, 
   } = useForm<QuestionFormData>({
     resolver: zodResolver(questionFormSchema),
-    defaultValues: { isMCQ: false, mcqOptions: ["", "", "", ""], category: 'Common' }
+    defaultValues: { isMCQ: false, mcqOptions: ["", "", "", ""], category: 'Common', difficulty: 'Medium' }
   });
-  const questionFormErrors = formState.errors; 
+  const questionFormErrors = questionFormControl.formState.errors; 
   const isMCQSelected = watchQuestionForm("isMCQ");
 
 
@@ -125,6 +124,11 @@ export default function InterviewPracticeHubPage() {
         toast({ title: "Error", description: "Please select an interview type.", variant: "destructive" });
         return;
       }
+      if (practiceSessionConfig.type === "ai") {
+        router.push('/ai-mock-interview'); // Navigate directly for AI
+        setIsSetupDialogOpen(false);
+        return;
+      }
       if (practiceSessionConfig.type === "friends") {
         if (!practiceSessionConfig.friendEmail?.trim()) {
           setFriendEmailError("Please enter a friend's email.");
@@ -136,12 +140,11 @@ export default function InterviewPracticeHubPage() {
           return;
         }
         setFriendEmailError(null); 
-        // For "friends", we send invitation and close dialog.
         toast({ title: "Invitation Sent (Mock)", description: `Invitation sent to ${practiceSessionConfig.friendEmail}.` });
         setIsSetupDialogOpen(false);
         return;
       }
-      setDialogStep('selectTopics');
+      setDialogStep('selectTopics'); // For experts
     } else if (dialogStep === 'selectTopics') {
       if (practiceSessionConfig.topics.length === 0) {
         toast({ title: "Error", description: "Please select at least one topic.", variant: "destructive" });
@@ -162,9 +165,8 @@ export default function InterviewPracticeHubPage() {
       return;
     }
 
-    if (practiceSessionConfig.type === 'ai') {
-      router.push(`/ai-mock-interview?topic=${encodeURIComponent(practiceSessionConfig.topics.join(','))}&dateTime=${practiceSessionConfig.dateTime.toISOString()}`);
-    } else if (practiceSessionConfig.type === 'experts') {
+    // AI type navigation is handled in handleDialogNextStep now
+    if (practiceSessionConfig.type === 'experts') {
       const newSession: PracticeSession = {
         id: `ps-expert-${Date.now()}`,
         userId: currentUser.id,
@@ -794,7 +796,6 @@ export default function InterviewPracticeHubPage() {
             {dialogStep === 'selectTimeSlot' && (
                <PracticeDateTimeSelector
                 initialSelectedDate={practiceSessionConfig.dateTime || undefined}
-                // initialSelectedTime might need conversion if dateTime is stored differently
                 onDateTimeChange={(date, time) => {
                     if (date && time) {
                         const [hours, minutes] = time.split(':').map(Number);
@@ -813,13 +814,15 @@ export default function InterviewPracticeHubPage() {
             {dialogStep !== 'selectType' && (
               <Button variant="outline" onClick={handleDialogPreviousStep}>Back</Button>
             )}
-            {dialogStep !== 'selectTimeSlot' && practiceSessionConfig.type !== 'friends' && (
-              <Button onClick={handleDialogNextStep} disabled={!practiceSessionConfig.type || (practiceSessionConfig.type === 'friends' && (!practiceSessionConfig.friendEmail || !!friendEmailError))}>Next</Button>
+            {dialogStep !== 'selectTimeSlot' && practiceSessionConfig.type !== 'friends' && practiceSessionConfig.type !== 'ai' && ( // Only show Next for experts now
+              <Button onClick={handleDialogNextStep} disabled={!practiceSessionConfig.type}>Next</Button>
             )}
-            {practiceSessionConfig.type === 'friends' && dialogStep === 'selectType' && (
-                 <Button onClick={handleDialogNextStep} disabled={!practiceSessionConfig.friendEmail || !!friendEmailError}>Send Invitation</Button>
+            {(practiceSessionConfig.type === 'friends' || practiceSessionConfig.type === 'ai') && dialogStep === 'selectType' && ( // Specific "Next/Action" button for AI and Friends at Type Selection
+                 <Button onClick={handleDialogNextStep} disabled={!practiceSessionConfig.type || (practiceSessionConfig.type === 'friends' && (!practiceSessionConfig.friendEmail || !!friendEmailError))}>
+                    {practiceSessionConfig.type === 'friends' ? "Send Invitation" : "Proceed to Setup"}
+                 </Button>
             )}
-            {dialogStep === 'selectTimeSlot' && (
+            {dialogStep === 'selectTimeSlot' && ( // Only for 'experts' now as AI/Friends redirect earlier
               <Button onClick={handleFinalBookSession} disabled={!practiceSessionConfig.dateTime} className="bg-green-600 hover:bg-green-700 text-white">Book Session</Button>
             )}
             <DialogClose asChild><Button variant="ghost">Cancel</Button></DialogClose>
