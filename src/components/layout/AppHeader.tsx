@@ -5,7 +5,7 @@
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Bell, LogOut, UserCircle, Settings as SettingsIcon, Briefcase, Award, WalletCards, Layers3, BookOpen, Activity as ActivityIcon, Flame, Star, Coins, PanelLeft, History as HistoryIcon } from "lucide-react"; 
+import { Bell, LogOut, UserCircle, Settings as SettingsIcon, Briefcase, Award, WalletCards, Layers3, BookOpen, Activity as ActivityIcon, Flame, Star, Coins, PanelLeft, History as HistoryIcon, Globe } from "lucide-react"; 
 import Link from "next/link";
 import {
   DropdownMenu,
@@ -26,7 +26,7 @@ import { useState, useEffect } from 'react';
 import { getRecentPages } from '@/lib/recent-pages'; 
 import type { RecentPageItem } from '@/types'; 
 import { usePathname } from "next/navigation"; 
-import AnnouncementBanner from '@/components/features/AnnouncementBanner'; // Added import
+import AnnouncementBanner from '@/components/features/AnnouncementBanner';
 
 export function AppHeader() {
   const { toast } = useToast();
@@ -34,6 +34,7 @@ export function AppHeader() {
   const wallet = sampleWalletBalance;
   const [recentPages, setRecentPages] = useState<RecentPageItem[]>([]);
   const pathname = usePathname(); 
+  // const { t } = useTranslations('AppHeader'); // Example for next-intl
 
   // Mock logout function
   const handleLogout = () => {
@@ -46,6 +47,12 @@ export function AppHeader() {
     setRecentPages(getRecentPages());
   }, [pathname]); // Depend on pathname to re-fetch when navigation occurs
 
+  const handleLanguageChange = (lang: string) => {
+    // In a real app, this would set the locale and redirect or update context
+    toast({ title: "Language Switched (Mock)", description: `Language set to ${lang}. Page would reload.` });
+    // Example: router.push(pathname, { locale: lang });
+  };
+
   return (
     <TooltipProvider>
       <header className="sticky top-0 z-10 border-b bg-card shadow-sm">
@@ -57,7 +64,22 @@ export function AppHeader() {
           <div className="flex-1">
             {/* Optionally, add a search bar or breadcrumbs here */}
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4"> {/* Adjusted gap for smaller screens */}
+            {/* Language Switcher Placeholder */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full">
+                  <Globe className="h-5 w-5 text-muted-foreground" />
+                  <span className="sr-only">{"AppHeader.languageSwitcherLabel"}</span> {/* Placeholder for t('languageSwitcherLabel') */}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => handleLanguageChange('en')}>English</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleLanguageChange('es')}>Español</DropdownMenuItem>
+                {/* Add more languages as needed */}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             <Button variant="ghost" size="icon" className="rounded-full">
               <Bell className="h-5 w-5 text-muted-foreground" />
               <span className="sr-only">Notifications</span>

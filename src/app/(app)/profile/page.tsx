@@ -24,6 +24,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { suggestDynamicSkills, type SuggestDynamicSkillsInput, type SuggestDynamicSkillsOutput } from '@/ai/flows/suggest-dynamic-skills';
+// import { useTranslations } from 'next-intl'; // Example for next-intl
 
 const profileSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -72,6 +73,7 @@ export default function ProfilePage() {
   const [suggestedSkills, setSuggestedSkills] = useState<SuggestedSkill[] | null>(null);
   const [isSkillsLoading, setIsSkillsLoading] = useState(false);
   const { toast } = useToast();
+  // const t = useTranslations('ProfilePage'); // Example for next-intl
 
   const { control, handleSubmit, watch, reset, setValue, formState: { errors, isDirty } } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -158,11 +160,17 @@ export default function ProfilePage() {
     }
     setIsEditing(false); 
     console.log("Updated Profile Data:", updatedProfileData);
+    // i18n-comment: "Profile Updated"
+    // i18n-comment: "Your profile information has been saved."
     toast({ title: "Profile Updated", description: "Your profile information has been saved." });
   };
   
-  const renderSectionHeader = (title: string, icon: React.ElementType, tooltipText?: string) => {
+  const renderSectionHeader = (titleKey: string, icon: React.ElementType, tooltipTextKey?: string) => {
     const IconComponent = icon;
+    // i18n-comment: titleKey and tooltipTextKey would be used with t(titleKey) and t(tooltipTextKey)
+    const title = titleKey; // Placeholder for t(titleKey)
+    const tooltipText = tooltipTextKey; // Placeholder for t(tooltipTextKey)
+
     return (
       <>
         <Separator className="my-6" />
@@ -191,6 +199,8 @@ export default function ProfilePage() {
       const currentSkills = watchedFields.skills?.split(',').map(s => s.trim()).filter(s => s) || [];
       const contextText = `${watchedFields.bio || ''} ${watchedFields.careerInterests || ''} ${watchedFields.currentJobTitle || ''} ${watchedFields.industry || ''}`.trim();
       if (!contextText) {
+        // i18n-comment: "Not Enough Info"
+        // i18n-comment: "Please fill in your bio, career interests, or job title for better skill suggestions."
         toast({ title: "Not Enough Info", description: "Please fill in your bio, career interests, or job title for better skill suggestions.", variant: "destructive" });
         setIsSkillsLoading(false);
         return;
@@ -201,9 +211,13 @@ export default function ProfilePage() {
       };
       const result = await suggestDynamicSkills(input);
       setSuggestedSkills(result.suggestedSkills);
+      // i18n-comment: "Skill Suggestions Ready"
+      // i18n-comment: "AI has suggested some new skills for you."
       toast({ title: "Skill Suggestions Ready", description: "AI has suggested some new skills for you." });
     } catch (error) {
       console.error("Skill suggestion error:", error);
+      // i18n-comment: "Suggestion Failed"
+      // i18n-comment: "Could not fetch skill suggestions."
       toast({ title: "Suggestion Failed", description: "Could not fetch skill suggestions.", variant: "destructive" });
     } finally {
       setIsSkillsLoading(false);
@@ -216,8 +230,12 @@ export default function ProfilePage() {
     if (!skillsArray.includes(skill)) {
         const newSkillsString = [...skillsArray, skill].join(', ');
         setValue('skills', newSkillsString, { shouldDirty: true });
+        // i18n-comment: "Skill Added"
+        // i18n-comment: `"${skill}" added to your skills list. Save profile to keep changes.`
         toast({title: "Skill Added", description: `"${skill}" added to your skills list. Save profile to keep changes.`});
     } else {
+        // i18n-comment: "Skill Exists"
+        // i18n-comment: `"${skill}" is already in your skills list.`
         toast({title: "Skill Exists", description: `"${skill}" is already in your skills list.`, variant: "default"});
     }
   };
@@ -227,10 +245,12 @@ export default function ProfilePage() {
     <div className="space-y-8">
     <TooltipProvider>
       <div className="flex items-center justify-between">
+        {/* i18n-comment: ProfilePage.title */}
         <h1 className="text-3xl font-bold tracking-tight text-foreground">My Profile</h1>
         {!isEditing && (
+          // i18n-comment: ProfilePage.editButton
           <Button onClick={() => setIsEditing(true)} variant="outline">
-            <Edit3 className="mr-2 h-4 w-4" /> Edit Profile
+            <Edit3 className="mr-2 h-4 w-4" /> Edit Profile 
           </Button>
         )}
       </div>
@@ -238,13 +258,15 @@ export default function ProfilePage() {
 
       <Card className="shadow-lg">
         <CardHeader>
+          {/* i18n-comment: "Profile Completion" */}
           <CardTitle className="flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-primary"/>Profile Completion
+            <Sparkles className="h-6 w-6 text-primary"/>Profile Completion 
             <Tooltip>
               <TooltipTrigger asChild>
                 <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
               </TooltipTrigger>
               <TooltipContent>
+                {/* i18n-comment: "Complete your profile to unlock more features and improve your recommendations." */}
                 <p>Complete your profile to unlock more features and improve your recommendations.</p>
               </TooltipContent>
             </Tooltip>
@@ -252,6 +274,7 @@ export default function ProfilePage() {
         </CardHeader>
         <CardContent>
           <Progress value={profileCompletion} className="w-full h-3 [&>div]:bg-primary" />
+          {/* i18n-comment: "{profileCompletion}% complete. Keep it up!" */}
           <p className="text-sm text-muted-foreground mt-2 text-center">{profileCompletion}% complete. Keep it up!</p>
         </CardContent>
       </Card>
@@ -271,6 +294,7 @@ export default function ProfilePage() {
                     <label htmlFor="avatarUpload" className="absolute inset-0 flex items-center justify-center bg-black/50 text-white opacity-0 group-hover:opacity-100 rounded-full cursor-pointer transition-opacity">
                       <Upload className="h-8 w-8" />
                     </label>
+                    {/* i18n-comment: "Avatar Upload", "Avatar upload functionality is mocked." */}
                     <input type="file" id="avatarUpload" className="hidden" accept="image/*" onChange={() => toast({title: "Avatar Upload", description: "Avatar upload functionality is mocked."})}/>
                     </>
                   )}
@@ -282,30 +306,37 @@ export default function ProfilePage() {
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Section 1: Personal & Contact Information */}
+              {/* i18n-comment: "Personal & Contact Information" (titleKey) */}
               {renderSectionHeader("Personal & Contact Information", User)}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-1">
+                  {/* i18n-comment: "Full Name" */}
                   <Label htmlFor="name">Full Name</Label>
                   <Controller name="name" control={control} render={({ field }) => <Input id="name" {...field} />} />
                   {errors.name && <p className="text-sm text-destructive mt-1">{errors.name.message}</p>}
                 </div>
+                {/* ... other fields similarly ... */}
                 <div className="space-y-1">
+                  {/* i18n-comment: "Email Address" */}
                   <Label htmlFor="email">Email Address</Label>
                   <Controller name="email" control={control} render={({ field }) => <Input id="email" type="email" {...field} />} />
                   {errors.email && <p className="text-sm text-destructive mt-1">{errors.email.message}</p>}
                 </div>
                 <div className="space-y-1">
+                   {/* i18n-comment: "Date of Birth" */}
                   <Label htmlFor="dateOfBirth">Date of Birth</Label>
                   <Controller name="dateOfBirth" control={control} render={({ field }) => <DatePicker date={field.value} setDate={field.onChange} />} />
                   {errors.dateOfBirth && <p className="text-sm text-destructive mt-1">{errors.dateOfBirth.message}</p>}
                 </div>
                 <div className="space-y-1">
+                  {/* i18n-comment: "Gender" */}
                   <Label htmlFor="gender">Gender</Label>
                   <Controller name="gender" control={control} render={({ field }) => (
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      {/* i18n-comment: "Select gender" (placeholder) */}
                       <SelectTrigger id="gender"><SelectValue placeholder="Select gender" /></SelectTrigger>
                       <SelectContent>
+                        {/* i18n-comment: "Male", "Female", "Prefer not to say" */}
                         <SelectItem value="Male">Male</SelectItem>
                         <SelectItem value="Female">Female</SelectItem>
                         <SelectItem value="Prefer not to say">Prefer not to say</SelectItem>
@@ -314,21 +345,26 @@ export default function ProfilePage() {
                   )} />
                 </div>
                 <div className="space-y-1">
+                   {/* i18n-comment: "Mobile Number" */}
                   <Label htmlFor="mobileNumber" className="flex items-center gap-1"><Phone className="h-4 w-4 text-muted-foreground"/>Mobile Number</Label>
                   <Controller name="mobileNumber" control={control} render={({ field }) => <Input id="mobileNumber" placeholder="e.g. +1 XXX XXX XXXX" {...field} />} />
                 </div>
                 <div className="space-y-1 md:col-span-2">
+                  {/* i18n-comment: "Current Address" */}
                   <Label htmlFor="currentAddress" className="flex items-center gap-1"><MapPin className="h-4 w-4 text-muted-foreground"/>Current Address</Label>
                   <Controller name="currentAddress" control={control} render={({ field }) => <Textarea id="currentAddress" placeholder="City, State, Country" {...field} />} />
                 </div>
               </div>
-
+                
+              {/* i18n-comment: "Academic Information" (titleKey) */}
               {renderSectionHeader("Academic Information", GraduationCap)}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="space-y-1">
+                  {/* i18n-comment: "Year of Graduation / Batch" */}
                   <Label htmlFor="graduationYear">Year of Graduation / Batch</Label>
                   <Controller name="graduationYear" control={control} render={({ field }) => (
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      {/* i18n-comment: "Select year" (placeholder) */}
                       <SelectTrigger id="graduationYear"><SelectValue placeholder="Select year" /></SelectTrigger>
                       <SelectContent>
                         {graduationYears.map(year => <SelectItem key={year} value={year}>{year}</SelectItem>)}
@@ -337,9 +373,11 @@ export default function ProfilePage() {
                   )} />
                 </div>
                 <div className="space-y-1">
+                  {/* i18n-comment: "Degree / Program" */}
                   <Label htmlFor="degreeProgram">Degree / Program</Label>
                   <Controller name="degreeProgram" control={control} render={({ field }) => (
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
+                       {/* i18n-comment: "Select degree" (placeholder) */}
                       <SelectTrigger id="degreeProgram"><SelectValue placeholder="Select degree" /></SelectTrigger>
                       <SelectContent>
                         {DegreePrograms.map(deg => <SelectItem key={deg} value={deg}>{deg}</SelectItem>)}
@@ -348,25 +386,31 @@ export default function ProfilePage() {
                   )} />
                 </div>
                 <div className="space-y-1">
+                  {/* i18n-comment: "Department" */}
                   <Label htmlFor="department">Department</Label>
                   <Controller name="department" control={control} render={({ field }) => <Input id="department" placeholder="e.g. Computer Science" {...field} />} />
                 </div>
               </div>
               
+              {/* i18n-comment: "Professional Information" (titleKey) */}
               {renderSectionHeader("Professional Information", Briefcase)}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-1">
+                  {/* i18n-comment: "Current Job Title" */}
                   <Label htmlFor="currentJobTitle">Current Job Title</Label>
                   <Controller name="currentJobTitle" control={control} render={({ field }) => <Input id="currentJobTitle" {...field} />} />
                 </div>
                 <div className="space-y-1">
+                  {/* i18n-comment: "Current Organization" */}
                   <Label htmlFor="currentOrganization" className="flex items-center gap-1"><Building className="h-4 w-4 text-muted-foreground"/>Current Organization</Label>
                   <Controller name="currentOrganization" control={control} render={({ field }) => <Input id="currentOrganization" {...field} />} />
                 </div>
                 <div className="space-y-1">
+                   {/* i18n-comment: "Industry / Sector" */}
                   <Label htmlFor="industry">Industry / Sector</Label>
                   <Controller name="industry" control={control} render={({ field }) => (
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      {/* i18n-comment: "Select industry" (placeholder) */}
                       <SelectTrigger id="industry"><SelectValue placeholder="Select industry" /></SelectTrigger>
                       <SelectContent>
                         {Industries.map(ind => <SelectItem key={ind} value={ind}>{ind}</SelectItem>)}
@@ -375,26 +419,33 @@ export default function ProfilePage() {
                   )} />
                 </div>
                 <div className="space-y-1">
+                  {/* i18n-comment: "Work Location (City, Country)" */}
                   <Label htmlFor="workLocation">Work Location (City, Country)</Label>
                   <Controller name="workLocation" control={control} render={({ field }) => <Input id="workLocation" {...field} />} />
                 </div>
                 <div className="space-y-1">
+                  {/* i18n-comment: "LinkedIn Profile URL" */}
                   <Label htmlFor="linkedInProfile" className="flex items-center gap-1"><LinkIcon className="h-4 w-4 text-muted-foreground"/>LinkedIn Profile URL</Label>
                   <Controller name="linkedInProfile" control={control} render={({ field }) => <Input id="linkedInProfile" type="url" {...field} />} />
                   {errors.linkedInProfile && <p className="text-sm text-destructive mt-1">{errors.linkedInProfile.message}</p>}
                 </div>
                 <div className="space-y-1">
+                  {/* i18n-comment: "Years of Experience" */}
                   <Label htmlFor="yearsOfExperience">Years of Experience</Label>
                   <Controller name="yearsOfExperience" control={control} render={({ field }) => <Input id="yearsOfExperience" type="text" placeholder="e.g. 5 or 5+" {...field} />} />
                 </div>
                 <div className="space-y-1 md:col-span-2">
+                   {/* i18n-comment: "Skills / Areas of Expertise (comma-separated)" */}
                   <Label htmlFor="skills" className="flex items-center gap-1"><Brain className="h-4 w-4 text-muted-foreground"/>Skills / Areas of Expertise (comma-separated)</Label>
                   <Controller name="skills" control={control} render={({ field }) => <Textarea id="skills" placeholder="e.g., React, Node.js, Python, Data Science, Marketing" {...field} />} />
                 </div>
               </div>
 
+              {/* i18n-comment: "Alumni Engagement & Support Interests" (titleKey) */}
+              {/* i18n-comment: "Indicate how you'd like to engage with the alumni community and what support you can offer." (tooltipTextKey) */}
               {renderSectionHeader("Alumni Engagement & Support Interests", Handshake, "Indicate how you'd like to engage with the alumni community and what support you can offer.")}
               <div className="space-y-4">
+                {/* i18n-comment: "Areas Where You Can Support" */}
                 <Label className="flex items-center gap-1 text-md"><Users className="h-4 w-4 text-muted-foreground"/>Areas Where You Can Support</Label>
                 <Controller
                   name="areasOfSupport"
@@ -415,6 +466,7 @@ export default function ProfilePage() {
                               }
                             }}
                           />
+                          {/* i18n-comment: Each area in AreasOfSupportOptions would be translated */}
                           <Label htmlFor={`support-${area.replace(/\s+/g, '-')}`} className="font-normal text-sm">{area}</Label>
                         </div>
                       ))}
@@ -424,9 +476,11 @@ export default function ProfilePage() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-1">
+                  {/* i18n-comment: "Time Willing to Commit (per month)" */}
                   <Label htmlFor="timeCommitment" className="flex items-center gap-1"><Clock className="h-4 w-4 text-muted-foreground"/>Time Willing to Commit (per month)</Label>
                   <Controller name="timeCommitment" control={control} render={({ field }) => (
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
+                       {/* i18n-comment: "Select time commitment" (placeholder) */}
                       <SelectTrigger id="timeCommitment"><SelectValue placeholder="Select time commitment" /></SelectTrigger>
                       <SelectContent>
                         {TimeCommitments.map(tc => <SelectItem key={tc} value={tc}>{tc}</SelectItem>)}
@@ -435,9 +489,11 @@ export default function ProfilePage() {
                   )} />
                 </div>
                 <div className="space-y-1">
+                   {/* i18n-comment: "Preferred Mode of Engagement" */}
                   <Label htmlFor="preferredEngagementMode" className="flex items-center gap-1"><MessageCircle className="h-4 w-4 text-muted-foreground"/>Preferred Mode of Engagement</Label>
                   <Controller name="preferredEngagementMode" control={control} render={({ field }) => (
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      {/* i18n-comment: "Select mode" (placeholder) */}
                       <SelectTrigger id="preferredEngagementMode"><SelectValue placeholder="Select mode" /></SelectTrigger>
                       <SelectContent>
                         {EngagementModes.map(mode => <SelectItem key={mode} value={mode}>{mode}</SelectItem>)}
@@ -447,16 +503,21 @@ export default function ProfilePage() {
                 </div>
               </div>
               <div className="space-y-1">
+                {/* i18n-comment: "Other Comments / Notes" */}
                 <Label htmlFor="otherComments" className="flex items-center gap-1"><Info className="h-4 w-4 text-muted-foreground"/>Other Comments / Notes</Label>
                 <Controller name="otherComments" control={control} render={({ field }) => <Textarea id="otherComments" {...field} />} />
               </div>
 
+              {/* i18n-comment: "Help You’re Looking For (Optional)" (titleKey) */}
+              {/* i18n-comment: "Let others know if you are seeking specific support or guidance from the alumni network." (tooltipTextKey) */}
               {renderSectionHeader("Help You’re Looking For (Optional)", HelpCircle, "Let others know if you are seeking specific support or guidance from the alumni network.")}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-1">
+                  {/* i18n-comment: "Type of Support You Are Looking For" */}
                   <Label htmlFor="lookingForSupportType">Type of Support You Are Looking For</Label>
                   <Controller name="lookingForSupportType" control={control} render={({ field }) => (
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      {/* i18n-comment: "Select support type" (placeholder) */}
                       <SelectTrigger id="lookingForSupportType"><SelectValue placeholder="Select support type" /></SelectTrigger>
                       <SelectContent>
                         {SupportTypesSoughtOptions.map(st => <SelectItem key={st} value={st}>{st}</SelectItem>)}
@@ -466,25 +527,32 @@ export default function ProfilePage() {
                 </div>
               </div>
               <div className="space-y-1">
+                {/* i18n-comment: "Brief Description of Help Needed" */}
                 <Label htmlFor="helpNeededDescription">Brief Description of Help Needed</Label>
                 <Controller name="helpNeededDescription" control={control} render={({ field }) => <Textarea id="helpNeededDescription" {...field} />} />
               </div>
 
+              {/* i18n-comment: "Visibility & Consent" (titleKey) */}
+              {/* i18n-comment: "Manage how your profile information is shared within the platform." (tooltipTextKey) */}
               {renderSectionHeader("Visibility & Consent", CheckSquare, "Manage how your profile information is shared within the platform.")}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
+                  {/* i18n-comment: "Can we share your profile with other alumni for relevant collaboration?" */}
                   <Label>Can we share your profile with other alumni for relevant collaboration?</Label>
                   <Controller name="shareProfileConsent" control={control} render={({ field }) => (
                     <RadioGroup onValueChange={(val) => field.onChange(val === "true")} defaultValue={String(field.value)} className="flex space-x-4">
+                       {/* i18n-comment: "Yes", "No" */}
                       <div className="flex items-center space-x-2"><RadioGroupItem value="true" id="share-yes" /><Label htmlFor="share-yes" className="font-normal">Yes</Label></div>
                       <div className="flex items-center space-x-2"><RadioGroupItem value="false" id="share-no" /><Label htmlFor="share-no" className="font-normal">No</Label></div>
                     </RadioGroup>
                   )} />
                 </div>
                 <div className="space-y-2">
+                  {/* i18n-comment: "Can we feature you on the alumni dashboard or spotlight?" */}
                   <Label>Can we feature you on the alumni dashboard or spotlight?</Label>
                   <Controller name="featureInSpotlightConsent" control={control} render={({ field }) => (
                     <RadioGroup onValueChange={(val) => field.onChange(val === "true")} defaultValue={String(field.value)} className="flex space-x-4">
+                      {/* i18n-comment: "Yes", "No" */}
                       <div className="flex items-center space-x-2"><RadioGroupItem value="true" id="feature-yes" /><Label htmlFor="feature-yes" className="font-normal">Yes</Label></div>
                       <div className="flex items-center space-x-2"><RadioGroupItem value="false" id="feature-no" /><Label htmlFor="feature-no" className="font-normal">No</Label></div>
                     </RadioGroup>
@@ -492,21 +560,26 @@ export default function ProfilePage() {
                 </div>
               </div>
               
+              {/* i18n-comment: "Additional Information" (titleKey) */}
               {renderSectionHeader("Additional Information", SettingsIcon)}
               <div className="space-y-1">
+                  {/* i18n-comment: "Profile Picture URL" */}
                   <Label htmlFor="profilePictureUrl" className="flex items-center gap-1"><User className="h-4 w-4 text-muted-foreground"/>Profile Picture URL</Label>
                   <Controller name="profilePictureUrl" control={control} render={({ field }) => <Input id="profilePictureUrl" placeholder="https://example.com/your-image.png" {...field} />} />
                   {errors.profilePictureUrl && <p className="text-sm text-destructive mt-1">{errors.profilePictureUrl.message}</p>}
               </div>
               <div className="space-y-1">
+                {/* i18n-comment: "Bio / Summary" */}
                 <Label htmlFor="bio" className="flex items-center gap-1"><Briefcase className="h-4 w-4 text-muted-foreground"/>Bio / Summary</Label>
                 <Controller name="bio" control={control} render={({ field }) => <Textarea id="bio" rows={4} placeholder="Tell us about yourself..." {...field} />} />
               </div>
               <div className="space-y-1">
+                {/* i18n-comment: "Career Interests" */}
                 <Label htmlFor="careerInterests" className="flex items-center gap-1"><Sparkles className="h-4 w-4 text-muted-foreground"/>Career Interests</Label>
                 <Controller name="careerInterests" control={control} render={({ field }) => <Input id="careerInterests" placeholder="e.g., AI, Fintech, SaaS" {...field} />} />
               </div>
               <div className="space-y-1">
+                 {/* i18n-comment: "Main Resume Text" */}
                 <Label htmlFor="resumeText" className="flex items-center gap-1">
                   <User className="h-4 w-4 text-muted-foreground"/>Main Resume Text
                   <Tooltip>
@@ -514,6 +587,7 @@ export default function ProfilePage() {
                         <HelpCircle className="h-3 w-3 text-muted-foreground cursor-help" />
                       </TooltipTrigger>
                       <TooltipContent>
+                        {/* i18n-comment: "This text will be used by AI features like Resume Analysis and Personalized Recommendations." */}
                         <p className="max-w-xs">This text will be used by AI features like Resume Analysis and Personalized Recommendations.</p>
                       </TooltipContent>
                     </Tooltip>
@@ -524,9 +598,11 @@ export default function ProfilePage() {
             <CardFooter>
               {isEditing && (
                 <div className="flex gap-2">
+                   {/* i18n-comment: "Save Changes" */}
                    <Button type="submit" disabled={!isDirty} className="bg-primary hover:bg-primary/90 text-primary-foreground">
                     <Save className="mr-2 h-4 w-4" /> Save Changes
                   </Button>
+                  {/* i18n-comment: "Cancel" */}
                   <Button type="button" variant="outline" onClick={() => { setIsEditing(false); reset(); }}>
                     Cancel
                   </Button>
@@ -540,19 +616,23 @@ export default function ProfilePage() {
       {/* Dynamic Skill Suggestions Card */}
       <Card className="shadow-lg">
         <CardHeader>
+           {/* i18n-comment: "AI Skill Suggestions" */}
           <CardTitle className="flex items-center gap-2">
             <Sparkles className="h-6 w-6 text-primary" /> AI Skill Suggestions
           </CardTitle>
+          {/* i18n-comment: "Get personalized skill suggestions based on your profile and career interests." */}
           <CardDescription>Get personalized skill suggestions based on your profile and career interests.</CardDescription>
         </CardHeader>
         <CardContent>
           {isSkillsLoading && (
             <div className="text-center py-4">
               <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+              {/* i18n-comment: "Finding skill suggestions..." */}
               <p className="mt-2 text-muted-foreground">Finding skill suggestions...</p>
             </div>
           )}
           {!isSkillsLoading && suggestedSkills && suggestedSkills.length === 0 && (
+            // i18n-comment: "No specific skill suggestions found at this time. Ensure your bio and career interests are filled out."
             <p className="text-muted-foreground text-center py-4">No specific skill suggestions found at this time. Ensure your bio and career interests are filled out.</p>
           )}
           {!isSkillsLoading && suggestedSkills && suggestedSkills.length > 0 && (
@@ -562,14 +642,17 @@ export default function ProfilePage() {
                   <div className="flex justify-between items-start gap-2">
                     <div>
                       <h4 className="font-semibold text-foreground">{skillRec.skill}</h4>
+                      {/* i18n-comment: "Relevance" */}
                       <p className="text-xs text-muted-foreground">Relevance: <span className="text-primary font-bold">{skillRec.relevanceScore}%</span></p>
                     </div>
                     {isEditing && (
+                       // i18n-comment: "Add Skill"
                        <Button size="sm" variant="outline" onClick={() => handleAddSuggestedSkill(skillRec.skill)}>
                         <PlusCircleIcon className="mr-1 h-4 w-4" /> Add Skill
                       </Button>
                     )}
                   </div>
+                  {/* i18n-comment: "Reasoning" */}
                   <p className="text-sm text-muted-foreground mt-1 italic">Reasoning: {skillRec.reasoning}</p>
                 </Card>
               ))}
@@ -577,6 +660,7 @@ export default function ProfilePage() {
           )}
         </CardContent>
         <CardFooter>
+          {/* i18n-comment: "Get AI Skill Suggestions" */}
           <Button onClick={handleGetSkillSuggestions} disabled={isSkillsLoading} className="w-full md:w-auto">
             {isSkillsLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ThumbsUp className="mr-2 h-4 w-4" />}
             Get AI Skill Suggestions
@@ -588,4 +672,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-

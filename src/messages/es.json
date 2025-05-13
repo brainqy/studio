@@ -1,0 +1,17 @@
+
+{
+  "Dashboard": {
+    "title": "Panel de Control",
+    "greeting": "¡Bienvenido, {name}!",
+    "description_admin": "Administre usuarios, configuraciones del sistema y vea estadísticas generales de la plataforma.",
+    "description_manager": "Supervise la participación de su inquilino, administre funciones específicas y realice un seguimiento de las métricas clave.",
+    "description_user": "Este es su centro central para administrar su trayectoria profesional con ResumeMatch AI."
+  },
+  "ProfilePage": {
+    "title": "Mi Perfil",
+    "editButton": "Editar Perfil"
+  },
+  "AppHeader": {
+    "languageSwitcherLabel": "Idioma"
+  }
+}

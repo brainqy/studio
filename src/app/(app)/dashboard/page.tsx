@@ -4,6 +4,7 @@
 import { useEffect, useState } from "react";
 import { sampleUserProfile } from "@/lib/sample-data";
 import type { UserRole } from "@/types";
+// import { useTranslations } from 'next-intl'; // Example for next-intl
 
 import AdminDashboard from "@/components/dashboards/AdminDashboard";
 import ManagerDashboard from "@/components/dashboards/ManagerDashboard";
@@ -21,6 +22,7 @@ export default function DashboardPage() {
   const [tourSteps, setTourSteps] = useState<any[]>([]);
   const [tourKey, setTourKey] = useState('');
   const [tourTitle, setTourTitle] = useState('');
+  // const t = useTranslations('Dashboard'); // Example for next-intl
 
   useEffect(() => {
     const role = sampleUserProfile.role; 
@@ -44,15 +46,15 @@ export default function DashboardPage() {
       if (role === 'admin') {
         currentTourKey = 'adminDashboardTourSeen';
         currentTourSteps = adminDashboardTourSteps;
-        currentTourTitle = "Welcome Admin!";
+        currentTourTitle = "Welcome Admin!"; // This would be t('greeting_admin_tour')
       } else if (role === 'manager') {
         currentTourKey = 'managerDashboardTourSeen';
         currentTourSteps = managerDashboardTourSteps;
-        currentTourTitle = "Welcome Manager!";
+        currentTourTitle = "Welcome Manager!"; // This would be t('greeting_manager_tour')
       } else { // user
         currentTourKey = 'userDashboardTourSeen';
         currentTourSteps = userDashboardTourSteps;
-        currentTourTitle = "Welcome to Your Dashboard!";
+        currentTourTitle = "Welcome to Your Dashboard!"; // This would be t('greeting_user_tour')
       }
       
       setTourKey(currentTourKey);
@@ -80,7 +82,8 @@ export default function DashboardPage() {
   if (isLoading) {
     return (
       <div className="space-y-8">
-        <Skeleton className="h-10 w-1/4" />
+        {/* i18n-comment: "Loading..." */}
+        <Skeleton className="h-10 w-1/4" /> 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <Skeleton className="h-28 w-full" />
           <Skeleton className="h-28 w-full" />
@@ -98,12 +101,13 @@ export default function DashboardPage() {
   const renderDashboard = () => {
     switch (userRole) {
       case 'admin':
-        return <AdminDashboard />;
+        // Pass t function or translated strings as props if AdminDashboard needs them
+        return <AdminDashboard /* title={t('title')} description={t('description_admin')} */ />;
       case 'manager':
-        return <ManagerDashboard />;
+        return <ManagerDashboard /* title={t('title')} description={t('description_manager')} */ />;
       case 'user':
       default:
-        return <UserDashboard />;
+        return <UserDashboard /* title={t('title')} description={t('description_user')} */ />;
     }
   };
 
@@ -123,7 +127,7 @@ export default function DashboardPage() {
           onClose={handleCloseWelcomeTour}
           tourKey={tourKey}
           steps={tourSteps}
-          title={tourTitle}
+          title={tourTitle} // This title would be translated
         />
       )}
     </>
