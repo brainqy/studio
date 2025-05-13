@@ -1,4 +1,5 @@
-import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem, Appointment, Wallet, ResumeProfile, Tenant, Badge, BlogPost, ReferralHistoryItem, GamificationRule, UserStatus, SurveyResponse, Affiliate, AffiliateClick, AffiliateSignup, AffiliateStatus, SurveyStep, ResumeTemplate, TourStep, CommunityComment, InterviewQuestion, InterviewQuestionCategory, BlogGenerationSettings } from '@/types';
+
+import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem, Appointment, Wallet, ResumeProfile, Tenant, Badge, BlogPost, ReferralHistoryItem, GamificationRule, UserStatus, SurveyResponse, Affiliate, AffiliateClick, AffiliateSignup, AffiliateStatus, SurveyStep, ResumeTemplate, TourStep, CommunityComment, InterviewQuestion, InterviewQuestionCategory, BlogGenerationSettings, MockInterviewSession } from '@/types';
 import { AreasOfSupport, AppointmentStatuses, Genders, DegreePrograms, Industries, TimeCommitments, EngagementModes, SupportTypesSought } from '@/types'; // Import AppointmentStatuses and other const arrays
 
 const SAMPLE_TENANT_ID = 'tenant-1'; // Define a default tenant ID for sample data
@@ -104,7 +105,7 @@ export const sampleActivities: Activity[] = [
   { id: 'act6', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), description: 'Posted in Community Feed: "Interview Tips?".' },
 ];
 
-export const sampleCommunityPosts: CommunityPost[] = [
+export let sampleCommunityPosts: CommunityPost[] = [ // Changed to let for dynamic updates
   { 
     id: 'post1', 
     tenantId: SAMPLE_TENANT_ID, 
@@ -275,15 +276,17 @@ export const sampleUserProfile: UserProfile = {
   dailyStreak: 15, 
   longestStreak: 25, 
   totalActiveDays: 300, 
-  weeklyActivity: [true, true, false, true, true, false, true],
+  weeklyActivity: [true, true, false, true, true, false, true], // Represents activity for the last 7 days, with the last element being today
   referralCode: 'USERREF789',
   earnedBadges: ['profile-pro', 'analyzer-ace', 'networker'],
   affiliateCode: 'AFFUSER007',
+  // Add sample interview sessions for this user
+  pastInterviewSessions: ['session-hist-1', 'session-hist-2'], // IDs referencing sampleMockInterviewSessions
 };
 
 export const samplePlatformUsers: UserProfile[] = [
   sampleUserProfile, 
-  ...sampleAlumni, // Directly spread sampleAlumni as they now include xpPoints
+  ...sampleAlumni, 
 ];
 
 
@@ -306,7 +309,7 @@ export const sampleWalletBalance: Wallet = {
     ]
 };
 
-export const sampleResumeProfiles: ResumeProfile[] = [
+export let sampleResumeProfiles: ResumeProfile[] = [
   { id: 'resume1', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', name: "Software Engineer Focused", resumeText: sampleUserProfile.resumeText || "This is a resume focused on software engineering roles...", lastAnalyzed: "2024-07-15" },
   { id: 'resume2', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', name: "Product Manager Application", resumeText: "A resume tailored for product management positions...", lastAnalyzed: "2024-07-10" },
   { id: 'resume3', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', name: "General Tech Resume", resumeText: "A general purpose resume for various tech roles.", lastAnalyzed: "2024-06-20" },
@@ -484,7 +487,7 @@ export let sampleBlogPosts: BlogPost[] = [ // Changed to let for user blog creat
     author: 'Alumni Relations (State University)',
     date: '2024-07-15T14:30:00Z',
     imageUrl: 'https://picsum.photos/seed/blognetwork/800/400',
-    content: 'Hear inspiring stories from fellow alumni who found opportunities through the ResumeMatch AI network. Discover tips for effective networking...\n\nAlice Wonderland (Class of \'15) shares how a connection made through the platform led to her current role at Google. "The recommendation feature pointed me towards someone I hadn\'t considered, and it turned out to be the perfect connection," she says.\n\nBob The Builder (Class of \'18) used the Alumni Search to find mentors in Product Management. "Being able to filter by skills and industry was invaluable," Bob notes.\n\n**Networking Tips:**\n1. Personalize your connection requests.\n2. Be clear about what you\'re seeking (advice, referral, chat).\n3. Follow up respectfully.\n\n*This is sample content. More details would follow in a real post.*',
+    content: 'Hear inspiring stories from fellow alumni who found opportunities through the ResumeMatch AI network. Discover tips for effective networking...\n\nAlice Wonderland (Class of \'15) shares how a connection made through the platform led to her current role at Google. "The recommendation feature pointed me towards someone I hadn\'t considered, and it turned out to be the perfect connection," she says.\n\nBob The Builder (Class of \'18) used the Alumni Directory filters to find mentors in Product Management. "Being able to filter by skills and industry was invaluable," Bob notes.\n\n**Networking Tips:**\n1. Personalize your connection requests.\n2. Be clear about what you\'re seeking (advice, referral, chat).\n3. Follow up respectfully.\n\n*This is sample content. More details would follow in a real post.*',
     excerpt: 'Hear inspiring stories from fellow alumni who found opportunities through the ResumeMatch AI network...',
     tags: ['networking', 'career', 'success stories', 'state university'],
     comments: [],
@@ -1082,3 +1085,50 @@ export let sampleBlogGenerationSettings: BlogGenerationSettings = {
   style: 'informative',
   lastGenerated: undefined,
 };
+
+export const sampleMockInterviewSessions: MockInterviewSession[] = [
+  {
+    id: 'session-hist-1',
+    userId: 'currentUser',
+    topic: 'Frontend Developer Interview',
+    jobDescription: 'Looking for a skilled frontend dev for a challenging role requiring React, TypeScript, and state management expertise.',
+    questions: sampleInterviewQuestions.slice(0, 2).map(q => ({ id: q.id, questionText: q.question, category: q.category })),
+    answers: [
+      { questionId: 'iq1', questionText: sampleInterviewQuestions[0].question, userAnswer: "I once tried to implement a feature too quickly without fully understanding the requirements, which led to significant rework. I learned the importance of thorough planning and asking clarifying questions upfront. Since then, I always create a detailed plan and confirm requirements before starting development, which has greatly reduced errors and delays.", aiFeedback: "Good attempt at STAR, but be more specific about the situation and the exact results of your corrective actions. Quantify if possible.", aiScore: 70, strengths: ["Honesty", "Acknowledged learning"], areasForImprovement: ["Specificity (STAR)", "Quantifiable results"] },
+      { questionId: 'iq2', questionText: sampleInterviewQuestions[1].question, userAnswer: "In a previous project, a senior team member was consistently dismissive of junior developers' ideas. I scheduled a one-on-one with them, explained how their approach was impacting team morale and innovation, and suggested they actively solicit input during design reviews. They were receptive, and the team dynamic improved.", aiFeedback: "Excellent use of the STAR method. Clear actions and positive outcome. Well done.", aiScore: 90, strengths: ["Proactive communication", "Problem-solving", "Empathy"], areasForImprovement: ["Could mention the specific positive impact on a project metric if applicable."] },
+    ],
+    overallFeedback: {
+      overallSummary: 'The user demonstrated good problem-solving approaches and an ability to learn from past experiences. Answers could be more consistently structured using the STAR method for maximum impact.',
+      keyStrengths: ['Self-awareness', 'Proactive communication', 'Willingness to learn'],
+      keyAreasForImprovement: ['Consistent STAR method application', 'Quantifying impact of actions'],
+      finalTips: ['Practice framing all behavioral answers using the STAR method.', 'Prepare specific examples with measurable results for common interview questions.'],
+      overallScore: 80,
+    },
+    overallScore: 80,
+    status: 'completed',
+    createdAt: new Date(Date.now() - 86400000 * 3).toISOString(), // 3 days ago
+    timerPerQuestion: 120,
+    questionCategories: ['Behavioral']
+  },
+  {
+    id: 'session-hist-2',
+    userId: 'currentUser',
+    topic: 'Data Analyst Role',
+    questions: sampleInterviewQuestions.slice(2, 3).map(q => ({ id: q.id, questionText: q.question, category: q.category })), // Only one question for this example
+    answers: [
+      { questionId: 'iq3', questionText: sampleInterviewQuestions[2].question, userAnswer: 'An abstract class can have constructors and implemented methods, while an interface traditionally only defines a contract with method signatures and constants. A class can inherit from only one abstract class but implement multiple interfaces.', aiFeedback: 'Correct and comprehensive explanation of the key differences.', aiScore: 95, strengths: ["Technical accuracy", "Clarity"], areasForImprovement: ["None for this answer"] },
+    ],
+    overallFeedback: {
+      overallSummary: 'Strong technical knowledge demonstrated regarding OOP principles.',
+      keyStrengths: ['Precise technical definitions', 'Clear communication of complex concepts'],
+      keyAreasForImprovement: ['N/A for this short session'],
+      finalTips: ['Continue to provide such clear and accurate technical explanations.'],
+      overallScore: 95,
+    },
+    overallScore: 95,
+    status: 'completed',
+    createdAt: new Date(Date.now() - 86400000 * 7).toISOString(), // 7 days ago
+    timerPerQuestion: 0, // No timer
+    questionCategories: ['Technical']
+  }
+];

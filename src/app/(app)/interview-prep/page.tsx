@@ -1,36 +1,45 @@
 
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Brain, Mic, MessageSquare, Users, Zap, Tag, Lightbulb, CheckSquare as CheckSquareIcon, Code, Puzzle, BookCopy } from "lucide-react";
-import { sampleInterviewQuestions } from "@/lib/sample-data";
-import type { InterviewQuestion, InterviewQuestionCategory } from "@/types";
+import { Brain, Mic, MessageSquare, Users, Zap, Tag, Lightbulb, CheckSquare as CheckSquareIcon, Code, Puzzle, BookCopy, ListFilter, Info, Share2, RefreshCw, History } from "lucide-react";
+import { sampleInterviewQuestions, sampleUserProfile, sampleMockInterviewSessions, sampleCommunityPosts } from "@/lib/sample-data";
+import type { InterviewQuestion, InterviewQuestionCategory, MockInterviewSession, CommunityPost } from "@/types";
 import Link from "next/link";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
-
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { format, parseISO } from "date-fns";
+import ScoreCircle from '@/components/ui/score-circle';
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const ALL_CATEGORIES: InterviewQuestionCategory[] = ['Common', 'Behavioral', 'Technical', 'Coding', 'Role-Specific', 'Analytical', 'HR'];
 
 export default function InterviewPreparationPage() {
-  const [selectedCategories, setSelectedCategories] = useState<Set<InterviewQuestionCategory>>(new Set(ALL_CATEGORIES));
+  const [selectedCategories, setSelectedCategories] = useState<InterviewQuestionCategory[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedMcqAnswers, setSelectedMcqAnswers] = useState<Record<string, string>>({});
   const { toast } = useToast();
+  const [viewingSession, setViewingSession] = useState<MockInterviewSession | null>(null);
+  const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
+  const currentUser = sampleUserProfile;
+  
+  const userInterviewHistory = useMemo(() => {
+    // In a real app, fetch this for the current user
+    return sampleMockInterviewSessions.filter(session => session.userId === currentUser.id);
+  }, [currentUser.id]);
+
 
   const filteredQuestions = useMemo(() => {
-    // Ensure all questions are MCQs as per requirement
     return sampleInterviewQuestions.filter(q => {
-      if (!q.isMCQ || !q.mcqOptions || !q.correctAnswer) return false; // Only include valid MCQs
+      if (!q.isMCQ || !q.mcqOptions || !q.correctAnswer) return false; 
 
-      const matchesCategory = selectedCategories.size === 0 || selectedCategories.has(q.category);
+      const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(q.category);
       const matchesSearch = searchTerm === '' || 
                             q.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
                             (q.answerOrTip && q.answerOrTip.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -39,16 +48,6 @@ export default function InterviewPreparationPage() {
       return matchesCategory && matchesSearch;
     });
   }, [selectedCategories, searchTerm]);
-
-  const handleCategoryChange = (category: InterviewQuestionCategory, checked: boolean | "indeterminate") => {
-    const newCategories = new Set(selectedCategories);
-    if (checked === true) {
-      newCategories.add(category);
-    } else {
-      newCategories.delete(category);
-    }
-    setSelectedCategories(newCategories);
-  };
   
   const handleMcqSelection = (questionId: string, selectedOption: string) => {
     setSelectedMcqAnswers(prev => ({...prev, [questionId]: selectedOption}));
@@ -73,8 +72,51 @@ export default function InterviewPreparationPage() {
         return;
     }
     toast({title: "Create Quiz (Mock)", description: `Quiz creation with ${filteredQuestions.length} questions initiated. This is a mock feature.`});
-    // Logic for quiz creation would go here
   };
+
+  const handleViewReport = (session: MockInterviewSession) => {
+    setViewingSession(session);
+    setIsReportDialogOpen(true);
+  };
+
+  const handleShareToFeed = (session: MockInterviewSession | null) => {
+    if (!session || !session.overallFeedback || session.overallScore === undefined) {
+      toast({ title: "Error", description: "Interview data is not complete for sharing.", variant: "destructive" });
+      return;
+    }
+
+    let postContent = `Just finished reviewing my AI Mock Interview for "${session.topic}"`;
+    if (session.overallScore !== undefined) {
+      postContent += ` with a score of ${session.overallScore}%! 📈`;
+    } else {
+      postContent += `! 📈`;
+    }
+    
+    if (session.overallFeedback.keyStrengths && session.overallFeedback.keyStrengths.length > 0) {
+        postContent += `\n\nKey Strength: "${session.overallFeedback.keyStrengths[0]}"`;
+    } else if (session.overallFeedback.overallSummary) {
+        postContent += `\n\nLearned a lot: "${session.overallFeedback.overallSummary.substring(0, 100)}${session.overallFeedback.overallSummary.length > 100 ? '...' : ''}"`;
+    }
+    postContent += `\n\n#AIMockInterview #InterviewPrep #${session.topic.toLowerCase().replace(/\s+/g, '')}`;
+    
+    const newPost: CommunityPost = {
+      id: `post-hist-interview-${Date.now()}`,
+      tenantId: currentUser.tenantId,
+      userId: currentUser.id,
+      userName: currentUser.name,
+      userAvatar: currentUser.profilePictureUrl,
+      timestamp: new Date().toISOString(),
+      content: postContent,
+      type: 'text',
+      tags: ['AIMockInterview', 'InterviewPrep', session.topic.toLowerCase().replace(/\s+/g, '')],
+      moderationStatus: 'visible',
+      flagCount: 0,
+      comments: [],
+    };
+    sampleCommunityPosts.unshift(newPost);
+    toast({ title: "Shared to Feed!", description: "Your mock interview reflection has been posted."});
+  };
+
 
   return (
     <div className="space-y-8">
@@ -95,35 +137,31 @@ export default function InterviewPreparationPage() {
       {/* Filters Section */}
       <Card className="shadow-md">
         <CardHeader>
-          <CardTitle className="text-lg">Filter Questions</CardTitle>
+          <CardTitle className="text-lg flex items-center gap-2"><ListFilter className="h-5 w-5"/>Filter Questions</CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-col md:flex-row gap-4 items-start">
-            <div className="flex-1 min-w-0"> {/* Ensure input can shrink */}
-                <Label htmlFor="search-questions" className="font-medium sr-only">Search Questions</Label>
-                <Input 
-                    id="search-questions" 
-                    placeholder="Search by keywords, tags, topics..." 
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full"
-                />
-            </div>
-            <div className="md:w-auto w-full">
-                <Label className="font-medium sr-only">Categories</Label>
-                <ScrollArea className="h-20 md:h-auto md:max-h-28 border rounded-md p-2">
-                    <div className="flex flex-row md:flex-wrap gap-x-4 gap-y-2">
+        <CardContent className="space-y-4">
+            <Input 
+                id="search-questions" 
+                placeholder="Search by keywords, tags, topics..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full"
+            />
+            <div>
+                <Label className="font-medium mb-2 block text-sm">Fast filter for questions (Categories):</Label>
+                <ToggleGroup
+                    type="multiple"
+                    variant="outline"
+                    value={selectedCategories}
+                    onValueChange={(value) => { setSelectedCategories(value as InterviewQuestionCategory[]); }}
+                    className="flex flex-wrap gap-2 justify-start"
+                >
                     {ALL_CATEGORIES.map(category => (
-                    <div key={category} className="flex items-center space-x-2">
-                        <Checkbox
-                        id={`cat-${category}`}
-                        checked={selectedCategories.has(category)}
-                        onCheckedChange={(checked) => handleCategoryChange(category, checked)}
-                        />
-                        <Label htmlFor={`cat-${category}`} className="font-normal text-sm cursor-pointer whitespace-nowrap">{category}</Label>
-                    </div>
+                        <ToggleGroupItem key={category} value={category} aria-label={`Toggle ${category}`} className="text-xs px-2 py-1 h-auto">
+                           {category}
+                        </ToggleGroupItem>
                     ))}
-                    </div>
-                </ScrollArea>
+                </ToggleGroup>
             </div>
         </CardContent>
       </Card>
@@ -200,6 +238,77 @@ export default function InterviewPreparationPage() {
         </CardFooter>
       </Card>
 
+      {/* Interview History Section */}
+      <Card className="shadow-lg">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><History className="h-6 w-6 text-primary"/>Mock Interview History</CardTitle>
+          <CardDescription>Review your past AI mock interview sessions and feedback.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {userInterviewHistory.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">No mock interview sessions recorded yet.</p>
+          ) : (
+            <div className="space-y-3">
+              {userInterviewHistory.map(session => (
+                <Card key={session.id} className="p-4 bg-secondary/30">
+                  <div className="flex flex-col sm:flex-row justify-between items-start gap-2">
+                    <div>
+                      <h4 className="font-semibold text-foreground">{session.topic}</h4>
+                      <p className="text-xs text-muted-foreground">
+                        Taken on: {format(parseISO(session.createdAt), 'PPp')}
+                        {session.overallScore !== undefined && ` • Score: ${session.overallScore}%`}
+                      </p>
+                    </div>
+                    <Button size="sm" variant="outline" onClick={() => handleViewReport(session)}>View Report</Button>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Report Dialog */}
+      <Dialog open={isReportDialogOpen} onOpenChange={setIsReportDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl">Interview Report: {viewingSession?.topic}</DialogTitle>
+            <DialogDescription>
+              Session on {viewingSession && format(parseISO(viewingSession.createdAt), 'PPp')}
+            </DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="max-h-[70vh] pr-4">
+            {viewingSession?.overallFeedback ? (
+                <div className="space-y-4 py-2">
+                    {viewingSession.overallScore !== undefined && (
+                        <div className="flex justify-center mb-4">
+                            <ScoreCircle score={viewingSession.overallScore} size="lg" label="Overall Score"/>
+                        </div>
+                    )}
+                    <p><strong>Summary:</strong> {viewingSession.overallFeedback.overallSummary}</p>
+                    {viewingSession.overallFeedback.keyStrengths?.length > 0 && (
+                        <div><strong>Strengths:</strong> <ul className="list-disc list-inside">{viewingSession.overallFeedback.keyStrengths.map((s,i) => <li key={`s-${i}`}>{s}</li>)}</ul></div>
+                    )}
+                    {viewingSession.overallFeedback.keyAreasForImprovement?.length > 0 && (
+                         <div><strong>Areas for Improvement:</strong> <ul className="list-disc list-inside">{viewingSession.overallFeedback.keyAreasForImprovement.map((a,i) => <li key={`a-${i}`}>{a}</li>)}</ul></div>
+                    )}
+                    {viewingSession.overallFeedback.finalTips?.length > 0 && (
+                        <div><strong>Final Tips:</strong> <ul className="list-disc list-inside">{viewingSession.overallFeedback.finalTips.map((t,i) => <li key={`t-${i}`}>{t}</li>)}</ul></div>
+                    )}
+                    {/* Detailed Answers can be added here if needed */}
+                </div>
+            ) : <p>No detailed feedback available for this session.</p>}
+          </ScrollArea>
+          <DialogFooter className="mt-4 justify-between">
+            <Button variant="outline" onClick={() => handleShareToFeed(viewingSession)}>
+                <Share2 className="mr-2 h-4 w-4"/> Share to Feed
+            </Button>
+            <DialogClose asChild><Button>Close</Button></DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+
        <Card className="shadow-md bg-blue-50 border-blue-200">
         <CardHeader>
           <CardTitle className="text-lg text-blue-700 flex items-center gap-2">
@@ -215,4 +324,3 @@ export default function InterviewPreparationPage() {
     </div>
   );
 }
-

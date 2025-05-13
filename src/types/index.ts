@@ -270,6 +270,7 @@ export interface UserProfile extends AlumniProfile { // Extend AlumniProfile for
   referralCode?: string;
   earnedBadges?: string[]; 
   affiliateCode?: string; 
+  pastInterviewSessions?: string[]; // IDs of MockInterviewSession
 }
 
 
@@ -539,10 +540,10 @@ export interface BlogGenerationSettings {
 }
 
 // AI Mock Interview Types
-export interface MockInterviewQuestion {
-  id: string;
+export interface MockInterviewQuestion { // This is specific to questions WITHIN a mock interview session instance
+  id: string; // Can be the same ID as the original InterviewQuestion from the bank
   questionText: string;
-  category?: InterviewQuestionCategory; // Use the updated type
+  category?: InterviewQuestionCategory; 
 }
 
 export interface MockInterviewAnswer {
@@ -551,26 +552,32 @@ export interface MockInterviewAnswer {
   userAnswer: string; 
   aiFeedback?: string;
   aiScore?: number; 
-  // Add detailed feedback fields if they exist in EvaluateInterviewAnswerOutput
   strengths?: string[];
   areasForImprovement?: string[];
   suggestedImprovements?: string[];
-  isRecording?: boolean; // Added to track if audio for this answer was recorded
+  isRecording?: boolean; 
 }
 
+export interface GenerateOverallInterviewFeedbackOutput {
+  overallSummary: string;
+  keyStrengths: string[];
+  keyAreasForImprovement: string[];
+  finalTips: string[];
+  overallScore: number; 
+}
 export interface MockInterviewSession {
   id: string;
   userId: string;
   topic: string; 
   jobDescription?: string; 
-  questions: MockInterviewQuestion[];
+  questions: MockInterviewQuestion[]; // Questions specific to THIS session
   answers: MockInterviewAnswer[];
-  overallFeedback?: GenerateOverallInterviewFeedbackOutput; // Use the specific output type here
+  overallFeedback?: GenerateOverallInterviewFeedbackOutput; 
   overallScore?: number; 
   status: 'pending' | 'in-progress' | 'completed';
   createdAt: string;
-  timerPerQuestion?: number; // Optional: time in seconds per question
-  questionCategories?: InterviewQuestionCategory[]; // Store selected categories
+  timerPerQuestion?: number; 
+  questionCategories?: InterviewQuestionCategory[]; 
 }
 
 export interface GenerateMockInterviewQuestionsInput {
@@ -578,11 +585,11 @@ export interface GenerateMockInterviewQuestionsInput {
   jobDescription?: string;
   numQuestions?: number; 
   difficulty?: 'easy' | 'medium' | 'hard';
-  timerPerQuestion?: number; // Optional: time in seconds per question
-  questionCategories?: InterviewQuestionCategory[]; // Added for selecting question types
+  timerPerQuestion?: number; 
+  questionCategories?: InterviewQuestionCategory[]; 
 }
 export interface GenerateMockInterviewQuestionsOutput {
-  questions: MockInterviewQuestion[];
+  questions: MockInterviewQuestion[]; // These are the questions for a new session
 }
 
 export interface EvaluateInterviewAnswerInput {
@@ -604,13 +611,7 @@ export interface GenerateOverallInterviewFeedbackInput {
   jobDescription?: string;
   evaluatedAnswers: { questionText: string; userAnswer: string; feedback: string; score: number }[];
 }
-export interface GenerateOverallInterviewFeedbackOutput {
-  overallSummary: string;
-  keyStrengths: string[];
-  keyAreasForImprovement: string[];
-  finalTips: string[];
-  overallScore: number; 
-}
+
 
 export type MockInterviewStepId = 'setup' | 'interview' | 'feedback';
 export const MOCK_INTERVIEW_STEPS: { id: MockInterviewStepId; title: string; description: string }[] = [
@@ -618,4 +619,3 @@ export const MOCK_INTERVIEW_STEPS: { id: MockInterviewStepId; title: string; des
   { id: 'interview', title: 'Interview Session', description: 'Answer the questions one by one.' },
   { id: 'feedback', title: 'Get Feedback', description: 'Review your performance and AI suggestions.' },
 ];
-
