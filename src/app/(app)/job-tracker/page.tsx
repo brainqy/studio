@@ -38,7 +38,7 @@ type JobApplicationFormData = z.infer<typeof jobApplicationSchema>;
 const KANBAN_COLUMNS_CONFIG: { id: KanbanColumnId; title: string; description: string; acceptedStatuses: JobApplicationStatus[] }[] = [
   { id: 'Saved', title: 'Saved', description: 'Jobs saved from our chrome extension or the scan report will appear here.', acceptedStatuses: ['Saved'] },
   { id: 'Applied', title: 'Applied', description: 'Application completed. Awaiting response from employer or recruiter.', acceptedStatuses: ['Applied'] },
-  { id: 'Interview', title: 'Interview', description: 'Invited to interview? Record the interview details and notes here.', acceptedStatuses: ['Interviewing'] },
+  { id: 'Interviewing', title: 'Interview', description: 'Invited to interview? Record the interview details and notes here.', acceptedStatuses: ['Interviewing'] },
   { id: 'Offer', title: 'Offer', description: 'Interviews completed. Negotiating offer, or waiting for employer response.', acceptedStatuses: ['Offer'] },
 ];
 
@@ -154,13 +154,7 @@ function KanbanColumn({ column, applications, onEdit, onDelete, onMove }: { colu
           ))
         )}
       </ScrollArea>
-       {applications.length > 0 && (
-         <div className="p-4 pt-0">
-          <div className="border-2 border-dashed border-border rounded-md p-6 text-center text-muted-foreground h-24 flex items-center justify-center">
-            Drag here
-          </div>
-         </div>
-        )}
+       {/* Removed the redundant "Drag here" box that was causing overlap */}
     </Card>
   );
 }
@@ -331,3 +325,4 @@ export default function JobTrackerPage() {
     </div>
   );
 }
+
