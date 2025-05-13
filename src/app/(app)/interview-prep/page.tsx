@@ -1,3 +1,4 @@
+
 "use client";
 
 import type React from 'react';
@@ -103,7 +104,7 @@ export default function InterviewPracticeHubPage() {
     resolver: zodResolver(questionFormSchema),
     defaultValues: { isMCQ: false, mcqOptions: ["", "", "", ""], category: 'Common', difficulty: 'Medium' }
   });
-  const questionFormErrors = questionFormControl.formState.errors; 
+  const questionFormErrors = formState.errors; 
   const isMCQSelected = watchQuestionForm("isMCQ");
 
 
@@ -125,8 +126,8 @@ export default function InterviewPracticeHubPage() {
         return;
       }
       if (practiceSessionConfig.type === "ai") {
-        router.push('/ai-mock-interview'); // Navigate directly for AI
-        setIsSetupDialogOpen(false);
+        // AI: Proceed to select topics in the same dialog for AI
+        setDialogStep('selectTopics');
         return;
       }
       if (practiceSessionConfig.type === "friends") {
@@ -150,7 +151,25 @@ export default function InterviewPracticeHubPage() {
         toast({ title: "Error", description: "Please select at least one topic.", variant: "destructive" });
         return;
       }
-      setDialogStep('selectTimeSlot');
+      // If AI type, directly go to AI Mock Interview page with config
+      if (practiceSessionConfig.type === "ai") {
+         // This part might need to pass config to the AI page differently, 
+         // e.g., via query params or state management, if not using direct navigation immediately
+        const aiConfig = {
+          topic: practiceSessionConfig.topics.join(', '),
+          questionCategories: practiceSessionConfig.topics as InterviewQuestionCategory[], 
+          // numQuestions, difficulty, timerPerQuestion can be set to defaults or further configured
+          numQuestions: 5, // Default
+          difficulty: 'medium' as 'easy' | 'medium' | 'hard', // Default
+          timerPerQuestion: 0, // Default (no timer)
+        };
+        // For now, assume we push to /ai-mock-interview and it handles setup
+        // A better way might be to have the AI setup screen integrated or pass query params.
+        router.push(`/ai-mock-interview?topic=${encodeURIComponent(aiConfig.topic)}&categories=${encodeURIComponent(aiConfig.questionCategories.join(','))}`);
+        setIsSetupDialogOpen(false);
+        return;
+      }
+      setDialogStep('selectTimeSlot'); // For experts
     }
   };
 
@@ -165,7 +184,6 @@ export default function InterviewPracticeHubPage() {
       return;
     }
 
-    // AI type navigation is handled in handleDialogNextStep now
     if (practiceSessionConfig.type === 'experts') {
       const newSession: PracticeSession = {
         id: `ps-expert-${Date.now()}`,
@@ -180,6 +198,7 @@ export default function InterviewPracticeHubPage() {
       setPracticeSessions(prev => [newSession, ...prev]);
       toast({ title: "Expert Session Booked (Mock)", description: `Session for ${practiceSessionConfig.topics.join(', ')} on ${format(practiceSessionConfig.dateTime, 'PPp')} scheduled.` });
     }
+    // AI booking is now handled by redirecting from 'selectTopics' step
     setIsSetupDialogOpen(false);
   };
 
@@ -741,7 +760,8 @@ export default function InterviewPracticeHubPage() {
             </DialogUITitle>
             <DialogUIDescription className="text-center text-muted-foreground">
               {dialogStep === 'selectType' && "How would you like to practice?"}
-              {dialogStep === 'selectTopics' && `For your ${practiceSessionConfig.type} interview.`}
+              {dialogStep === 'selectTopics' && practiceSessionConfig.type === 'ai' && "Choose topics for your AI Mock Interview."}
+              {dialogStep === 'selectTopics' && practiceSessionConfig.type !== 'ai' && `For your ${practiceSessionConfig.type} interview.`}
               {dialogStep === 'selectTimeSlot' && `For your ${practiceSessionConfig.type} interview on ${practiceSessionConfig.topics.join(', ')}.`}
             </DialogUIDescription>
           </DialogHeader>
@@ -793,7 +813,7 @@ export default function InterviewPracticeHubPage() {
               />
             )}
 
-            {dialogStep === 'selectTimeSlot' && (
+            {dialogStep === 'selectTimeSlot' && practiceSessionConfig.type === 'experts' && ( // Only show for experts
                <PracticeDateTimeSelector
                 initialSelectedDate={practiceSessionConfig.dateTime || undefined}
                 onDateTimeChange={(date, time) => {
@@ -814,15 +834,17 @@ export default function InterviewPracticeHubPage() {
             {dialogStep !== 'selectType' && (
               <Button variant="outline" onClick={handleDialogPreviousStep}>Back</Button>
             )}
-            {dialogStep !== 'selectTimeSlot' && practiceSessionConfig.type !== 'friends' && practiceSessionConfig.type !== 'ai' && ( // Only show Next for experts now
-              <Button onClick={handleDialogNextStep} disabled={!practiceSessionConfig.type}>Next</Button>
+            {dialogStep !== 'selectTimeSlot' && !(dialogStep === 'selectTopics' && practiceSessionConfig.type === 'ai') && (
+              <Button onClick={handleDialogNextStep} disabled={!practiceSessionConfig.type || (practiceSessionConfig.type === 'friends' && (!practiceSessionConfig.friendEmail || !!friendEmailError))}>
+                {practiceSessionConfig.type === 'friends' ? "Send Invitation" : "Next"}
+              </Button>
             )}
-            {(practiceSessionConfig.type === 'friends' || practiceSessionConfig.type === 'ai') && dialogStep === 'selectType' && ( // Specific "Next/Action" button for AI and Friends at Type Selection
-                 <Button onClick={handleDialogNextStep} disabled={!practiceSessionConfig.type || (practiceSessionConfig.type === 'friends' && (!practiceSessionConfig.friendEmail || !!friendEmailError))}>
-                    {practiceSessionConfig.type === 'friends' ? "Send Invitation" : "Proceed to Setup"}
+            {dialogStep === 'selectTopics' && practiceSessionConfig.type === 'ai' && (
+                 <Button onClick={handleDialogNextStep} disabled={practiceSessionConfig.topics.length === 0}>
+                    Proceed to AI Interview
                  </Button>
             )}
-            {dialogStep === 'selectTimeSlot' && ( // Only for 'experts' now as AI/Friends redirect earlier
+            {dialogStep === 'selectTimeSlot' && practiceSessionConfig.type === 'experts' && ( 
               <Button onClick={handleFinalBookSession} disabled={!practiceSessionConfig.dateTime} className="bg-green-600 hover:bg-green-700 text-white">Book Session</Button>
             )}
             <DialogClose asChild><Button variant="ghost">Cancel</Button></DialogClose>
@@ -832,3 +854,4 @@ export default function InterviewPracticeHubPage() {
     </div>
   );
 }
+
