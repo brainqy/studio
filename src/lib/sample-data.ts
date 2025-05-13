@@ -923,6 +923,20 @@ export const sampleInterviewQuestions: InterviewQuestion[] = [
     answerOrTip: "Provide specific examples of how you've managed stressful situations. Mention healthy coping mechanisms like prioritization, time management, taking short breaks, or exercise. Emphasize your ability to remain calm and productive.", 
     tags: ['stress management', 'soft skills'] 
   },
+  {
+    id: 'coding1',
+    category: 'Coding',
+    question: "Write a function to reverse a string in JavaScript.",
+    answerOrTip: "Common approaches include using split('').reverse().join(''), or iterating through the string and building the reversed string. Discuss time and space complexity.",
+    tags: ['javascript', 'string manipulation', 'algorithms']
+  },
+  {
+    id: 'coding2',
+    category: 'Coding',
+    question: "Explain Big O notation and provide an example of O(n) and O(log n).",
+    answerOrTip: "Big O notation describes the limiting behavior of a function when the argument tends towards a particular value or infinity. O(n) - linear search in an unsorted array. O(log n) - binary search in a sorted array.",
+    tags: ['data structures', 'algorithms', 'complexity']
+  },
 ];
 
 export let sampleBlogGenerationSettings: BlogGenerationSettings = {
@@ -931,3 +945,4 @@ export let sampleBlogGenerationSettings: BlogGenerationSettings = {
   style: 'informative',
   lastGenerated: undefined,
 };
+

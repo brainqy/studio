@@ -5,7 +5,7 @@ import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Brain, Mic, MessageSquare, Users, Zap, Tag, Lightbulb, CheckSquare as CheckSquareIcon } from "lucide-react"; // Added CheckSquareIcon for MCQs
+import { Brain, Mic, MessageSquare, Users, Zap, Tag, Lightbulb, CheckSquare as CheckSquareIcon, Code } from "lucide-react"; // Added Code icon
 import { sampleInterviewQuestions } from "@/lib/sample-data";
 import type { InterviewQuestion, InterviewQuestionCategory } from "@/types";
 import Link from "next/link";
@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"; // For displaying MCQ options
 
 
-const ALL_CATEGORIES: InterviewQuestionCategory[] = ['Common', 'Behavioral', 'Technical', 'Role-Specific', 'Analytical', 'HR'];
+const ALL_CATEGORIES: InterviewQuestionCategory[] = ['Common', 'Behavioral', 'Technical', 'Coding', 'Role-Specific', 'Analytical', 'HR'];
 
 export default function InterviewPreparationPage() {
   const [selectedCategories, setSelectedCategories] = useState<Set<InterviewQuestionCategory>>(new Set(ALL_CATEGORIES));
@@ -48,6 +48,19 @@ export default function InterviewPreparationPage() {
   const handleMcqSelection = (questionId: string, selectedOption: string) => {
     setSelectedMcqAnswers(prev => ({...prev, [questionId]: selectedOption}));
     // In a real quiz, you might check the answer here or store it for later evaluation.
+  };
+
+  const getCategoryIcon = (category: InterviewQuestionCategory) => {
+    switch(category) {
+      case 'Behavioral': return <Users className="h-4 w-4 text-purple-500 flex-shrink-0" title="Behavioral Question"/>;
+      case 'Technical': return <Zap className="h-4 w-4 text-orange-500 flex-shrink-0" title="Technical Question"/>;
+      case 'Coding': return <Code className="h-4 w-4 text-sky-500 flex-shrink-0" title="Coding Question"/>;
+      case 'Role-Specific': return <Brain className="h-4 w-4 text-indigo-500 flex-shrink-0" title="Role-Specific Question"/>;
+      case 'Analytical': return <MessageSquare className="h-4 w-4 text-teal-500 flex-shrink-0" title="Analytical Question"/>;
+      case 'HR': return <Lightbulb className="h-4 w-4 text-pink-500 flex-shrink-0" title="HR Question"/>;
+      case 'Common': return <MessageSquare className="h-4 w-4 text-gray-500 flex-shrink-0" title="Common Question"/>;
+      default: return null;
+    }
   };
 
   return (
@@ -111,6 +124,7 @@ export default function InterviewPreparationPage() {
                       <AccordionTrigger className="text-md text-left hover:text-primary data-[state=open]:text-primary">
                         <div className="flex items-center gap-2">
                            {q.isMCQ && <CheckSquareIcon className="h-4 w-4 text-blue-500 flex-shrink-0" title="Multiple Choice Question"/>}
+                           {getCategoryIcon(q.category)}
                            <span>{q.question}</span>
                         </div>
                          <span className="ml-auto mr-2 text-xs px-2 py-0.5 bg-accent text-accent-foreground rounded-full whitespace-nowrap">{q.category}</span>
@@ -178,3 +192,4 @@ export default function InterviewPreparationPage() {
     </div>
   );
 }
+

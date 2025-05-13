@@ -518,7 +518,7 @@ export const RESUME_BUILDER_STEPS: { id: ResumeBuilderStep; title: string; descr
   { id: 'finalize', title: 'Finalize', description: "Review and finalize your resume.", mainHeading: "Review & Finalize" },
 ];
 
-export type InterviewQuestionCategory = 'Behavioral' | 'Technical' | 'Role-Specific' | 'Common' | 'Analytical' | 'HR';
+export type InterviewQuestionCategory = 'Behavioral' | 'Technical' | 'Role-Specific' | 'Common' | 'Analytical' | 'HR' | 'Coding';
 export interface InterviewQuestion {
   id: string;
   category: InterviewQuestionCategory;

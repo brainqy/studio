@@ -14,7 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import type { GenerateMockInterviewQuestionsInput, InterviewQuestionCategory } from '@/types';
 import { Brain, Timer, ListFilter } from 'lucide-react'; // Added ListFilter for categories
 
-const ALL_QUESTION_CATEGORIES: InterviewQuestionCategory[] = ['Common', 'Behavioral', 'Technical', 'Role-Specific', 'Analytical', 'HR'];
+const ALL_QUESTION_CATEGORIES: InterviewQuestionCategory[] = ['Common', 'Behavioral', 'Technical', 'Coding', 'Role-Specific', 'Analytical', 'HR'];
 
 const setupSchema = z.object({
   topic: z.string().min(3, "Topic must be at least 3 characters long."),
@@ -183,3 +183,4 @@ export default function StepSetup({ onSetupComplete, isLoading }: StepSetupProps
     </form>
   );
 }
+
