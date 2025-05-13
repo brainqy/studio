@@ -98,6 +98,8 @@ export const sampleActivities: Activity[] = [
   { id: 'act4', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(), description: 'Tracked new job application for "Data Scientist" at Data Corp.' },
   { id: 'act5', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(), description: 'Earned the "Profile Pro" badge.' },
   { id: 'act6', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), description: 'Posted in Community Feed: "Interview Tips?".' },
+  { id: 'act7', tenantId: SAMPLE_TENANT_ID, userId: 'alumni1', timestamp: new Date(Date.now() - 1000 * 60 * 15).toISOString(), description: 'Shared a new job opening: "Junior Developer at Google".' },
+  { id: 'act8', tenantId: SAMPLE_TENANT_ID, userId: 'alumni2', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString(), description: 'Commented on "Interview Tips?" post.' },
 ];
 
 export let sampleCommunityPosts: CommunityPost[] = [ // Changed to let for dynamic updates
@@ -204,83 +206,77 @@ export const sampleJobOpenings: JobOpening[] = [
 export const sampleUserProfile: UserProfile = {
   id: 'currentUser',
   tenantId: SAMPLE_TENANT_ID,
-  role: 'user', 
-  name: 'Alex Taylor (User)', 
-  email: 'user@example.com', 
+  role: 'admin', 
+  name: 'Alex Taylor (Admin)', 
+  email: 'admin@example.com', 
   status: 'active',
   lastLogin: new Date().toISOString(),
-  dateOfBirth: '1995-08-15',
+  dateOfBirth: '1990-05-20',
   gender: 'Male',
-  mobileNumber: '+15551234567',
-  currentAddress: '123 Main St, Anytown, CA, USA',
-  graduationYear: '2017',
-  degreeProgram: 'Bachelor of Science (B.Sc)',
-  department: 'Computer Science',
-  currentJobTitle: 'Software Developer',
-  company: 'Tech Startup Inc.', // Added company for consistency with AlumniProfile
-  currentOrganization: 'Tech Startup Inc.',
+  mobileNumber: '+15550001111',
+  currentAddress: 'Admin HQ, Tech City, CA, USA',
+  graduationYear: '2012',
+  degreeProgram: 'Master of Business Administration (MBA)',
+  department: 'Business Administration',
+  currentJobTitle: 'Platform Administrator',
+  company: 'ResumeMatch AI', 
+  currentOrganization: 'ResumeMatch AI',
   industry: 'IT/Software',
   workLocation: 'Remote',
-  linkedInProfile: 'https://linkedin.com/in/alexuser',
-  yearsOfExperience: '5',
-  skills: ['JavaScript', 'React', 'Node.js', 'Problem Solving', 'Python', 'SQL'],
-  areasOfSupport: ['Mentoring Students'],
-  timeCommitment: '1-2 hours',
+  linkedInProfile: 'https://linkedin.com/in/alexadmin',
+  yearsOfExperience: '10',
+  skills: ['System Administration', 'User Management', 'Platform Configuration', 'Problem Solving', 'Data Analysis', 'Security Management'],
+  areasOfSupport: ['Startup/Business Mentorship', 'Organizing Alumni Events'],
+  timeCommitment: '5+ hours',
   preferredEngagementMode: 'Online',
-  otherComments: 'Happy to help with technical questions.',
-  lookingForSupportType: 'Career Mentoring',
-  helpNeededDescription: 'Guidance on advancing to a senior role.',
+  otherComments: 'Overseeing platform operations and enhancements.',
+  lookingForSupportType: 'General Networking',
+  helpNeededDescription: 'Always interested in connecting with industry leaders and innovators.',
   shareProfileConsent: true, 
   featureInSpotlightConsent: true,
-  shortBio: 'Enthusiastic software developer passionate about creating innovative solutions. With 5 years in the field, I have honed my skills in JavaScript, React, and Node.js, primarily focusing on building scalable web applications. My experience at Tech Startup Inc. involved leading front-end development for key projects and mentoring junior developers. I am always keen to learn new technologies and contribute to impactful products. Outside of work, I enjoy hiking and exploring new tech trends.',
-  university: 'State University', // Added for consistency
-  profilePictureUrl: 'https://picsum.photos/seed/alexuser/200/200',
-  interests: ['Coding', 'AI Ethics', 'Sci-fi Novels'],
-  offersHelpWith: [AreasOfSupport[0]], // Added for consistency
-  appointmentCoinCost: 0, // Users typically don't charge themselves
-  resumeText: `Alex Taylor (User)
-  Email: user@example.com | LinkedIn: linkedin.com/in/alexuser | Mobile: +15551234567
+  shortBio: 'Experienced platform administrator dedicated to optimizing ResumeMatch AI for all users. With over 10 years in tech and system management, I focus on ensuring a seamless and valuable experience for our alumni network. My expertise lies in user support, platform configuration, and driving engagement through innovative features. I am passionate about leveraging technology to foster career growth and community connections. Available for strategic discussions on platform development and alumni engagement.',
+  university: 'Global Tech University', 
+  profilePictureUrl: 'https://picsum.photos/seed/alexadmin/200/200',
+  interests: ['Platform Scalability', 'AI in HR Tech', 'Community Building'],
+  offersHelpWith: [AreasOfSupport[4], AreasOfSupport[8]], 
+  appointmentCoinCost: 0, 
+  resumeText: `Alex Taylor (Admin)
+  Email: admin@example.com | LinkedIn: linkedin.com/in/alexadmin | Mobile: +15550001111
 
   Summary:
-  A highly motivated and results-oriented Software Developer with 5 years of experience in building and maintaining web applications. Proficient in JavaScript, React, Node.js, and cloud technologies. Strong problem-solving skills and a collaborative team player. Eager to contribute to innovative projects and continuously learn new technologies.
+  Dynamic and results-driven Platform Administrator with over 10 years of experience in managing and scaling technology platforms. Proven ability in system administration, user support, feature implementation, and data-driven decision-making. Committed to enhancing user experience and fostering a vibrant online community. Strong leadership and problem-solving skills with a focus on security and operational excellence.
   
   Experience:
-  Software Developer, Tech Startup Inc. (Jan 2020 - Present)
-  - Developed and maintained front-end components using React and TypeScript.
-  - Built RESTful APIs with Node.js and Express.js.
-  - Collaborated with cross-functional teams to deliver high-quality software products.
-  - Mentored 2 junior developers, improving team productivity by 15%.
+  Platform Administrator, ResumeMatch AI (Present)
+  - Oversee all aspects of platform operations, including user management, tenant configurations, and feature deployment.
+  - Lead initiatives for platform improvement and new feature development based on user feedback and analytics.
+  - Manage security protocols, data integrity, and system performance.
+  - Collaborate with development and marketing teams to ensure platform goals are met.
   
-  Junior Developer, Web Solutions Co. (Jun 2017 - Dec 2019)
-  - Assisted in the development of client websites using HTML, CSS, and JavaScript.
-  - Provided technical support and bug fixes for existing applications.
+  Senior Systems Analyst, Tech Solutions Corp (Previous)
+  - Managed enterprise-level IT systems and provided advanced technical support.
+  - Led projects for system upgrades and migrations.
   
   Education:
-  Bachelor of Science in Computer Science, State University (2013 - 2017)
-  - Dean's List 2016, 2017
-  - Capstone Project: AI-Powered Recommendation Engine
+  Master of Business Administration (MBA), Global Tech University (2010 - 2012)
+  Bachelor of Science in Information Technology, State University (2004 - 2008)
   
   Skills:
-  Languages: JavaScript, TypeScript, Python, HTML, CSS
-  Frameworks/Libraries: React, Redux, Node.js, Express.js
-  Databases: MongoDB, PostgreSQL, SQL
-  Tools: Git, Docker, Jenkins, Jira
-  Cloud: AWS (EC2, S3, Lambda)
-  Other: Agile Methodologies, Problem Solving, Team Collaboration
+  Platform Management, System Administration, User Support, Project Management, Data Analysis, Security & Compliance, Cloud Infrastructure (AWS, Azure), Database Management (SQL, NoSQL), Agile Methodologies, Stakeholder Communication, Gamification Strategy, Community Moderation.
   `,
-  careerInterests: 'Full-stack Development, AI Applications, Web Technologies, Cloud Architecture',
-  xpPoints: 1250,
-  dailyStreak: 15, 
-  longestStreak: 25, 
-  totalActiveDays: 300, 
-  weeklyActivity: [true, true, false, true, true, false, true], // Represents activity for the last 7 days, with the last element being today
-  referralCode: 'USERREF789',
-  earnedBadges: ['profile-pro', 'analyzer-ace', 'networker'],
-  affiliateCode: 'AFFUSER007',
-  // Add sample interview sessions for this user
-  pastInterviewSessions: ['session-hist-1', 'session-hist-2'], // IDs referencing sampleMockInterviewSessions
-  interviewCredits: 2,
+  careerInterests: 'Platform Strategy, Technology Leadership, Community Engagement, AI Ethics',
+  xpPoints: 10000,
+  dailyStreak: 50, 
+  longestStreak: 100, 
+  totalActiveDays: 500, 
+  weeklyActivity: [true, true, true, true, true, true, true], 
+  referralCode: 'ADMINREF123',
+  earnedBadges: ['profile-pro', 'analyzer-ace', 'networker', 'contributor', 'admin-master'],
+  affiliateCode: 'AFFADMIN001',
+  pastInterviewSessions: [], 
+  interviewCredits: 10, 
 };
+
 
 export const samplePlatformUsers: UserProfile[] = [
   sampleUserProfile, 

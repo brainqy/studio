@@ -1,18 +1,20 @@
+
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { PieChart, Bar, Pie, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, Sector, LineChart as RechartsLineChart } from 'recharts';
-import { Activity, Briefcase, Users, Zap, FileText, CheckCircle, Clock, Target, CalendarClock, CalendarCheck2 } from "lucide-react"; // Added CalendarCheck2
+import { Activity, Briefcase, Users, Zap, FileText, CheckCircle, Clock, Target, CalendarClock, CalendarCheck2, History as HistoryIcon } from "lucide-react"; // Added CalendarCheck2 and HistoryIcon
 import { sampleJobApplications, sampleActivities, sampleAlumni, sampleUserProfile, sampleAppointments, userDashboardTourSteps, samplePracticeSessions } from "@/lib/sample-data"; 
 import type { PieSectorDataItem } from "recharts/types/polar/Pie";
 import { useState, useCallback, useEffect, useMemo } from "react";
-import { format, parseISO, isFuture, differenceInDays, isToday, compareAsc } from "date-fns"; 
+import { format, parseISO, isFuture, differenceInDays, isToday, compareAsc, formatDistanceToNow } from "date-fns"; 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast"; 
 import WelcomeTourDialog from '@/components/features/WelcomeTourDialog';
-import type { TourStep, Appointment, PracticeSession } from '@/types';
+import type { TourStep, Appointment, PracticeSession, Activity as ActivityType } from '@/types'; // Added ActivityType
 import { cn } from "@/lib/utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 
 const jobApplicationStatusData = sampleJobApplications.reduce((acc, curr) => {
@@ -81,6 +83,14 @@ export default function UserDashboard() {
   const user = sampleUserProfile;
   const { toast } = useToast();
   const [showUserTour, setShowUserTour] = useState(false);
+
+  const recentUserActivities = useMemo(() => {
+    return sampleActivities
+      .filter(act => act.userId === user.id)
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      .slice(0, 5);
+  }, [user.id]);
+
 
   useEffect(() => {
     setTotalResumesAnalyzed(125); 
@@ -335,22 +345,33 @@ export default function UserDashboard() {
 
         <Card className="shadow-lg">
             <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
-              <CardDescription>Your latest interactions on the platform.</CardDescription>
+              <CardTitle className="flex items-center gap-2"><HistoryIcon className="h-5 w-5 text-primary" />Recent Activities</CardTitle>
+              <CardDescription>Your latest actions on the platform.</CardDescription>
             </CardHeader>
             <CardContent>
-              <ul className="space-y-4">
-                {sampleActivities.filter(act => act.userId === user.id).slice(0, 5).map(activity => (
-                  <li key={activity.id} className="flex items-center space-x-3 p-3 bg-secondary/50 rounded-md">
-                    <Activity className="h-5 w-5 text-primary" />
-                    <div>
-                      <p className="text-sm text-foreground">{activity.description}</p>
-                      <p className="text-xs text-muted-foreground">{new Date(activity.timestamp).toLocaleString()}</p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
+              {recentUserActivities.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">No recent activities to show.</p>
+              ) : (
+                <ScrollArea className="h-[250px] pr-3">
+                  <ul className="space-y-3">
+                    {recentUserActivities.map((activity: ActivityType) => (
+                      <li key={activity.id} className="flex items-start space-x-3 p-3 bg-secondary/50 rounded-md">
+                        <Activity className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                        <div>
+                          <p className="text-sm text-foreground">{activity.description}</p>
+                          <p className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true })}</p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </ScrollArea>
+              )}
             </CardContent>
+            <CardFooter>
+                <Button variant="link" asChild>
+                    <Link href="/activity-log">View All Activities</Link>
+                </Button>
+            </CardFooter>
           </Card>
 
       </div>
