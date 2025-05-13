@@ -1,6 +1,6 @@
-
 "use client";
 
+import type React from 'react';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { sampleUserProfile, samplePracticeSessions, sampleInterviewQuestions, sampleCreatedQuizzes } from "@/lib/sample-data";
 import type { PracticeSession, InterviewQuestion, InterviewQuestionCategory, MockInterviewSession } from "@/types";
 import { ALL_CATEGORIES } from '@/types';
-import { format, parseISO, isFuture } from "date-fns"; // Added isFuture
+import { format, parseISO, isFuture } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -82,7 +82,14 @@ export default function InterviewPreparationPage() {
   const [currentRating, setCurrentRating] = useState(0);
 
 
-  const { control: questionFormControl, handleSubmit: handleQuestionFormSubmit, reset: resetQuestionForm, setValue: setQuestionFormValue, watch: watchQuestionForm } = useForm<QuestionFormData>({
+  const {
+    control: questionFormControl,
+    handleSubmit: handleQuestionFormSubmit,
+    reset: resetQuestionForm,
+    setValue: setQuestionFormValue,
+    watch: watchQuestionForm,
+    formState: { errors: questionFormErrors }
+  } = useForm<QuestionFormData>({
     resolver: zodResolver(questionFormSchema),
     defaultValues: { isMCQ: false, mcqOptions: ["", "", "", ""], category: 'Common' }
   });
@@ -507,7 +514,7 @@ export default function InterviewPreparationPage() {
                                 </Button>
                             </div>
                             {currentUser.role === 'admin' && !q.approved && (
-                                <Badge variant="warning" className="mt-1">Needs Approval</Badge>
+                                <Badge variant="destructive" className="mt-1">Needs Approval</Badge>
                             )}
 
                             {/* Commenting & Rating Section (Collapsible or Modal) */}
@@ -589,7 +596,7 @@ export default function InterviewPreparationPage() {
             <div>
               <Label htmlFor="question-text">Question Text *</Label>
               <Controller name="question" control={questionFormControl} render={({ field }) => <Textarea id="question-text" {...field} rows={3} />} />
-              {questionFormControl.formState.errors.question && <p className="text-sm text-destructive mt-1">{questionFormControl.formState.errors.question.message}</p>}
+              {questionFormErrors.question && <p className="text-sm text-destructive mt-1">{questionFormErrors.question.message}</p>}
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -640,7 +647,7 @@ export default function InterviewPreparationPage() {
             <div>
               <Label htmlFor="answerOrTip">Suggested Answer / Explanation / Tip *</Label>
               <Controller name="answerOrTip" control={questionFormControl} render={({ field }) => <Textarea id="answerOrTip" {...field} rows={4} />} />
-              {questionFormControl.formState.errors.answerOrTip && <p className="text-sm text-destructive mt-1">{questionFormControl.formState.errors.answerOrTip.message}</p>}
+              {questionFormErrors.answerOrTip && <p className="text-sm text-destructive mt-1">{questionFormErrors.answerOrTip.message}</p>}
             </div>
             <DialogUIFooter>
               <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
