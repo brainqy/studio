@@ -58,6 +58,8 @@ const commentFormSchema = z.object({
 type CommentFormData = z.infer<typeof commentFormSchema>;
 
 const ITEMS_PER_PAGE = 10; 
+const optionLetters = ['A', 'B', 'C', 'D', 'E', 'F'];
+
 
 export default function InterviewPreparationPage() {
   const [allQuestions, setAllQuestions] = useState<InterviewQuestion[]>(sampleInterviewQuestions);
@@ -800,3 +802,4 @@ export default function InterviewPreparationPage() {
     </div>
   );
 }
+
