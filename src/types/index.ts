@@ -1,5 +1,6 @@
 
 
+
 export type UserRole = 'admin' | 'manager' | 'user';
 export type UserStatus = 'active' | 'inactive' | 'pending' | 'suspended';
 
@@ -109,7 +110,7 @@ export interface AlumniProfile {
   interests?: string[];
   offersHelpWith?: SupportArea[];
   appointmentCoinCost?: number;
-  xpPoints?: number; // Added for leaderboard
+  xpPoints?: number; 
 }
 
 export interface Activity {
@@ -167,11 +168,11 @@ export interface GalleryEvent {
   id: string;
   tenantId: string;
   title: string;
-  date: string; // ISO string date
+  date: string; 
   imageUrl: string;
   description?: string;
   dataAiHint?: string;
-  isPlatformGlobal?: boolean; // To differentiate between tenant-specific and platform-wide
+  isPlatformGlobal?: boolean; 
 }
 
 export interface JobOpening {
@@ -215,7 +216,7 @@ export interface BlogPost {
   comments?: CommunityComment[]; 
 }
 
-export interface UserProfile extends AlumniProfile { // Extend AlumniProfile for UserProfile to share common fields
+export interface UserProfile extends AlumniProfile { 
   id: string;
   tenantId: string; 
   role: UserRole; 
@@ -233,14 +234,14 @@ export interface UserProfile extends AlumniProfile { // Extend AlumniProfile for
   degreeProgram?: DegreeProgram;
   department?: string;
 
-  currentJobTitle: string; // Made non-optional as it's in AlumniProfile
-  currentOrganization?: string; // Keep optional if user might not have one
+  currentJobTitle: string; 
+  currentOrganization?: string; 
   industry?: Industry;
   workLocation?: string; 
   linkedInProfile?: string; 
   yearsOfExperience?: string; 
 
-  skills: string[]; // Made non-optional as it's in AlumniProfile
+  skills: string[]; 
 
   areasOfSupport?: SupportArea[];
   timeCommitment?: TimeCommitment;
@@ -256,8 +257,10 @@ export interface UserProfile extends AlumniProfile { // Extend AlumniProfile for
   profilePictureUrl?: string;
   resumeText?: string; 
   careerInterests?: string;
-  bio: string; // Made non-optional as it's in AlumniProfile
+  bio: string; 
   interests?: string[];
+
+  offersHelpWith?: SupportArea[]; 
 
   xpPoints?: number;
   dailyStreak?: number; 
@@ -267,7 +270,7 @@ export interface UserProfile extends AlumniProfile { // Extend AlumniProfile for
   referralCode?: string;
   earnedBadges?: string[]; 
   affiliateCode?: string; 
-  pastInterviewSessions?: string[]; // IDs of MockInterviewSession
+  pastInterviewSessions?: string[]; 
 }
 
 export interface ResumeProfile {
@@ -275,7 +278,7 @@ export interface ResumeProfile {
   tenantId: string;
   userId: string; 
   name: string; 
-  resumeText: string; // Could be stringified JSON of ResumeBuilderData or plain text
+  resumeText: string; 
   lastAnalyzed?: string;
 }
 
@@ -295,7 +298,7 @@ export type Appointment = {
   notes?: string; 
   costInCoins?: number; 
   withUser: string; 
-  reminderDate?: string; // ISO string for reminder
+  reminderDate?: string; 
 };
 
 export type WalletTransaction = {
@@ -401,7 +404,7 @@ export interface SurveyResponse {
   userId: string;
   userName: string;
   surveyId: string;
-  surveyName?: string; // Optional, can be derived
+  surveyName?: string; 
   responseDate: string; 
   data: Record<string, any>; 
 }
@@ -457,7 +460,6 @@ export interface TourStep {
   targetId?: string; 
 }
 
-// Resume Builder Types
 export interface ResumeHeaderData {
   fullName: string;
   phone: string;
@@ -472,10 +474,10 @@ export interface ResumeExperienceEntry {
   jobTitle: string;
   company: string;
   location: string;
-  startDate: string; // Consider using YYYY-MM format
-  endDate: string;   // Consider using YYYY-MM format or "Present"
+  startDate: string; 
+  endDate: string;   
   isCurrent?: boolean;
-  responsibilities: string; // Store as a single string, use newlines for bullets
+  responsibilities: string; 
 }
 
 export interface ResumeEducationEntry {
@@ -485,7 +487,7 @@ export interface ResumeEducationEntry {
   university: string;
   location: string;
   graduationYear: string;
-  details?: string; // Store as a single string, use newlines for bullets
+  details?: string; 
 }
 
 export interface ResumeBuilderData {
@@ -500,7 +502,7 @@ export interface ResumeBuilderData {
     languages?: string;
     interests?: string;
   };
-  templateId: string; // To know which template to use for preview
+  templateId: string; 
 }
 
 export type ResumeBuilderStep = 'header' | 'experience' | 'education' | 'skills' | 'summary' | 'additional-details' | 'finalize';
@@ -531,20 +533,19 @@ export interface InterviewQuestion {
   mcqOptions?: string[]; 
   correctAnswer?: string; 
   difficulty?: InterviewQuestionDifficulty;
-  rating?: number; // e.g., 1-5 stars
-  comments?: string; // Admin notes or discussion
-  createdBy?: string; // User ID or name
-  approved?: boolean; // For admin moderation
+  rating?: number; 
+  comments?: string; 
+  createdBy?: string; 
+  approved?: boolean; 
 }
 
 export interface BlogGenerationSettings {
   generationIntervalHours: number;
-  topics: string[]; // Comma-separated string initially, then array
-  style?: 'informative' | 'casual' | 'formal' | 'technical' | 'storytelling'; // Added storytelling
-  lastGenerated?: string; // ISO date string
+  topics: string[]; 
+  style?: 'informative' | 'casual' | 'formal' | 'technical' | 'storytelling'; 
+  lastGenerated?: string; 
 }
 
-// AI Mock Interview Types
 export interface MockInterviewQuestion { 
   id: string; 
   questionText: string;
@@ -591,7 +592,7 @@ export interface GenerateMockInterviewQuestionsInput {
   topic: string;
   jobDescription?: string;
   numQuestions?: number; 
-  difficulty?: 'easy' | 'medium' | 'hard'; // Matches InterviewQuestionDifficulty but lowercase for input
+  difficulty?: 'easy' | 'medium' | 'hard'; 
   timerPerQuestion?: number; 
   questionCategories?: InterviewQuestionCategory[]; 
 }
@@ -625,3 +626,17 @@ export const MOCK_INTERVIEW_STEPS: { id: MockInterviewStepId; title: string; des
   { id: 'interview', title: 'Interview Session', description: 'Answer the questions one by one.' },
   { id: 'feedback', title: 'Get Feedback', description: 'Review your performance and AI suggestions.' },
 ];
+
+// Quiz Mode Specific Types
+export interface QuizSession {
+  id: string;
+  userId: string;
+  questions: InterviewQuestion[]; // The actual questions used in this quiz
+  userAnswers: Record<string, string>; // questionId: selectedOptionValue
+  score?: number; // Number of correct answers
+  percentage?: number; // Percentage score
+  startTime: string; // ISO DateTime string
+  endTime?: string; // ISO DateTime string
+  status: 'in-progress' | 'completed';
+  title?: string; // e.g., "Java Basics Quiz"
+}

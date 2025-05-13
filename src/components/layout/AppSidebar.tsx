@@ -1,7 +1,8 @@
+
 "use client";
 
 import { Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarSeparator, SidebarGroup, SidebarGroupLabel } from "@/components/ui/sidebar";
-import { Aperture, Award, BarChart2, BookOpen, Briefcase, Building2, CalendarDays, FileText, GalleryVerticalEnd, GitFork, Gift, Handshake, History, Home, Layers3, ListChecks, MessageSquare, Settings, ShieldAlert, ShieldQuestion, User, Users, Wallet, Zap, UserCog, BotMessageSquare, Target, Users2, BookText, Activity, Edit, FileType, Brain, FilePlus2, Trophy, Settings2Icon } from "lucide-react";
+import { Aperture, Award, BarChart2, BookOpen, Briefcase, Building2, CalendarDays, FileText, GalleryVerticalEnd, GitFork, Gift, Handshake, History, Home, Layers3, ListChecks, MessageSquare, Settings, ShieldAlert, ShieldQuestion, User, Users, Wallet, Zap, UserCog, BotMessageSquare, Target, Users2, BookText, Activity, Edit, FileType, Brain, FilePlus2, Trophy, Settings2Icon, Puzzle as PuzzleIcon } from "lucide-react"; // Added PuzzleIcon for Quiz
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { sampleUserProfile } from "@/lib/sample-data"; 
@@ -16,6 +17,7 @@ const navItems = [
       { href: "/ai-resume-writer", label: "AI Resume Writer", icon: Edit },
       { href: "/cover-letter-generator", label: "Cover Letter Generator", icon: FileType },
       { href: "/ai-mock-interview", label: "AI Mock Interview", icon: Brain },
+      { href: "/interview-prep/quiz", label: "Practice Quiz", icon: PuzzleIcon }, // New Quiz Mode link
     ]
   },
   { href: "/my-resumes", label: "My Resumes", icon: Layers3 },
@@ -87,7 +89,7 @@ export function AppSidebar() {
               <span className={`${(isActive || isAdminDashboardActive) ? "text-sidebar-primary-foreground" : ""} group-data-[collapsible=icon]:hidden`}>{item.label}</span>
             </SidebarMenuButton>
            </Link>
-         ) : ( // This case is for group labels that are not links themselves
+         ) : ( 
            <SidebarMenuButton size={isSubItem ? "sm" : "default"} className="w-full justify-start cursor-default hover:bg-transparent group-data-[collapsible=icon]:justify-center">
               <item.icon className="h-5 w-5 text-sidebar-foreground/80" />
               <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
@@ -110,7 +112,7 @@ export function AppSidebar() {
           {navItems.map((item) =>
             item.subItems && item.subItems.length > 0 ? ( 
               <SidebarGroup key={item.label} className="p-0">
-                 {renderMenuItem(item, false)} {/* Render the group item itself */}
+                 {renderMenuItem(item, false)} 
                 <div className="pl-4 group-data-[collapsible=icon]:hidden">
                   <SidebarMenu>
                     {item.subItems.map(subItem => renderMenuItem(subItem, true))}

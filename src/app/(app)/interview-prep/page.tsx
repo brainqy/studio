@@ -1,31 +1,33 @@
+
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Brain, Mic, MessageSquare, Users, Zap, Tag, Lightbulb, CheckSquare as CheckSquareIcon, Code, Puzzle, BookCopy, ListFilter, Info, Share2, RefreshCw, History, Check, X, Star as StarIcon, UserCircle, CalendarDays, ThumbsUp, ShieldCheck, Edit3 as EditIcon, ShieldAlert, PlusCircle, Textarea as TextareaIcon } from "lucide-react"; // Added PlusCircle
+import { Brain, Mic, MessageSquare, Users, Zap, Tag, Lightbulb, CheckSquare as CheckSquareIcon, Code, Puzzle, BookCopy, ListFilter, Info, Share2, RefreshCw, History, Check, X, Star as StarIcon, UserCircle, CalendarDays, ThumbsUp, ShieldCheck, Edit3 as EditIcon, ShieldAlert, PlusCircle, Textarea as TextareaIcon, ChevronLeft, ChevronRight } from "lucide-react"; // Added ChevronLeft, ChevronRight for pagination
 import { sampleInterviewQuestions, sampleUserProfile, sampleMockInterviewSessions, sampleCommunityPosts } from "@/lib/sample-data";
 import type { InterviewQuestion, InterviewQuestionCategory, MockInterviewSession, CommunityPost, InterviewQuestionDifficulty } from "@/types";
-import { ALL_CATEGORIES, ALL_DIFFICULTIES } from "@/types"; // Import ALL_DIFFICULTIES
+import { ALL_CATEGORIES, ALL_DIFFICULTIES } from "@/types";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose, DialogTrigger } from "@/components/ui/dialog"; // Added DialogTrigger, DialogClose
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose, DialogTrigger } from "@/components/ui/dialog";
 import { format, parseISO } from "date-fns";
 import ScoreCircle from '@/components/ui/score-circle';
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Checkbox } from "@/components/ui/checkbox"; 
-import { cn } from "@/lib/utils"; 
+import { Checkbox } from "@/components/ui/checkbox";
+import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { useForm, Controller } from "react-hook-form"; // Added useForm, Controller
-import { zodResolver } from "@hookform/resolvers/zod"; // Added zodResolver
-import * as z from "zod"; // Added z
-import { Textarea } from "@/components/ui/textarea"; // Added Textarea
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; // Added Select components
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useRouter } from 'next/navigation'; // Import useRouter for navigation
 
 const questionFormSchema = z.object({
   question: z.string().min(10, "Question text must be at least 10 characters."),
@@ -43,11 +45,12 @@ const questionFormSchema = z.object({
   return true;
 }, {
   message: "For MCQ, provide at least 2 options and ensure the correct answer is one of the options.",
-  path: ["mcqOptions"], // Or a more general path if needed
+  path: ["mcqOptions"],
 });
 
 type QuestionFormData = z.infer<typeof questionFormSchema>;
 
+const ITEMS_PER_PAGE = 10; // Number of questions per page
 
 export default function InterviewPreparationPage() {
   const [allQuestions, setAllQuestions] = useState<InterviewQuestion[]>(sampleInterviewQuestions);
@@ -58,10 +61,12 @@ export default function InterviewPreparationPage() {
   const [viewingSession, setViewingSession] = useState<MockInterviewSession | null>(null);
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
   const currentUser = sampleUserProfile;
-  const [selectedQuestionIds, setSelectedQuestionIds] = useState<Set<string>>(new Set()); 
-  
+  const [selectedQuestionIds, setSelectedQuestionIds] = useState<Set<string>>(new Set());
+  const [currentPage, setCurrentPage] = useState(1);
+  const router = useRouter();
+
   const [isCreateQuestionDialogOpen, setIsCreateQuestionDialogOpen] = useState(false);
-  const [mcqOptionInputs, setMcqOptionInputs] = useState<string[]>(['', '']); // For new question form
+  const [mcqOptionInputs, setMcqOptionInputs] = useState<string[]>(['', '']);
 
   const { control: questionFormControl, handleSubmit: handleQuestionFormSubmit, reset: resetQuestionForm, watch: watchQuestionForm, setValue: setQuestionFormValue, formState: { errors: questionFormErrors } } = useForm<QuestionFormData>({
     resolver: zodResolver(questionFormSchema),
@@ -77,7 +82,6 @@ export default function InterviewPreparationPage() {
 
   useEffect(() => {
     if (isMCQSelected) {
-      // Ensure there are at least two mcqOptionInputs if none or one exists
       if (mcqOptionInputs.length < 2) {
         setMcqOptionInputs(['', '']);
         setQuestionFormValue('mcqOptions', ['', '']);
@@ -85,19 +89,17 @@ export default function InterviewPreparationPage() {
     }
   }, [isMCQSelected, mcqOptionInputs.length, setQuestionFormValue]);
 
-
   const userInterviewHistory = useMemo(() => {
     return sampleMockInterviewSessions.filter(session => session.userId === currentUser.id);
   }, [currentUser.id]);
 
-
-  const filteredQuestions = useMemo(() => {
-    return allQuestions.filter(q => { // Changed from sampleInterviewQuestions to allQuestions
-      if (!q.isMCQ || !q.mcqOptions || !q.correctAnswer) return false; 
+  const filteredQuestionsFromBank = useMemo(() => {
+    return allQuestions.filter(q => {
+      if (!q.isMCQ || !q.mcqOptions || !q.correctAnswer) return false;
       if (q.approved === false && currentUser.role !== 'admin') return false;
 
       const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(q.category);
-      const matchesSearch = searchTerm === '' || 
+      const matchesSearch = searchTerm === '' ||
                             q.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
                             (q.answerOrTip && q.answerOrTip.toLowerCase().includes(searchTerm.toLowerCase())) ||
                             (q.tags && q.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))) ||
@@ -105,7 +107,14 @@ export default function InterviewPreparationPage() {
       return matchesCategory && matchesSearch;
     });
   }, [selectedCategories, searchTerm, currentUser.role, allQuestions]);
-  
+
+  const totalPages = Math.ceil(filteredQuestionsFromBank.length / ITEMS_PER_PAGE);
+  const paginatedQuestions = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return filteredQuestionsFromBank.slice(startIndex, endIndex);
+  }, [filteredQuestionsFromBank, currentPage]);
+
   const handleMcqSelection = (questionId: string, selectedOption: string) => {
     setSelectedMcqAnswers(prev => ({...prev, [questionId]: selectedOption}));
   };
@@ -119,26 +128,27 @@ export default function InterviewPreparationPage() {
       case 'Analytical': return <Puzzle className="h-5 w-5 text-teal-500 flex-shrink-0" title="Analytical"/>;
       case 'HR': return <Lightbulb className="h-5 w-5 text-pink-500 flex-shrink-0" title="HR"/>;
       case 'Common': return <MessageSquare className="h-5 w-5 text-gray-500 flex-shrink-0" title="Common"/>;
-      default: return <Puzzle className="h-5 w-5 text-gray-400 flex-shrink-0" />; 
+      default: return <Puzzle className="h-5 w-5 text-gray-400 flex-shrink-0" />;
     }
   };
 
   const getDifficultyBadgeVariant = (difficulty?: InterviewQuestionDifficulty): "default" | "secondary" | "destructive" | "outline" => {
     switch (difficulty) {
-      case 'Easy': return 'default'; 
-      case 'Medium': return 'secondary'; 
-      case 'Hard': return 'destructive'; 
+      case 'Easy': return 'default';
+      case 'Medium': return 'secondary';
+      case 'Hard': return 'destructive';
       default: return 'outline';
     }
   };
 
   const handleCreateQuiz = () => {
-    const questionsForQuiz = allQuestions.filter(q => selectedQuestionIds.has(q.id));
-    if (questionsForQuiz.length === 0) {
+    const questionIdsToPass = Array.from(selectedQuestionIds);
+    if (questionIdsToPass.length === 0) {
         toast({title: "No Questions Selected", description: "Please select questions to include in the quiz.", variant: "destructive"});
         return;
     }
-    toast({title: "Create Quiz (Mock)", description: `Quiz creation with ${questionsForQuiz.length} questions initiated. This is a mock feature.`});
+    // Navigate to the quiz page, passing selected question IDs as query parameters
+    router.push(`/interview-prep/quiz?questions=${questionIdsToPass.join(',')}`);
   };
 
   const handleViewReport = (session: MockInterviewSession) => {
@@ -158,14 +168,14 @@ export default function InterviewPreparationPage() {
     } else {
       postContent += `! 📈`;
     }
-    
+
     if (session.overallFeedback.keyStrengths && session.overallFeedback.keyStrengths.length > 0) {
         postContent += `\n\nKey Strength: "${session.overallFeedback.keyStrengths[0]}"`;
     } else if (session.overallFeedback.overallSummary) {
         postContent += `\n\nLearned a lot: "${session.overallFeedback.overallSummary.substring(0, 100)}${session.overallFeedback.overallSummary.length > 100 ? '...' : ''}"`;
     }
     postContent += `\n\n#AIMockInterview #InterviewPrep #${session.topic.toLowerCase().replace(/\s+/g, '')}`;
-    
+
     const newPost: CommunityPost = {
       id: `post-hist-interview-${Date.now()}`,
       tenantId: currentUser.tenantId,
@@ -195,13 +205,12 @@ export default function InterviewPreparationPage() {
       correctAnswer: data.isMCQ ? data.correctAnswer : undefined,
       answerOrTip: data.answerOrTip,
       tags: data.tags?.split(',').map(tag => tag.trim()).filter(tag => tag),
-      createdBy: currentUser.id, 
-      approved: false, // New questions default to unapproved
-      rating: 0, 
+      createdBy: currentUser.id,
+      approved: false,
+      rating: 0,
       comments: 'Awaiting admin review.'
     };
     setAllQuestions(prev => [newQuestion, ...prev]);
-    // In a real app, sampleInterviewQuestions would also be updated if it's the source of truth
     sampleInterviewQuestions.unshift(newQuestion);
     toast({ title: "Question Created", description: "Your question has been submitted for review." });
     setIsCreateQuestionDialogOpen(false);
@@ -232,6 +241,11 @@ export default function InterviewPreparationPage() {
     setQuestionFormValue('mcqOptions', updatedInputs);
   };
 
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -259,9 +273,9 @@ export default function InterviewPreparationPage() {
           <CardTitle className="text-lg flex items-center gap-2"><ListFilter className="h-5 w-5"/>Filter Questions</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-            <Input 
-                id="search-questions" 
-                placeholder="Search by keywords, tags, topics..." 
+            <Input
+                id="search-questions"
+                placeholder="Search by keywords, tags, topics..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full"
@@ -284,8 +298,7 @@ export default function InterviewPreparationPage() {
             </div>
         </CardContent>
       </Card>
-      
-      {/* Dialog for Creating New Question */}
+
       <Dialog open={isCreateQuestionDialogOpen} onOpenChange={setIsCreateQuestionDialogOpen}>
         <DialogContent className="sm:max-w-lg max-h-[90vh]">
           <DialogHeader>
@@ -328,8 +341,8 @@ export default function InterviewPreparationPage() {
                   <Label>MCQ Options (at least 2 required)</Label>
                   {mcqOptionInputs.map((opt, index) => (
                     <div key={index} className="flex items-center gap-2">
-                      <Input 
-                        placeholder={`Option ${index + 1}`} 
+                      <Input
+                        placeholder={`Option ${index + 1}`}
                         value={opt}
                         onChange={(e) => handleMcqOptionChange(index, e.target.value)}
                         className="flex-grow"
@@ -368,19 +381,15 @@ export default function InterviewPreparationPage() {
         </DialogContent>
       </Dialog>
 
-
       <Card className="shadow-lg">
         <CardHeader className="flex flex-row justify-between items-center">
           <div>
-            <CardTitle className="flex items-center gap-2"><MessageSquare className="h-6 w-6 text-primary"/>Questions ({filteredQuestions.length} matching)</CardTitle>
+            <CardTitle className="flex items-center gap-2"><MessageSquare className="h-6 w-6 text-primary"/>Questions ({filteredQuestionsFromBank.length} matching)</CardTitle>
             <CardDescription>Browse and practice with our curated list of interview questions. Select questions to create a custom quiz.</CardDescription>
           </div>
-          <Button onClick={handleCreateQuiz} disabled={selectedQuestionIds.size === 0} className="bg-primary hover:bg-primary/90 shrink-0">
-              <PlusCircle className="mr-2 h-4 w-4" /> Create Quiz ({selectedQuestionIds.size})
-          </Button>
         </CardHeader>
         <CardContent>
-          {filteredQuestions.length === 0 ? (
+          {paginatedQuestions.length === 0 ? (
             <div className="text-center text-muted-foreground py-10 border-2 border-dashed rounded-lg">
                 <Zap className="h-12 w-12 mx-auto text-muted-foreground/50 mb-2"/>
                 <p>No questions match your criteria.</p>
@@ -388,10 +397,10 @@ export default function InterviewPreparationPage() {
             </div>
           ) : (
             <Accordion type="single" collapsible className="w-full space-y-3">
-              {filteredQuestions.map((q) => (
+              {paginatedQuestions.map((q) => (
                 <AccordionItem value={q.id} key={q.id} className="border rounded-lg bg-card overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                   <AccordionTrigger className="text-md text-left hover:no-underline data-[state=open]:bg-secondary/50 relative group py-3 px-4">
-                    <div className="flex items-center gap-3 flex-1 min-w-0"> 
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
                         <Checkbox
                           id={`select-q-${q.id}`}
                           checked={selectedQuestionIds.has(q.id)}
@@ -401,7 +410,7 @@ export default function InterviewPreparationPage() {
                             else newSelectedIds.delete(q.id);
                             setSelectedQuestionIds(newSelectedIds);
                           }}
-                          onClick={(e) => e.stopPropagation()} 
+                          onClick={(e) => e.stopPropagation()}
                           className="h-5 w-5 border-muted-foreground data-[state=checked]:bg-primary data-[state=checked]:border-primary shrink-0"
                           aria-label={`Select question: ${q.question}`}
                         />
@@ -416,8 +425,8 @@ export default function InterviewPreparationPage() {
                   <AccordionContent className="space-y-4 p-4 text-sm bg-secondary/20">
                     <div className="mb-3 p-3 border rounded-md bg-background">
                         <p className="font-medium text-foreground mb-2">Options:</p>
-                        <RadioGroup 
-                            onValueChange={(value) => handleMcqSelection(q.id, value)} 
+                        <RadioGroup
+                            onValueChange={(value) => handleMcqSelection(q.id, value)}
                             value={selectedMcqAnswers[q.id]}
                             className="space-y-1.5"
                         >
@@ -480,6 +489,36 @@ export default function InterviewPreparationPage() {
             </Accordion>
           )}
         </CardContent>
+        <CardFooter className="flex flex-col items-center gap-4 pt-4 border-t">
+           <Button onClick={handleCreateQuiz} disabled={selectedQuestionIds.size === 0} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+              <PlusCircle className="mr-2 h-4 w-4" /> Create Quiz from Selected ({selectedQuestionIds.size})
+          </Button>
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center space-x-2 mt-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Previous
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                Page {currentPage} of {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+        </CardFooter>
       </Card>
 
       <Card className="shadow-lg">
@@ -550,7 +589,6 @@ export default function InterviewPreparationPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
 
        <Card className="shadow-md bg-blue-50 border-blue-200 dark:bg-blue-900/30 dark:border-blue-700">
         <CardHeader>
