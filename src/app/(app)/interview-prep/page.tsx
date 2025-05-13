@@ -1,4 +1,3 @@
-
 "use client";
 
 import type React from 'react';
@@ -12,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Brain, Calendar, Users, ShieldAlert, Type, Languages, MessageSquare, CheckCircle, XCircle, Mic, ListChecks, Search, ChevronLeft, ChevronRight, Tag, Settings2, Puzzle, Lightbulb, Code, Eye, Edit3, Play, PlusCircle, Star as StarIcon, Send, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { sampleUserProfile, samplePracticeSessions, sampleInterviewQuestions, sampleCreatedQuizzes } from "@/lib/sample-data";
-import type { PracticeSession, InterviewQuestion, InterviewQuestionCategory, MockInterviewSession, PracticeFlowStage, PracticeSessionConfig } from "@/types"; // Added PracticeFlowStage, PracticeSessionConfig
+import type { PracticeSession, InterviewQuestion, InterviewQuestionCategory, MockInterviewSession, PracticeFlowStage, PracticeSessionConfig, InterviewQuestionUserComment, InterviewQuestionDifficulty } from "@/types"; // Added PracticeFlowStage, PracticeSessionConfig
 import { ALL_CATEGORIES, PREDEFINED_INTERVIEW_TOPICS } from '@/types'; // Added PREDEFINED_INTERVIEW_TOPICS
 import { format, parseISO, isFuture as dateIsFuture } from "date-fns"; 
 import { cn } from "@/lib/utils";
@@ -98,11 +97,12 @@ export default function InterviewPracticeHubPage() {
     reset: resetQuestionForm,
     setValue: setQuestionFormValue,
     watch: watchQuestionForm,
+    formState,
   } = useForm<QuestionFormData>({
     resolver: zodResolver(questionFormSchema),
     defaultValues: { isMCQ: false, mcqOptions: ["", "", "", ""], category: 'Common' }
   });
-  const questionFormErrors = questionFormControl.formState.errors; // Corrected access to errors
+  const questionFormErrors = formState.errors;
   const isMCQSelected = watchQuestionForm("isMCQ");
 
 
@@ -325,7 +325,7 @@ export default function InterviewPracticeHubPage() {
   };
   
   const onCommentSubmit = (data: CommentFormData, questionId: string) => {
-    const newComment = {
+    const newComment: InterviewQuestionUserComment = { // Explicitly type newComment
         id: `uc-${questionId}-${Date.now()}`,
         userId: currentUser.id,
         userName: currentUser.name,
@@ -705,6 +705,7 @@ export default function InterviewPracticeHubPage() {
                         <SelectContent>{ALL_CATEGORIES.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}</SelectContent>
                     </Select>
                 )} />
+                 {questionFormErrors.category && <p className="text-sm text-destructive mt-1">{questionFormErrors.category.message}</p>}
               </div>
               <div>
                 <Label htmlFor="question-difficulty">Difficulty</Label>
