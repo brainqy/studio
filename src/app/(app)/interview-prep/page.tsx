@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Brain, Mic, MessageSquare, Users, Zap, Tag, Lightbulb, CheckSquare as CheckSquareIcon, Code, Puzzle, BookCopy, ListFilter, Info, Share2, RefreshCw, History, Check, X, Star as StarIcon, UserCircle, CalendarDays, ThumbsUp, ShieldCheck, Edit3 as EditIcon, ShieldAlert, PlusCircle, Textarea as TextareaIcon, ChevronLeft, ChevronRight, ListChecks as ListChecksIcon, ChevronDown } from "lucide-react";
-import { sampleInterviewQuestions, sampleUserProfile, sampleMockInterviewSessions, sampleCommunityPosts, sampleCreatedQuizzes } from "@/lib/sample-data";
+import { sampleInterviewQuestions, sampleUserProfile, sampleMockInterviewSessions, sampleCreatedQuizzes } from "@/lib/sample-data";
 import type { InterviewQuestion, InterviewQuestionCategory, MockInterviewSession, CommunityPost, InterviewQuestionDifficulty } from "@/types";
 import { ALL_CATEGORIES, ALL_DIFFICULTIES } from "@/types";
 import Link from "next/link";
@@ -407,7 +407,7 @@ export default function InterviewPreparationPage() {
             <Accordion type="single" collapsible className="w-full space-y-3">
               {paginatedQuestions.map((q) => (
                 <AccordionItem value={q.id} key={q.id} className="border rounded-lg bg-card overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                  <AccordionTrigger asChild className="text-md text-left hover:no-underline data-[state=open]:bg-secondary/50 relative group py-3 px-4">
+                  <AccordionTrigger className="text-md text-left hover:no-underline data-[state=open]:bg-secondary/50 relative group py-3 px-4">
                     <div className="flex flex-1 items-center justify-between group">
                         <div className="flex items-center gap-3 flex-1 min-w-0">
                             <Checkbox
@@ -429,7 +429,6 @@ export default function InterviewPreparationPage() {
                         <div className="flex items-center gap-2 ml-3 shrink-0">
                             {q.difficulty && <Badge variant={getDifficultyBadgeVariant(q.difficulty)} className="text-xs">{q.difficulty}</Badge>}
                             <Badge variant="outline" className="text-xs">{q.category}</Badge>
-                             <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180" />
                         </div>
                     </div>
                   </AccordionTrigger>
