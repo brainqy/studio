@@ -1,16 +1,15 @@
-
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Brain, Mic, MessageSquare, Users, Zap, Tag, Lightbulb, CheckSquare as CheckSquareIcon, Code, Puzzle, BookCopy, ListFilter, Info, Share2, RefreshCw, History } from "lucide-react";
+import { Brain, Mic, MessageSquare, Users, Zap, Tag, Lightbulb, CheckSquare as CheckSquareIcon, Code, Puzzle, BookCopy, ListFilter, Info, Share2, RefreshCw, History, Check, X } from "lucide-react"; // Added Check, X
 import { sampleInterviewQuestions, sampleUserProfile, sampleMockInterviewSessions, sampleCommunityPosts } from "@/lib/sample-data";
 import type { InterviewQuestion, InterviewQuestionCategory, MockInterviewSession, CommunityPost } from "@/types";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label"; // Added import for Label
+import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -18,6 +17,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { format, parseISO } from "date-fns";
 import ScoreCircle from '@/components/ui/score-circle';
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Checkbox } from "@/components/ui/checkbox"; // Added Checkbox import
+import { cn } from "@/lib/utils"; // Added cn import
 
 const ALL_CATEGORIES: InterviewQuestionCategory[] = ['Common', 'Behavioral', 'Technical', 'Coding', 'Role-Specific', 'Analytical', 'HR'];
 
@@ -29,9 +30,9 @@ export default function InterviewPreparationPage() {
   const [viewingSession, setViewingSession] = useState<MockInterviewSession | null>(null);
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
   const currentUser = sampleUserProfile;
+  const [selectedQuestionIds, setSelectedQuestionIds] = useState<Set<string>>(new Set()); // State for selected questions
   
   const userInterviewHistory = useMemo(() => {
-    // In a real app, fetch this for the current user
     return sampleMockInterviewSessions.filter(session => session.userId === currentUser.id);
   }, [currentUser.id]);
 
@@ -63,16 +64,18 @@ export default function InterviewPreparationPage() {
       case 'Analytical': return <Puzzle className="h-4 w-4 text-teal-500 flex-shrink-0" title="Analytical Question"/>;
       case 'HR': return <Lightbulb className="h-4 w-4 text-pink-500 flex-shrink-0" title="HR Question"/>;
       case 'Common': return <MessageSquare className="h-4 w-4 text-gray-500 flex-shrink-0" title="Common Question"/>;
-      default: return null;
+      default: return <Puzzle className="h-4 w-4 text-gray-400 flex-shrink-0" />; // Fallback icon
     }
   };
 
   const handleCreateQuiz = () => {
-    if (filteredQuestions.length === 0) {
-        toast({title: "No Questions Selected", description: "Please adjust filters to include questions for the quiz.", variant: "destructive"});
+    const questionsForQuiz = sampleInterviewQuestions.filter(q => selectedQuestionIds.has(q.id));
+    if (questionsForQuiz.length === 0) {
+        toast({title: "No Questions Selected", description: "Please select questions to include in the quiz.", variant: "destructive"});
         return;
     }
-    toast({title: "Create Quiz (Mock)", description: `Quiz creation with ${filteredQuestions.length} questions initiated. This is a mock feature.`});
+    toast({title: "Create Quiz (Mock)", description: `Quiz creation with ${questionsForQuiz.length} questions initiated. This is a mock feature.`});
+    // Here, you would navigate to a quiz page or start a quiz flow with `questionsForQuiz`
   };
 
   const handleViewReport = (session: MockInterviewSession) => {
@@ -170,8 +173,8 @@ export default function InterviewPreparationPage() {
       {/* Question Bank Section */}
       <Card className="shadow-lg">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><MessageSquare className="h-6 w-6 text-primary"/>Questions</CardTitle>
-          <CardDescription>Browse and practice with our curated list of interview questions.</CardDescription>
+          <CardTitle className="flex items-center gap-2"><MessageSquare className="h-6 w-6 text-primary"/>Questions ({filteredQuestions.length} matching)</CardTitle>
+          <CardDescription>Browse and practice with our curated list of interview questions. Select questions to create a custom quiz.</CardDescription>
         </CardHeader>
         <CardContent>
           {filteredQuestions.length === 0 ? (
@@ -184,15 +187,27 @@ export default function InterviewPreparationPage() {
             <Accordion type="single" collapsible className="w-full">
               {filteredQuestions.map((q) => (
                 <AccordionItem value={q.id} key={q.id}>
-                  <AccordionTrigger className="text-md text-left hover:text-primary data-[state=open]:text-primary">
-                    <div className="flex items-center gap-2">
-                       <CheckSquareIcon className="h-4 w-4 text-blue-500 flex-shrink-0" title="Multiple Choice Question"/>
+                  <AccordionTrigger className="text-md text-left hover:text-primary data-[state=open]:text-primary relative group py-3 px-2">
+                    <div className="flex items-center gap-3 flex-1 min-w-0"> {/* Added min-w-0 for truncation */}
+                        <Checkbox
+                          id={`select-q-${q.id}`}
+                          checked={selectedQuestionIds.has(q.id)}
+                          onCheckedChange={(checked) => {
+                            const newSelectedIds = new Set(selectedQuestionIds);
+                            if (checked) newSelectedIds.add(q.id);
+                            else newSelectedIds.delete(q.id);
+                            setSelectedQuestionIds(newSelectedIds);
+                          }}
+                          onClick={(e) => e.stopPropagation()} // Prevent accordion toggle
+                          className="h-5 w-5 border-muted-foreground data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                          aria-label={`Select question: ${q.question}`}
+                        />
                        {getCategoryIcon(q.category)}
-                       <span>{q.question}</span>
+                       <span className="truncate group-hover:underline flex-1">{q.question}</span>
                     </div>
-                     <span className="ml-auto mr-2 text-xs px-2 py-0.5 bg-accent text-accent-foreground rounded-full whitespace-nowrap">{q.category}</span>
+                     <span className="ml-3 text-xs px-2 py-0.5 bg-accent text-accent-foreground rounded-full whitespace-nowrap">{q.category}</span>
                   </AccordionTrigger>
-                  <AccordionContent className="space-y-3 pl-2 text-sm">
+                  <AccordionContent className="space-y-3 pl-4 pr-2 pt-2 pb-3 text-sm">
                     <div className="mb-3 p-3 border rounded-md bg-secondary/30">
                         <p className="font-medium text-foreground mb-2">Options:</p>
                         <RadioGroup 
@@ -208,9 +223,12 @@ export default function InterviewPreparationPage() {
                           ))}
                         </RadioGroup>
                         {selectedMcqAnswers[q.id] && q.correctAnswer && (
-                            <p className={`mt-2 text-xs font-semibold ${selectedMcqAnswers[q.id] === q.correctAnswer ? 'text-green-600' : 'text-red-600'}`}>
+                            <div className={cn("mt-2 text-xs font-semibold p-2 rounded-md flex items-center gap-1.5",
+                                selectedMcqAnswers[q.id] === q.correctAnswer ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                            )}>
+                                {selectedMcqAnswers[q.id] === q.correctAnswer ? <Check className="h-4 w-4"/> : <X className="h-4 w-4"/>}
                                 Your answer is {selectedMcqAnswers[q.id] === q.correctAnswer ? 'correct!' : `incorrect. Correct answer: ${q.correctAnswer}`}
-                            </p>
+                            </div>
                         )}
                       </div>
                     <div className="p-3 border rounded-md bg-primary/5">
@@ -233,8 +251,8 @@ export default function InterviewPreparationPage() {
           )}
         </CardContent>
         <CardFooter>
-            <Button onClick={handleCreateQuiz} disabled={filteredQuestions.length === 0} className="bg-primary hover:bg-primary/90">
-                <Puzzle className="mr-2 h-4 w-4" /> Create Quiz from Filtered Questions
+            <Button onClick={handleCreateQuiz} disabled={selectedQuestionIds.size === 0} className="bg-primary hover:bg-primary/90">
+                <Puzzle className="mr-2 h-4 w-4" /> Create Quiz from Selected ({selectedQuestionIds.size})
             </Button>
         </CardFooter>
       </Card>
@@ -310,13 +328,13 @@ export default function InterviewPreparationPage() {
       </Dialog>
 
 
-       <Card className="shadow-md bg-blue-50 border-blue-200">
+       <Card className="shadow-md bg-blue-50 border-blue-200 dark:bg-blue-900/30 dark:border-blue-700">
         <CardHeader>
-          <CardTitle className="text-lg text-blue-700 flex items-center gap-2">
+          <CardTitle className="text-lg text-blue-700 dark:text-blue-300 flex items-center gap-2">
             <Lightbulb className="h-5 w-5"/>Pro Tip: Effective Practice
           </CardTitle>
         </CardHeader>
-        <CardContent className="text-sm text-blue-600 space-y-1">
+        <CardContent className="text-sm text-blue-600 dark:text-blue-400 space-y-1">
           <p>Regularly test yourself with MCQs from different categories.</p>
           <p>Understand why the correct answer is right and why others are wrong.</p>
           <p>Use the explanations to deepen your knowledge.</p>
