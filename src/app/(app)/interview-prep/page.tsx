@@ -1,13 +1,12 @@
-
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Brain, Mic, MessageSquare, Users, Zap, Tag, Lightbulb, CheckSquare as CheckSquareIcon, Code, Puzzle, BookCopy, ListFilter, Info, Share2, RefreshCw, History, Check, X, Star, UserCircle, CalendarDays, ThumbsUp } from "lucide-react"; // Added Check, X, Star, UserCircle, CalendarDays, ThumbsUp
+import { Brain, Mic, MessageSquare, Users, Zap, Tag, Lightbulb, CheckSquare as CheckSquareIcon, Code, Puzzle, BookCopy, ListFilter, Info, Share2, RefreshCw, History, Check, X, Star as StarIcon, UserCircle, CalendarDays, ThumbsUp, ShieldCheck, Edit3 as EditIcon } from "lucide-react";
 import { sampleInterviewQuestions, sampleUserProfile, sampleMockInterviewSessions, sampleCommunityPosts } from "@/lib/sample-data";
-import type { InterviewQuestion, InterviewQuestionCategory, MockInterviewSession, CommunityPost, InterviewQuestionDifficulty } from "@/types"; // Added InterviewQuestionDifficulty
+import type { InterviewQuestion, InterviewQuestionCategory, MockInterviewSession, CommunityPost, InterviewQuestionDifficulty } from "@/types";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,7 +19,7 @@ import ScoreCircle from '@/components/ui/score-circle';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox"; 
 import { cn } from "@/lib/utils"; 
-import { Badge } from "@/components/ui/badge"; // Added Badge for difficulty
+import { Badge } from "@/components/ui/badge";
 
 const ALL_CATEGORIES: InterviewQuestionCategory[] = ['Common', 'Behavioral', 'Technical', 'Coding', 'Role-Specific', 'Analytical', 'HR'];
 
@@ -71,7 +70,7 @@ export default function InterviewPreparationPage() {
     }
   };
 
-  const getDifficultyBadgeVariant = (difficulty?: InterviewQuestionDifficulty) => {
+  const getDifficultyBadgeVariant = (difficulty?: InterviewQuestionDifficulty): "default" | "secondary" | "destructive" | "outline" => {
     switch (difficulty) {
       case 'Easy': return 'default'; // Green or default
       case 'Medium': return 'secondary'; // Yellow or secondary
@@ -257,10 +256,25 @@ export default function InterviewPreparationPage() {
                       </div>
                     )}
                     <div className="mt-2 text-xs text-muted-foreground space-y-0.5">
-                        {q.rating && <p className="flex items-center gap-1"><Star className="h-3 w-3 text-yellow-400"/> Rating: {q.rating}/5</p>}
-                        {q.createdBy && <p>Created By: {q.createdBy}</p>}
-                        {currentUser.role === 'admin' && q.comments && <p>Admin Comments: {q.comments}</p>}
-                        {currentUser.role === 'admin' && <p>Approved: {q.approved ? <Check className="inline h-3 w-3 text-green-500"/> : <X className="inline h-3 w-3 text-red-500"/>}</p>}
+                        {q.rating !== undefined && (
+                          <div className="flex items-center gap-1">
+                            <span className="font-medium">Rating:</span>
+                            {[1,2,3,4,5].map(star => (
+                                <StarIcon key={star} className={cn("h-3 w-3", q.rating! >= star ? "text-yellow-400 fill-yellow-400" : "text-gray-300")}/>
+                            ))}
+                            ({q.rating}/5)
+                          </div>
+                        )}
+                        {q.createdBy && <p>Created By: {q.createdBy === 'system' ? 'ResumeMatch AI' : q.createdBy}</p>}
+                         {currentUser.role === 'admin' && q.comments && <p className="italic">Admin Notes: {q.comments}</p>}
+                         {currentUser.role === 'admin' && (
+                            <div className="flex items-center gap-1">
+                                Approved: {q.approved ? <CheckCircle className="h-4 w-4 text-green-500"/> : <X className="h-4 w-4 text-red-500"/>}
+                                <Button variant="link" size="sm" className="p-0 h-auto text-xs" onClick={() => toast({title: "Edit Approval (Mock)"})}>
+                                    <EditIcon className="h-3 w-3 mr-1"/>Change
+                                </Button>
+                            </div>
+                         )}
                     </div>
                   </AccordionContent>
                 </AccordionItem>
