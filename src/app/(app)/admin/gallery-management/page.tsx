@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { GalleryVerticalEnd, PlusCircle, Edit3, Trash2, CalendarDays, ShieldAlert } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { GalleryEvent } from "@/types";
-import { sampleGalleryEvents, sampleUserProfile, SAMPLE_TENANT_ID } from "@/lib/sample-data";
+import { sampleEvents, sampleUserProfile, SAMPLE_TENANT_ID } from "@/lib/sample-data";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -35,7 +35,7 @@ const galleryEventSchema = z.object({
 type GalleryEventFormData = z.infer<typeof galleryEventSchema>;
 
 export default function GalleryManagementPage() {
-  const [events, setEvents] = useState<GalleryEvent[]>(sampleGalleryEvents);
+  const [events, setEvents] = useState<GalleryEvent[]>(sampleEvents);
   const [isFormDialogOpen, setIsFormDialogOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<GalleryEvent | null>(null);
   const { toast } = useToast();

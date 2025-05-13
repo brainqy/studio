@@ -3,7 +3,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { GalleryVerticalEnd, CalendarDays } from "lucide-react";
-import { sampleGalleryEvents } from "@/lib/sample-data";
+import { sampleEvents } from "@/lib/sample-data";
 import Image from "next/image";
 
 export default function GalleryPage() {
@@ -14,7 +14,7 @@ export default function GalleryPage() {
       </h1>
       <CardDescription>A glimpse into past events and memorable moments from our community.</CardDescription>
 
-      {sampleGalleryEvents.length === 0 ? (
+      {sampleEvents.length === 0 ? (
         <Card className="text-center py-12 shadow-lg">
           <CardHeader>
             <GalleryVerticalEnd className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
@@ -26,7 +26,7 @@ export default function GalleryPage() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {sampleGalleryEvents.map((event) => (
+          {sampleEvents.map((event) => (
             <Card key={event.id} className="shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden">
               <div className="aspect-video relative w-full">
                 {event.imageUrls && event.imageUrls.length > 0 ? (

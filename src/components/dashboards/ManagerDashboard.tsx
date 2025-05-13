@@ -12,7 +12,7 @@ import {
     sampleResumeScanHistory, 
     sampleCommunityPosts,
     sampleAppointments, // For pending approvals example
-    sampleEvents, // For events example
+    sampleEvents, // Changed from sampleGalleryEvents
 } from "@/lib/sample-data";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
