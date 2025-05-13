@@ -1,0 +1,203 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Settings, ShieldAlert, Server, Users, Briefcase, Zap, Handshake, Gift, Target, MessageSquare, ListChecks, Palette, Columns, HelpCircle, Coins, Settings2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import type { PlatformSettings, ProfileVisibility } from "@/types";
+import { samplePlatformSettings, sampleUserProfile } from "@/lib/sample-data";
+import Link from "next/link";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
+const settingsSchema = z.object({
+  platformName: z.string().min(3, "Platform name must be at least 3 characters"),
+  maintenanceMode: z.boolean(),
+  communityFeedEnabled: z.boolean(),
+  autoModeratePosts: z.boolean(),
+  jobBoardEnabled: z.boolean(),
+  maxJobPostingDays: z.coerce.number().min(1).max(365),
+  gamificationEnabled: z.boolean(),
+  xpForLogin: z.coerce.number().min(0),
+  xpForNewPost: z.coerce.number().min(0),
+  resumeAnalyzerEnabled: z.boolean(),
+  aiResumeWriterEnabled: z.boolean(),
+  coverLetterGeneratorEnabled: z.boolean(),
+  mockInterviewEnabled: z.boolean(),
+  referralsEnabled: z.boolean(),
+  affiliateProgramEnabled: z.boolean(),
+  alumniConnectEnabled: z.boolean(),
+  defaultAppointmentCost: z.coerce.number().min(0),
+  featureRequestsEnabled: z.boolean(),
+  allowTenantCustomBranding: z.boolean(),
+  allowTenantEmailCustomization: z.boolean(),
+  defaultProfileVisibility: z.enum(['public', 'alumni_only', 'private']),
+});
+
+type SettingsFormData = z.infer<typeof settingsSchema>;
+
+export default function PlatformSettingsPage() {
+  const [currentSettings, setCurrentSettings] = useState<PlatformSettings>(samplePlatformSettings);
+  const { toast } = useToast();
+  const currentUser = sampleUserProfile;
+
+  const { control, handleSubmit, reset, formState: { errors, isDirty } } = useForm<SettingsFormData>({
+    resolver: zodResolver(settingsSchema),
+    defaultValues: currentSettings,
+  });
+
+  useEffect(() => {
+    reset(currentSettings);
+  }, [currentSettings, reset]);
+
+  if (currentUser.role !== 'admin') {
+    return (
+      <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)]">
+        <ShieldAlert className="w-16 h-16 text-destructive mb-4" />
+        <h1 className="text-2xl font-bold text-foreground mb-2">Access Denied</h1>
+        <p className="text-muted-foreground">You do not have permission to view this page.</p>
+        <Button asChild className="mt-6">
+          <Link href="/dashboard">Go to Dashboard</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  const onSubmit = (data: SettingsFormData) => {
+    const updatedSettings: PlatformSettings = { ...data };
+    // In a real app, save this to backend:
+    Object.assign(samplePlatformSettings, updatedSettings); 
+    setCurrentSettings(updatedSettings); // Update local state to reflect saved changes
+    toast({ title: "Settings Saved", description: "Platform settings have been updated successfully." });
+    reset(updatedSettings); // Reset form with new defaults to clear dirty state
+  };
+
+  const renderSettingRow = (id: keyof SettingsFormData, label: string, controlElement: React.ReactNode, description?: string, error?: string) => (
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded-md hover:bg-secondary/20 transition-colors">
+      <div className="mb-2 sm:mb-0">
+        <Label htmlFor={id} className="text-sm font-medium">{label}</Label>
+        {description && <p className="text-xs text-muted-foreground mt-0.5">{description}</p>}
+      </div>
+      <div className="sm:w-1/2 md:w-1/3">
+       {controlElement}
+       {error && <p className="text-xs text-destructive mt-1">{error}</p>}
+      </div>
+    </div>
+  );
+
+  return (
+    <TooltipProvider>
+    <div className="space-y-8">
+      <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
+        <Server className="h-8 w-8" /> Platform Settings
+      </h1>
+      <CardDescription>Configure global settings and default behaviors for the ResumeMatch AI platform.</CardDescription>
+
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Settings2 className="h-5 w-5 text-primary"/>General Platform</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {renderSettingRow("platformName", "Platform Name", <Controller name="platformName" control={control} render={({ field }) => <Input {...field} />} />, "The public name of your platform.", errors.platformName?.message)}
+            {renderSettingRow("maintenanceMode", "Maintenance Mode", <Controller name="maintenanceMode" control={control} render={({ field }) => <Switch checked={field.value} onCheckedChange={field.onChange} />} />, "Temporarily disable access for users while performing updates.")}
+            {renderSettingRow("defaultProfileVisibility", "Default New User Profile Visibility", 
+              <Controller name="defaultProfileVisibility" control={control} render={({ field }) => (
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="public">Public</SelectItem>
+                    <SelectItem value="alumni_only">Alumni Only</SelectItem>
+                    <SelectItem value="private">Private</SelectItem>
+                  </SelectContent>
+                </Select>
+              )} />, "Set the default visibility for new user profiles."
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><MessageSquare className="h-5 w-5 text-primary"/>Community Features</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {renderSettingRow("communityFeedEnabled", "Enable Community Feed", <Controller name="communityFeedEnabled" control={control} render={({ field }) => <Switch checked={field.value} onCheckedChange={field.onChange} />} />)}
+            {renderSettingRow("autoModeratePosts", "Auto-Moderate New Posts (Mock)", <Controller name="autoModeratePosts" control={control} render={({ field }) => <Switch checked={field.value} onCheckedChange={field.onChange} />} />, "If enabled, new posts might be hidden pending review based on content filters.")}
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Briefcase className="h-5 w-5 text-primary"/>Job & Career Tools</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {renderSettingRow("jobBoardEnabled", "Enable Job Board", <Controller name="jobBoardEnabled" control={control} render={({ field }) => <Switch checked={field.value} onCheckedChange={field.onChange} />} />)}
+            {renderSettingRow("maxJobPostingDays", "Max Job Posting Duration (Days)", <Controller name="maxJobPostingDays" control={control} render={({ field }) => <Input type="number" {...field} />} />, "Default number of days a job posting stays active.", errors.maxJobPostingDays?.message)}
+            {renderSettingRow("resumeAnalyzerEnabled", "Enable Resume Analyzer", <Controller name="resumeAnalyzerEnabled" control={control} render={({ field }) => <Switch checked={field.value} onCheckedChange={field.onChange} />} />)}
+            {renderSettingRow("aiResumeWriterEnabled", "Enable AI Resume Writer", <Controller name="aiResumeWriterEnabled" control={control} render={({ field }) => <Switch checked={field.value} onCheckedChange={field.onChange} />} />)}
+            {renderSettingRow("coverLetterGeneratorEnabled", "Enable Cover Letter Generator", <Controller name="coverLetterGeneratorEnabled" control={control} render={({ field }) => <Switch checked={field.value} onCheckedChange={field.onChange} />} />)}
+            {renderSettingRow("mockInterviewEnabled", "Enable AI Mock Interviews", <Controller name="mockInterviewEnabled" control={control} render={({ field }) => <Switch checked={field.value} onCheckedChange={field.onChange} />} />)}
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><ListChecks className="h-5 w-5 text-primary"/>Engagement Features</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {renderSettingRow("gamificationEnabled", "Enable Gamification (XP, Badges)", <Controller name="gamificationEnabled" control={control} render={({ field }) => <Switch checked={field.value} onCheckedChange={field.onChange} />} />)}
+            {renderSettingRow("xpForLogin", "XP Awarded for Daily Login", <Controller name="xpForLogin" control={control} render={({ field }) => <Input type="number" {...field} />} />, "Points for daily platform login.", errors.xpForLogin?.message)}
+            {renderSettingRow("xpForNewPost", "XP Awarded for New Community Post", <Controller name="xpForNewPost" control={control} render={({ field }) => <Input type="number" {...field} />} />, "Points for creating a new post in community feed.", errors.xpForNewPost?.message)}
+            {renderSettingRow("referralsEnabled", "Enable Referral Program", <Controller name="referralsEnabled" control={control} render={({ field }) => <Switch checked={field.value} onCheckedChange={field.onChange} />} />)}
+            {renderSettingRow("affiliateProgramEnabled", "Enable Affiliate Program", <Controller name="affiliateProgramEnabled" control={control} render={({ field }) => <Switch checked={field.value} onCheckedChange={field.onChange} />} />)}
+            {renderSettingRow("featureRequestsEnabled", "Enable Feature Request Submissions", <Controller name="featureRequestsEnabled" control={control} render={({ field }) => <Switch checked={field.value} onCheckedChange={field.onChange} />} />)}
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Handshake className="h-5 w-5 text-primary"/>Alumni Connect</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+             {renderSettingRow("alumniConnectEnabled", "Enable Alumni Connect Directory", <Controller name="alumniConnectEnabled" control={control} render={({ field }) => <Switch checked={field.value} onCheckedChange={field.onChange} />} />)}
+             {renderSettingRow("defaultAppointmentCost", "Default Appointment Cost (Coins)", 
+                <Controller name="defaultAppointmentCost" control={control} render={({ field }) => <Input type="number" min="0" {...field} />} />, 
+                "Default coin cost for booking an appointment with alumni.", errors.defaultAppointmentCost?.message)}
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-lg">
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Palette className="h-5 w-5 text-primary"/>Tenant Customization Allowances</CardTitle>
+                <CardDescription>Control whether individual tenants can customize certain aspects.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+                {renderSettingRow("allowTenantCustomBranding", "Allow Tenant Custom Branding", 
+                    <Controller name="allowTenantCustomBranding" control={control} render={({ field }) => <Switch checked={field.value} onCheckedChange={field.onChange} />} />, 
+                    "Permit tenant admins to set custom logos and theme colors."
+                )}
+                {renderSettingRow("allowTenantEmailCustomization", "Allow Tenant Email Customization (Mock)", 
+                    <Controller name="allowTenantEmailCustomization" control={control} render={({ field }) => <Switch checked={field.value} onCheckedChange={field.onChange} />} />, 
+                    "Permit tenant admins to customize automated email templates."
+                )}
+            </CardContent>
+        </Card>
+
+
+        <div className="pt-6 text-right">
+          <Button type="submit" size="lg" disabled={!isDirty} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+            Save All Platform Settings
+          </Button>
+        </div>
+      </form>
+    </div>
+    </TooltipProvider>
+  );
+}

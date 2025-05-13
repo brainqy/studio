@@ -1,4 +1,3 @@
-
 export type UserRole = 'admin' | 'manager' | 'user';
 export type UserStatus = 'active' | 'inactive' | 'pending' | 'suspended';
 
@@ -744,3 +743,36 @@ export const KANBAN_COLUMNS_CONFIG: { id: KanbanColumnId; title: string; descrip
   { id: 'Interviewing', title: 'Interview', description: 'Record interview details and notes here.', acceptedStatuses: ['Interviewing'] },
   { id: 'Offer', title: 'Offer', description: 'Interviews completed. Negotiating offer.', acceptedStatuses: ['Offer'] },
 ];
+
+export type ProfileVisibility = 'public' | 'alumni_only' | 'private';
+
+export interface PlatformSettings {
+  platformName: string;
+  maintenanceMode: boolean;
+  // Community
+  communityFeedEnabled: boolean;
+  autoModeratePosts: boolean; 
+  // Job Board
+  jobBoardEnabled: boolean;
+  maxJobPostingDays: number;
+  // Gamification
+  gamificationEnabled: boolean;
+  xpForLogin: number;
+  xpForNewPost: number;
+  // AI Tools
+  resumeAnalyzerEnabled: boolean;
+  aiResumeWriterEnabled: boolean;
+  coverLetterGeneratorEnabled: boolean;
+  mockInterviewEnabled: boolean;
+  // Other Features
+  referralsEnabled: boolean;
+  affiliateProgramEnabled: boolean;
+  alumniConnectEnabled: boolean;
+  defaultAppointmentCost: number;
+  featureRequestsEnabled: boolean;
+  // Tenant Customization Abilities (Global toggles for whether tenants *can* customize these)
+  allowTenantCustomBranding: boolean; 
+  allowTenantEmailCustomization: boolean; 
+  // Default visibility for new user profiles
+  defaultProfileVisibility: ProfileVisibility;
+}

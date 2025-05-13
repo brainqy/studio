@@ -1,5 +1,4 @@
-
-import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem, Appointment, Wallet, ResumeProfile, Tenant, Badge, BlogPost, ReferralHistoryItem, GamificationRule, UserStatus, SurveyResponse, Affiliate, AffiliateClick, AffiliateSignup, AffiliateStatus, SurveyStep, ResumeTemplate, TourStep, CommunityComment, InterviewQuestion, InterviewQuestionCategory, BlogGenerationSettings, MockInterviewSession, InterviewQuestionDifficulty, InterviewQuestionUserComment, PracticeSession, PracticeSessionStatus, JobApplicationStatus, KanbanColumnId } from '@/types';
+import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem, Appointment, Wallet, ResumeProfile, Tenant, Badge, BlogPost, ReferralHistoryItem, GamificationRule, UserStatus, SurveyResponse, Affiliate, AffiliateClick, AffiliateSignup, AffiliateStatus, SurveyStep, ResumeTemplate, TourStep, CommunityComment, InterviewQuestion, InterviewQuestionCategory, BlogGenerationSettings, MockInterviewSession, InterviewQuestionDifficulty, InterviewQuestionUserComment, PracticeSession, PracticeSessionStatus, JobApplicationStatus, KanbanColumnId, PlatformSettings } from '@/types';
 import { AreasOfSupport, AppointmentStatuses, Genders, DegreePrograms, Industries, TimeCommitments, EngagementModes, SupportTypesSought, JOB_APPLICATION_STATUSES, KANBAN_COLUMNS_CONFIG, PREDEFINED_INTERVIEW_TOPICS, PRACTICE_FOCUS_AREAS, ALL_CATEGORIES, ALL_DIFFICULTIES, MOCK_INTERVIEW_STEPS, RESUME_BUILDER_STEPS, PreferredTimeSlots } from '@/types'; // Import AppointmentStatuses and other const arrays
 
 export const SAMPLE_TENANT_ID = 'tenant-1'; // Define a default tenant ID for sample data
@@ -1334,3 +1333,34 @@ export const samplePracticeSessions: PracticeSession[] = [
     notes: "Expert had to reschedule.",
   },
 ];
+
+export let samplePlatformSettings: PlatformSettings = {
+  platformName: "ResumeMatch AI",
+  maintenanceMode: false,
+  // Community
+  communityFeedEnabled: true,
+  autoModeratePosts: true, // Simplified from profanity filter level
+  // Job Board
+  jobBoardEnabled: true,
+  maxJobPostingDays: 30,
+  // Gamification
+  gamificationEnabled: true,
+  xpForLogin: 10,
+  xpForNewPost: 20,
+  // AI Tools
+  resumeAnalyzerEnabled: true,
+  aiResumeWriterEnabled: true,
+  coverLetterGeneratorEnabled: true,
+  mockInterviewEnabled: true,
+  // Other Features
+  referralsEnabled: true,
+  affiliateProgramEnabled: true,
+  alumniConnectEnabled: true,
+  defaultAppointmentCost: 10,
+  featureRequestsEnabled: true,
+  // Tenant Customization Abilities
+  allowTenantCustomBranding: true,
+  allowTenantEmailCustomization: false,
+  // Default visibility
+  defaultProfileVisibility: 'alumni_only',
+};

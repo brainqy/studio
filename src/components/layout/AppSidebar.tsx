@@ -1,8 +1,7 @@
-
 "use client";
 
 import { Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarSeparator, SidebarGroup, SidebarGroupLabel } from "@/components/ui/sidebar";
-import { Aperture, Award, BarChart2, BookOpen, Briefcase, Building2, CalendarDays, FileText, GalleryVerticalEnd, GitFork, Gift, Handshake, History, Home, Layers3, ListChecks, MessageSquare, Settings, ShieldAlert, ShieldQuestion, User, Users, Wallet, Zap, UserCog, BotMessageSquare, Target, Users2, BookText as BookTextIcon, Activity, Edit, FileType, Brain, FilePlus2, Trophy, Settings2Icon, Puzzle as PuzzleIcon, Mic } from "lucide-react"; // Added PuzzleIcon, Mic
+import { Aperture, Award, BarChart2, BookOpen, Briefcase, Building2, CalendarDays, FileText, GalleryVerticalEnd, GitFork, Gift, Handshake, History, Home, Layers3, ListChecks, MessageSquare, Settings, ShieldAlert, ShieldQuestion, User, Users, Wallet, Zap, UserCog, BotMessageSquare, Target, Users2, BookText as BookTextIcon, Activity, Edit, FileType, Brain, FilePlus2, Trophy, Settings2Icon, Puzzle as PuzzleIcon, Mic, Server } from "lucide-react"; // Added PuzzleIcon, Mic, Server
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { sampleUserProfile } from "@/lib/sample-data"; 
@@ -70,6 +69,7 @@ const adminItems = [
    { href: "/admin/affiliate-management", label: "Affiliate Mgt.", icon: Users2 },
    { href: "/admin/gallery-management", label: "Gallery Mgt.", icon: GalleryVerticalEnd },
    { href: "/admin/blog-settings", label: "Blog Settings", icon: Settings2Icon },
+   { href: "/admin/platform-settings", label: "Platform Settings", icon: Server },
 ];
 
 export function AppSidebar() {
@@ -171,4 +171,3 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
-
