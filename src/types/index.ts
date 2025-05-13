@@ -1,4 +1,5 @@
 
+
 export type UserRole = 'admin' | 'manager' | 'user';
 export type UserStatus = 'active' | 'inactive' | 'pending' | 'suspended';
 
@@ -89,6 +90,8 @@ export interface JobApplication {
   resumeUsed?: string; 
   location?: string;
   reminderDate?: string; 
+  sourceJobOpeningId?: string; // Added to link to original job opening
+  applicationUrl?: string; // Added to store the application URL
 }
 
 export interface AlumniProfile {
@@ -729,3 +732,5 @@ export const PREDEFINED_INTERVIEW_TOPICS: string[] = ["Java", "Python", "DSA", "
 // New constant for specific practice focus areas/topics
 export const PRACTICE_FOCUS_AREAS = ["Java", "Python", "DSA", "Angular", "Javascript", "Microservices", "System Design", "Behavioral", "Product Management", "Data Science"] as const;
 export type PracticeFocusArea = typeof PRACTICE_FOCUS_AREAS[number];
+
+```

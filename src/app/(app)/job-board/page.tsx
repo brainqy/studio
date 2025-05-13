@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useMemo, type FormEvent } from "react";
@@ -12,9 +13,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { PlusCircle, Aperture, Briefcase, Users, MapPin, Building, CalendarDays, Search, Filter as FilterIcon, Edit3, Sparkles, Loader2, ExternalLink, ThumbsUp } from "lucide-react";
-import { sampleJobOpenings, sampleAlumni, sampleUserProfile } from "@/lib/sample-data";
-import type { JobOpening, UserProfile } from "@/types";
+import { PlusCircle, Aperture, Briefcase, Users, MapPin, Building, CalendarDays, Search, Filter as FilterIcon, Edit3, Sparkles, Loader2, ExternalLink, ThumbsUp, Bookmark } from "lucide-react";
+import { sampleJobOpenings, sampleAlumni, sampleUserProfile, sampleJobApplications } from "@/lib/sample-data";
+import type { JobOpening, UserProfile, JobApplication, JobApplicationStatus } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -142,7 +143,7 @@ export default function JobBoardPage() {
       const input: PersonalizedJobRecommendationsInput = {
         userProfileText,
         careerInterests: currentUser.careerInterests || 'General job opportunities',
-        availableJobs: openings.map(job => ({ // Map current openings to the schema expected by the flow
+        availableJobs: openings.map(job => ({ 
             id: job.id,
             title: job.title,
             company: job.company,
@@ -159,6 +160,64 @@ export default function JobBoardPage() {
       toast({ title: "Recommendation Failed", description: "Could not fetch job recommendations.", variant: "destructive" });
     } finally {
       setIsRecLoading(false);
+    }
+  };
+
+  const createJobApplicationFromOpening = (opening: JobOpening, status: JobApplicationStatus): JobApplication => {
+    return {
+      id: `app-${opening.id}-${Date.now()}`, // Ensure unique ID for application
+      tenantId: opening.tenantId,
+      userId: currentUser.id,
+      companyName: opening.company,
+      jobTitle: opening.title,
+      status: status,
+      dateApplied: new Date().toISOString().split('T')[0],
+      jobDescription: opening.description,
+      location: opening.location,
+      sourceJobOpeningId: opening.id,
+      applicationUrl: opening.applicationLink,
+      notes: status === 'Saved' ? 'Saved from Job Board' : 'Applied from Job Board',
+    };
+  };
+
+  const handleSaveJob = (opening: JobOpening) => {
+    const existingApplication = sampleJobApplications.find(
+      app => app.sourceJobOpeningId === opening.id && app.userId === currentUser.id
+    );
+
+    if (existingApplication && (existingApplication.status === 'Saved' || existingApplication.status === 'Applied')) {
+      toast({ title: "Already Tracked", description: `This job is already in your tracker as '${existingApplication.status}'.`, variant: "default" });
+      return;
+    }
+
+    const newApplication = createJobApplicationFromOpening(opening, 'Saved');
+    sampleJobApplications.unshift(newApplication); // Add to the beginning for visibility in tracker
+    toast({ title: "Job Saved!", description: `${opening.title} at ${opening.company} has been saved to your Job Tracker.` });
+  };
+
+  const handleApplyJob = (opening: JobOpening) => {
+    if (opening.applicationLink) {
+      window.open(opening.applicationLink, '_blank');
+    }
+
+    const existingApplicationIndex = sampleJobApplications.findIndex(
+      app => app.sourceJobOpeningId === opening.id && app.userId === currentUser.id
+    );
+
+    if (existingApplicationIndex !== -1) {
+      if (sampleJobApplications[existingApplicationIndex].status === 'Applied') {
+        toast({ title: "Already Applied", description: `You've already marked this job as 'Applied' in your tracker.`, variant: "default" });
+        return;
+      }
+      // Update status from 'Saved' to 'Applied'
+      sampleJobApplications[existingApplicationIndex].status = 'Applied';
+      sampleJobApplications[existingApplicationIndex].dateApplied = new Date().toISOString().split('T')[0];
+      sampleJobApplications[existingApplicationIndex].notes = "Updated to 'Applied' from Job Board";
+      toast({ title: "Application Tracked", description: `${opening.title} status updated to 'Applied' in your Job Tracker.` });
+    } else {
+      const newApplication = createJobApplicationFromOpening(opening, 'Applied');
+      sampleJobApplications.unshift(newApplication);
+      toast({ title: "Application Tracked", description: `${opening.title} at ${opening.company} has been added to your Job Tracker as 'Applied'.` });
     }
   };
 
@@ -419,21 +478,20 @@ export default function JobBoardPage() {
                 </p>
                 <div className="flex space-x-2">
                   {isOwnPosting && (
-                    <Button size="sm" variant="outline" onClick={() => openEditPostDialog(opening)}>
+                    <Button size="sm" variant="outline" onClick={() => openEditPostDialog(opening)} title="Edit Posting">
                       <Edit3 className="h-4 w-4" />
                     </Button>
                   )}
-                  {opening.applicationLink ? (
-                    <Button size="sm" variant="default" asChild>
-                       <Link href={opening.applicationLink} target="_blank" rel="noopener noreferrer">
-                         {opening.type === 'Mentorship' ? 'Express Interest' : 'Apply Now'} <ExternalLink className="ml-1 h-3 w-3"/>
-                       </Link>
-                    </Button>
-                  ) : (
-                     <Button size="sm" variant="default" onClick={() => toast({title: "Apply (Mocked)", description: `You showed interest in ${opening.title}.`})}>
-                      {opening.type === 'Mentorship' ? 'Express Interest' : 'Apply Now'}
-                    </Button>
-                  )}
+                  <Button size="sm" variant="outline" onClick={() => handleSaveJob(opening)} title="Save for Later">
+                     <Bookmark className="h-4 w-4" />
+                  </Button>
+                  <Button size="sm" variant="default" onClick={() => handleApplyJob(opening)} className="bg-primary hover:bg-primary/90">
+                    {opening.applicationLink ? (
+                       <> {opening.type === 'Mentorship' ? 'Express Interest' : 'Apply'} <ExternalLink className="ml-1 h-3 w-3"/> </>
+                    ) : (
+                      opening.type === 'Mentorship' ? 'Express Interest' : 'Apply'
+                    )}
+                  </Button>
                 </div>
               </CardFooter>
             </Card>
@@ -444,3 +502,5 @@ export default function JobBoardPage() {
     </div>
   );
 }
+
+```
