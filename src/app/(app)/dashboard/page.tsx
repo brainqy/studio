@@ -25,7 +25,7 @@ export default function DashboardPage() {
     // Logic to show streak popup once per day
     const today = new Date().toISOString().split('T')[0];
     const popupShownKey = `dailyStreakPopupShown_${today}`;
-    if (!localStorage.getItem(popupShownKey)) {
+    if (typeof window !== 'undefined' && !localStorage.getItem(popupShownKey)) {
       setShowStreakPopup(true);
       localStorage.setItem(popupShownKey, 'true');
     }
@@ -68,12 +68,13 @@ export default function DashboardPage() {
   return (
     <>
       {renderDashboard()}
-      <DailyStreakPopup 
-        isOpen={showStreakPopup} 
-        onClose={handleCloseStreakPopup} 
-        userProfile={sampleUserProfile} 
-      />
+      {userRole === 'user' && sampleUserProfile && ( // Only show for 'user' role and if profile exists
+         <DailyStreakPopup 
+          isOpen={showStreakPopup} 
+          onClose={handleCloseStreakPopup} 
+          userProfile={sampleUserProfile} 
+        />
+      )}
     </>
   );
 }
-

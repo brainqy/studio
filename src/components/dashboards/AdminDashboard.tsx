@@ -2,10 +2,10 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { BarChart, Users, Settings, Activity, Building2, FileText, MessageSquare, Zap as ZapIcon } from "lucide-react"; // Added Building2, FileText, MessageSquare, ZapIcon
+import { BarChart, Users, Settings, Activity, Building2, FileText, MessageSquare, Zap as ZapIcon, ShieldQuestion, UserPlus, Briefcase, Handshake, Mic } from "lucide-react"; 
 import { useEffect, useState } from "react";
 import WelcomeTourDialog from '@/components/features/WelcomeTourDialog';
-import { adminDashboardTourSteps, sampleTenants, sampleCommunityPosts } from "@/lib/sample-data"; // Added sampleTenants, sampleCommunityPosts
+import { adminDashboardTourSteps, sampleTenants, sampleCommunityPosts, sampleJobApplications, sampleAlumni, sampleMockInterviewSessions } from "@/lib/sample-data"; 
 // import { ResponsiveContainer, BarChart as RechartsBarChart, XAxis, YAxis, Tooltip, Legend, Bar } from 'recharts'; // Example chart import
 
 // Sample data for charts (replace with actual data fetching)
@@ -107,7 +107,7 @@ export default function AdminDashboard() {
           <Card className="shadow-lg">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Feature Requests</CardTitle>
-              <Users className="h-5 w-5 text-primary" /> 
+              <ShieldQuestion className="h-5 w-5 text-primary" /> 
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">25 Pending</div>
@@ -122,6 +122,46 @@ export default function AdminDashboard() {
             <CardContent>
               <div className="text-2xl font-bold text-green-600">Optimal</div>
               <p className="text-xs text-muted-foreground">All services running</p>
+            </CardContent>
+          </Card>
+           <Card className="shadow-lg">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">New Signups (Weekly)</CardTitle>
+              <UserPlus className="h-5 w-5 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">85</div>
+              <p className="text-xs text-muted-foreground">+12% from last week</p>
+            </CardContent>
+          </Card>
+           <Card className="shadow-lg">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Job Applications Tracked</CardTitle>
+              <Briefcase className="h-5 w-5 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{sampleJobApplications.length}</div>
+              <p className="text-xs text-muted-foreground">Across all users</p>
+            </CardContent>
+          </Card>
+           <Card className="shadow-lg">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Alumni Connections</CardTitle>
+              <Handshake className="h-5 w-5 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{sampleAlumni.length * 5}</div> {/* Mock data */}
+              <p className="text-xs text-muted-foreground">Total connections made</p>
+            </CardContent>
+          </Card>
+           <Card className="shadow-lg">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Mock Interviews Done</CardTitle>
+              <Mic className="h-5 w-5 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{sampleMockInterviewSessions.length}</div>
+              <p className="text-xs text-muted-foreground">Completed AI sessions</p>
             </CardContent>
           </Card>
         </div>
