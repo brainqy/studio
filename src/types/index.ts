@@ -1,6 +1,5 @@
 
 
-
 export type UserRole = 'admin' | 'manager' | 'user';
 export type UserStatus = 'active' | 'inactive' | 'pending' | 'suspended';
 
@@ -525,7 +524,7 @@ export type InterviewQuestionDifficulty = typeof ALL_DIFFICULTIES[number];
 
 export interface InterviewQuestion {
   id: string;
-  category: InterviewQuestionCategory;
+  category: InterviewQuestionCategory; // Ensure category is always present
   question: string;
   answerOrTip: string; 
   tags?: string[];
@@ -639,4 +638,9 @@ export interface QuizSession {
   endTime?: string; // ISO DateTime string
   status: 'in-progress' | 'completed';
   title?: string; // e.g., "Java Basics Quiz"
+  categoryStats?: Record<string, { correct: number; total: number; accuracy: number }>; // Added for sectional analysis
+  timeTaken?: number; // Time in seconds
+  totalQuizTime?: number; // Total allotted time in seconds
+  answeredCount?: number;
+  markedForReviewCount?: number;
 }

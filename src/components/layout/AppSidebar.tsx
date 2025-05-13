@@ -1,8 +1,7 @@
-
 "use client";
 
 import { Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarSeparator, SidebarGroup, SidebarGroupLabel } from "@/components/ui/sidebar";
-import { Aperture, Award, BarChart2, BookOpen, Briefcase, Building2, CalendarDays, FileText, GalleryVerticalEnd, GitFork, Gift, Handshake, History, Home, Layers3, ListChecks, MessageSquare, Settings, ShieldAlert, ShieldQuestion, User, Users, Wallet, Zap, UserCog, BotMessageSquare, Target, Users2, BookText, Activity, Edit, FileType, Brain, FilePlus2, Trophy, Settings2Icon, Puzzle as PuzzleIcon } from "lucide-react"; // Added PuzzleIcon for Quiz
+import { Aperture, Award, BarChart2, BookOpen, Briefcase, Building2, CalendarDays, FileText, GalleryVerticalEnd, GitFork, Gift, Handshake, History, Home, Layers3, ListChecks, MessageSquare, Settings, ShieldAlert, ShieldQuestion, User, Users, Wallet, Zap, UserCog, BotMessageSquare, Target, Users2, BookText as BookTextIcon, Activity, Edit, FileType, Brain, FilePlus2, Trophy, Settings2Icon, Puzzle as PuzzleIcon, Mic } from "lucide-react"; // Added PuzzleIcon, Mic
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { sampleUserProfile } from "@/lib/sample-data"; 
@@ -16,20 +15,21 @@ const navItems = [
       { href: "/resume-analyzer", label: "Resume Analyzer", icon: Zap },
       { href: "/ai-resume-writer", label: "AI Resume Writer", icon: Edit },
       { href: "/cover-letter-generator", label: "Cover Letter Generator", icon: FileType },
-      { href: "/ai-mock-interview", label: "AI Mock Interview", icon: Brain },
-      { href: "/interview-prep/quiz", label: "Practice Quiz", icon: PuzzleIcon }, // New Quiz Mode link
+      { href: "/ai-mock-interview", label: "AI Mock Interview", icon: Mic }, 
+      { href: "/interview-prep/quiz", label: "Practice Quiz", icon: PuzzleIcon },
     ]
   },
   { href: "/my-resumes", label: "My Resumes", icon: Layers3 },
   { href: "/resume-builder", label: "Resume Builder", icon: FilePlus2 },
   { href: "/resume-templates", label: "Resume Templates", icon: Layers3 }, 
   { href: "/job-tracker", label: "Job Tracker", icon: Briefcase },
-  { href: "/interview-prep", label: "Interview Prep", icon: Brain },
+  { href: "/interview-prep", label: "Interview Prep Bank", icon: Brain }, // Changed label
   {
     label: "Alumni Network",
     icon: Handshake, 
     subItems: [
       { href: "/alumni-connect", label: "Search Alumni", icon: Users },
+      { href: "/alumni-connect/recommendations", label: "AI Mentorship", icon: Brain },
     ]
   },
   { href: "/job-board", label: "Job Board", icon: Aperture },
@@ -45,7 +45,7 @@ const utilityItems = [
   { href: "/wallet", label: "Digital Wallet", icon: Wallet },
   { href: "/feature-requests", label: "Feature Requests", icon: ShieldQuestion },
   { href: "/settings", label: "Settings", icon: Settings },
-  { href: "/documentation", label: "Documentation", icon: BookText },
+  { href: "/documentation", label: "Documentation", icon: BookTextIcon },
 ];
 
 const gamificationItems = [
