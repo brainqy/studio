@@ -17,6 +17,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Textarea } from "@/components/ui/textarea"; // Added import
 
 const settingsSchema = z.object({
   platformName: z.string().min(3, "Platform name must be at least 3 characters"),
@@ -220,3 +221,4 @@ export default function PlatformSettingsPage() {
     </TooltipProvider>
   );
 }
+
