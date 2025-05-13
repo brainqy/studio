@@ -1,12 +1,13 @@
+
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Brain, Mic, MessageSquare, Users, Zap, Tag, Lightbulb, CheckSquare as CheckSquareIcon, Code, Puzzle, BookCopy, ListFilter, Info, Share2, RefreshCw, History, Check, X } from "lucide-react"; // Added Check, X
+import { Brain, Mic, MessageSquare, Users, Zap, Tag, Lightbulb, CheckSquare as CheckSquareIcon, Code, Puzzle, BookCopy, ListFilter, Info, Share2, RefreshCw, History, Check, X, Star, UserCircle, CalendarDays, ThumbsUp } from "lucide-react"; // Added Check, X, Star, UserCircle, CalendarDays, ThumbsUp
 import { sampleInterviewQuestions, sampleUserProfile, sampleMockInterviewSessions, sampleCommunityPosts } from "@/lib/sample-data";
-import type { InterviewQuestion, InterviewQuestionCategory, MockInterviewSession, CommunityPost } from "@/types";
+import type { InterviewQuestion, InterviewQuestionCategory, MockInterviewSession, CommunityPost, InterviewQuestionDifficulty } from "@/types"; // Added InterviewQuestionDifficulty
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,8 +18,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { format, parseISO } from "date-fns";
 import ScoreCircle from '@/components/ui/score-circle';
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Checkbox } from "@/components/ui/checkbox"; // Added Checkbox import
-import { cn } from "@/lib/utils"; // Added cn import
+import { Checkbox } from "@/components/ui/checkbox"; 
+import { cn } from "@/lib/utils"; 
+import { Badge } from "@/components/ui/badge"; // Added Badge for difficulty
 
 const ALL_CATEGORIES: InterviewQuestionCategory[] = ['Common', 'Behavioral', 'Technical', 'Coding', 'Role-Specific', 'Analytical', 'HR'];
 
@@ -30,7 +32,7 @@ export default function InterviewPreparationPage() {
   const [viewingSession, setViewingSession] = useState<MockInterviewSession | null>(null);
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
   const currentUser = sampleUserProfile;
-  const [selectedQuestionIds, setSelectedQuestionIds] = useState<Set<string>>(new Set()); // State for selected questions
+  const [selectedQuestionIds, setSelectedQuestionIds] = useState<Set<string>>(new Set()); 
   
   const userInterviewHistory = useMemo(() => {
     return sampleMockInterviewSessions.filter(session => session.userId === currentUser.id);
@@ -40,6 +42,7 @@ export default function InterviewPreparationPage() {
   const filteredQuestions = useMemo(() => {
     return sampleInterviewQuestions.filter(q => {
       if (!q.isMCQ || !q.mcqOptions || !q.correctAnswer) return false; 
+      if (q.approved === false && currentUser.role !== 'admin') return false; // Hide unapproved for non-admins
 
       const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(q.category);
       const matchesSearch = searchTerm === '' || 
@@ -49,7 +52,7 @@ export default function InterviewPreparationPage() {
                             (q.mcqOptions && q.mcqOptions.some(opt => opt.toLowerCase().includes(searchTerm.toLowerCase())));
       return matchesCategory && matchesSearch;
     });
-  }, [selectedCategories, searchTerm]);
+  }, [selectedCategories, searchTerm, currentUser.role]);
   
   const handleMcqSelection = (questionId: string, selectedOption: string) => {
     setSelectedMcqAnswers(prev => ({...prev, [questionId]: selectedOption}));
@@ -64,7 +67,16 @@ export default function InterviewPreparationPage() {
       case 'Analytical': return <Puzzle className="h-4 w-4 text-teal-500 flex-shrink-0" title="Analytical Question"/>;
       case 'HR': return <Lightbulb className="h-4 w-4 text-pink-500 flex-shrink-0" title="HR Question"/>;
       case 'Common': return <MessageSquare className="h-4 w-4 text-gray-500 flex-shrink-0" title="Common Question"/>;
-      default: return <Puzzle className="h-4 w-4 text-gray-400 flex-shrink-0" />; // Fallback icon
+      default: return <Puzzle className="h-4 w-4 text-gray-400 flex-shrink-0" />; 
+    }
+  };
+
+  const getDifficultyBadgeVariant = (difficulty?: InterviewQuestionDifficulty) => {
+    switch (difficulty) {
+      case 'Easy': return 'default'; // Green or default
+      case 'Medium': return 'secondary'; // Yellow or secondary
+      case 'Hard': return 'destructive'; // Red or destructive
+      default: return 'outline';
     }
   };
 
@@ -75,7 +87,6 @@ export default function InterviewPreparationPage() {
         return;
     }
     toast({title: "Create Quiz (Mock)", description: `Quiz creation with ${questionsForQuiz.length} questions initiated. This is a mock feature.`});
-    // Here, you would navigate to a quiz page or start a quiz flow with `questionsForQuiz`
   };
 
   const handleViewReport = (session: MockInterviewSession) => {
@@ -138,7 +149,6 @@ export default function InterviewPreparationPage() {
         </Button>
       </div>
 
-      {/* Filters Section */}
       <Card className="shadow-md">
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2"><ListFilter className="h-5 w-5"/>Filter Questions</CardTitle>
@@ -170,7 +180,6 @@ export default function InterviewPreparationPage() {
         </CardContent>
       </Card>
       
-      {/* Question Bank Section */}
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="flex items-center gap-2"><MessageSquare className="h-6 w-6 text-primary"/>Questions ({filteredQuestions.length} matching)</CardTitle>
@@ -188,7 +197,7 @@ export default function InterviewPreparationPage() {
               {filteredQuestions.map((q) => (
                 <AccordionItem value={q.id} key={q.id}>
                   <AccordionTrigger className="text-md text-left hover:text-primary data-[state=open]:text-primary relative group py-3 px-2">
-                    <div className="flex items-center gap-3 flex-1 min-w-0"> {/* Added min-w-0 for truncation */}
+                    <div className="flex items-center gap-3 flex-1 min-w-0"> 
                         <Checkbox
                           id={`select-q-${q.id}`}
                           checked={selectedQuestionIds.has(q.id)}
@@ -198,14 +207,17 @@ export default function InterviewPreparationPage() {
                             else newSelectedIds.delete(q.id);
                             setSelectedQuestionIds(newSelectedIds);
                           }}
-                          onClick={(e) => e.stopPropagation()} // Prevent accordion toggle
+                          onClick={(e) => e.stopPropagation()} 
                           className="h-5 w-5 border-muted-foreground data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                           aria-label={`Select question: ${q.question}`}
                         />
                        {getCategoryIcon(q.category)}
                        <span className="truncate group-hover:underline flex-1">{q.question}</span>
                     </div>
-                     <span className="ml-3 text-xs px-2 py-0.5 bg-accent text-accent-foreground rounded-full whitespace-nowrap">{q.category}</span>
+                     <div className="flex items-center gap-2 ml-3">
+                        {q.difficulty && <Badge variant={getDifficultyBadgeVariant(q.difficulty)} className="text-xs">{q.difficulty}</Badge>}
+                        <span className="text-xs px-2 py-0.5 bg-accent text-accent-foreground rounded-full whitespace-nowrap">{q.category}</span>
+                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="space-y-3 pl-4 pr-2 pt-2 pb-3 text-sm">
                     <div className="mb-3 p-3 border rounded-md bg-secondary/30">
@@ -244,6 +256,12 @@ export default function InterviewPreparationPage() {
                         ))}
                       </div>
                     )}
+                    <div className="mt-2 text-xs text-muted-foreground space-y-0.5">
+                        {q.rating && <p className="flex items-center gap-1"><Star className="h-3 w-3 text-yellow-400"/> Rating: {q.rating}/5</p>}
+                        {q.createdBy && <p>Created By: {q.createdBy}</p>}
+                        {currentUser.role === 'admin' && q.comments && <p>Admin Comments: {q.comments}</p>}
+                        {currentUser.role === 'admin' && <p>Approved: {q.approved ? <Check className="inline h-3 w-3 text-green-500"/> : <X className="inline h-3 w-3 text-red-500"/>}</p>}
+                    </div>
                   </AccordionContent>
                 </AccordionItem>
               ))}
@@ -257,7 +275,6 @@ export default function InterviewPreparationPage() {
         </CardFooter>
       </Card>
 
-      {/* Interview History Section */}
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="flex items-center gap-2"><History className="h-6 w-6 text-primary"/>Mock Interview History</CardTitle>
@@ -276,6 +293,7 @@ export default function InterviewPreparationPage() {
                       <p className="text-xs text-muted-foreground">
                         Taken on: {format(parseISO(session.createdAt), 'PPp')}
                         {session.overallScore !== undefined && ` • Score: ${session.overallScore}%`}
+                        {session.difficulty && ` • Difficulty: ${session.difficulty}`}
                       </p>
                     </div>
                     <Button size="sm" variant="outline" onClick={() => handleViewReport(session)}>View Report</Button>
@@ -287,13 +305,13 @@ export default function InterviewPreparationPage() {
         </CardContent>
       </Card>
 
-      {/* Report Dialog */}
       <Dialog open={isReportDialogOpen} onOpenChange={setIsReportDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="text-xl">Interview Report: {viewingSession?.topic}</DialogTitle>
             <DialogDescription>
               Session on {viewingSession && format(parseISO(viewingSession.createdAt), 'PPp')}
+              {viewingSession?.difficulty && ` • Difficulty: ${viewingSession.difficulty}`}
             </DialogDescription>
           </DialogHeader>
           <ScrollArea className="max-h-[70vh] pr-4">
@@ -314,7 +332,6 @@ export default function InterviewPreparationPage() {
                     {viewingSession.overallFeedback.finalTips?.length > 0 && (
                         <div><strong>Final Tips:</strong> <ul className="list-disc list-inside">{viewingSession.overallFeedback.finalTips.map((t,i) => <li key={`t-${i}`}>{t}</li>)}</ul></div>
                     )}
-                    {/* Detailed Answers can be added here if needed */}
                 </div>
             ) : <p>No detailed feedback available for this session.</p>}
           </ScrollArea>

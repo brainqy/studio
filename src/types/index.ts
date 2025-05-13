@@ -1,5 +1,6 @@
 
 
+
 export type UserRole = 'admin' | 'manager' | 'user';
 export type UserStatus = 'active' | 'inactive' | 'pending' | 'suspended';
 
@@ -520,15 +521,22 @@ export const RESUME_BUILDER_STEPS: { id: ResumeBuilderStep; title: string; descr
 ];
 
 export type InterviewQuestionCategory = 'Behavioral' | 'Technical' | 'Role-Specific' | 'Common' | 'Analytical' | 'HR' | 'Coding';
+export type InterviewQuestionDifficulty = 'Easy' | 'Medium' | 'Hard';
+
 export interface InterviewQuestion {
   id: string;
   category: InterviewQuestionCategory;
   question: string;
-  answerOrTip: string; // For MCQs, this can be the explanation
+  answerOrTip: string; 
   tags?: string[];
-  isMCQ?: boolean; // True if this is a Multiple Choice Question
-  mcqOptions?: string[]; // Array of option texts for MCQ
-  correctAnswer?: string; // The text of the correct MCQ option
+  isMCQ?: boolean; 
+  mcqOptions?: string[]; 
+  correctAnswer?: string; 
+  difficulty?: InterviewQuestionDifficulty;
+  rating?: number; // e.g., 1-5 stars
+  comments?: string; // Admin notes or discussion
+  createdBy?: string; // User ID or name
+  approved?: boolean; // For admin moderation
 }
 
 
@@ -540,10 +548,11 @@ export interface BlogGenerationSettings {
 }
 
 // AI Mock Interview Types
-export interface MockInterviewQuestion { // This is specific to questions WITHIN a mock interview session instance
-  id: string; // Can be the same ID as the original InterviewQuestion from the bank
+export interface MockInterviewQuestion { 
+  id: string; 
   questionText: string;
   category?: InterviewQuestionCategory; 
+  difficulty?: InterviewQuestionDifficulty;
 }
 
 export interface MockInterviewAnswer {
@@ -570,7 +579,7 @@ export interface MockInterviewSession {
   userId: string;
   topic: string; 
   jobDescription?: string; 
-  questions: MockInterviewQuestion[]; // Questions specific to THIS session
+  questions: MockInterviewQuestion[]; 
   answers: MockInterviewAnswer[];
   overallFeedback?: GenerateOverallInterviewFeedbackOutput; 
   overallScore?: number; 
@@ -578,18 +587,19 @@ export interface MockInterviewSession {
   createdAt: string;
   timerPerQuestion?: number; 
   questionCategories?: InterviewQuestionCategory[]; 
+  difficulty?: InterviewQuestionDifficulty;
 }
 
 export interface GenerateMockInterviewQuestionsInput {
   topic: string;
   jobDescription?: string;
   numQuestions?: number; 
-  difficulty?: 'easy' | 'medium' | 'hard';
+  difficulty?: 'easy' | 'medium' | 'hard'; // Matches InterviewQuestionDifficulty but lowercase for input
   timerPerQuestion?: number; 
   questionCategories?: InterviewQuestionCategory[]; 
 }
 export interface GenerateMockInterviewQuestionsOutput {
-  questions: MockInterviewQuestion[]; // These are the questions for a new session
+  questions: MockInterviewQuestion[]; 
 }
 
 export interface EvaluateInterviewAnswerInput {

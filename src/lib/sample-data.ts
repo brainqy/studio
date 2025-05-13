@@ -1,5 +1,6 @@
 
-import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem, Appointment, Wallet, ResumeProfile, Tenant, Badge, BlogPost, ReferralHistoryItem, GamificationRule, UserStatus, SurveyResponse, Affiliate, AffiliateClick, AffiliateSignup, AffiliateStatus, SurveyStep, ResumeTemplate, TourStep, CommunityComment, InterviewQuestion, InterviewQuestionCategory, BlogGenerationSettings, MockInterviewSession } from '@/types';
+
+import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem, Appointment, Wallet, ResumeProfile, Tenant, Badge, BlogPost, ReferralHistoryItem, GamificationRule, UserStatus, SurveyResponse, Affiliate, AffiliateClick, AffiliateSignup, AffiliateStatus, SurveyStep, ResumeTemplate, TourStep, CommunityComment, InterviewQuestion, InterviewQuestionCategory, BlogGenerationSettings, MockInterviewSession, InterviewQuestionDifficulty } from '@/types';
 import { AreasOfSupport, AppointmentStatuses, Genders, DegreePrograms, Industries, TimeCommitments, EngagementModes, SupportTypesSought } from '@/types'; // Import AppointmentStatuses and other const arrays
 
 const SAMPLE_TENANT_ID = 'tenant-1'; // Define a default tenant ID for sample data
@@ -904,7 +905,12 @@ export const sampleInterviewQuestions: InterviewQuestion[] = [
     ],
     correctAnswer: "I once missed a critical deadline on Project X due to poor planning. I took responsibility, communicated proactively, and implemented a new system to prevent recurrence, successfully meeting subsequent deadlines.",
     answerOrTip: "The best approach is to use the STAR method (Situation, Task, Action, Result) and focus on what you learned and how you improved.",
-    tags: ['failure', 'learning']
+    tags: ['failure', 'learning'],
+    difficulty: 'Medium',
+    rating: 4,
+    comments: "Standard behavioral question, good for assessing self-awareness.",
+    createdBy: "system",
+    approved: true,
   },
   {
     id: 'iq2',
@@ -919,7 +925,12 @@ export const sampleInterviewQuestions: InterviewQuestion[] = [
     ],
     correctAnswer: "I initiated a private conversation to understand their perspective, found common ground, and established clear communication protocols, which improved our collaboration.",
     answerOrTip: "Focus on professional and constructive approaches. Highlight your communication, empathy, and problem-solving skills.",
-    tags: ['teamwork', 'conflict']
+    tags: ['teamwork', 'conflict'],
+    difficulty: 'Medium',
+    rating: 5,
+    comments: "Assesses conflict resolution and interpersonal skills.",
+    createdBy: "system",
+    approved: true,
   },
   {
     id: 'iq3',
@@ -934,7 +945,12 @@ export const sampleInterviewQuestions: InterviewQuestion[] = [
     ],
     correctAnswer: "Abstract classes can have constructors, interfaces cannot.",
     answerOrTip: "Key differences: Abstract classes can have constructors and member variable implementations; interfaces cannot (traditionally). A class can implement multiple interfaces but inherit only one class (or abstract class).",
-    tags: ['oop', 'programming']
+    tags: ['oop', 'programming'],
+    difficulty: 'Medium',
+    rating: 4,
+    comments: "Fundamental OOP concept.",
+    createdBy: "adminUser1",
+    approved: true,
   },
   {
     id: 'iq4',
@@ -949,7 +965,12 @@ export const sampleInterviewQuestions: InterviewQuestion[] = [
     ],
     correctAnswer: "Conduct user research, define clear requirements, prioritize based on impact/effort, work with design/dev, and define success metrics.",
     answerOrTip: "A good answer outlines a structured product development process: research, definition, prioritization, execution, and measurement.",
-    tags: ['product management', 'design']
+    tags: ['product management', 'design'],
+    difficulty: 'Hard',
+    rating: 5,
+    comments: "Tests understanding of product lifecycle.",
+    createdBy: "adminUser2",
+    approved: true,
   },
   {
     id: 'iq5',
@@ -964,7 +985,11 @@ export const sampleInterviewQuestions: InterviewQuestion[] = [
     ],
     correctAnswer: "This role aligns perfectly with my skills in X and Y, and I'm excited about [Company Mission/Product] because [Specific Reason]. I believe I can contribute Z.",
     answerOrTip: "Connect your skills, experience, and career goals to the specific requirements of the role and the company's mission. Show genuine enthusiasm.",
-    tags: ['motivation', 'fit']
+    tags: ['motivation', 'fit'],
+    difficulty: 'Easy',
+    rating: 3,
+    createdBy: "system",
+    approved: true,
   },
   {
     id: 'iq6',
@@ -979,7 +1004,12 @@ export const sampleInterviewQuestions: InterviewQuestion[] = [
     ],
     correctAnswer: "I see myself growing within a role like this, taking on more responsibility, developing expertise in [Relevant Area], and contributing to significant projects for the company.",
     answerOrTip: "Show ambition for growth that aligns with the company's potential opportunities. Express interest in developing skills and taking on more responsibility.",
-    tags: ['career goals']
+    tags: ['career goals'],
+    difficulty: 'Easy',
+    rating: 3,
+    createdBy: "system",
+    approved: false, // Example of an unapproved question
+    comments: "Needs review for phrasing.",
   },
   {
     id: 'iq7',
@@ -994,7 +1024,11 @@ export const sampleInterviewQuestions: InterviewQuestion[] = [
     ],
     correctAnswer: "Stateless, Client-Server, Uniform Interface, Cacheable, Layered System.",
     answerOrTip: "Key principles: Client-Server, Stateless, Cacheable, Uniform Interface (resource identification, manipulation through representations, self-descriptive messages, HATEOAS), Layered System, Code on Demand (optional).",
-    tags: ['api', 'backend']
+    tags: ['api', 'backend'],
+    difficulty: 'Hard',
+    rating: 5,
+    createdBy: "adminUser1",
+    approved: true,
   },
   {
     id: 'iq8',
@@ -1009,7 +1043,11 @@ export const sampleInterviewQuestions: InterviewQuestion[] = [
     ],
     correctAnswer: "My goal was to improve team efficiency by 15%. I identified bottlenecks in our workflow, proposed a new process using [Tool/Method], trained the team, and we achieved a 20% efficiency gain in 3 months.",
     answerOrTip: "Use the STAR method. Be specific about the goal, your actions, and the quantifiable result or impact.",
-    tags: ['achievement', 'goals']
+    tags: ['achievement', 'goals'],
+    difficulty: 'Medium',
+    rating: 4,
+    createdBy: "system",
+    approved: true,
   },
   {
     id: 'mcq1',
@@ -1019,7 +1057,11 @@ export const sampleInterviewQuestions: InterviewQuestion[] = [
     mcqOptions: ["GET", "POST", "PUSH", "DELETE"],
     correctAnswer: "PUSH",
     answerOrTip: "PUSH is not a standard HTTP method. Common methods include GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS.",
-    tags: ['http', 'api', 'mcq']
+    tags: ['http', 'api', 'mcq'],
+    difficulty: 'Easy',
+    rating: 3,
+    createdBy: "system",
+    approved: true,
   },
   {
     id: 'mcq2',
@@ -1029,7 +1071,11 @@ export const sampleInterviewQuestions: InterviewQuestion[] = [
     mcqOptions: ["No impact", "Completion delayed by 1 day", "Completion delayed by 2 days", "Completion delayed by more than 2 days"],
     correctAnswer: "Completion delayed by 2 days",
     answerOrTip: "A delay on the critical path directly translates to a delay in the project completion date by the same amount, assuming no other changes.",
-    tags: ['project management', 'analytical', 'mcq']
+    tags: ['project management', 'analytical', 'mcq'],
+    difficulty: 'Medium',
+    rating: 4,
+    createdBy: "adminUser2",
+    approved: true,
   },
   {
     id: 'hr1',
@@ -1044,7 +1090,11 @@ export const sampleInterviewQuestions: InterviewQuestion[] = [
     ],
     correctAnswer: "I prioritize tasks, break them into manageable steps, focus on what I can control, and take short breaks to stay effective. For example, during Project Y's tight deadline...",
     answerOrTip: "Describe specific strategies you use (e.g., prioritization, time management, mindfulness, seeking support). Give a brief example if possible.",
-    tags: ['stress management', 'soft skills']
+    tags: ['stress management', 'soft skills'],
+    difficulty: 'Medium',
+    rating: 4,
+    createdBy: "system",
+    approved: true,
   },
   {
     id: 'coding1',
@@ -1059,7 +1109,11 @@ export const sampleInterviewQuestions: InterviewQuestion[] = [
     ],
     correctAnswer: "str.split('').reverse().join('')",
     answerOrTip: "Common solutions include `str.split('').reverse().join('')` or a loop. Discuss time/space complexity (O(n) for both in most JS engines).",
-    tags: ['javascript', 'string manipulation', 'algorithms']
+    tags: ['javascript', 'string manipulation', 'algorithms'],
+    difficulty: 'Easy',
+    rating: 3,
+    createdBy: "system",
+    approved: true,
   },
   {
     id: 'coding2',
@@ -1074,7 +1128,11 @@ export const sampleInterviewQuestions: InterviewQuestion[] = [
     ],
     correctAnswer: "It describes the worst-case time or space complexity as input size grows. O(n): linear search. O(log n): binary search.",
     answerOrTip: "Big O notation describes the upper bound of an algorithm's time or space complexity in relation to input size. O(n) is linear (e.g., iterating an array), O(log n) is logarithmic (e.g., binary search on a sorted array).",
-    tags: ['data structures', 'algorithms', 'complexity']
+    tags: ['data structures', 'algorithms', 'complexity'],
+    difficulty: 'Medium',
+    rating: 4,
+    createdBy: "adminUser1",
+    approved: true,
   },
 ];
 
@@ -1092,7 +1150,7 @@ export const sampleMockInterviewSessions: MockInterviewSession[] = [
     userId: 'currentUser',
     topic: 'Frontend Developer Interview',
     jobDescription: 'Looking for a skilled frontend dev for a challenging role requiring React, TypeScript, and state management expertise.',
-    questions: sampleInterviewQuestions.slice(0, 2).map(q => ({ id: q.id, questionText: q.question, category: q.category })),
+    questions: sampleInterviewQuestions.slice(0, 2).map(q => ({ id: q.id, questionText: q.question, category: q.category, difficulty: q.difficulty })),
     answers: [
       { questionId: 'iq1', questionText: sampleInterviewQuestions[0].question, userAnswer: "I once tried to implement a feature too quickly without fully understanding the requirements, which led to significant rework. I learned the importance of thorough planning and asking clarifying questions upfront. Since then, I always create a detailed plan and confirm requirements before starting development, which has greatly reduced errors and delays.", aiFeedback: "Good attempt at STAR, but be more specific about the situation and the exact results of your corrective actions. Quantify if possible.", aiScore: 70, strengths: ["Honesty", "Acknowledged learning"], areasForImprovement: ["Specificity (STAR)", "Quantifiable results"] },
       { questionId: 'iq2', questionText: sampleInterviewQuestions[1].question, userAnswer: "In a previous project, a senior team member was consistently dismissive of junior developers' ideas. I scheduled a one-on-one with them, explained how their approach was impacting team morale and innovation, and suggested they actively solicit input during design reviews. They were receptive, and the team dynamic improved.", aiFeedback: "Excellent use of the STAR method. Clear actions and positive outcome. Well done.", aiScore: 90, strengths: ["Proactive communication", "Problem-solving", "Empathy"], areasForImprovement: ["Could mention the specific positive impact on a project metric if applicable."] },
@@ -1108,13 +1166,14 @@ export const sampleMockInterviewSessions: MockInterviewSession[] = [
     status: 'completed',
     createdAt: new Date(Date.now() - 86400000 * 3).toISOString(), // 3 days ago
     timerPerQuestion: 120,
-    questionCategories: ['Behavioral']
+    questionCategories: ['Behavioral'],
+    difficulty: 'Medium'
   },
   {
     id: 'session-hist-2',
     userId: 'currentUser',
     topic: 'Data Analyst Role',
-    questions: sampleInterviewQuestions.slice(2, 3).map(q => ({ id: q.id, questionText: q.question, category: q.category })), // Only one question for this example
+    questions: sampleInterviewQuestions.slice(2, 3).map(q => ({ id: q.id, questionText: q.question, category: q.category, difficulty: q.difficulty })), // Only one question for this example
     answers: [
       { questionId: 'iq3', questionText: sampleInterviewQuestions[2].question, userAnswer: 'An abstract class can have constructors and implemented methods, while an interface traditionally only defines a contract with method signatures and constants. A class can inherit from only one abstract class but implement multiple interfaces.', aiFeedback: 'Correct and comprehensive explanation of the key differences.', aiScore: 95, strengths: ["Technical accuracy", "Clarity"], areasForImprovement: ["None for this answer"] },
     ],
@@ -1129,6 +1188,7 @@ export const sampleMockInterviewSessions: MockInterviewSession[] = [
     status: 'completed',
     createdAt: new Date(Date.now() - 86400000 * 7).toISOString(), // 7 days ago
     timerPerQuestion: 0, // No timer
-    questionCategories: ['Technical']
+    questionCategories: ['Technical'],
+    difficulty: 'Medium'
   }
 ];
