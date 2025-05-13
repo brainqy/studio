@@ -10,6 +10,7 @@ import { sampleInterviewQuestions, sampleUserProfile, sampleMockInterviewSession
 import type { InterviewQuestion, InterviewQuestionCategory, MockInterviewSession, CommunityPost } from "@/types";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label"; // Added import for Label
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
