@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarSeparator, SidebarGroup, SidebarGroupLabel } from "@/components/ui/sidebar";
@@ -23,7 +24,7 @@ const navItems = [
   { href: "/resume-builder", label: "Resume Builder", icon: FilePlus2 },
   { href: "/resume-templates", label: "Resume Templates", icon: Layers3 }, 
   { href: "/job-tracker", label: "Job Tracker", icon: Briefcase },
-  { href: "/interview-prep", label: "Interview Prep Bank", icon: Brain }, // Changed label
+  { href: "/interview-prep", label: "Practice Hub", icon: Brain }, // Changed label, points to new hub
   {
     label: "Alumni Network",
     icon: Handshake, 
@@ -171,3 +172,4 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
+

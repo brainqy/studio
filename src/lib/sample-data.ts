@@ -1,5 +1,6 @@
 
-import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem, Appointment, Wallet, ResumeProfile, Tenant, Badge, BlogPost, ReferralHistoryItem, GamificationRule, UserStatus, SurveyResponse, Affiliate, AffiliateClick, AffiliateSignup, AffiliateStatus, SurveyStep, ResumeTemplate, TourStep, CommunityComment, InterviewQuestion, InterviewQuestionCategory, BlogGenerationSettings, MockInterviewSession, InterviewQuestionDifficulty, InterviewQuestionUserComment } from '@/types';
+
+import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem, Appointment, Wallet, ResumeProfile, Tenant, Badge, BlogPost, ReferralHistoryItem, GamificationRule, UserStatus, SurveyResponse, Affiliate, AffiliateClick, AffiliateSignup, AffiliateStatus, SurveyStep, ResumeTemplate, TourStep, CommunityComment, InterviewQuestion, InterviewQuestionCategory, BlogGenerationSettings, MockInterviewSession, InterviewQuestionDifficulty, InterviewQuestionUserComment, PracticeSession, PracticeSessionStatus } from '@/types';
 import { AreasOfSupport, AppointmentStatuses, Genders, DegreePrograms, Industries, TimeCommitments, EngagementModes, SupportTypesSought } from '@/types'; // Import AppointmentStatuses and other const arrays
 
 const SAMPLE_TENANT_ID = 'tenant-1'; // Define a default tenant ID for sample data
@@ -278,6 +279,7 @@ export const sampleUserProfile: UserProfile = {
   affiliateCode: 'AFFUSER007',
   // Add sample interview sessions for this user
   pastInterviewSessions: ['session-hist-1', 'session-hist-2'], // IDs referencing sampleMockInterviewSessions
+  interviewCredits: 2,
 };
 
 export const samplePlatformUsers: UserProfile[] = [
@@ -947,7 +949,7 @@ export const sampleInterviewQuestions: InterviewQuestion[] = [
     ],
     correctAnswer: "Abstract classes can have constructors, interfaces cannot.",
     answerOrTip: "Key differences: Abstract classes can have constructors and member variable implementations; interfaces cannot (traditionally). A class can implement multiple interfaces but inherit only one class (or abstract class).",
-    tags: ['oop', 'programming'],
+    tags: ['oop', 'programming', 'java'],
     difficulty: 'Medium',
     rating: 4.0,
     ratingsCount: 10,
@@ -1219,7 +1221,7 @@ export const sampleMockInterviewSessions: MockInterviewSession[] = [
   }
 ];
 
-export const sampleCreatedQuizzes: MockInterviewSession[] = [ // Using MockInterviewSession as a base for Quizzes
+export let sampleCreatedQuizzes: MockInterviewSession[] = [ // Using MockInterviewSession as a base for Quizzes // Made 'let' for edit
   {
     id: 'quiz-java-basics',
     userId: 'system', // Indicates a system-generated or admin-created quiz
@@ -1255,5 +1257,48 @@ export const sampleCreatedQuizzes: MockInterviewSession[] = [ // Using MockInter
     createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
     questionCategories: ['Role-Specific', 'Analytical'],
     difficulty: 'Hard',
+  },
+];
+
+export const samplePracticeSessions: PracticeSession[] = [
+  {
+    id: "ps1",
+    userId: "currentUser",
+    date: new Date(Date.now() + 86400000 * 3).toISOString(), // 3 days from now
+    category: "Practice with Experts",
+    type: "Angular",
+    language: "English",
+    status: "SCHEDULED",
+    notes: "Focus on advanced component architecture.",
+  },
+  {
+    id: "ps2",
+    userId: "currentUser",
+    date: new Date(Date.now() + 86400000 * 7).toISOString(), // 7 days from now
+    category: "Practice with AI",
+    type: "Java Backend",
+    language: "English",
+    status: "SCHEDULED",
+    notes: "Data structures and algorithms focus.",
+  },
+  {
+    id: "ps3",
+    userId: "currentUser",
+    date: new Date(Date.now() - 86400000 * 2).toISOString(), // 2 days ago
+    category: "Practice with Friends",
+    type: "Behavioral",
+    language: "English",
+    status: "COMPLETED",
+    notes: "Practiced STAR method.",
+  },
+  {
+    id: "ps4",
+    userId: "currentUser",
+    date: new Date(Date.now() + 86400000 * 1).toISOString(), // Tomorrow
+    category: "Practice with Experts",
+    type: "System Design",
+    language: "English",
+    status: "CANCELLED",
+    notes: "Expert had to reschedule.",
   },
 ];

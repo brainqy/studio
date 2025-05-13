@@ -1,4 +1,5 @@
 
+
 export type UserRole = 'admin' | 'manager' | 'user';
 export type UserStatus = 'active' | 'inactive' | 'pending' | 'suspended';
 
@@ -270,6 +271,7 @@ export interface UserProfile extends AlumniProfile {
   earnedBadges?: string[]; 
   affiliateCode?: string; 
   pastInterviewSessions?: string[]; 
+  interviewCredits?: number;
 }
 
 export interface ResumeProfile {
@@ -670,4 +672,17 @@ export interface QuizSession {
   totalQuizTime?: number; // Total allotted time in seconds
   answeredCount?: number;
   markedForReviewCount?: number;
+}
+
+// Practice Session Type (for the new practice hub)
+export type PracticeSessionStatus = 'SCHEDULED' | 'CANCELLED' | 'COMPLETED';
+export interface PracticeSession {
+  id: string;
+  userId: string;
+  date: string; // ISO date string for the session
+  category: "Practice with Friends" | "Practice with Experts" | "Practice with AI";
+  type: string; // e.g., "Angular", "Java", "Behavioral"
+  language: string; // e.g., "Angular", "Java", "English"
+  status: PracticeSessionStatus;
+  notes?: string; // Any additional notes or details
 }

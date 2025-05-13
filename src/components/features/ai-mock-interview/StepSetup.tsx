@@ -19,7 +19,7 @@ const ALL_QUESTION_CATEGORIES: InterviewQuestionCategory[] = ['Common', 'Behavio
 const setupSchema = z.object({
   topic: z.string().min(3, "Topic must be at least 3 characters long."),
   jobDescription: z.string().optional(),
-  numQuestions: z.coerce.number().min(1, "Must request at least 1 question.").max(20, "Cannot request more than 20 questions.").default(5), // Updated numQuestions schema
+  numQuestions: z.coerce.number().min(1, "Must request at least 1 question.").max(50, "Cannot request more than 50 questions.").default(5), // Updated max to 50
   difficulty: z.enum(['easy', 'medium', 'hard']).default('medium'),
   timerPerQuestion: z.coerce.number().min(0).max(300).optional().default(0),
   questionCategories: z.array(z.string()).optional(), 
@@ -81,7 +81,7 @@ export default function StepSetup({ onSetupComplete, isLoading }: StepSetupProps
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div>
-          <Label htmlFor="numQuestions">Number of Questions (1-20)</Label>
+          <Label htmlFor="numQuestions">Number of Questions (1-50)</Label>
           <Controller
             name="numQuestions"
             control={control}
@@ -90,7 +90,7 @@ export default function StepSetup({ onSetupComplete, isLoading }: StepSetupProps
                 id="numQuestions" 
                 type="number" 
                 min="1" 
-                max="20" 
+                max="50" 
                 {...field} 
                 onChange={e => field.onChange(parseInt(e.target.value, 10))}
               />
