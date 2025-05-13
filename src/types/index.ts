@@ -1,6 +1,4 @@
 
-
-
 export type UserRole = 'admin' | 'manager' | 'user';
 export type UserStatus = 'active' | 'inactive' | 'pending' | 'suspended';
 
@@ -117,7 +115,6 @@ export interface Activity {
   id: string;
   tenantId: string;
   timestamp: string;
-  description: string;
   userId?: string; 
 }
 
@@ -677,15 +674,16 @@ export interface QuizSession {
 
 // Practice Session Type (for the new practice hub)
 export type PracticeSessionStatus = 'SCHEDULED' | 'CANCELLED' | 'COMPLETED';
-export type PracticeSessionType = "friends" | "experts" | "ai"; // Mirroring InterviewType
-export type PracticeFlowStage = 'idle' | 'selectType' | 'selectTopics' | 'selectTimeSlot';
+export type PracticeSessionType = "friends" | "experts" | "ai"; 
+
+export type DialogStep = 'selectType' | 'selectTopics' | 'selectTimeSlot';
 
 export interface PracticeSessionConfig {
   type: PracticeSessionType | null;
-  topics: InterviewQuestionCategory[];
+  topics: string[]; // Changed from InterviewQuestionCategory[] to string[]
   dateTime: Date | null;
   friendEmail?: string;
-  expertId?: string; // Potentially to store selected expert ID
+  expertId?: string; 
 }
 
 export interface PracticeSession {
@@ -693,7 +691,7 @@ export interface PracticeSession {
   userId: string;
   date: string; 
   category: "Practice with Friends" | "Practice with Experts" | "Practice with AI";
-  type: string; // This can be a comma-separated list of topics or a general description
+  type: string; 
   language: string; 
   status: PracticeSessionStatus;
   notes?: string; 
@@ -701,3 +699,6 @@ export interface PracticeSession {
 
 export const PREDEFINED_INTERVIEW_TOPICS: InterviewQuestionCategory[] = [...ALL_CATEGORIES];
 
+// New constant for specific practice focus areas/topics
+export const PRACTICE_FOCUS_AREAS = ["Java", "Python", "DSA", "Angular", "Javascript", "Microservices", "System Design", "Behavioral", "Product Management", "Data Science"] as const;
+export type PracticeFocusArea = typeof PRACTICE_FOCUS_AREAS[number];
