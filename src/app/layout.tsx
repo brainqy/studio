@@ -1,3 +1,4 @@
+
 // src/app/layout.tsx
 import type {Metadata} from 'next';
 import { Inter as FontSans } from "next/font/google";
@@ -13,6 +14,7 @@ const fontSans = FontSans({
 export const metadata: Metadata = {
   title: 'ResumeMatch AI',
   description: 'AI-powered resume analysis and job matching platform.',
+  manifest: '/manifest.json', // Link to the manifest file
 };
 
 export default function RootLayout({
@@ -20,13 +22,10 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return (
-    <html lang="en" suppressHydrationWarning>
+  // Ensure there's no whitespace between <html>, <head />, and <body> in the JSX
+  return (<html lang="en" suppressHydrationWarning>
       <head />
-      <body className={cn("min-h-screen bg-background font-sans antialiased", fontSans.variable)}>
-        {children}
-        <Toaster />
-      </body>
-    </html>
-  );
+      <body className={cn("min-h-screen bg-background font-sans antialiased", fontSans.variable)}>{children}<Toaster /></body>
+    </html>);
 }
+

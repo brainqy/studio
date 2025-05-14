@@ -23,6 +23,12 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'avatar.vercel.sh', // Added for user avatars
+        port: '',
+        pathname: '/**',
+      }
     ],
   },
   // For multi-language support with next-intl or similar,
@@ -35,3 +41,4 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+
