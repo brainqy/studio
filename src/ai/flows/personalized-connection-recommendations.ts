@@ -2,11 +2,12 @@
 'use server';
 
 /**
- * @fileOverview Provides AI-driven suggestions for alumni connections.
+ * @fileOverview THIS FLOW IS DEPRECATED AND NO LONGER IN USE.
+ * Provides AI-driven suggestions for alumni connections.
  *
  * - personalizedConnectionRecommendations - A function that suggests alumni connections.
  * - PersonalizedConnectionRecommendationsInput - The input type for the personalizedConnectionRecommendations function.
- * - PersonalizedConnectionRecommendationsOutput - The return type for the personalizedConnectionRecommendations function.
+ * - PersonalizedConnectionRecommendationsOutput - The return type for the personalizedConnectionRecommendationsOutput function.
  */
 
 import {ai} from '@/ai/genkit';
@@ -37,9 +38,16 @@ export type PersonalizedConnectionRecommendationsOutput = z.infer<
 export async function personalizedConnectionRecommendations(
   input: PersonalizedConnectionRecommendationsInput
 ): Promise<PersonalizedConnectionRecommendationsOutput> {
-  return personalizedConnectionRecommendationsFlow(input);
+  // This flow is deprecated. Return a default or error response.
+  console.warn("DEPRECATED: personalizedConnectionRecommendations flow was called.");
+  return {
+    suggestedConnections: [],
+    reasoning: "This feature (AI Mentorship Matching) is currently unavailable or has been removed."
+  };
 }
 
+// The actual Genkit flow definition can be commented out or removed
+/*
 const prompt = ai.definePrompt({
   name: 'personalizedConnectionRecommendationsPrompt',
   input: {schema: PersonalizedConnectionRecommendationsInputSchema},
@@ -74,3 +82,4 @@ const personalizedConnectionRecommendationsFlow = ai.defineFlow(
     return output;
   }
 );
+*/

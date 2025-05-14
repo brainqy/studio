@@ -47,7 +47,7 @@ const PATH_LABEL_MAP: Record<string, string> = {
   '/resume-analyzer': 'Resume Analyzer',
   '/ai-resume-writer': 'AI Resume Writer',
   '/cover-letter-generator': 'Cover Letter Generator',
-  '/ai-mock-interview': 'AI Mock Interview', // Added new page
+  '/ai-mock-interview': 'AI Mock Interview', 
   '/my-resumes': 'My Resumes',
   '/resume-builder': 'Resume Builder',
   '/resume-templates': 'Resume Templates',

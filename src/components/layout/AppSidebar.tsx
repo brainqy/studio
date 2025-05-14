@@ -28,7 +28,6 @@ const navItems = [
     icon: Handshake, 
     subItems: [
       { href: "/alumni-connect", label: "Search Alumni", icon: Users },
-      { href: "/alumni-connect/recommendations", label: "AI Mentorship", icon: Brain },
     ]
   },
   { href: "/job-board", label: "Job Board", icon: Aperture },
