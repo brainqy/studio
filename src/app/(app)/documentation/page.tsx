@@ -64,22 +64,114 @@ export default function DocumentationPage() {
 
       <Card className="shadow-lg">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Code2 className="h-6 w-6 text-primary"/>API Documentation (Placeholder)</CardTitle>
-          <CardDescription>Information for developers looking to integrate with ResumeMatch AI.</CardDescription>
+          <CardTitle className="flex items-center gap-2"><Code2 className="h-6 w-6 text-primary"/>API Documentation (Conceptual)</CardTitle>
+          <CardDescription>Information for developers looking to integrate with ResumeMatch AI. (These are conceptual examples and not yet live endpoints).</CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground">
-            Our API documentation is currently under development. Please check back soon for details on available endpoints, authentication, and usage guidelines.
+          <p className="text-muted-foreground mb-4">
+            Our API documentation is currently under development. Below are conceptual examples of how our API might work.
           </p>
-          <div className="mt-4 space-y-2">
-            <h4 className="font-semibold">Anticipated API Features:</h4>
-            <ul className="list-disc list-inside text-muted-foreground text-sm">
-              <li>User Authentication API</li>
-              <li>Resume Submission & Analysis API</li>
-              <li>Job Posting API</li>
-              <li>Community Feed Interaction API</li>
-            </ul>
-          </div>
+          <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="api-auth">
+              <AccordionTrigger className="text-md font-semibold">User Authentication API</AccordionTrigger>
+              <AccordionContent className="space-y-2 text-muted-foreground">
+                <p><strong>Endpoint:</strong> <code>POST /api/auth/login</code></p>
+                <p><strong>Description:</strong> Authenticates a user and returns a session token.</p>
+                <p className="font-medium text-card-foreground">Request Payload (application/json):</p>
+                <pre className="bg-secondary p-3 rounded-md text-xs overflow-x-auto"><code>{`{
+  "email": "user@example.com",
+  "password": "securepassword123"
+}`}</code></pre>
+                <p className="font-medium text-card-foreground">Success Response (200 OK):</p>
+                <pre className="bg-secondary p-3 rounded-md text-xs overflow-x-auto"><code>{`{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": "user-123",
+    "name": "Jane Doe",
+    "email": "user@example.com",
+    "role": "user"
+  }
+}`}</code></pre>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="api-resume-analysis">
+              <AccordionTrigger className="text-md font-semibold">Resume Analysis API</AccordionTrigger>
+              <AccordionContent className="space-y-2 text-muted-foreground">
+                <p><strong>Endpoint:</strong> <code>POST /api/resumes/analyze</code></p>
+                <p><strong>Description:</strong> Analyzes a resume against a job description.</p>
+                <p className="font-medium text-card-foreground">Request Payload (application/json):</p>
+                <pre className="bg-secondary p-3 rounded-md text-xs overflow-x-auto"><code>{`{
+  "resumeText": "Full text of the user's resume...",
+  "jobDescriptionText": "Full text of the job description..."
+}`}</code></pre>
+                <p className="font-medium text-card-foreground">Success Response (200 OK):</p>
+                <pre className="bg-secondary p-3 rounded-md text-xs overflow-x-auto"><code>{`{
+  "matchScore": 85,
+  "matchingSkills": ["JavaScript", "React", "Node.js"],
+  "missingSkills": ["TypeScript", "GraphQL"],
+  "resumeKeyStrengths": "Strong experience in full-stack development with React and Node.js...",
+  "jobDescriptionKeyRequirements": "Requires expertise in TypeScript, React, and GraphQL for building scalable web applications...",
+  "searchabilityScore": 90,
+  // ... other fields from AnalyzeResumeAndJobDescriptionOutput
+}`}</code></pre>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="api-job-postings">
+              <AccordionTrigger className="text-md font-semibold">Job Postings API</AccordionTrigger>
+              <AccordionContent className="space-y-2 text-muted-foreground">
+                <p><strong>Endpoint:</strong> <code>GET /api/jobs</code></p>
+                <p><strong>Description:</strong> Retrieves a list of job openings.</p>
+                <p className="font-medium text-card-foreground">Query Parameters (Optional):</p>
+                <ul className="list-disc list-inside text-xs">
+                  <li><code>keywords</code> (string): Search by keywords.</li>
+                  <li><code>location</code> (string): Filter by location.</li>
+                  <li><code>limit</code> (number): Number of results to return.</li>
+                  <li><code>offset</code> (number): Offset for pagination.</li>
+                </ul>
+                <p className="font-medium text-card-foreground">Success Response (200 OK):</p>
+                <pre className="bg-secondary p-3 rounded-md text-xs overflow-x-auto"><code>{`[
+  {
+    "id": "job-abc-123",
+    "title": "Senior Frontend Developer",
+    "company": "Innovate Solutions",
+    "location": "Remote",
+    "datePosted": "2024-07-25",
+    "type": "Full-time",
+    "descriptionSnippet": "Seeking an experienced Frontend Developer..."
+  },
+  // ... more job openings
+]`}</code></pre>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="api-community-feed">
+              <AccordionTrigger className="text-md font-semibold">Community Feed API</AccordionTrigger>
+              <AccordionContent className="space-y-2 text-muted-foreground">
+                <p><strong>Endpoint:</strong> <code>POST /api/feed/posts</code></p>
+                <p><strong>Description:</strong> Creates a new post in the community feed.</p>
+                 <p className="font-medium text-card-foreground">Request Payload (application/json):</p>
+                <pre className="bg-secondary p-3 rounded-md text-xs overflow-x-auto"><code>{`{
+  "content": "Excited to share my latest project! Check it out...",
+  "tags": ["project", "showcase", "webdev"],
+  "type": "text"
+}`}</code></pre>
+                <p className="font-medium text-card-foreground">Success Response (201 Created):</p>
+                <pre className="bg-secondary p-3 rounded-md text-xs overflow-x-auto"><code>{`{
+  "id": "post-xyz-789",
+  "userId": "user-123",
+  "userName": "Jane Doe",
+  "timestamp": "2024-07-26T10:00:00Z",
+  "content": "Excited to share my latest project! Check it out...",
+  "type": "text",
+  "tags": ["project", "showcase", "webdev"],
+  "likes": 0,
+  "commentsCount": 0
+}`}</code></pre>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </CardContent>
       </Card>
     </div>
