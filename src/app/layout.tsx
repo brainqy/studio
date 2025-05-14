@@ -20,11 +20,13 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Ensure there's no whitespace between <html>, <head />, and <body> in the JSX
-  return (<html lang="en" suppressHydrationWarning><head />
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <head />
       <body className={cn("min-h-screen bg-background font-sans antialiased", fontSans.variable)}>
         {children}
         <Toaster />
       </body>
-    </html>);
+    </html>
+  );
 }
