@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -14,13 +15,13 @@ import {z} from 'genkit';
 const AnalyzeResumeAndJobDescriptionInputSchema = z.object({
   resumeText: z.string().describe('The text content of the resume.'),
   jobDescriptionText: z.string().describe('The text content of the job description.'),
-  // targetIndustry: z.string().optional().describe('Optional: The target industry for more contextual analysis.'),
 });
 export type AnalyzeResumeAndJobDescriptionInput = z.infer<typeof AnalyzeResumeAndJobDescriptionInputSchema>;
 
 const SearchabilityDetailsSchema = z.object({
   hasPhoneNumber: z.boolean().describe("Resume contains a phone number."),
   hasEmail: z.boolean().describe("Resume contains an email address."),
+  hasAddress: z.boolean().optional().describe("Resume contains a physical address."),
   jobTitleMatchesJD: z.boolean().describe("Job title in resume aligns with or is found in the job description."),
   hasWorkExperienceSection: z.boolean().describe("A distinct work experience section was identified."),
   hasEducationSection: z.boolean().describe("A distinct education section was identified."),
@@ -42,7 +43,7 @@ const AtsFormattingIssueSchema = z.object({
 
 const AtsParsingConfidenceSchema = z.object({
     overall: z.number().min(0).max(100).optional().describe("Overall confidence score (0-100) for ATS parsing."),
-    sections: z.record(z.number().min(0).max(100)).optional().describe("Confidence scores for parsing specific sections (e.g., contactInfo: 90, experience: 75)."),
+    // sections: z.record(z.number().min(0).max(100)).optional().describe("Confidence scores for parsing specific sections (e.g., contactInfo: 90, experience: 75)."), // Removed due to API schema error
     warnings: z.array(z.string()).optional().describe("Specific warnings or potential issues for ATS parsing."),
 });
 
@@ -131,6 +132,7 @@ function getDefaultOutput(errorMessage?: string): AnalyzeResumeAndJobDescription
     searchabilityDetails: {
       hasPhoneNumber: false,
       hasEmail: false,
+      hasAddress: false,
       jobTitleMatchesJD: false,
       hasWorkExperienceSection: false,
       hasEducationSection: false,
@@ -138,7 +140,7 @@ function getDefaultOutput(errorMessage?: string): AnalyzeResumeAndJobDescription
       keywordDensityFeedback: "N/A",
     },
     formattingDetails: [{issue: "Overall Formatting", recommendation: "Could not assess due to an error or missing data."}],
-    atsParsingConfidence: { overall: 0, sections: {}, warnings: ["Could not assess ATS parsing confidence."] },
+    atsParsingConfidence: { overall: 0, warnings: ["Could not assess ATS parsing confidence."] },
     atsStandardFormattingComplianceScore: 0,
     standardFormattingIssues: [{ issue: "Standard Formatting", recommendation: "Could not assess standard formatting compliance." }],
     undefinedAcronyms: [],
@@ -178,6 +180,8 @@ export async function analyzeResumeAndJobDescription(
   
   let aiResponse;
   try {
+    // The direct call to analyzeResumeAndJobDescriptionPrompt is made here as analyzeResumeAndJobDescriptionFlow
+    // was a wrapper. This is fine.
     aiResponse = await analyzeResumeAndJobDescriptionPrompt(input);
   } catch (error) {
     console.error("[AI FLOW] Error during AI prompt execution:", error);
@@ -187,7 +191,7 @@ export async function analyzeResumeAndJobDescription(
   console.log("[AI FLOW] Raw AI model output:", JSON.stringify(aiResponse?.output, null, 2));
 
   if (!aiResponse?.output) {
-    console.error("[AI FLOW] AI prompt did not return any parsable output for input:", input);
+    console.error("[AI FLOW] AI prompt did not return any parsable output for input:", { resumeLength: input.resumeText.length, jdLength: input.jobDescriptionText.length });
     return getDefaultOutput("AI analysis did not return any parsable output.");
   }
 
@@ -232,7 +236,7 @@ const analyzeResumeAndJobDescriptionPrompt = ai.definePrompt({
   input: {schema: AnalyzeResumeAndJobDescriptionInputSchema},
   output: {schema: AnalyzeResumeAndJobDescriptionOutputSchema},
   config: {
-    safetySettings: [ // Relax safety settings slightly for complex generation
+    safetySettings: [ 
       { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
       { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
       { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
@@ -269,11 +273,11 @@ Analysis Categories and Instructions for JSON Output Fields:
     *   atsStandardFormattingComplianceScore: Score for compliance with standard ATS-friendly formatting (fonts, no tables for layout, etc.).
 
 3.  **Detailed Breakdowns:**
-    *   searchabilityDetails: Object with booleans for hasPhoneNumber, hasEmail, jobTitleMatchesJD, hasWorkExperienceSection, hasEducationSection, hasProfessionalSummary, and a string for keywordDensityFeedback.
+    *   searchabilityDetails: Object with booleans for hasPhoneNumber, hasEmail, hasAddress, jobTitleMatchesJD, hasWorkExperienceSection, hasEducationSection, hasProfessionalSummary, and a string for keywordDensityFeedback.
     *   recruiterTips: Array of RecruiterTipItemSchema objects.
     *   formattingDetails: Array of AtsFormattingIssueSchema objects (feedback on clarity, consistency, length etc. from a general perspective).
     *   standardFormattingIssues: Array of AtsFormattingIssueSchema objects (specific ATS formatting issues like font choice, use of tables for layout, special characters).
-    *   atsParsingConfidence: Object with optional overall score (0-100) and optional sections record (string to number) for ATS parsing confidence, and optional warnings array.
+    *   atsParsingConfidence: Object with optional overall score (0-100) and optional warnings array. Do NOT include a 'sections' sub-object here.
     *   undefinedAcronyms: Array of strings listing acronyms used without prior definition.
 
 4.  **Content Quality Details:**
@@ -286,11 +290,12 @@ Analysis Categories and Instructions for JSON Output Fields:
 `,
 });
 
+// The flow definition remains for Genkit's system, but the exported function now calls the prompt directly.
 const analyzeResumeAndJobDescriptionFlow = ai.defineFlow(
   {
     name: 'analyzeResumeAndJobDescriptionFlow',
     inputSchema: AnalyzeResumeAndJobDescriptionInputSchema,
     outputSchema: AnalyzeResumeAndJobDescriptionOutputSchema,
   },
-  analyzeResumeAndJobDescription // Use the refactored function
+  analyzeResumeAndJobDescription // Use the refactored function which now calls the prompt and handles output
 );
