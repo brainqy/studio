@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -32,6 +32,11 @@ export default function AffiliateManagementPage() {
     );
   }
 
+  // Update local state if global sampleAffiliates changes (for demo persistence)
+  useEffect(() => {
+    setAffiliates(sampleAffiliates);
+  }, []);
+
 
   const handleAffiliateStatusChange = (affiliateId: string, newStatus: AffiliateStatus) => {
     setAffiliates(prev =>
@@ -39,6 +44,9 @@ export default function AffiliateManagementPage() {
         aff.id === affiliateId ? { ...aff, status: newStatus } : aff
       )
     );
+    const globalIndex = sampleAffiliates.findIndex(a => a.id === affiliateId);
+    if(globalIndex !== -1) sampleAffiliates[globalIndex].status = newStatus;
+    
     const affiliate = affiliates.find(a => a.id === affiliateId);
     toast({
       title: `Affiliate ${newStatus.charAt(0).toUpperCase() + newStatus.slice(1)}`,
@@ -56,8 +64,8 @@ export default function AffiliateManagementPage() {
 
   const affiliateStats = useMemo(() => {
     const totalAffiliates = affiliates.length;
-    const totalClicks = sampleAffiliateClicks.length; // Sum of all clicks regardless of affiliate for platform total
-    const totalSignups = sampleAffiliateSignups.length; // Sum of all signups via any affiliate
+    const totalClicks = sampleAffiliateClicks.length;
+    const totalSignups = sampleAffiliateSignups.length;
     const totalCommissionsPaid = sampleAffiliateSignups.reduce((sum, signup) => sum + (signup.commissionEarned || 0), 0);
     return { totalAffiliates, totalClicks, totalSignups, totalCommissionsPaid };
   }, [affiliates]);

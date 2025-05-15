@@ -5,10 +5,10 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Award, Star, PlusCircle, Edit3, Trash2, ListChecks, HelpCircle } from "lucide-react";
+import { Award, Star, PlusCircle, Edit3, Trash2, ListChecks, HelpCircle, ShieldAlert } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Badge, GamificationRule } from "@/types";
-import { sampleBadges as initialBadges, sampleXpRules as initialXpRules } from "@/lib/sample-data";
+import { sampleBadges as initialBadges, sampleXpRules as initialXpRules, sampleUserProfile } from "@/lib/sample-data";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,7 +17,8 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import * as LucideIcons from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"; // Added Tooltip
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import Link from "next/link";
 
 type IconName = keyof typeof LucideIcons;
 
@@ -25,7 +26,7 @@ const badgeSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(3, "Badge name must be at least 3 characters"),
   description: z.string().min(10, "Description must be at least 10 characters"),
-  icon: z.string().min(1, "Icon name is required"), // Lucide icon name
+  icon: z.string().min(1, "Icon name is required"), 
   xpReward: z.coerce.number().min(0, "XP Reward must be non-negative").default(0),
   triggerCondition: z.string().min(5, "Trigger condition must be described"),
 });
@@ -49,6 +50,7 @@ export default function GamificationRulesPage() {
   const [editingBadge, setEditingBadge] = useState<Badge | null>(null);
   const [editingXpRule, setEditingXpRule] = useState<GamificationRule | null>(null);
   const { toast } = useToast();
+  const currentUser = sampleUserProfile;
 
   const { control: badgeControl, handleSubmit: handleBadgeSubmit, reset: resetBadgeForm, setValue: setBadgeValue, formState: { errors: badgeErrors } } = useForm<BadgeFormData>({
     resolver: zodResolver(badgeSchema),
@@ -70,6 +72,19 @@ export default function GamificationRulesPage() {
     }
   });
 
+  if (currentUser.role !== 'admin') {
+    return (
+      <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)]">
+        <ShieldAlert className="w-16 h-16 text-destructive mb-4" />
+        <h1 className="text-2xl font-bold text-foreground mb-2">Access Denied</h1>
+        <p className="text-muted-foreground">You do not have permission to view this page.</p>
+        <Button asChild className="mt-6">
+          <Link href="/dashboard">Go to Dashboard</Link>
+        </Button>
+      </div>
+    );
+  }
+
   const onBadgeFormSubmit = (data: BadgeFormData) => {
     if (editingBadge) {
       setBadges(prev => prev.map(b => b.id === editingBadge.id ? { ...b, ...data } : b));
@@ -86,11 +101,9 @@ export default function GamificationRulesPage() {
 
   const onXpRuleFormSubmit = (data: XpRuleFormData) => {
     if (editingXpRule) {
-        // Prevent editing the unique actionId if it's an existing rule
         setXpRules(prev => prev.map(r => r.actionId === editingXpRule.actionId ? { ...r, description: data.description, xpPoints: data.xpPoints } : r));
         toast({ title: "XP Rule Updated", description: `Rule "${data.description}" updated.` });
     } else {
-        // Check if actionId already exists
         if (xpRules.some(r => r.actionId === data.actionId)) {
             toast({ title: "Error", description: `Action ID "${data.actionId}" already exists. Choose a unique ID.`, variant: "destructive" });
             return;
@@ -146,10 +159,9 @@ export default function GamificationRulesPage() {
     toast({ title: "XP Rule Deleted", description: "XP rule removed.", variant: "destructive" });
   };
 
-  // Helper function to render Lucide icons dynamically
   function DynamicIcon({ name, ...props }: { name: IconName } & LucideIcons.LucideProps) {
     const IconComponent = LucideIcons[name] as React.ElementType;
-    if (!IconComponent) return <LucideIcons.HelpCircle {...props} />; // Fallback icon
+    if (!IconComponent) return <LucideIcons.HelpCircle {...props} />; 
     return <IconComponent {...props} />;
   }
 
@@ -161,7 +173,6 @@ export default function GamificationRulesPage() {
       </h1>
       <CardDescription>Define and manage badges and XP points awarded for user actions.</CardDescription>
 
-      {/* Badges Section */}
       <Card className="shadow-lg">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
@@ -211,7 +222,6 @@ export default function GamificationRulesPage() {
         </CardContent>
       </Card>
 
-      {/* XP Rules Section */}
       <Card className="shadow-lg">
         <CardHeader className="flex flex-row items-center justify-between">
            <div>
@@ -257,7 +267,6 @@ export default function GamificationRulesPage() {
         </CardContent>
       </Card>
 
-      {/* Badge Dialog */}
       <Dialog open={isBadgeDialogOpen} onOpenChange={(isOpen) => { if (!isOpen) { setEditingBadge(null); resetBadgeForm(); } setIsBadgeDialogOpen(isOpen); }}>
         <DialogContent className="sm:max-w-[525px]">
           <DialogHeader>
@@ -325,7 +334,6 @@ export default function GamificationRulesPage() {
         </DialogContent>
       </Dialog>
 
-      {/* XP Rule Dialog */}
       <Dialog open={isXpRuleDialogOpen} onOpenChange={(isOpen) => { if (!isOpen) { setEditingXpRule(null); resetXpRuleForm(); } setIsXpRuleDialogOpen(isOpen); }}>
         <DialogContent className="sm:max-w-[525px]">
            <DialogHeader>

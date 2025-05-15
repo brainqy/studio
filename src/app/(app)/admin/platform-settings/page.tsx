@@ -17,7 +17,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Textarea } from "@/components/ui/textarea"; // Added import
+import { Textarea } from "@/components/ui/textarea"; 
 
 const settingsSchema = z.object({
   platformName: z.string().min(3, "Platform name must be at least 3 characters"),
@@ -44,7 +44,7 @@ const settingsSchema = z.object({
   maxResumeUploadsPerUser: z.coerce.number().min(1).max(50).default(5),
   defaultTheme: z.enum(['light', 'dark']).default('light'),
   enablePublicProfilePages: z.boolean().default(false),
-  sessionTimeoutMinutes: z.coerce.number().min(5).max(1440).default(60), // 5 mins to 24 hours
+  sessionTimeoutMinutes: z.coerce.number().min(5).max(1440).default(60), 
   maxEventRegistrationsPerUser: z.coerce.number().min(1).max(100).optional(),
   globalAnnouncement: z.string().max(500).optional(),
   pointsForAffiliateSignup: z.coerce.number().min(0).optional(),
@@ -80,7 +80,7 @@ export default function PlatformSettingsPage() {
   }
 
   const onSubmit = (data: SettingsFormData) => {
-    const updatedSettings: PlatformSettings = { ...currentSettings, ...data }; // Merge to keep fields not in form
+    const updatedSettings: PlatformSettings = { ...currentSettings, ...data };
     Object.assign(samplePlatformSettings, updatedSettings); 
     setCurrentSettings(updatedSettings);
     toast({ title: "Settings Saved", description: "Platform settings have been updated successfully." });
@@ -221,4 +221,3 @@ export default function PlatformSettingsPage() {
     </TooltipProvider>
   );
 }
-

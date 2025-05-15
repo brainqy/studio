@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -11,15 +11,16 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { UserCog, PlusCircle, Edit3, Trash2, UploadCloud, DownloadCloud, ChevronDown, Search, HelpCircle } from "lucide-react";
+import { UserCog, PlusCircle, Edit3, Trash2, UploadCloud, DownloadCloud, ChevronDown, Search, HelpCircle, ShieldAlert } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { UserProfile, UserRole, UserStatus } from "@/types";
-import { samplePlatformUsers } from "@/lib/sample-data"; // Using sampleAlumni as mock users
+import { samplePlatformUsers, sampleUserProfile } from "@/lib/sample-data";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format } from "date-fns";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"; // Added Tooltip
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import Link from "next/link";
 
 const userSchema = z.object({
   id: z.string().optional(),
@@ -27,12 +28,18 @@ const userSchema = z.object({
   email: z.string().email("Invalid email address"),
   role: z.enum(['admin', 'manager', 'user'] as [UserRole, ...UserRole[]]),
   status: z.enum(['active', 'inactive', 'pending', 'suspended'] as [UserStatus, ...UserStatus[]]),
+  tenantId: z.string().optional(), // Added for admin creation
 });
 
 type UserFormData = z.infer<typeof userSchema>;
 
 export default function UserManagementPage() {
-  const [users, setUsers] = useState<UserProfile[]>(samplePlatformUsers);
+  const currentUser = sampleUserProfile;
+  const [users, setUsers] = useState<UserProfile[]>(
+    currentUser.role === 'admin'
+      ? samplePlatformUsers
+      : samplePlatformUsers.filter(u => u.tenantId === currentUser.tenantId)
+  );
   const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
   const [searchTerm, setSearchTerm] = useState("");
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
@@ -42,6 +49,17 @@ export default function UserManagementPage() {
   const { control, handleSubmit, reset, setValue, formState: { errors } } = useForm<UserFormData>({
     resolver: zodResolver(userSchema),
   });
+
+  useEffect(() => {
+    // Re-filter users if the current user's role or tenantId might change (e.g., in a dynamic context)
+    // For sample data, this ensures it's correctly filtered on initial load based on role
+    setUsers(
+      currentUser.role === 'admin'
+        ? samplePlatformUsers
+        : samplePlatformUsers.filter(u => u.tenantId === currentUser.tenantId)
+    );
+  }, [currentUser.role, currentUser.tenantId]);
+
 
   const filteredUsers = useMemo(() => {
     return users.filter(user =>
@@ -71,18 +89,36 @@ export default function UserManagementPage() {
 
   const onUserFormSubmit = (data: UserFormData) => {
     if (editingUser) {
-      setUsers(prev => prev.map(u => u.id === editingUser.id ? { ...u, ...data } : u));
+      const updatedUser = { 
+        ...editingUser, 
+        ...data, 
+        // Ensure tenantId is not changed by manager if editing, admin can change
+        tenantId: currentUser.role === 'admin' && data.tenantId ? data.tenantId : editingUser.tenantId,
+      };
+      setUsers(prev => prev.map(u => u.id === editingUser.id ? updatedUser : u));
+      // Update samplePlatformUsers if editing an existing one
+      const platformUserIndex = samplePlatformUsers.findIndex(pu => pu.id === editingUser.id);
+      if (platformUserIndex !== -1) {
+        samplePlatformUsers[platformUserIndex] = updatedUser;
+      }
       toast({ title: "User Updated", description: `User "${data.name}" has been updated.` });
     } else {
+      const newTenantId = currentUser.role === 'admin' && data.tenantId ? data.tenantId : currentUser.tenantId;
       const newUser: UserProfile = {
         ...data,
         id: `user-${Date.now()}`,
-        tenantId: 'tenant-1', // Default tenant or get from context
+        tenantId: newTenantId,
         lastLogin: new Date().toISOString(),
-        profilePictureUrl: `https://avatar.vercel.sh/${data.email}.png`
+        profilePictureUrl: `https://avatar.vercel.sh/${data.email}.png`,
+        createdAt: new Date().toISOString(),
+        skills: [],
+        bio: '',
+        currentJobTitle: '',
+        company: '',
       };
       setUsers(prev => [newUser, ...prev]);
-      toast({ title: "User Created", description: `User "${data.name}" has been created.` });
+      samplePlatformUsers.push(newUser); // Add to global sample data
+      toast({ title: "User Created", description: `User "${data.name}" has been created for tenant ${newTenantId}.` });
     }
     setIsUserDialogOpen(false);
     reset();
@@ -91,7 +127,7 @@ export default function UserManagementPage() {
 
   const openNewUserDialog = () => {
     setEditingUser(null);
-    reset({ name: '', email: '', role: 'user', status: 'pending' });
+    reset({ name: '', email: '', role: 'user', status: 'pending', tenantId: currentUser.role === 'manager' ? currentUser.tenantId : '' });
     setIsUserDialogOpen(true);
   };
 
@@ -102,11 +138,16 @@ export default function UserManagementPage() {
     setValue('role', user.role);
     setValue('status', user.status || 'pending');
     setValue('id', user.id);
+    setValue('tenantId', user.tenantId);
     setIsUserDialogOpen(true);
   };
 
   const handleDeleteUser = (userId: string) => {
     setUsers(prev => prev.filter(u => u.id !== userId));
+    const indexInPlatformUsers = samplePlatformUsers.findIndex(u => u.id === userId);
+    if (indexInPlatformUsers > -1) {
+        samplePlatformUsers.splice(indexInPlatformUsers, 1);
+    }
     setSelectedUserIds(prev => {
         const newSet = new Set(prev);
         newSet.delete(userId);
@@ -120,30 +161,40 @@ export default function UserManagementPage() {
         toast({title: "No Users Selected", description: "Please select users to perform bulk action.", variant:"destructive"});
         return;
     }
+    let updatedUsers = [...users];
+    let updatedPlatformUsers = [...samplePlatformUsers];
 
     switch(action) {
         case 'activate':
-            setUsers(users.map(u => selectedUserIds.has(u.id) ? {...u, status: 'active'} : u));
+            updatedUsers = users.map(u => selectedUserIds.has(u.id) ? {...u, status: 'active'} : u);
+            updatedPlatformUsers = samplePlatformUsers.map(u => selectedUserIds.has(u.id) ? {...u, status: 'active'} : u);
             toast({title: "Users Activated", description: `${selectedUserIds.size} users activated.`});
             break;
         case 'deactivate':
-             setUsers(users.map(u => selectedUserIds.has(u.id) ? {...u, status: 'inactive'} : u));
+            updatedUsers = users.map(u => selectedUserIds.has(u.id) ? {...u, status: 'inactive'} : u);
+            updatedPlatformUsers = samplePlatformUsers.map(u => selectedUserIds.has(u.id) ? {...u, status: 'inactive'} : u);
             toast({title: "Users Deactivated", description: `${selectedUserIds.size} users deactivated.`});
             break;
         case 'delete':
-            setUsers(users.filter(u => !selectedUserIds.has(u.id)));
+            updatedUsers = users.filter(u => !selectedUserIds.has(u.id));
+            updatedPlatformUsers = samplePlatformUsers.filter(u => !selectedUserIds.has(u.id));
             toast({title: "Users Deleted", description: `${selectedUserIds.size} users deleted.`, variant: "destructive"});
             break;
     }
+    setUsers(updatedUsers);
+    // This direct mutation is for sample data persistence across app.
+    // In real app, this would be an API call.
+    samplePlatformUsers.length = 0; 
+    samplePlatformUsers.push(...updatedPlatformUsers);
+
     setSelectedUserIds(new Set());
   };
-
 
   return (
     <TooltipProvider>
     <div className="space-y-8">
       <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
-        <UserCog className="h-8 w-8" /> User Management
+        <UserCog className="h-8 w-8" /> User Management {currentUser.role === 'manager' && `(Tenant: ${currentUser.tenantId})`}
       </h1>
       <CardDescription>Manage platform users, roles, and statuses.</CardDescription>
 
@@ -167,22 +218,26 @@ export default function UserManagementPage() {
                 </TooltipTrigger>
                 <TooltipContent><p>Manually add a new user to the platform.</p></TooltipContent>
             </Tooltip>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <Button variant="outline" onClick={() => toast({ title: "Mock Action", description: "User upload initiated." })}>
-                        <UploadCloud className="mr-2 h-5 w-5" /> Upload Users
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent><p>Bulk upload users via CSV file (mocked feature).</p></TooltipContent>
-            </Tooltip>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <Button variant="outline" onClick={() => toast({ title: "Mock Action", description: "User download initiated." })}>
-                        <DownloadCloud className="mr-2 h-5 w-5" /> Download Users
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent><p>Download a list of current users in CSV format (mocked feature).</p></TooltipContent>
-            </Tooltip>
+            {currentUser.role === 'admin' && ( // Only admin can bulk upload/download all users
+              <>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button variant="outline" onClick={() => toast({ title: "Mock Action", description: "User upload initiated." })}>
+                            <UploadCloud className="mr-2 h-5 w-5" /> Upload Users
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent><p>Bulk upload users via CSV file (mocked feature).</p></TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button variant="outline" onClick={() => toast({ title: "Mock Action", description: "User download initiated." })}>
+                            <DownloadCloud className="mr-2 h-5 w-5" /> Download Users
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent><p>Download a list of current users in CSV format (mocked feature).</p></TooltipContent>
+                </Tooltip>
+              </>
+            )}
           </div>
         </CardHeader>
         <CardContent>
@@ -222,6 +277,7 @@ export default function UserManagementPage() {
                   <TableHead>Email</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Status</TableHead>
+                  {currentUser.role === 'admin' && <TableHead>Tenant ID</TableHead>}
                   <TableHead>Last Login</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -249,6 +305,7 @@ export default function UserManagementPage() {
                            {user.status || 'N/A'}
                        </span>
                     </TableCell>
+                    {currentUser.role === 'admin' && <TableCell className="font-mono text-xs">{user.tenantId || 'N/A'}</TableCell>}
                     <TableCell>{user.lastLogin ? format(new Date(user.lastLogin), 'PPp') : 'Never'}</TableCell>
                     <TableCell className="text-right space-x-2">
                       <Button variant="outline" size="sm" onClick={() => openEditUserDialog(user)}>
@@ -292,8 +349,8 @@ export default function UserManagementPage() {
                     <SelectTrigger id="user-role"><SelectValue placeholder="Select role" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="user">User</SelectItem>
-                      <SelectItem value="manager">Manager</SelectItem>
-                      <SelectItem value="admin">Admin</SelectItem>
+                      {currentUser.role === 'admin' && <SelectItem value="manager">Manager</SelectItem>}
+                      {currentUser.role === 'admin' && <SelectItem value="admin">Admin</SelectItem>}
                     </SelectContent>
                   </Select>
                 )}
@@ -319,6 +376,12 @@ export default function UserManagementPage() {
               />
               {errors.status && <p className="text-sm text-destructive mt-1">{errors.status.message}</p>}
             </div>
+            {currentUser.role === 'admin' && (
+                <div>
+                    <Label htmlFor="user-tenantId">Tenant ID</Label>
+                    <Controller name="tenantId" control={control} render={({ field }) => <Input id="user-tenantId" placeholder="e.g., tenant-1" {...field} />} />
+                </div>
+            )}
             <DialogFooter>
               <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
               <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground">{editingUser ? "Save Changes" : "Create User"}</Button>

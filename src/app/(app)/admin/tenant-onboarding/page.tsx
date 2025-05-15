@@ -12,30 +12,23 @@ import { useToast } from "@/hooks/use-toast";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Building2, Palette, Settings, UserPlus, Eye, Layers3, ChevronLeft, ChevronRight } from "lucide-react";
+import { Building2, Palette, Settings, UserPlus, Eye, Layers3, ChevronLeft, ChevronRight, ShieldAlert } from "lucide-react";
 import type { Tenant, TenantSettings } from "@/types";
-import { sampleTenants, sampleUserProfile } from "@/lib/sample-data"; // For adding to sample data
+import { sampleTenants, sampleUserProfile } from "@/lib/sample-data"; 
 import Link from "next/link";
 
 const tenantOnboardingSchema = z.object({
-  // Step 1: Basic Info
   tenantName: z.string().min(3, "Tenant name must be at least 3 characters"),
   tenantDomain: z.string().optional(),
-
-  // Step 2: Branding
   customLogoUrl: z.string().url("Invalid URL format").optional().or(z.literal('')),
   primaryColor: z.string().regex(/^hsl\(\d{1,3}\s\d{1,3}%\s\d{1,3}%\)$|^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, "Invalid color format (HSL or HEX)").optional().or(z.literal('')),
   accentColor: z.string().regex(/^hsl\(\d{1,3}\s\d{1,3}%\s\d{1,3}%\)$|^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, "Invalid color format (HSL or HEX)").optional().or(z.literal('')),
-  
-  // Step 3: Feature Configuration
   allowPublicSignup: z.boolean().default(true),
   communityFeedEnabled: z.boolean().default(true),
   jobBoardEnabled: z.boolean().default(true),
   gamificationEnabled: z.boolean().default(true),
   walletEnabled: z.boolean().default(true),
   eventRegistrationEnabled: z.boolean().default(true),
-  
-  // Step 4: Initial Admin User
   adminEmail: z.string().email("Invalid email for admin"),
   adminName: z.string().min(1, "Admin name is required"),
   adminPassword: z.string().min(8, "Password must be at least 8 characters"),
@@ -63,12 +56,12 @@ export default function TenantOnboardingPage() {
       gamificationEnabled: true,
       walletEnabled: true,
       eventRegistrationEnabled: true,
-      primaryColor: 'hsl(180 100% 25%)', // Default teal
+      primaryColor: 'hsl(180 100% 25%)', 
       accentColor: 'hsl(180 100% 30%)',
     }
   });
 
-  const currentUser = sampleUserProfile; // For permission check
+  const currentUser = sampleUserProfile; 
     if (currentUser.role !== 'admin') {
     return (
         <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)]">
@@ -88,7 +81,6 @@ export default function TenantOnboardingPage() {
     switch (currentStep) {
       case 0: fieldsToValidate = ['tenantName', 'tenantDomain']; break;
       case 1: fieldsToValidate = ['customLogoUrl', 'primaryColor', 'accentColor']; break;
-      case 2: /* No specific validation for feature toggles, defaults are fine */ break;
       case 3: fieldsToValidate = ['adminEmail', 'adminName', 'adminPassword']; break;
     }
     
@@ -106,7 +98,6 @@ export default function TenantOnboardingPage() {
   };
 
   const onSubmit = (data: TenantOnboardingFormData) => {
-    // Mock tenant creation
     const newTenantSettings: TenantSettings = {
       allowPublicSignup: data.allowPublicSignup,
       customLogoUrl: data.customLogoUrl,
@@ -129,20 +120,18 @@ export default function TenantOnboardingPage() {
       createdAt: new Date().toISOString(),
     };
 
-    // This would be an API call in a real app
     sampleTenants.push(newTenant); 
     console.log("New Tenant Created (Mock):", newTenant);
     console.log("Initial Admin User (Mock):", { email: data.adminEmail, name: data.adminName });
 
     toast({ title: "Tenant Created Successfully!", description: `Tenant "${data.tenantName}" has been onboarded.` });
-    setCurrentStep(0); // Reset to first step or redirect
-    // Consider resetting form fields too if needed: reset();
+    setCurrentStep(0); 
   };
 
   const renderStepContent = () => {
     const formData = getValues();
     switch (currentStep) {
-      case 0: // Basic Information
+      case 0: 
         return (
           <div className="space-y-4">
             <div>
@@ -157,7 +146,7 @@ export default function TenantOnboardingPage() {
             </div>
           </div>
         );
-      case 1: // Branding
+      case 1: 
         return (
           <div className="space-y-4">
             <div>
@@ -177,7 +166,7 @@ export default function TenantOnboardingPage() {
             </div>
           </div>
         );
-      case 2: // Feature Configuration
+      case 2: 
         return (
           <div className="space-y-3">
             <h3 className="text-md font-medium mb-2">Core Features:</h3>
@@ -210,7 +199,7 @@ export default function TenantOnboardingPage() {
              </div>
           </div>
         );
-      case 3: // Initial Admin User
+      case 3: 
         return (
           <div className="space-y-4">
             <div>
@@ -230,7 +219,7 @@ export default function TenantOnboardingPage() {
             </div>
           </div>
         );
-      case 4: // Review & Create
+      case 4: 
         return (
           <div className="space-y-3 text-sm">
             <h3 className="text-md font-semibold text-primary">Review Tenant Configuration:</h3>

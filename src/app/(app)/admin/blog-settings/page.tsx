@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -7,15 +8,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Settings, Loader2, Sparkles, Send, CalendarClock, Tag, Info } from "lucide-react";
+import { Settings, Loader2, Sparkles, Send, CalendarClock, Tag, Info, ShieldAlert } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { BlogGenerationSettings, BlogPost } from "@/types";
-import { sampleBlogGenerationSettings, sampleBlogPosts } from "@/lib/sample-data";
+import { sampleBlogGenerationSettings, sampleBlogPosts, sampleUserProfile } from "@/lib/sample-data";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { generateAiBlogPost, type GenerateAiBlogPostInput, type GenerateAiBlogPostOutput } from "@/ai/flows/generate-ai-blog-post";
 import { formatDistanceToNow } from "date-fns";
+import Link from "next/link";
 
 const settingsSchema = z.object({
   generationIntervalHours: z.coerce.number().min(1, "Interval must be at least 1 hour").max(720, "Interval too long (max 30 days)"),
@@ -32,6 +34,7 @@ export default function AdminBlogSettingsPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [manualTopic, setManualTopic] = useState(settings.topics[0] || "");
   const { toast } = useToast();
+  const currentUser = sampleUserProfile;
 
   const { control, handleSubmit, reset, formState: { errors } } = useForm<SettingsFormData>({
     resolver: zodResolver(settingsSchema),
@@ -50,6 +53,18 @@ export default function AdminBlogSettingsPage() {
     });
   }, [settings, reset]);
 
+  if (currentUser.role !== 'admin') {
+    return (
+      <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)]">
+        <ShieldAlert className="w-16 h-16 text-destructive mb-4" />
+        <h1 className="text-2xl font-bold text-foreground mb-2">Access Denied</h1>
+        <p className="text-muted-foreground">You do not have permission to view this page.</p>
+        <Button asChild className="mt-6">
+          <Link href="/dashboard">Go to Dashboard</Link>
+        </Button>
+      </div>
+    );
+  }
 
   const onSettingsSubmit = (data: SettingsFormData) => {
     const updatedSettings: BlogGenerationSettings = {
@@ -59,7 +74,6 @@ export default function AdminBlogSettingsPage() {
       style: data.style,
     };
     setSettings(updatedSettings);
-    // In a real app, save this to backend:
     Object.assign(sampleBlogGenerationSettings, updatedSettings); 
     toast({ title: "Settings Saved", description: "AI blog generation settings have been updated." });
   };
@@ -74,7 +88,6 @@ export default function AdminBlogSettingsPage() {
       const input: GenerateAiBlogPostInput = {
         topic: manualTopic,
         style: settings.style,
-        // targetAudience and keywords could be added to settings UI if needed
       };
       const blogOutput = await generateAiBlogPost(input);
       
@@ -94,7 +107,7 @@ export default function AdminBlogSettingsPage() {
         comments: [],
       };
       
-      sampleBlogPosts.unshift(newPost); // Add to global sample data
+      sampleBlogPosts.unshift(newPost); 
       
       const updatedSettings = { ...settings, lastGenerated: new Date().toISOString() };
       setSettings(updatedSettings);
@@ -230,4 +243,3 @@ export default function AdminBlogSettingsPage() {
     </div>
   );
 }
-

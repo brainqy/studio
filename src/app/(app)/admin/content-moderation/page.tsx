@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -14,31 +14,52 @@ import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 
 export default function ContentModerationPage() {
-  // In a real app, posts state would be managed globally or fetched.
-  // For this example, we use a local state derived from sample data.
-  // Actions here are mocked with toasts; actual state changes should occur on CommunityFeedPage or via a shared service.
-  const [posts, setPosts] = useState<CommunityPost[]>(sampleCommunityPosts);
+  const currentUser = sampleUserProfile;
   const { toast } = useToast();
+  
+  // Initial posts state based on role
+  const [posts, setPosts] = useState<CommunityPost[]>(
+    currentUser.role === 'admin' 
+      ? sampleCommunityPosts 
+      : sampleCommunityPosts.filter(p => p.tenantId === currentUser.tenantId)
+  );
+
+  // Update posts if the global sample data changes (for demo purposes)
+  useEffect(() => {
+     setPosts(
+      currentUser.role === 'admin' 
+        ? sampleCommunityPosts 
+        : sampleCommunityPosts.filter(p => p.tenantId === currentUser.tenantId)
+    );
+  }, []); // Rerun if sampleCommunityPosts identity changes (won't for this setup, but good for real data)
+
 
   const flaggedPosts = useMemo(() => {
     return posts.filter(post => post.moderationStatus === 'flagged');
   }, [posts]);
 
-  // Mock actions for this page as direct state manipulation is complex without global state
   const handleApprove = (postId: string) => {
-    // This would ideally update the central posts state.
-    // For now, we filter it out from this view and show a toast.
-    setPosts(prev => prev.map(p => p.id === postId ? {...p, moderationStatus: 'visible', flagCount: 0} : p));
-    toast({ title: "Post Approved (Mock)", description: "Post marked as visible. Refresh Community Feed to see changes." });
+    const updateGlobalAndLocal = (updater: (p: CommunityPost) => CommunityPost) => {
+        const globalIndex = sampleCommunityPosts.findIndex(p => p.id === postId);
+        if (globalIndex !== -1) sampleCommunityPosts[globalIndex] = updater(sampleCommunityPosts[globalIndex]);
+        setPosts(prev => prev.map(p => p.id === postId ? updater(p) : p));
+    };
+    updateGlobalAndLocal(p => ({...p, moderationStatus: 'visible', flagCount: 0}));
+    toast({ title: "Post Approved", description: "Post marked as visible. Refresh Community Feed to see changes." });
   };
 
   const handleRemove = (postId: string) => {
-    setPosts(prev => prev.map(p => p.id === postId ? {...p, moderationStatus: 'removed'} : p));
-    toast({ title: "Post Removed (Mock)", description: "Post marked as removed. Refresh Community Feed to see changes.", variant: "destructive" });
+     const updateGlobalAndLocal = (updater: (p: CommunityPost) => CommunityPost) => {
+        const globalIndex = sampleCommunityPosts.findIndex(p => p.id === postId);
+        if (globalIndex !== -1) sampleCommunityPosts[globalIndex] = updater(sampleCommunityPosts[globalIndex]);
+        setPosts(prev => prev.map(p => p.id === postId ? updater(p) : p));
+    };
+    updateGlobalAndLocal(p => ({...p, moderationStatus: 'removed'}));
+    toast({ title: "Post Removed", description: "Post marked as removed. Refresh Community Feed to see changes.", variant: "destructive" });
   };
 
 
-  if (sampleUserProfile.role !== 'admin') {
+  if (currentUser.role !== 'admin' && currentUser.role !== 'manager') {
     return (
         <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)]">
             <ShieldAlert className="w-16 h-16 text-destructive mb-4" />
@@ -54,9 +75,9 @@ export default function ContentModerationPage() {
   return (
     <div className="space-y-8">
       <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
-        <ShieldAlert className="h-8 w-8" /> Content Moderation
+        <ShieldAlert className="h-8 w-8" /> Content Moderation {currentUser.role === 'manager' && `(Tenant: ${currentUser.tenantId})`}
       </h1>
-      <CardDescription>Review and manage posts flagged by users or AI.</CardDescription>
+      <CardDescription>Review and manage posts flagged by users or AI{currentUser.role === 'manager' && ' within your tenant'}.</CardDescription>
 
       <Card className="shadow-lg">
         <CardHeader>
@@ -64,7 +85,7 @@ export default function ContentModerationPage() {
         </CardHeader>
         <CardContent>
           {flaggedPosts.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">No posts are currently flagged for review.</p>
+            <p className="text-center text-muted-foreground py-8">No posts are currently flagged for review{currentUser.role === 'manager' && ' in your tenant'}.</p>
           ) : (
             <Table>
               <TableHeader>

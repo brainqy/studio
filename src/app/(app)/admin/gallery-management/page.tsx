@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -20,13 +20,14 @@ import { format, parseISO } from "date-fns";
 import { DatePicker } from "@/components/ui/date-picker";
 import Image from "next/image";
 import Link from "next/link";
+import { Checkbox } from "@/components/ui/checkbox";
 
 
 const galleryEventSchema = z.object({
   id: z.string().optional(),
   title: z.string().min(3, "Title must be at least 3 characters"),
   date: z.date({ required_error: "Event date is required." }),
-  imageUrls: z.string().min(1, "At least one image URL is required (comma-separated if multiple)."), // Changed from imageUrl
+  imageUrls: z.string().min(1, "At least one image URL is required (comma-separated if multiple)."),
   description: z.string().optional(),
   dataAiHint: z.string().optional(),
   isPlatformGlobal: z.boolean().default(false),
@@ -35,18 +36,31 @@ const galleryEventSchema = z.object({
 type GalleryEventFormData = z.infer<typeof galleryEventSchema>;
 
 export default function GalleryManagementPage() {
-  const [events, setEvents] = useState<GalleryEvent[]>(sampleEvents);
+  const currentUser = sampleUserProfile;
+  const { toast } = useToast();
+
+  const [events, setEvents] = useState<GalleryEvent[]>(
+    currentUser.role === 'admin'
+      ? sampleEvents
+      : sampleEvents.filter(e => e.tenantId === currentUser.tenantId)
+  );
   const [isFormDialogOpen, setIsFormDialogOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<GalleryEvent | null>(null);
-  const { toast } = useToast();
-  const currentUser = sampleUserProfile;
+  
+  useEffect(() => {
+    setEvents(
+      currentUser.role === 'admin'
+        ? sampleEvents
+        : sampleEvents.filter(e => e.tenantId === currentUser.tenantId)
+    );
+  }, [currentUser.role, currentUser.tenantId]);
 
   const { control, handleSubmit, reset, setValue, formState: { errors } } = useForm<GalleryEventFormData>({
     resolver: zodResolver(galleryEventSchema),
     defaultValues: { isPlatformGlobal: false }
   });
   
-  if (currentUser.role !== 'admin') {
+  if (currentUser.role !== 'admin' && currentUser.role !== 'manager') {
     return (
         <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)]">
             <ShieldAlert className="w-16 h-16 text-destructive mb-4" />
@@ -60,22 +74,26 @@ export default function GalleryManagementPage() {
   }
 
   const onSubmitForm = (data: GalleryEventFormData) => {
+    const tenantForEvent = currentUser.role === 'admin' && data.isPlatformGlobal ? 'platform' : currentUser.tenantId || SAMPLE_TENANT_ID;
     const eventData: GalleryEvent = {
       title: data.title,
       date: data.date.toISOString(),
-      imageUrls: data.imageUrls.split(',').map(url => url.trim()).filter(url => url), // Split comma-separated string
+      imageUrls: data.imageUrls.split(',').map(url => url.trim()).filter(url => url),
       description: data.description,
       dataAiHint: data.dataAiHint,
       id: editingEvent ? editingEvent.id : `gallery-${Date.now()}`,
-      tenantId: data.isPlatformGlobal ? 'platform' : (currentUser.tenantId || SAMPLE_TENANT_ID),
+      tenantId: tenantForEvent,
       isPlatformGlobal: data.isPlatformGlobal,
     };
 
     if (editingEvent) {
       setEvents(prev => prev.map(e => e.id === editingEvent.id ? eventData : e));
+      const globalIndex = sampleEvents.findIndex(e => e.id === editingEvent.id);
+      if (globalIndex !== -1) sampleEvents[globalIndex] = eventData;
       toast({ title: "Gallery Event Updated", description: `Event "${data.title}" has been updated.` });
     } else {
       setEvents(prev => [eventData, ...prev]);
+      sampleEvents.unshift(eventData);
       toast({ title: "Gallery Event Created", description: `Event "${data.title}" has been added.` });
     }
     setIsFormDialogOpen(false);
@@ -85,7 +103,7 @@ export default function GalleryManagementPage() {
 
   const openNewEventDialog = () => {
     setEditingEvent(null);
-    reset({ title: '', imageUrls: '', description: '', dataAiHint: '', isPlatformGlobal: false });
+    reset({ title: '', imageUrls: '', description: '', dataAiHint: '', isPlatformGlobal: false, date: new Date() });
     setIsFormDialogOpen(true);
   };
 
@@ -93,15 +111,17 @@ export default function GalleryManagementPage() {
     setEditingEvent(event);
     setValue('title', event.title);
     setValue('date', parseISO(event.date));
-    setValue('imageUrls', event.imageUrls.join(', ')); // Join array to comma-separated string for textarea
+    setValue('imageUrls', event.imageUrls.join(', '));
     setValue('description', event.description || '');
     setValue('dataAiHint', event.dataAiHint || '');
-    setValue('isPlatformGlobal', event.tenantId === 'platform');
+    setValue('isPlatformGlobal', event.tenantId === 'platform' || event.isPlatformGlobal);
     setIsFormDialogOpen(true);
   };
 
   const handleDeleteEvent = (eventId: string) => {
     setEvents(prev => prev.filter(e => e.id !== eventId));
+    const globalIndex = sampleEvents.findIndex(e => e.id === eventId);
+    if (globalIndex !== -1) sampleEvents.splice(globalIndex, 1);
     toast({ title: "Gallery Event Deleted", description: "Event removed from gallery.", variant: "destructive" });
   };
 
@@ -110,7 +130,7 @@ export default function GalleryManagementPage() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
-          <GalleryVerticalEnd className="h-8 w-8" /> Event Gallery Management
+          <GalleryVerticalEnd className="h-8 w-8" /> Event Gallery Management {currentUser.role === 'manager' && `(Tenant: ${currentUser.tenantId})`}
         </h1>
         <Button onClick={openNewEventDialog} className="bg-primary hover:bg-primary/90 text-primary-foreground">
           <PlusCircle className="mr-2 h-5 w-5" /> Add New Event
@@ -162,14 +182,16 @@ export default function GalleryManagementPage() {
               <Label htmlFor="event-dataAiHint">AI Hint for Images (Optional)</Label>
               <Controller name="dataAiHint" control={control} render={({ field }) => <Input id="event-dataAiHint" placeholder="e.g., conference students" {...field} />} />
             </div>
-            <div className="flex items-center space-x-2">
-              <Controller name="isPlatformGlobal" control={control} render={({ field }) => (
-                <input type="checkbox" id="isPlatformGlobal" checked={field.value} onChange={field.onChange} className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary" />
-              )} />
-              <Label htmlFor="isPlatformGlobal" className="font-normal">
-                Show this event globally (not tied to specific tenant)
-              </Label>
-            </div>
+            {currentUser.role === 'admin' && (
+                <div className="flex items-center space-x-2">
+                <Controller name="isPlatformGlobal" control={control} render={({ field }) => (
+                    <Checkbox id="isPlatformGlobal" checked={field.value} onCheckedChange={field.onChange} className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary" />
+                )} />
+                <Label htmlFor="isPlatformGlobal" className="font-normal">
+                    Show this event globally (not tied to specific tenant)
+                </Label>
+                </div>
+            )}
             <DialogFooter>
               <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
               <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground">
@@ -186,7 +208,7 @@ export default function GalleryManagementPage() {
         </CardHeader>
         <CardContent>
           {events.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">No gallery events added yet.</p>
+            <p className="text-center text-muted-foreground py-8">No gallery events added yet{currentUser.role === 'manager' && ' for your tenant'}.</p>
           ) : (
             <Table>
               <TableHeader>
@@ -194,7 +216,7 @@ export default function GalleryManagementPage() {
                   <TableHead>Preview</TableHead>
                   <TableHead>Title</TableHead>
                   <TableHead>Date</TableHead>
-                  <TableHead>Tenant / Scope</TableHead>
+                  {currentUser.role === 'admin' && <TableHead>Tenant / Scope</TableHead>}
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -212,7 +234,7 @@ export default function GalleryManagementPage() {
                     </TableCell>
                     <TableCell className="font-medium">{event.title}</TableCell>
                     <TableCell>{format(parseISO(event.date), "MMM dd, yyyy")}</TableCell>
-                    <TableCell>{event.tenantId === 'platform' ? 'Platform Global' : `Tenant: ${event.tenantId}`}</TableCell>
+                    {currentUser.role === 'admin' && <TableCell>{event.tenantId === 'platform' ? 'Platform Global' : `Tenant: ${event.tenantId}`}</TableCell>}
                     <TableCell className="text-right space-x-2">
                       <Button variant="outline" size="sm" onClick={() => openEditEventDialog(event)}>
                         <Edit3 className="h-4 w-4" />

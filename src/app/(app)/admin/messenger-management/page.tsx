@@ -1,3 +1,4 @@
+
 "use client";
 
 import type React from 'react';
@@ -24,16 +25,16 @@ interface SurveyDefinitionListItem {
   name: string;
   description?: string;
   steps?: SurveyStep[];
+  tenantId?: string; // For scoping surveys
 }
 
 const initialSurveyDefinitions: SurveyDefinitionListItem[] = [
-    { id: 'initialFeedbackSurvey', name: 'Initial User Feedback', description: 'Gather first impressions from users.', steps: [] /* Loaded by FloatingMessenger */ },
-    { id: 'profileCompletionSurvey', name: 'Profile Completion Survey', description: 'Guide users to complete their profile.', steps: profileCompletionSurveyDefinition },
+    { id: 'initialFeedbackSurvey', name: 'Initial User Feedback', description: 'Gather first impressions from users.', steps: [] /* Loaded by FloatingMessenger */, tenantId: 'platform' },
+    { id: 'profileCompletionSurvey', name: 'Profile Completion Survey', description: 'Guide users to complete their profile.', steps: profileCompletionSurveyDefinition, tenantId: 'platform' },
 ];
 
-// For creating new steps in the dialog
 interface NewSurveyOption extends SurveyOptionType {
-  tempId: string; // For UI key
+  tempId: string; 
 }
 interface NewSurveyStep extends Omit<SurveyStep, 'options' | 'dropdownOptions'> {
   options?: NewSurveyOption[];
@@ -42,30 +43,34 @@ interface NewSurveyStep extends Omit<SurveyStep, 'options' | 'dropdownOptions'> 
 
 
 export default function MessengerManagementPage() {
-  const [surveyDefinitionsState, setSurveyDefinitionsState] = useState<SurveyDefinitionListItem[]>(initialSurveyDefinitions);
-  const [surveyResponses, setSurveyResponses] = useState<SurveyResponse[]>(sampleSurveyResponses);
+  const currentUser = sampleUserProfile;
+  const { toast } = useToast();
+
+  const [surveyDefinitionsState, setSurveyDefinitionsState] = useState<SurveyDefinitionListItem[]>(
+      currentUser.role === 'admin' ? initialSurveyDefinitions : initialSurveyDefinitions.filter(s => s.tenantId === 'platform' || s.tenantId === currentUser.tenantId)
+  );
+  const [surveyResponses, setSurveyResponses] = useState<SurveyResponse[]>(
+      currentUser.role === 'admin' ? sampleSurveyResponses : sampleSurveyResponses.filter(sr => surveyDefinitionsState.find(sds => sds.id === sr.surveyId && (sds.tenantId === 'platform' || sds.tenantId === currentUser.tenantId)))
+  );
+
   const [selectedResponse, setSelectedResponse] = useState<SurveyResponse | null>(null);
   const [isResponseDetailOpen, setIsResponseDetailOpen] = useState(false);
   const [isCreateSurveyOpen, setIsCreateSurveyOpen] = useState(false);
-  const [activeSurveyId, setActiveSurveyId] = useState<string>(initialSurveyDefinitions[0].id);
   
-  // State for new survey dialog stepper
-  const [surveyCreationDialogStep, setSurveyCreationDialogStep] = useState(0); // 0: Details, 1: Add Steps
+  const defaultActiveSurveyId = surveyDefinitionsState.length > 0 ? surveyDefinitionsState[0].id : '';
+  const [activeSurveyId, setActiveSurveyId] = useState<string>(defaultActiveSurveyId);
+  
+  const [surveyCreationDialogStep, setSurveyCreationDialogStep] = useState(0); 
   const [newSurveyName, setNewSurveyName] = useState('');
   const [newSurveyDescription, setNewSurveyDescription] = useState('');
   const [newSurveySteps, setNewSurveySteps] = useState<SurveyStep[]>([]);
   
-  // State for configuring a single step within the dialog
   const [currentStepTypeToAdd, setCurrentStepTypeToAdd] = useState<SurveyStep['type'] | null>(null);
   const [currentStepConfig, setCurrentStepConfig] = useState<Partial<NewSurveyStep>>({});
   const [currentStepOptions, setCurrentStepOptions] = useState<NewSurveyOption[]>([]);
   const [currentStepDropdownOptions, setCurrentStepDropdownOptions] = useState<{tempId: string, label: string, value: string}[]>([]);
 
-
-  const { toast } = useToast();
-  const currentUser = sampleUserProfile;
-
-  if (currentUser.role !== 'admin') {
+  if (currentUser.role !== 'admin' && currentUser.role !== 'manager') {
     return (
         <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)]">
             <ShieldAlert className="w-16 h-16 text-destructive mb-4" />
@@ -113,11 +118,13 @@ export default function MessengerManagementPage() {
       id: `survey-${Date.now()}`, 
       name: newSurveyName, 
       description: newSurveyDescription, 
-      steps: newSurveySteps 
+      steps: newSurveySteps,
+      tenantId: currentUser.role === 'manager' ? currentUser.tenantId : 'platform', // Scope to tenant if manager creates
     };
     
+    initialSurveyDefinitions.push(newSurvey); // Add to global sample data
     setSurveyDefinitionsState(prev => [...prev, newSurvey]);
-    toast({ title: "Survey Created", description: `Survey "${newSurveyName}" has been added to the list.` });
+    toast({ title: "Survey Created", description: `Survey "${newSurveyName}" has been added.` });
     
     resetSurveyCreationForm();
     setIsCreateSurveyOpen(false);
@@ -208,7 +215,7 @@ export default function MessengerManagementPage() {
   };
 
   const handleNextSurveyStep = () => {
-    if (surveyCreationDialogStep === 0) { // Validating Survey Details
+    if (surveyCreationDialogStep === 0) { 
         if (!newSurveyName.trim()) {
             toast({title: "Error", description: "Survey name is required to proceed.", variant: "destructive"});
             return;
@@ -221,12 +228,11 @@ export default function MessengerManagementPage() {
   return (
     <div className="space-y-8">
       <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
-        <BotMessageSquare className="h-8 w-8" /> Messenger & Survey Management
+        <BotMessageSquare className="h-8 w-8" /> Messenger & Survey Management {currentUser.role === 'manager' && `(Tenant: ${currentUser.tenantId})`}
       </h1>
       <CardDescription>Oversee automated messenger interactions, manage surveys, and analyze user feedback.</CardDescription>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Stat Cards */}
         <Card className="shadow-md">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Responses</CardTitle>
@@ -234,7 +240,7 @@ export default function MessengerManagementPage() {
             </CardHeader>
             <CardContent>
                 <div className="text-2xl font-bold">{totalResponses}</div>
-                <p className="text-xs text-muted-foreground">Across all surveys</p>
+                <p className="text-xs text-muted-foreground">Across {currentUser.role === 'manager' ? 'tenant' : 'all'} surveys</p>
             </CardContent>
         </Card>
         <Card className="shadow-md">
@@ -244,7 +250,7 @@ export default function MessengerManagementPage() {
             </CardHeader>
             <CardContent>
                 <div className="text-2xl font-bold">{totalSurveysDeployed}</div>
-                <p className="text-xs text-muted-foreground">Defined surveys</p>
+                <p className="text-xs text-muted-foreground">{currentUser.role === 'manager' ? 'Tenant & Platform' : 'Platform-wide'}</p>
             </CardContent>
         </Card>
          <Card className="shadow-md">
@@ -270,7 +276,6 @@ export default function MessengerManagementPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Survey Config Card */}
         <Card className="shadow-lg lg:col-span-1">
           <CardHeader>
             <CardTitle>Survey Configuration</CardTitle>
@@ -285,7 +290,7 @@ export default function MessengerManagementPage() {
                 </SelectTrigger>
                 <SelectContent>
                   {surveyDefinitionsState.map(survey => (
-                    <SelectItem key={survey.id} value={survey.id}>{survey.name}</SelectItem>
+                    <SelectItem key={survey.id} value={survey.id}>{survey.name} {survey.tenantId && survey.tenantId !== 'platform' ? `(Tenant: ${survey.tenantId.substring(0,6)}...)` : '(Platform)'}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -304,7 +309,7 @@ export default function MessengerManagementPage() {
                 </DialogHeader>
                 <ScrollArea className="max-h-[70vh] p-1">
                   <div className="space-y-4 py-4 pr-4">
-                    {surveyCreationDialogStep === 0 && ( // Step 1: Survey Details
+                    {surveyCreationDialogStep === 0 && ( 
                       <>
                         <div>
                           <Label htmlFor="new-survey-name">Survey Name <span className="text-destructive">*</span></Label>
@@ -316,7 +321,7 @@ export default function MessengerManagementPage() {
                         </div>
                       </>
                     )}
-                    {surveyCreationDialogStep === 1 && ( // Step 2: Add Steps
+                    {surveyCreationDialogStep === 1 && ( 
                       <>
                         <div className="border-t pt-4 mt-4">
                           <h3 className="text-lg font-medium mb-2">Define Survey Steps</h3>
@@ -422,7 +427,6 @@ export default function MessengerManagementPage() {
           </CardContent>
         </Card>
         
-        {/* Profile Completion Insights Card */}
         <Card className="shadow-lg lg:col-span-2">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2"><ListFilter className="h-5 w-5"/>Profile Completion Insights (Conceptual)</CardTitle>
@@ -451,7 +455,6 @@ export default function MessengerManagementPage() {
         </Card>
       </div>
 
-      {/* Survey Responses Table Card */}
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle>Survey Responses</CardTitle>
@@ -496,7 +499,6 @@ export default function MessengerManagementPage() {
         </CardContent>
       </Card>
 
-      {/* Response Detail Dialog */}
       <Dialog open={isResponseDetailOpen} onOpenChange={setIsResponseDetailOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -524,4 +526,3 @@ export default function MessengerManagementPage() {
     </div>
   );
 }
-

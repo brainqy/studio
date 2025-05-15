@@ -36,6 +36,9 @@ export default function TenantManagementPage() {
 
   const handleDeleteTenant = (tenantId: string) => {
     setTenants(prev => prev.filter(t => t.id !== tenantId));
+    // Also remove from global sample data for demo persistence
+    const index = sampleTenants.findIndex(t => t.id === tenantId);
+    if (index > -1) sampleTenants.splice(index, 1);
     toast({ title: "Tenant Deleted", description: `Tenant ${tenantId} deleted.`, variant: "destructive" });
   };
 
