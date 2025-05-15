@@ -1,14 +1,25 @@
 
 "use client";
 
-import { Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarSeparator, SidebarGroup, SidebarGroupLabel } from "@/components/ui/sidebar";
+import { Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarMenuItem, SidebarMenuButton, SidebarSeparator, SidebarGroup, SidebarGroupLabel } from "@/components/ui/sidebar";
 import { Aperture, Award, BarChart2, BookOpen, Briefcase, Building2, CalendarDays, FileText, GalleryVerticalEnd, GitFork, Gift, Handshake, History, Home, Layers3, ListChecks, MessageSquare, Settings, ShieldAlert, ShieldQuestion, User, Users, Wallet, Zap, UserCog, BotMessageSquare, Target, Users2, BookText as BookTextIcon, Activity, Edit, FileType, Brain, FilePlus2, Trophy, Settings2Icon, Puzzle as PuzzleIcon, Mic, Server, Megaphone } from "lucide-react"; 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { sampleUserProfile } from "@/lib/sample-data"; 
 
 const navItems = [
+  { href: "/community-feed", label: "Community Feed", icon: MessageSquare },
   { href: "/dashboard", label: "Dashboard", icon: Home },
+  {
+    label: "Alumni Network",
+    icon: Handshake, 
+    subItems: [
+      { href: "/alumni-connect", label: "Search Alumni", icon: Users },
+    ]
+  },
+  { href: "/job-board", label: "Job Board", icon: Aperture },
+  { href: "/job-tracker", label: "Job Tracker", icon: Briefcase },
+  { href: "/interview-prep", label: "Practice Hub", icon: Brain }, 
   {
     label: "AI Tools", 
     icon: Zap,
@@ -21,17 +32,6 @@ const navItems = [
   { href: "/my-resumes", label: "My Resumes", icon: Layers3 },
   { href: "/resume-builder", label: "Resume Builder", icon: FilePlus2 },
   { href: "/resume-templates", label: "Resume Templates", icon: Layers3 }, 
-  { href: "/job-tracker", label: "Job Tracker", icon: Briefcase },
-  { href: "/interview-prep", label: "Practice Hub", icon: Brain }, 
-  {
-    label: "Alumni Network",
-    icon: Handshake, 
-    subItems: [
-      { href: "/alumni-connect", label: "Search Alumni", icon: Users },
-    ]
-  },
-  { href: "/job-board", label: "Job Board", icon: Aperture },
-  { href: "/community-feed", label: "Community Feed", icon: MessageSquare },
   { href: "/events", label: "Events Registration", icon: CalendarDays },
   { href: "/gallery", label: "Event Gallery", icon: GalleryVerticalEnd },
   { href: "/activity-log", label: "Activity Log", icon: BarChart2 },
@@ -50,7 +50,7 @@ const gamificationItems = [
   { href: "/gamification", label: "Rewards & Badges", icon: Award },
   { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
   { href: "/referrals", label: "Referrals", icon: Gift },
-  { href: "/affiliates", label: "Affiliates Program", icon: Target },
+  { href: "/affiliates", label: "Affiliates Program", icon: Target, adminOnly: true },
 ];
 
 const blogItems = [

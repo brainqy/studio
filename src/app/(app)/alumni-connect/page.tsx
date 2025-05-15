@@ -14,8 +14,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogC
 import { Textarea } from "@/components/ui/textarea";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, Search, Briefcase, GraduationCap, MessageSquare, Eye, CalendarDays, Coins, Filter as FilterIcon, User as UserIcon, Mail, CalendarPlus, Star, ChevronLeft, ChevronRight } from "lucide-react";
-import { sampleAlumni } from "@/lib/sample-data";
+import { Users, Search, Briefcase, GraduationCap, MessageSquare, Eye, CalendarDays, Coins, Filter as FilterIcon, User as UserIcon, Mail, CalendarPlus, Star, ChevronLeft, ChevronRight, Edit3 } from "lucide-react";
+import { sampleAlumni, sampleUserProfile } from "@/lib/sample-data";
 import type { AlumniProfile, PreferredTimeSlot } from "@/types";
 import { PreferredTimeSlots } from "@/types";
 import { useToast } from '@/hooks/use-toast';
@@ -25,6 +25,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
 import Image from "next/image";
+import { Switch } from '@/components/ui/switch'; 
 
 const bookingSchema = z.object({
   purpose: z.string().min(10, "Purpose must be at least 10 characters."),
@@ -35,9 +36,11 @@ const bookingSchema = z.object({
 type BookingFormData = z.infer<typeof bookingSchema>;
 
 export default function AlumniConnectPage() {
+  const [allAlumniData, setAllAlumniData] = useState<AlumniProfile[]>(sampleAlumni);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filteredAlumni, setFilteredAlumni] = useState<AlumniProfile[]>(sampleAlumni);
+  const [filteredAlumni, setFilteredAlumni] = useState<AlumniProfile[]>(allAlumniData);
   const { toast } = useToast();
+  const currentUser = sampleUserProfile;
 
   const [selectedCompanies, setSelectedCompanies] = useState<Set<string>>(new Set());
   const [selectedSkills, setSelectedSkills] = useState<Set<string>>(new Set());
@@ -55,13 +58,13 @@ export default function AlumniConnectPage() {
     }
   });
 
-  const distinguishedAlumni = useMemo(() => sampleAlumni.filter(a => a.isDistinguished), []);
-  const uniqueCompanies = useMemo(() => Array.from(new Set(sampleAlumni.map(a => a.company))).sort(), []);
-  const uniqueSkills = useMemo(() => Array.from(new Set(sampleAlumni.flatMap(a => a.skills))).sort(), []);
-  const uniqueUniversities = useMemo(() => Array.from(new Set(sampleAlumni.map(a => a.university))).sort(), []);
+  const distinguishedAlumni = useMemo(() => allAlumniData.filter(a => a.isDistinguished), [allAlumniData]);
+  const uniqueCompanies = useMemo(() => Array.from(new Set(allAlumniData.map(a => a.company))).sort(), [allAlumniData]);
+  const uniqueSkills = useMemo(() => Array.from(new Set(allAlumniData.flatMap(a => a.skills))).sort(), [allAlumniData]);
+  const uniqueUniversities = useMemo(() => Array.from(new Set(allAlumniData.map(a => a.university))).sort(), [allAlumniData]);
 
   useEffect(() => {
-    let results = sampleAlumni;
+    let results = allAlumniData;
     if (searchTerm) {
       results = results.filter(alumni => 
         alumni.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -78,7 +81,7 @@ export default function AlumniConnectPage() {
       results = results.filter(alumni => selectedUniversities.has(alumni.university));
     }
     setFilteredAlumni(results);
-  }, [searchTerm, selectedCompanies, selectedSkills, selectedUniversities]);
+  }, [searchTerm, selectedCompanies, selectedSkills, selectedUniversities, allAlumniData]);
 
   const handleFilterChange = (filterSet: Set<string>, item: string, setter: React.Dispatch<React.SetStateAction<Set<string>>>) => {
     const newSet = new Set(filterSet);
@@ -121,6 +124,23 @@ export default function AlumniConnectPage() {
     });
     setIsBookingDialogOpen(false);
   };
+
+  const handleToggleDistinguished = (alumniId: string, currentStatus: boolean | undefined) => {
+    const isCurrentlyDistinguished = currentStatus || false;
+    // Update the global sampleAlumni (for demo persistence across app)
+    const globalAlumniIndex = sampleAlumni.findIndex(a => a.id === alumniId);
+    if (globalAlumniIndex !== -1) {
+        sampleAlumni[globalAlumniIndex].isDistinguished = !isCurrentlyDistinguished;
+    }
+
+    // Update the local state for immediate UI refresh
+    setAllAlumniData(prevAlumni =>
+        prevAlumni.map(a =>
+            a.id === alumniId ? { ...a, isDistinguished: !isCurrentlyDistinguished } : a
+        )
+    );
+    toast({ title: "Status Updated", description: `Alumnus marked as ${!isCurrentlyDistinguished ? "distinguished" : "not distinguished"}.` });
+  };
   
   const renderTags = (tags: string[] | undefined, maxVisible: number = 3) => {
     if (!tags || tags.length === 0) return <p className="text-xs text-muted-foreground">N/A</p>;
@@ -158,7 +178,7 @@ export default function AlumniConnectPage() {
             <Carousel
               opts={{
                 align: "start",
-                loop: distinguishedAlumni.length > 2, // Loop if more than 2 items visible
+                loop: distinguishedAlumni.length > 2, 
               }}
               className="w-full"
             >
@@ -310,6 +330,16 @@ export default function AlumniConnectPage() {
                 </div>
                  <p className="text-xs text-muted-foreground mb-1 line-clamp-2">{alumni.shortBio}</p>
                  <p className="text-xs text-muted-foreground mb-3"><GraduationCap className="inline h-3 w-3 mr-1"/>{alumni.university}</p>
+                  {currentUser.role === 'manager' && alumni.tenantId === currentUser.tenantId && (
+                    <div className="flex items-center space-x-2 my-2 p-2 border-t border-b">
+                      <Switch
+                        id={`distinguished-${alumni.id}`}
+                        checked={alumni.isDistinguished}
+                        onCheckedChange={() => handleToggleDistinguished(alumni.id, alumni.isDistinguished)}
+                      />
+                      <Label htmlFor={`distinguished-${alumni.id}`} className="text-xs font-normal">Mark as Distinguished</Label>
+                    </div>
+                  )}
               </CardContent>
               <CardFooter className="border-t pt-4 mt-auto flex flex-col space-y-2">
                 <div className="flex w-full justify-between items-center">
@@ -405,3 +435,4 @@ export default function AlumniConnectPage() {
     </div>
   );
 }
+
