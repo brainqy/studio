@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { RecentPageItem } from '@/types';
@@ -22,17 +23,13 @@ export function addRecentPage(path: string, label: string): void {
   if (typeof window === 'undefined') {
     return;
   }
-  // Do not add auth pages or the landing page to recent history
   if (path.startsWith('/auth') || path === '/') {
     return;
   }
   try {
     let currentPages = getRecentPages();
-    // Remove if already exists to move to top
     currentPages = currentPages.filter(page => page.path !== path);
-    // Add new page to the beginning
     currentPages.unshift({ path, label, timestamp: Date.now() });
-    // Trim to max size
     const updatedPages = currentPages.slice(0, MAX_RECENT_PAGES);
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedPages));
   } catch (error) {
@@ -40,14 +37,12 @@ export function addRecentPage(path: string, label: string): void {
   }
 }
 
-// This map should ideally be more dynamic, perhaps generated from sidebar navigation items.
-// For now, it's a static map.
 const PATH_LABEL_MAP: Record<string, string> = {
   '/dashboard': 'Dashboard',
   '/resume-analyzer': 'Resume Analyzer',
   '/ai-resume-writer': 'AI Resume Writer',
   '/cover-letter-generator': 'Cover Letter Generator',
-  '/ai-mock-interview': 'AI Mock Interview', 
+  '/ai-mock-interview': 'AI Mock Interview',
   '/my-resumes': 'My Resumes',
   '/resume-builder': 'Resume Builder',
   '/resume-templates': 'Resume Templates',
@@ -66,11 +61,10 @@ const PATH_LABEL_MAP: Record<string, string> = {
   '/settings': 'Settings',
   '/documentation': 'Documentation',
   '/gamification': 'Rewards & Badges',
-  '/leaderboard': 'Leaderboard',
+  // '/leaderboard': 'Leaderboard', // Removed
   '/referrals': 'Referrals',
   '/affiliates': 'Affiliates Program',
   '/blog': 'Blog',
-  // Admin paths
   '/admin/tenants': 'Tenant Management',
   '/admin/tenant-onboarding': 'Tenant Onboarding',
   '/admin/user-management': 'User Management',
@@ -83,12 +77,11 @@ const PATH_LABEL_MAP: Record<string, string> = {
 };
 
 export function getLabelForPath(path: string): string {
-  // Handle dynamic blog post paths
   if (path.startsWith('/blog/')) {
     const slug = path.substring('/blog/'.length);
-    // Capitalize first letter of each word in slug for a nicer label
     const title = slug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
     return `Blog: ${title}`;
   }
-  return PATH_LABEL_MAP[path] || path; // Fallback to path if no label found
+  return PATH_LABEL_MAP[path] || path;
 }
+

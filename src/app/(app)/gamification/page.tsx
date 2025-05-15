@@ -3,12 +3,16 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Award, Flame, Star, CheckCircle } from "lucide-react";
-import { sampleUserProfile, sampleBadges } from "@/lib/sample-data";
+import { Award, Flame, Star, CheckCircle, Trophy, UserCircle } from "lucide-react"; // Added Trophy, UserCircle
+import { sampleUserProfile, sampleBadges, samplePlatformUsers } from "@/lib/sample-data"; // Added samplePlatformUsers
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import * as React from "react";
-import * as LucideIcons from "lucide-react"; // Import all icons
+import * as LucideIcons from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button"; // Added Button for potential pagination
+import { useState, useEffect, useMemo } from "react"; // Added useState, useEffect, useMemo
 
 type IconName = keyof typeof LucideIcons;
 
@@ -16,7 +20,6 @@ function DynamicIcon({ name, ...props }: { name: IconName } & LucideIcons.Lucide
   const IconComponent = LucideIcons[name] as React.ElementType;
 
   if (!IconComponent) {
-    // Return a default icon or null if the name is invalid
     return <LucideIcons.HelpCircle {...props} />;
   }
 
@@ -26,14 +29,29 @@ function DynamicIcon({ name, ...props }: { name: IconName } & LucideIcons.Lucide
 
 export default function GamificationPage() {
   const user = sampleUserProfile;
-  const badges = sampleBadges; // Use all sample badges
+  const badges = sampleBadges;
 
-  // Determine which badges the user has earned
   const earnedBadges = badges.filter(badge => user.earnedBadges?.includes(badge.id));
   const notEarnedBadges = badges.filter(badge => !user.earnedBadges?.includes(badge.id));
 
-  const xpLevel = Math.floor((user.xpPoints || 0) / 1000) + 1; // Example: 1000 XP per level
-  const xpProgress = ((user.xpPoints || 0) % 1000) / 10; // Example: Progress within the current level (percentage)
+  const xpLevel = Math.floor((user.xpPoints || 0) / 1000) + 1;
+  const xpProgress = ((user.xpPoints || 0) % 1000) / 10;
+
+  const [leaderboardUsers, setLeaderboardUsers] = useState<UserProfile[]>([]);
+
+  useEffect(() => {
+    const sortedUsers = [...samplePlatformUsers]
+      .filter(u => typeof u.xpPoints === 'number' && u.xpPoints > 0)
+      .sort((a, b) => (b.xpPoints || 0) - (a.xpPoints || 0));
+    setLeaderboardUsers(sortedUsers.slice(0, 10)); // Show top 10
+  }, []);
+
+  const getRankIcon = (rank: number) => {
+    if (rank === 1) return <Trophy className="h-5 w-5 text-yellow-500" />;
+    if (rank === 2) return <Award className="h-5 w-5 text-gray-400" />; // Using Award as a placeholder for silver
+    if (rank === 3) return <Star className="h-5 w-5 text-orange-400" />; // Using Star as a placeholder for bronze
+    return <span className="text-sm font-medium w-5 text-center">{rank}</span>;
+  };
 
   return (
     <div className="space-y-8">
@@ -90,7 +108,6 @@ export default function GamificationPage() {
         <CardContent>
           <TooltipProvider>
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4">
-              {/* Earned Badges First */}
               {earnedBadges.map((badge) => (
                 <Tooltip key={badge.id}>
                   <TooltipTrigger asChild>
@@ -103,10 +120,10 @@ export default function GamificationPage() {
                   <TooltipContent>
                     <p className="font-semibold">{badge.name}</p>
                     <p className="text-xs text-muted-foreground">{badge.description}</p>
+                    {badge.xpReward && <p className="text-xs text-yellow-500">+{badge.xpReward} XP</p>}
                   </TooltipContent>
                 </Tooltip>
               ))}
-               {/* Not Earned Badges (Grayed Out) */}
               {notEarnedBadges.map((badge) => (
                  <Tooltip key={badge.id}>
                   <TooltipTrigger asChild>
@@ -118,6 +135,7 @@ export default function GamificationPage() {
                    <TooltipContent>
                     <p className="font-semibold">{badge.name}</p>
                     <p className="text-xs text-muted-foreground">{badge.description}</p>
+                    {badge.xpReward && <p className="text-xs text-yellow-500">+{badge.xpReward} XP</p>}
                      <p className="text-xs text-red-500 mt-1">(Not Yet Earned)</p>
                   </TooltipContent>
                 </Tooltip>
@@ -127,16 +145,53 @@ export default function GamificationPage() {
         </CardContent>
       </Card>
 
-       {/* Leaderboard Placeholder */}
        <Card className="shadow-lg">
             <CardHeader>
-                <CardTitle>Leaderboard (Coming Soon)</CardTitle>
-                <CardDescription>See how you rank among fellow alumni based on XP points.</CardDescription>
+                <CardTitle className="flex items-center gap-2"><Trophy className="h-6 w-6 text-primary"/>Leaderboard</CardTitle>
+                <CardDescription>See how you rank among fellow alumni based on XP points (Top 10 shown).</CardDescription>
             </CardHeader>
-            <CardContent className="text-center text-muted-foreground py-8">
-                <p>Leaderboard feature is under development. Stay tuned!</p>
+            <CardContent>
+              {leaderboardUsers.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">Leaderboard data is currently being calculated. Check back soon!</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[80px] text-center">Rank</TableHead>
+                      <TableHead>User</TableHead>
+                      <TableHead className="text-right">XP Points</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {leaderboardUsers.map((lbUser, index) => (
+                      <TableRow key={lbUser.id} className={cn(index < 3 && "bg-secondary/50 font-semibold", lbUser.id === user.id && "bg-primary/10 border-l-2 border-primary")}>
+                        <TableCell className="text-center">
+                          <div className="flex items-center justify-center h-full">
+                            {getRankIcon(index + 1)}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-9 w-9">
+                              <AvatarImage src={lbUser.profilePictureUrl} alt={lbUser.name} data-ai-hint="person face"/>
+                              <AvatarFallback>
+                                {lbUser.name ? lbUser.name.substring(0, 1).toUpperCase() : <UserCircle />}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className={cn("font-medium", index < 3 && "text-primary")}>{lbUser.name} {lbUser.id === user.id && "(You)"}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right font-bold text-lg">
+                          {lbUser.xpPoints?.toLocaleString() || 0}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
         </Card>
     </div>
   );
 }
+

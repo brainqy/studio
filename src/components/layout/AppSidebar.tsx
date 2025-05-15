@@ -1,27 +1,21 @@
 
 "use client";
 
-import { Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarMenuItem, SidebarMenuButton, SidebarSeparator, SidebarGroup, SidebarGroupLabel, SidebarMenu } from "@/components/ui/sidebar"; // Added SidebarMenu
-import { Aperture, Award, BarChart2, BookOpen, Briefcase, Building2, CalendarDays, FileText, GalleryVerticalEnd, GitFork, Gift, Handshake, History, Home, Layers3, ListChecks, MessageSquare, Settings, ShieldAlert, ShieldQuestion, User, Users, Wallet, Zap, UserCog, BotMessageSquare, Target, Users2, BookText as BookTextIcon, Activity, Edit, FileType, Brain, FilePlus2, Trophy, Settings2Icon, Puzzle as PuzzleIcon, Mic, Server, Megaphone } from "lucide-react"; 
+import { Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarMenuItem, SidebarMenuButton, SidebarSeparator, SidebarGroup, SidebarGroupLabel, SidebarMenu } from "@/components/ui/sidebar";
+import { Aperture, Award, BarChart2, BookOpen, Briefcase, Building2, CalendarDays, FileText, GalleryVerticalEnd, GitFork, Gift, Handshake, History, Home, Layers3, ListChecks, MessageSquare, Settings, ShieldAlert, ShieldQuestion, User, Users, Wallet, Zap, UserCog, BotMessageSquare, Target, Users2, BookText as BookTextIcon, Activity, Edit, FileType, Brain, FilePlus2, Trophy, Settings2Icon, Puzzle as PuzzleIcon, Mic, Server, Megaphone } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { sampleUserProfile } from "@/lib/sample-data"; 
+import { sampleUserProfile } from "@/lib/sample-data";
 
 const navItems = [
   { href: "/community-feed", label: "Community Feed", icon: MessageSquare },
   { href: "/dashboard", label: "Dashboard", icon: Home },
-  {
-    label: "Alumni Network",
-    icon: Handshake, 
-    subItems: [
-      { href: "/alumni-connect", label: "Search Alumni", icon: Users },
-    ]
-  },
+  { href: "/alumni-connect", label: "Alumni Network", icon: Handshake },
   { href: "/job-board", label: "Job Board", icon: Aperture },
   { href: "/job-tracker", label: "Job Tracker", icon: Briefcase },
-  { href: "/interview-prep", label: "Practice Hub", icon: Brain }, 
+  { href: "/interview-prep", label: "Practice Hub", icon: Brain },
   {
-    label: "AI Tools", 
+    label: "AI Tools",
     icon: Zap,
     subItems: [
       { href: "/resume-analyzer", label: "Resume Analyzer", icon: Zap },
@@ -31,7 +25,7 @@ const navItems = [
   },
   { href: "/my-resumes", label: "My Resumes", icon: Layers3 },
   { href: "/resume-builder", label: "Resume Builder", icon: FilePlus2 },
-  { href: "/resume-templates", label: "Resume Templates", icon: Layers3 }, 
+  { href: "/resume-templates", label: "Resume Templates", icon: Layers3 },
   { href: "/events", label: "Events Registration", icon: CalendarDays },
   { href: "/gallery", label: "Event Gallery", icon: GalleryVerticalEnd },
   { href: "/activity-log", label: "Activity Log", icon: BarChart2 },
@@ -47,8 +41,7 @@ const utilityItems = [
 ];
 
 const gamificationItems = [
-  { href: "/gamification", label: "Rewards & Badges", icon: Award },
-  { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
+  { href: "/gamification", label: "Rewards & Badges", icon: Award }, // Leaderboard will be inside this page
   { href: "/referrals", label: "Referrals", icon: Gift },
   { href: "/affiliates", label: "Affiliates Program", icon: Target, adminOnly: true },
 ];
@@ -58,7 +51,7 @@ const blogItems = [
 ];
 
 const adminItems = [
-   { href: "/dashboard", label: "Admin Dashboard", icon: Activity }, 
+   { href: "/dashboard", label: "Admin Dashboard", icon: Activity },
    { href: "/admin/tenants", label: "Tenant Management", icon: Building2 },
    { href: "/admin/tenant-onboarding", label: "Tenant Onboarding", icon: Layers3 },
    { href: "/admin/user-management", label: "User Management", icon: UserCog },
@@ -74,13 +67,12 @@ const adminItems = [
 
 export function AppSidebar() {
   const pathname = usePathname();
-  const currentUser = sampleUserProfile; 
+  const currentUser = sampleUserProfile;
 
   const renderMenuItem = (item: any, isSubItem = false) => {
     const isActive = pathname === item.href || (item.href && item.href !== "/dashboard" && pathname.startsWith(item.href));
     const isAdminDashboardActive = item.href === "/dashboard" && item.label === "Admin Dashboard" && pathname === "/dashboard" && currentUser.role === 'admin';
 
-    // Hide adminOnly items if user is not admin
     if (item.adminOnly && currentUser.role !== 'admin') {
       return null;
     }
@@ -94,7 +86,7 @@ export function AppSidebar() {
               <span className={`${(isActive || isAdminDashboardActive) ? "text-sidebar-primary-foreground" : ""} group-data-[collapsible=icon]:hidden`}>{item.label}</span>
             </SidebarMenuButton>
            </Link>
-         ) : ( 
+         ) : (
            <SidebarMenuButton size={isSubItem ? "sm" : "default"} className="w-full justify-start cursor-default hover:bg-transparent group-data-[collapsible=icon]:justify-center">
               <item.icon className="h-5 w-5 text-sidebar-foreground/80" />
               <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
@@ -115,16 +107,16 @@ export function AppSidebar() {
       <SidebarContent className="p-2">
         <SidebarMenu>
           {navItems.map((item) =>
-            item.subItems && item.subItems.length > 0 ? ( 
+            item.subItems && item.subItems.length > 0 ? (
               <SidebarGroup key={item.label} className="p-0">
-                 {renderMenuItem(item, false)} 
+                 {renderMenuItem(item, false)}
                 <div className="pl-4 group-data-[collapsible=icon]:hidden">
                   <SidebarMenu>
                     {item.subItems.map(subItem => renderMenuItem(subItem, true))}
                   </SidebarMenu>
                 </div>
               </SidebarGroup>
-            ) : ( 
+            ) : (
               renderMenuItem(item)
             )
           )}
@@ -176,3 +168,4 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
+

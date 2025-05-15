@@ -25,7 +25,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
 import Image from "next/image";
-import { Switch } from '@/components/ui/switch'; 
+import { Switch } from '@/components/ui/switch';
 
 const bookingSchema = z.object({
   purpose: z.string().min(10, "Purpose must be at least 10 characters."),
@@ -38,7 +38,6 @@ type BookingFormData = z.infer<typeof bookingSchema>;
 export default function AlumniConnectPage() {
   const [allAlumniData, setAllAlumniData] = useState<AlumniProfile[]>(sampleAlumni);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filteredAlumni, setFilteredAlumni] = useState<AlumniProfile[]>(allAlumniData);
   const { toast } = useToast();
   const currentUser = sampleUserProfile;
 
@@ -48,7 +47,7 @@ export default function AlumniConnectPage() {
 
   const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
   const [alumniToBook, setAlumniToBook] = useState<AlumniProfile | null>(null);
-  
+
   const { control, handleSubmit: handleBookingSubmit, reset: resetBookingForm, formState: { errors: bookingErrors } } = useForm<BookingFormData>({
     resolver: zodResolver(bookingSchema),
     defaultValues: {
@@ -58,15 +57,19 @@ export default function AlumniConnectPage() {
     }
   });
 
+  useEffect(() => {
+    setAllAlumniData(sampleAlumni); // Ensure local state is in sync with potentially mutated global sample
+  }, []);
+
   const distinguishedAlumni = useMemo(() => allAlumniData.filter(a => a.isDistinguished), [allAlumniData]);
   const uniqueCompanies = useMemo(() => Array.from(new Set(allAlumniData.map(a => a.company))).sort(), [allAlumniData]);
   const uniqueSkills = useMemo(() => Array.from(new Set(allAlumniData.flatMap(a => a.skills))).sort(), [allAlumniData]);
   const uniqueUniversities = useMemo(() => Array.from(new Set(allAlumniData.map(a => a.university))).sort(), [allAlumniData]);
 
-  useEffect(() => {
+  const filteredAlumni = useMemo(() => {
     let results = allAlumniData;
     if (searchTerm) {
-      results = results.filter(alumni => 
+      results = results.filter(alumni =>
         alumni.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         alumni.currentJobTitle.toLowerCase().includes(searchTerm.toLowerCase())
       );
@@ -80,7 +83,7 @@ export default function AlumniConnectPage() {
     if (selectedUniversities.size > 0) {
       results = results.filter(alumni => selectedUniversities.has(alumni.university));
     }
-    setFilteredAlumni(results);
+    return results;
   }, [searchTerm, selectedCompanies, selectedSkills, selectedUniversities, allAlumniData]);
 
   const handleFilterChange = (filterSet: Set<string>, item: string, setter: React.Dispatch<React.SetStateAction<Set<string>>>) => {
@@ -104,7 +107,7 @@ export default function AlumniConnectPage() {
     setAlumniToBook(alumni);
     resetBookingForm({
       purpose: '',
-      preferredDate: new Date(), 
+      preferredDate: new Date(),
       preferredTimeSlot: PreferredTimeSlots[0],
       message: ''
     });
@@ -113,7 +116,7 @@ export default function AlumniConnectPage() {
 
   const onBookAppointmentSubmit = (data: BookingFormData) => {
     if (!alumniToBook) return;
-    
+
     toast({
       title: "Coins Deducted (Mock)",
       description: `${alumniToBook.appointmentCoinCost || 10} coins deducted from your wallet.`,
@@ -125,23 +128,33 @@ export default function AlumniConnectPage() {
     setIsBookingDialogOpen(false);
   };
 
-  const handleToggleDistinguished = (alumniId: string, currentStatus: boolean | undefined) => {
-    const isCurrentlyDistinguished = currentStatus || false;
+  const handleToggleDistinguished = (alumniId: string) => {
+    const alumniToUpdate = allAlumniData.find(a => a.id === alumniId);
+    if (!alumniToUpdate) return;
+
+    // Permission check: Admin can toggle anyone. Manager can only toggle alumni in their tenant.
+    if (currentUser.role !== 'admin' && (currentUser.role !== 'manager' || alumniToUpdate.tenantId !== currentUser.tenantId)) {
+      toast({ title: "Permission Denied", description: "You do not have permission to change this alumnus's distinguished status.", variant: "destructive" });
+      return;
+    }
+
+    const newDistinguishedStatus = !alumniToUpdate.isDistinguished;
+
     // Update the global sampleAlumni (for demo persistence across app)
     const globalAlumniIndex = sampleAlumni.findIndex(a => a.id === alumniId);
     if (globalAlumniIndex !== -1) {
-        sampleAlumni[globalAlumniIndex].isDistinguished = !isCurrentlyDistinguished;
+        sampleAlumni[globalAlumniIndex].isDistinguished = newDistinguishedStatus;
     }
 
     // Update the local state for immediate UI refresh
     setAllAlumniData(prevAlumni =>
         prevAlumni.map(a =>
-            a.id === alumniId ? { ...a, isDistinguished: !isCurrentlyDistinguished } : a
+            a.id === alumniId ? { ...a, isDistinguished: newDistinguishedStatus } : a
         )
     );
-    toast({ title: "Status Updated", description: `Alumnus marked as ${!isCurrentlyDistinguished ? "distinguished" : "not distinguished"}.` });
+    toast({ title: "Status Updated", description: `${alumniToUpdate.name} marked as ${newDistinguishedStatus ? "distinguished" : "not distinguished"}.` });
   };
-  
+
   const renderTags = (tags: string[] | undefined, maxVisible: number = 3) => {
     if (!tags || tags.length === 0) return <p className="text-xs text-muted-foreground">N/A</p>;
     const visibleTags = tags.slice(0, maxVisible);
@@ -178,7 +191,7 @@ export default function AlumniConnectPage() {
             <Carousel
               opts={{
                 align: "start",
-                loop: distinguishedAlumni.length > 2, 
+                loop: distinguishedAlumni.length > 2,
               }}
               className="w-full"
             >
@@ -235,8 +248,8 @@ export default function AlumniConnectPage() {
                   <div className="space-y-2">
                     {uniqueCompanies.map(company => (
                       <div key={company} className="flex items-center space-x-2">
-                        <Checkbox 
-                          id={`comp-${company}`} 
+                        <Checkbox
+                          id={`comp-${company}`}
                           checked={selectedCompanies.has(company)}
                           onCheckedChange={() => handleFilterChange(selectedCompanies, company, setSelectedCompanies)}
                         />
@@ -252,8 +265,8 @@ export default function AlumniConnectPage() {
                   <div className="space-y-2">
                     {uniqueSkills.map(skill => (
                       <div key={skill} className="flex items-center space-x-2">
-                        <Checkbox 
-                          id={`skill-${skill}`} 
+                        <Checkbox
+                          id={`skill-${skill}`}
                           checked={selectedSkills.has(skill)}
                           onCheckedChange={() => handleFilterChange(selectedSkills, skill, setSelectedSkills)}
                         />
@@ -269,8 +282,8 @@ export default function AlumniConnectPage() {
                   <div className="space-y-2">
                     {uniqueUniversities.map(uni => (
                       <div key={uni} className="flex items-center space-x-2">
-                        <Checkbox 
-                          id={`uni-${uni}`} 
+                        <Checkbox
+                          id={`uni-${uni}`}
                           checked={selectedUniversities.has(uni)}
                           onCheckedChange={() => handleFilterChange(selectedUniversities, uni, setSelectedUniversities)}
                         />
@@ -313,7 +326,7 @@ export default function AlumniConnectPage() {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="space-y-3 mb-4">
                   <div>
                     <h4 className="text-sm font-semibold mb-1">Skills:</h4>
@@ -330,12 +343,13 @@ export default function AlumniConnectPage() {
                 </div>
                  <p className="text-xs text-muted-foreground mb-1 line-clamp-2">{alumni.shortBio}</p>
                  <p className="text-xs text-muted-foreground mb-3"><GraduationCap className="inline h-3 w-3 mr-1"/>{alumni.university}</p>
-                  {currentUser.role === 'manager' && alumni.tenantId === currentUser.tenantId && (
+                 {(currentUser.role === 'admin' || currentUser.role === 'manager') && (
                     <div className="flex items-center space-x-2 my-2 p-2 border-t border-b">
                       <Switch
                         id={`distinguished-${alumni.id}`}
                         checked={alumni.isDistinguished}
-                        onCheckedChange={() => handleToggleDistinguished(alumni.id, alumni.isDistinguished)}
+                        onCheckedChange={() => handleToggleDistinguished(alumni.id)}
+                        disabled={currentUser.role === 'manager' && alumni.tenantId !== currentUser.tenantId}
                       />
                       <Label htmlFor={`distinguished-${alumni.id}`} className="text-xs font-normal">Mark as Distinguished</Label>
                     </div>
@@ -350,9 +364,9 @@ export default function AlumniConnectPage() {
                     <MessageSquare className="mr-1 h-4 w-4" /> Message
                   </Button>
                 </div>
-                <Button 
-                    variant="default" 
-                    size="sm" 
+                <Button
+                    variant="default"
+                    size="sm"
                     className="w-full bg-primary hover:bg-primary/90"
                     onClick={() => openBookingDialog(alumni)}
                   >
