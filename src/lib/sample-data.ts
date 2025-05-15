@@ -1,10 +1,8 @@
 
-
-
 import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem, Appointment, Wallet, ResumeProfile, Tenant, Badge, BlogPost, ReferralHistoryItem, GamificationRule, UserStatus, SurveyResponse, Affiliate, AffiliateClick, AffiliateSignup, AffiliateStatus, SurveyStep, ResumeTemplate, TourStep, CommunityComment, InterviewQuestion, InterviewQuestionCategory, BlogGenerationSettings, MockInterviewSession, InterviewQuestionDifficulty, InterviewQuestionUserComment, PracticeSession, PracticeSessionStatus, JobApplicationStatus, KanbanColumnId, PlatformSettings, Announcement, AnnouncementStatus, AnnouncementAudience } from '@/types';
 import { AreasOfSupport, AppointmentStatuses, Genders, DegreePrograms, Industries, TimeCommitments, EngagementModes, SupportTypesSought, JOB_APPLICATION_STATUSES, KANBAN_COLUMNS_CONFIG, PREDEFINED_INTERVIEW_TOPICS, PRACTICE_FOCUS_AREAS, ALL_CATEGORIES, ALL_DIFFICULTIES, MOCK_INTERVIEW_STEPS, RESUME_BUILDER_STEPS, PreferredTimeSlots, AnnouncementStatuses, AnnouncementAudiences } from '@/types'; 
 
-export const SAMPLE_TENANT_ID = 'tenant-1'; 
+export const SAMPLE_TENANT_ID = 'tenant-1'; // Default tenant for most sample data
 
 export let sampleJobApplications: JobApplication[] = [
   { id: '1', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', companyName: 'Tech Solutions Inc.', jobTitle: 'Software Engineer', status: 'Applied', dateApplied: '2024-07-01', notes: 'Applied via company portal.', location: 'Remote', resumeUsed: 'resume1', reminderDate: new Date(Date.now() + 86400000 * 7).toISOString(), applicationUrl: 'https://example.com/apply/job1' }, 
@@ -211,100 +209,84 @@ export const sampleJobOpenings: JobOpening[] = [
 ];
 
 export const sampleUserProfile: UserProfile = {
-  id: 'currentUser',
-  tenantId: SAMPLE_TENANT_ID,
-  role: 'admin', 
-  name: 'Alex Taylor (Admin)', 
-  email: 'admin@example.com', 
+  id: 'managerUser1', // Changed from 'currentUser'
+  tenantId: 'tenant-2', // Changed from SAMPLE_TENANT_ID
+  role: 'manager', // Role is now manager
+  name: 'Manager Mike', // Changed name
+  email: 'manager.mike@tenant2.com', // Changed email
   status: 'active',
   lastLogin: new Date().toISOString(),
-  dateOfBirth: '1990-05-20',
-  gender: 'Male',
-  mobileNumber: '+15550001111',
-  currentAddress: 'Admin HQ, Tech City, CA, USA',
-  graduationYear: '2012',
-  degreeProgram: 'Master of Business Administration (MBA)',
-  department: 'Business Administration',
-  currentJobTitle: 'Platform Administrator',
-  company: 'ResumeMatch AI', 
-  currentOrganization: 'ResumeMatch AI',
-  industry: 'IT/Software',
-  workLocation: 'Remote',
-  linkedInProfile: 'https://linkedin.com/in/alexadmin',
-  yearsOfExperience: '10',
-  skills: ['System Administration', 'User Management', 'Platform Configuration', 'Problem Solving', 'Data Analysis', 'Security Management'],
-  areasOfSupport: ['Startup/Business Mentorship', 'Organizing Alumni Events'],
-  timeCommitment: '5+ hours',
-  preferredEngagementMode: 'Online',
-  otherComments: 'Overseeing platform operations and enhancements.',
-  lookingForSupportType: 'General Networking',
-  helpNeededDescription: 'Always interested in connecting with industry leaders and innovators.',
+  dateOfBirth: '1985-08-15', // Example DOB
+  gender: 'Male', // Example Gender
+  mobileNumber: '+15552223333', // Example mobile
+  currentAddress: '123 Corporate Ave, Business City, TX, USA', // Example address
+  graduationYear: '2007', // Example graduation year
+  degreeProgram: 'Bachelor of Business Administration (BBA)', // Example degree
+  department: 'Management', // Example department
+  currentJobTitle: 'Engagement Lead', // Changed job title
+  company: 'Corporate Partner Inc.', // Changed company
+  currentOrganization: 'Corporate Partner Inc.', // Changed organization
+  industry: 'Consulting', // Example industry
+  workLocation: 'Dallas, TX', // Example work location
+  linkedInProfile: 'https://linkedin.com/in/managermike', // Example LinkedIn
+  yearsOfExperience: '15', // Example experience
+  skills: ['Team Leadership', 'Project Management', 'Alumni Relations', 'Strategic Planning', 'Communication'], // Changed skills
+  areasOfSupport: ['Mentoring Students', 'Sharing Job Referrals', 'Organizing Alumni Events'], // Example areas of support
+  timeCommitment: '3-5 hours', // Example time commitment
+  preferredEngagementMode: 'Online', // Example engagement mode
+  otherComments: 'Leading engagement initiatives and fostering alumni connections for Corporate Partner Inc.', // Changed comments
+  lookingForSupportType: 'General Networking', // Example support sought
+  helpNeededDescription: 'Interested in connecting with other managers and sharing best practices for alumni engagement.', // Example help needed
   shareProfileConsent: true, 
-  featureInSpotlightConsent: true,
-  shortBio: 'Experienced platform administrator dedicated to optimizing ResumeMatch AI for all users. With over 10 years in tech and system management, I focus on ensuring a seamless and valuable experience for our alumni network. My expertise lies in user support, platform configuration, and driving engagement through innovative features. I am passionate about leveraging technology to foster career growth and community connections. Available for strategic discussions on platform development and alumni engagement.',
-  university: 'Global Tech University', 
-  profilePictureUrl: 'https://picsum.photos/seed/alexadmin/200/200',
-  interests: ['Platform Scalability', 'AI in HR Tech', 'Community Building'],
-  offersHelpWith: [AreasOfSupport[4], AreasOfSupport[8]], 
-  appointmentCoinCost: 0, 
-  resumeText: `Alex Taylor (Admin)
-  Email: admin@example.com | LinkedIn: linkedin.com/in/alexadmin | Mobile: +15550001111
+  featureInSpotlightConsent: false,
+  shortBio: 'Dedicated Engagement Lead at Corporate Partner Inc., focused on maximizing alumni potential and fostering a strong professional network within Tenant-2. My expertise includes team leadership, project management, and strategic planning for alumni relations. Committed to creating valuable connections and opportunities for our members.', // Changed bio
+  university: 'Business School of Excellence', // Example university
+  profilePictureUrl: 'https://picsum.photos/seed/managermike/200/200', // Changed avatar
+  interests: ['Leadership Development', 'Corporate Strategy', 'Golf'], // Example interests
+  offersHelpWith: [AreasOfSupport[0], AreasOfSupport[2], AreasOfSupport[8]], // Example offers help with
+  appointmentCoinCost: 0, // Managers might not have a cost
+  resumeText: `Manager Mike
+  Email: manager.mike@tenant2.com | LinkedIn: linkedin.com/in/managermike | Mobile: +15552223333
 
   Summary:
-  Dynamic and results-driven Platform Administrator with over 10 years of experience in managing and scaling technology platforms. Proven ability in system administration, user support, feature implementation, and data-driven decision-making. Committed to enhancing user experience and fostering a vibrant online community. Strong leadership and problem-solving skills with a focus on security and operational excellence.
+  Results-oriented Engagement Lead with 15 years of experience in fostering alumni relations and driving community growth for Corporate Partner Inc. (Tenant-2). Expertise in strategic planning, team leadership, and project management. Passionate about creating impactful programs that connect alumni and enhance their professional development.
   
   Experience:
-  Platform Administrator, ResumeMatch AI (Present)
-  - Oversee all aspects of platform operations, including user management, tenant configurations, and feature deployment.
-  - Lead initiatives for platform improvement and new feature development based on user feedback and analytics.
-  - Manage security protocols, data integrity, and system performance.
-  - Collaborate with development and marketing teams to ensure platform goals are met.
+  Engagement Lead, Corporate Partner Inc. (Tenant-2) (Present)
+  - Spearhead alumni engagement strategies and initiatives for Tenant-2.
+  - Manage a team to organize networking events, mentorship programs, and communication campaigns.
+  - Develop and implement programs to increase alumni participation and satisfaction.
+  - Collaborate with stakeholders to align alumni activities with organizational goals.
   
-  Senior Systems Analyst, Tech Solutions Corp (Previous)
-  - Managed enterprise-level IT systems and provided advanced technical support.
-  - Led projects for system upgrades and migrations.
+  Senior Project Manager, Global Solutions Ltd. (Previous)
+  - Led cross-functional teams to deliver complex projects on time and within budget.
+  - Managed stakeholder expectations and communication across all project phases.
   
   Education:
-  Master of Business Administration (MBA), Global Tech University (2010 - 2012)
-  Bachelor of Science in Information Technology, State University (2004 - 2008)
+  Bachelor of Business Administration (BBA), Business School of Excellence (2003 - 2007)
   
   Skills:
-  Platform Management, System Administration, User Support, Project Management, Data Analysis, Security & Compliance, Cloud Infrastructure (AWS, Azure), Database Management (SQL, NoSQL), Agile Methodologies, Stakeholder Communication, Gamification Strategy, Community Moderation.
-  `,
-  careerInterests: 'Platform Strategy, Technology Leadership, Community Engagement, AI Ethics',
-  xpPoints: 10000,
-  dailyStreak: 50, 
-  longestStreak: 100, 
-  totalActiveDays: 500, 
-  weeklyActivity: [true, true, true, true, true, true, true], 
-  referralCode: 'ADMINREF123',
-  earnedBadges: ['profile-pro', 'analyzer-ace', 'networker', 'contributor', 'admin-master'],
-  affiliateCode: 'AFFADMIN001',
+  Team Leadership, Project Management, Alumni Relations, Strategic Planning, Stakeholder Management, Event Management, Communication, Public Speaking, Data Analysis (for engagement tracking).
+  `, // Changed resume text
+  careerInterests: 'Executive Leadership, Organizational Development, Alumni Network Growth', // Changed career interests
+  xpPoints: 3200, // Example XP
+  dailyStreak: 15, 
+  longestStreak: 40, 
+  totalActiveDays: 200, 
+  weeklyActivity: [true, false, true, true, false, true, true], 
+  referralCode: 'MANAGERMIKE1',
+  earnedBadges: ['networker', 'contributor', 'profile-pro'], // Example badges
+  affiliateCode: 'AFFMIKE789',
   pastInterviewSessions: [], 
-  interviewCredits: 10, 
-  createdAt: new Date(Date.now() - 86400000 * 1000).toISOString(), // ~3 years ago
+  interviewCredits: 5, // Managers might have fewer AI credits
+  createdAt: new Date(Date.now() - 86400000 * 90).toISOString(), // 3 months ago
 };
 
 
 export const samplePlatformUsers: UserProfile[] = [
   sampleUserProfile, 
   ...sampleAlumni.map(alumni => ({...alumni, company: alumni.company, currentJobTitle: alumni.currentJobTitle, shortBio: alumni.shortBio, university: alumni.university, skills: alumni.skills, email: alumni.email, role: alumni.role || 'user', status: alumni.status || 'active', lastLogin: alumni.lastLogin, interests: alumni.interests, offersHelpWith: alumni.offersHelpWith, appointmentCoinCost: alumni.appointmentCoinCost, xpPoints: alumni.xpPoints, createdAt: alumni.createdAt || new Date().toISOString() })),
-  {
-    id: 'managerUser1',
-    tenantId: 'tenant-2', // Belongs to Corporate Partner Inc.
-    role: 'manager',
-    name: 'Manager Mike',
-    email: 'manager.mike@tenant2.com',
-    status: 'active',
-    lastLogin: new Date().toISOString(),
-    currentJobTitle: 'Engagement Lead',
-    company: 'Corporate Partner Inc.',
-    skills: ['Team Leadership', 'Project Management', 'Alumni Relations'],
-    bio: 'Leading engagement initiatives for Corporate Partner Inc. alumni.',
-    profilePictureUrl: 'https://picsum.photos/seed/managermike/200/200',
-    xpPoints: 3200,
-    createdAt: new Date(Date.now() - 86400000 * 90).toISOString(), // 3 months ago
-  } as UserProfile, 
+  // This managerUser1 is now represented by sampleUserProfile
 ];
 
 
@@ -313,24 +295,26 @@ export const sampleAppointments: Appointment[] = [
     { id: 'appt2', tenantId: SAMPLE_TENANT_ID, requesterUserId: 'currentUser', alumniUserId: 'alumni2', title: 'Networking Call with Bob B.', dateTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 5).toISOString(), withUser: 'Bob The Builder (Manager)', status: 'Pending', costInCoins: 15, reminderDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 4).toISOString() },
     { id: 'appt3', tenantId: SAMPLE_TENANT_ID, requesterUserId: 'alumni3', alumniUserId: 'currentUser', title: 'Incoming Request: Career Advice', dateTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 0).toISOString(), withUser: 'Charlie Brown', status: 'Pending', costInCoins: 10, reminderDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 0).toISOString() }, 
     { id: 'appt4', tenantId: SAMPLE_TENANT_ID, requesterUserId: 'currentUser', alumniUserId: 'alumni4', title: 'Discuss Marketing Strategy', dateTime: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(), withUser: 'Diana Prince (Admin)', status: 'Completed', costInCoins: 20 },
+    { id: 'appt5', tenantId: 'tenant-2', requesterUserId: 'managerUser1', alumniUserId: 'someAlumniTenant2', title: 'Tenant 2 Strategy Meeting', dateTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 1).toISOString(), withUser: 'External Consultant', status: 'Confirmed', costInCoins: 0, reminderDate: new Date().toISOString() },
 ];
 
 export const sampleWalletBalance: Wallet = {
-    tenantId: SAMPLE_TENANT_ID,
-    userId: 'currentUser',
-    coins: 150,
+    tenantId: sampleUserProfile.tenantId, // Use the tenantId of the currently logged-in user
+    userId: sampleUserProfile.id, // Use the ID of the currently logged-in user
+    coins: sampleUserProfile.role === 'manager' ? 500 : 150, // Managers might have more coins or a different system
     transactions: [
-        { id: 'txn1', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', date: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(), description: 'Reward for profile completion', amount: 50, type: 'credit' },
-        { id: 'txn2', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', date: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString(), description: 'Used for premium report', amount: -20, type: 'debit' },
-        { id: 'txn3', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', date: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), description: 'Appointment booking fee (Alice W.)', amount: -10, type: 'debit' },
-        { id: 'txn4', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', date: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(), description: 'Daily login bonus', amount: 5, type: 'credit' },
+        { id: 'txn1', tenantId: sampleUserProfile.tenantId, userId: sampleUserProfile.id, date: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(), description: 'Reward for profile completion', amount: 50, type: 'credit' },
+        { id: 'txn2', tenantId: sampleUserProfile.tenantId, userId: sampleUserProfile.id, date: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString(), description: 'Used for premium report', amount: -20, type: 'debit' },
+        { id: 'txn3', tenantId: sampleUserProfile.tenantId, userId: sampleUserProfile.id, date: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), description: 'Appointment booking fee (Alice W.)', amount: -10, type: 'debit' },
+        { id: 'txn4', tenantId: sampleUserProfile.tenantId, userId: sampleUserProfile.id, date: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(), description: 'Daily login bonus', amount: 5, type: 'credit' },
     ]
 };
 
 export let sampleResumeProfiles: ResumeProfile[] = [
-  { id: 'resume1', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', name: "Software Engineer Focused", resumeText: sampleUserProfile.resumeText || "This is a resume focused on software engineering roles...", lastAnalyzed: "2024-07-15" },
+  { id: 'resume1', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', name: "Software Engineer Focused", resumeText: "This is a resume focused on software engineering roles...", lastAnalyzed: "2024-07-15" },
   { id: 'resume2', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', name: "Product Manager Application", resumeText: "A resume tailored for product management positions...", lastAnalyzed: "2024-07-10" },
   { id: 'resume3', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', name: "General Tech Resume", resumeText: "A general purpose resume for various tech roles.", lastAnalyzed: "2024-06-20" },
+  { id: 'resumeManager1', tenantId: 'tenant-2', userId: 'managerUser1', name: "Engagement Strategy Lead Resume", resumeText: "Resume for Manager Mike, focused on engagement and leadership.", lastAnalyzed: "2024-07-20" },
 ];
 
 const placeholderResumeText = `[Your Name]
@@ -638,12 +622,12 @@ export const sampleAffiliates: Affiliate[] = [
     createdAt: new Date(Date.now() - 86400000 * 10).toISOString(),
   },
   {
-    id: 'currentUser', 
-    userId: 'currentUser',
-    name: sampleUserProfile.name, 
-    email: sampleUserProfile.email, 
+    id: 'currentUser', // This ID will match the main sampleUserProfile.id if 'currentUser' is used for it
+    userId: 'currentUser', // This should be consistent with the main sampleUserProfile.id
+    name: 'Alex Taylor (Admin)', // Or whatever the current sampleUserProfile.name is
+    email: 'admin@example.com', // Or current sampleUserProfile.email
     status: 'approved' as AffiliateStatus,
-    affiliateCode: sampleUserProfile.affiliateCode || 'AFFUSER007',
+    affiliateCode: 'ADMINREF123', // This should match sampleUserProfile.affiliateCode
     commissionRate: 0.15,
     totalEarned: 125.50,
     createdAt: new Date(Date.now() - 86400000 * 30).toISOString(),
@@ -708,7 +692,7 @@ export const sampleResumeTemplates: ResumeTemplate[] = [
     id: 'template1',
     name: 'Modern Chronological',
     description: 'A clean, modern take on the classic chronological resume. Great for experienced professionals.',
-    previewImageUrl: 'https://picsum.photos/seed/template1/300/400',
+    previewImageUrl: 'https://placehold.co/300x400.png',
     category: 'Modern',
     dataAiHint: 'resume modern',
     content: `[Your Name]
@@ -754,7 +738,7 @@ Certifications (Optional)
     id: 'template2',
     name: 'Creative Combination',
     description: 'Highlights skills and projects. Ideal for creative fields or career changers.',
-    previewImageUrl: 'https://picsum.photos/seed/template2/300/400',
+    previewImageUrl: 'https://placehold.co/300x400.png',
     category: 'Creative',
     dataAiHint: 'resume creative',
     content: `[Your Name]
@@ -796,7 +780,7 @@ Awards & Recognition (Optional)
     id: 'template3',
     name: 'Functional Skills-Based',
     description: 'Emphasizes skills over work history. Good for those with employment gaps or students.',
-    previewImageUrl: 'https://picsum.photos/seed/template3/300/400',
+    previewImageUrl: 'https://placehold.co/300x400.png',
     category: 'Functional',
     dataAiHint: 'resume skills',
     content: `[Your Name]
@@ -839,7 +823,7 @@ Volunteer Experience (Optional)
     id: 'template4',
     name: 'Academic CV',
     description: 'Designed for academic positions, research roles, and grants. Includes publication sections.',
-    previewImageUrl: 'https://picsum.photos/seed/template4/300/400',
+    previewImageUrl: 'https://placehold.co/300x400.png',
     category: 'Academic',
     dataAiHint: 'cv academic',
     content: `[Your Name]
