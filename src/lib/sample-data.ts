@@ -33,6 +33,7 @@ export const sampleAlumni: AlumniProfile[] = [
     appointmentCoinCost: 10,
     xpPoints: 2500,
     createdAt: new Date(Date.now() - 86400000 * 365).toISOString(), // 1 year ago
+    isDistinguished: true,
   },
   {
     id: 'alumni2',
@@ -53,6 +54,7 @@ export const sampleAlumni: AlumniProfile[] = [
     appointmentCoinCost: 15,
     xpPoints: 1800,
     createdAt: new Date(Date.now() - 86400000 * 180).toISOString(), // 6 months ago
+    isDistinguished: true,
   },
   {
     id: 'alumni3',
@@ -73,6 +75,7 @@ export const sampleAlumni: AlumniProfile[] = [
     appointmentCoinCost: 10,
     xpPoints: 1200,
     createdAt: new Date(Date.now() - 86400000 * 500).toISOString(), // ~1.5 years ago
+    isDistinguished: false,
   },
   {
     id: 'alumni4',
@@ -93,6 +96,7 @@ export const sampleAlumni: AlumniProfile[] = [
     appointmentCoinCost: 20,
     xpPoints: 5000,
     createdAt: new Date(Date.now() - 86400000 * 700).toISOString(), // ~2 years ago
+    isDistinguished: true,
   },
 ];
 
@@ -1387,6 +1391,7 @@ export let samplePlatformSettings: PlatformSettings = {
 export let sampleAnnouncements: Announcement[] = [
   {
     id: 'announce-1',
+    tenantId: 'platform',
     title: 'New Feature: AI Mock Interview!',
     content: 'We are excited to launch our new AI Mock Interview feature. Practice common interview questions and get instant feedback. Find it under "Interview Prep" in the sidebar.',
     startDate: new Date(Date.now() - 86400000 * 2).toISOString(), // 2 days ago
@@ -1399,6 +1404,7 @@ export let sampleAnnouncements: Announcement[] = [
   },
   {
     id: 'announce-2',
+    tenantId: 'platform',
     title: 'Platform Maintenance Scheduled',
     content: 'We will be performing scheduled maintenance on Sunday from 2 AM to 4 AM PST. The platform may be temporarily unavailable during this time.',
     startDate: new Date(Date.now() + 86400000 * 3).toISOString(),
@@ -1411,6 +1417,7 @@ export let sampleAnnouncements: Announcement[] = [
   },
   {
     id: 'announce-3',
+    tenantId: 'tenant-2',
     title: 'Tenant-Specific Welcome (Draft)',
     content: 'Welcome to the Corporate Partner Inc. alumni portal! We are thrilled to have you. Please complete your profile to get started.',
     startDate: new Date().toISOString(),

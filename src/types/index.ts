@@ -113,6 +113,7 @@ export interface AlumniProfile {
   appointmentCoinCost?: number;
   xpPoints?: number; 
   createdAt?: string; 
+  isDistinguished?: boolean;
 }
 
 export interface Activity {
@@ -791,4 +792,5 @@ export interface Announcement {
   createdAt: string;
   updatedAt: string;
   createdBy: string; // User ID of admin who created it
+  tenantId?: string; // Added to scope announcements for managers
 }

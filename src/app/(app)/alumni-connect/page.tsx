@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogC
 import { Textarea } from "@/components/ui/textarea";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, Search, Briefcase, GraduationCap, MessageSquare, Eye, CalendarDays, Coins, Filter as FilterIcon, User as UserIcon, Mail, CalendarPlus } from "lucide-react";
+import { Users, Search, Briefcase, GraduationCap, MessageSquare, Eye, CalendarDays, Coins, Filter as FilterIcon, User as UserIcon, Mail, CalendarPlus, Star, ChevronLeft, ChevronRight } from "lucide-react";
 import { sampleAlumni } from "@/lib/sample-data";
 import type { AlumniProfile, PreferredTimeSlot } from "@/types";
 import { PreferredTimeSlots } from "@/types";
@@ -23,6 +23,8 @@ import Link from 'next/link';
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
+import Image from "next/image";
 
 const bookingSchema = z.object({
   purpose: z.string().min(10, "Purpose must be at least 10 characters."),
@@ -53,7 +55,7 @@ export default function AlumniConnectPage() {
     }
   });
 
-
+  const distinguishedAlumni = useMemo(() => sampleAlumni.filter(a => a.isDistinguished), []);
   const uniqueCompanies = useMemo(() => Array.from(new Set(sampleAlumni.map(a => a.company))).sort(), []);
   const uniqueSkills = useMemo(() => Array.from(new Set(sampleAlumni.flatMap(a => a.skills))).sort(), []);
   const uniqueUniversities = useMemo(() => Array.from(new Set(sampleAlumni.map(a => a.university))).sort(), []);
@@ -143,6 +145,56 @@ export default function AlumniConnectPage() {
         <h1 className="text-3xl font-bold tracking-tight text-foreground">Alumni Directory</h1>
         <p className="text-muted-foreground mt-1">Connect with fellow alumni. Discover skills, interests, and potential collaborators.</p>
       </div>
+
+      {distinguishedAlumni.length > 0 && (
+        <Card className="shadow-lg bg-primary/5 border-primary/20">
+          <CardHeader>
+            <CardTitle className="text-2xl font-semibold text-primary flex items-center gap-2">
+              <Star className="h-6 w-6" /> Most Distinguished Alumni
+            </CardTitle>
+            <CardDescription>Spotlight on our accomplished alumni making an impact.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Carousel
+              opts={{
+                align: "start",
+                loop: distinguishedAlumni.length > 2, // Loop if more than 2 items visible
+              }}
+              className="w-full"
+            >
+              <CarouselContent className="-ml-4">
+                {distinguishedAlumni.map((alumni) => (
+                  <CarouselItem key={alumni.id} className="md:basis-1/2 lg:basis-1/3 pl-4">
+                    <Card className="h-full flex flex-col shadow-md hover:shadow-lg transition-shadow">
+                      <CardContent className="p-4 flex-grow flex flex-col items-center text-center">
+                        <Avatar className="h-20 w-20 mb-3 border-2 border-primary">
+                          <AvatarImage src={alumni.profilePictureUrl || `https://avatar.vercel.sh/${alumni.email}.png`} alt={alumni.name} data-ai-hint="person portrait" />
+                          <AvatarFallback className="text-2xl">{alumni.name.substring(0,1)}</AvatarFallback>
+                        </Avatar>
+                        <h3 className="text-md font-semibold text-foreground">{alumni.name}</h3>
+                        <p className="text-xs text-primary">{alumni.currentJobTitle}</p>
+                        <p className="text-xs text-muted-foreground mb-2">{alumni.company}</p>
+                        <p className="text-xs text-muted-foreground line-clamp-2 flex-grow">{alumni.shortBio}</p>
+                      </CardContent>
+                      <CardFooter className="p-3 border-t mt-auto">
+                        <Button variant="outline" size="sm" className="w-full" onClick={() => toast({ title: "View Profile (Mock)", description: `Viewing profile of ${alumni.name}.`})}>
+                          <Eye className="mr-1 h-3.5 w-3.5" /> View Profile
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              {distinguishedAlumni.length > 1 && (
+                <>
+                    <CarouselPrevious className="ml-2 bg-card hover:bg-secondary" />
+                    <CarouselNext className="mr-2 bg-card hover:bg-secondary" />
+                </>
+              )}
+            </Carousel>
+          </CardContent>
+        </Card>
+      )}
 
       <Accordion type="single" collapsible className="w-full bg-card shadow-lg rounded-lg">
         <AccordionItem value="filters">
