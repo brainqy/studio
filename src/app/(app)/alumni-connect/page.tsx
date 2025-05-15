@@ -59,7 +59,7 @@ export default function AlumniConnectPage() {
 
   useEffect(() => {
     setAllAlumniData(sampleAlumni); // Ensure local state is in sync with potentially mutated global sample
-  }, []);
+  }, [sampleAlumni]); // Add sampleAlumni to dependency array if it can be mutated globally and needs to trigger refresh
 
   const distinguishedAlumni = useMemo(() => allAlumniData.filter(a => a.isDistinguished), [allAlumniData]);
   const uniqueCompanies = useMemo(() => Array.from(new Set(allAlumniData.map(a => a.company))).sort(), [allAlumniData]);
@@ -132,8 +132,8 @@ export default function AlumniConnectPage() {
     const alumniToUpdate = allAlumniData.find(a => a.id === alumniId);
     if (!alumniToUpdate) return;
 
-    // Permission check: Admin can toggle anyone. Manager can only toggle alumni in their tenant.
-    if (currentUser.role !== 'admin' && (currentUser.role !== 'manager' || alumniToUpdate.tenantId !== currentUser.tenantId)) {
+    // Updated Permission check: Admin or Manager can toggle anyone's distinguished status.
+    if (currentUser.role !== 'admin' && currentUser.role !== 'manager') {
       toast({ title: "Permission Denied", description: "You do not have permission to change this alumnus's distinguished status.", variant: "destructive" });
       return;
     }
@@ -349,7 +349,8 @@ export default function AlumniConnectPage() {
                         id={`distinguished-${alumni.id}`}
                         checked={alumni.isDistinguished}
                         onCheckedChange={() => handleToggleDistinguished(alumni.id)}
-                        disabled={currentUser.role === 'manager' && alumni.tenantId !== currentUser.tenantId}
+                        // A manager can toggle any alumnus's distinguished status. An admin can too.
+                        // This switch is primarily for admin/manager roles. Regular users won't see it.
                       />
                       <Label htmlFor={`distinguished-${alumni.id}`} className="text-xs font-normal">Mark as Distinguished</Label>
                     </div>
