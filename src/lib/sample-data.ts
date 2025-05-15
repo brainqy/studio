@@ -13,7 +13,7 @@ export let sampleJobApplications: JobApplication[] = [
   { id: '6', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', companyName: 'AI Future', jobTitle: 'Machine Learning Eng.', status: 'Saved', dateApplied: '2024-07-15', notes: 'From scan report, good match.', location: 'Seattle, WA', resumeUsed: 'resume1', sourceJobOpeningId: 'job-board-aifuture-02' },
 ];
 
-export const sampleAlumni: AlumniProfile[] = [
+export let sampleAlumni: AlumniProfile[] = [
   {
     id: 'alumni1',
     tenantId: SAMPLE_TENANT_ID,
@@ -58,7 +58,7 @@ export const sampleAlumni: AlumniProfile[] = [
   },
   {
     id: 'alumni3',
-    tenantId: SAMPLE_TENANT_ID,
+    tenantId: 'tenant-2', // Moved to tenant-2
     name: 'Charlie Brown',
     profilePictureUrl: 'https://picsum.photos/seed/charlie/200/200',
     currentJobTitle: 'Data Scientist',
@@ -75,7 +75,7 @@ export const sampleAlumni: AlumniProfile[] = [
     appointmentCoinCost: 10,
     xpPoints: 1200,
     createdAt: new Date(Date.now() - 86400000 * 500).toISOString(), // ~1.5 years ago
-    isDistinguished: false,
+    isDistinguished: false, // Explicitly not distinguished initially
   },
   {
     id: 'alumni4',
@@ -212,43 +212,43 @@ export const sampleJobOpenings: JobOpening[] = [
   { id: 'job-board-aifuture-02', tenantId: SAMPLE_TENANT_ID, title: 'Machine Learning Eng.', company: 'AI Future', postedByAlumniId: 'alumni3', alumniName: 'Charlie Brown', description: 'Work on cutting-edge ML projects. Strong Python and TensorFlow/PyTorch skills needed.', datePosted: '2024-07-14', location: 'Seattle, WA', type: 'Full-time' },
 ];
 
-export const sampleUserProfile: UserProfile = {
-  id: 'managerUser1', // Changed from 'currentUser'
-  tenantId: 'tenant-2', // Changed from SAMPLE_TENANT_ID
-  role: 'manager', // Role is now manager
-  name: 'Manager Mike', // Changed name
-  email: 'manager.mike@tenant2.com', // Changed email
+export let sampleUserProfile: UserProfile = {
+  id: 'managerUser1', 
+  tenantId: 'tenant-2', 
+  role: 'manager', 
+  name: 'Manager Mike', 
+  email: 'manager.mike@tenant2.com', 
   status: 'active',
   lastLogin: new Date().toISOString(),
-  dateOfBirth: '1985-08-15', // Example DOB
-  gender: 'Male', // Example Gender
-  mobileNumber: '+15552223333', // Example mobile
-  currentAddress: '123 Corporate Ave, Business City, TX, USA', // Example address
-  graduationYear: '2007', // Example graduation year
-  degreeProgram: 'Bachelor of Business Administration (BBA)', // Example degree
-  department: 'Management', // Example department
-  currentJobTitle: 'Engagement Lead', // Changed job title
-  company: 'Corporate Partner Inc.', // Changed company
-  currentOrganization: 'Corporate Partner Inc.', // Changed organization
-  industry: 'Consulting', // Example industry
-  workLocation: 'Dallas, TX', // Example work location
-  linkedInProfile: 'https://linkedin.com/in/managermike', // Example LinkedIn
-  yearsOfExperience: '15', // Example experience
-  skills: ['Team Leadership', 'Project Management', 'Alumni Relations', 'Strategic Planning', 'Communication'], // Changed skills
-  areasOfSupport: ['Mentoring Students', 'Sharing Job Referrals', 'Organizing Alumni Events'], // Example areas of support
-  timeCommitment: '3-5 hours', // Example time commitment
-  preferredEngagementMode: 'Online', // Example engagement mode
-  otherComments: 'Leading engagement initiatives and fostering alumni connections for Corporate Partner Inc.', // Changed comments
-  lookingForSupportType: 'General Networking', // Example support sought
-  helpNeededDescription: 'Interested in connecting with other managers and sharing best practices for alumni engagement.', // Example help needed
+  dateOfBirth: '1985-08-15', 
+  gender: 'Male', 
+  mobileNumber: '+15552223333', 
+  currentAddress: '123 Corporate Ave, Business City, TX, USA', 
+  graduationYear: '2007', 
+  degreeProgram: 'Bachelor of Business Administration (BBA)', 
+  department: 'Management', 
+  currentJobTitle: 'Engagement Lead', 
+  company: 'Corporate Partner Inc.', 
+  currentOrganization: 'Corporate Partner Inc.', 
+  industry: 'Consulting', 
+  workLocation: 'Dallas, TX', 
+  linkedInProfile: 'https://linkedin.com/in/managermike', 
+  yearsOfExperience: '15', 
+  skills: ['Team Leadership', 'Project Management', 'Alumni Relations', 'Strategic Planning', 'Communication'], 
+  areasOfSupport: ['Mentoring Students', 'Sharing Job Referrals', 'Organizing Alumni Events'], 
+  timeCommitment: '3-5 hours', 
+  preferredEngagementMode: 'Online', 
+  otherComments: 'Leading engagement initiatives and fostering alumni connections for Corporate Partner Inc.', 
+  lookingForSupportType: 'General Networking', 
+  helpNeededDescription: 'Interested in connecting with other managers and sharing best practices for alumni engagement.', 
   shareProfileConsent: true, 
   featureInSpotlightConsent: false,
-  shortBio: 'Dedicated Engagement Lead at Corporate Partner Inc., focused on maximizing alumni potential and fostering a strong professional network within Tenant-2. My expertise includes team leadership, project management, and strategic planning for alumni relations. Committed to creating valuable connections and opportunities for our members.', // Changed bio
-  university: 'Business School of Excellence', // Example university
-  profilePictureUrl: 'https://picsum.photos/seed/managermike/200/200', // Changed avatar
-  interests: ['Leadership Development', 'Corporate Strategy', 'Golf'], // Example interests
-  offersHelpWith: [AreasOfSupport[0], AreasOfSupport[2], AreasOfSupport[8]], // Example offers help with
-  appointmentCoinCost: 0, // Managers might not have a cost
+  shortBio: 'Dedicated Engagement Lead at Corporate Partner Inc., focused on maximizing alumni potential and fostering a strong professional network within Tenant-2. My expertise includes team leadership, project management, and strategic planning for alumni relations. Committed to creating valuable connections and opportunities for our members.', 
+  university: 'Business School of Excellence', 
+  profilePictureUrl: 'https://picsum.photos/seed/managermike/200/200', 
+  interests: ['Leadership Development', 'Corporate Strategy', 'Golf'], 
+  offersHelpWith: [AreasOfSupport[0], AreasOfSupport[2], AreasOfSupport[8]], 
+  appointmentCoinCost: 0, 
   resumeText: `Manager Mike
   Email: manager.mike@tenant2.com | LinkedIn: linkedin.com/in/managermike | Mobile: +15552223333
 
@@ -271,26 +271,25 @@ export const sampleUserProfile: UserProfile = {
   
   Skills:
   Team Leadership, Project Management, Alumni Relations, Strategic Planning, Stakeholder Management, Event Management, Communication, Public Speaking, Data Analysis (for engagement tracking).
-  `, // Changed resume text
-  careerInterests: 'Executive Leadership, Organizational Development, Alumni Network Growth', // Changed career interests
-  xpPoints: 3200, // Example XP
+  `, 
+  careerInterests: 'Executive Leadership, Organizational Development, Alumni Network Growth', 
+  xpPoints: 3200, 
   dailyStreak: 15, 
   longestStreak: 40, 
   totalActiveDays: 200, 
   weeklyActivity: [true, false, true, true, false, true, true], 
   referralCode: 'MANAGERMIKE1',
-  earnedBadges: ['networker', 'contributor', 'profile-pro'], // Example badges
+  earnedBadges: ['networker', 'contributor', 'profile-pro'], 
   affiliateCode: 'AFFMIKE789',
   pastInterviewSessions: [], 
-  interviewCredits: 5, // Managers might have fewer AI credits
-  createdAt: new Date(Date.now() - 86400000 * 90).toISOString(), // 3 months ago
+  interviewCredits: 5, 
+  createdAt: new Date(Date.now() - 86400000 * 90).toISOString(), 
 };
 
 
 export const samplePlatformUsers: UserProfile[] = [
   sampleUserProfile, 
   ...sampleAlumni.map(alumni => ({...alumni, company: alumni.company, currentJobTitle: alumni.currentJobTitle, shortBio: alumni.shortBio, university: alumni.university, skills: alumni.skills, email: alumni.email, role: alumni.role || 'user', status: alumni.status || 'active', lastLogin: alumni.lastLogin, interests: alumni.interests, offersHelpWith: alumni.offersHelpWith, appointmentCoinCost: alumni.appointmentCoinCost, xpPoints: alumni.xpPoints, createdAt: alumni.createdAt || new Date().toISOString() })),
-  // This managerUser1 is now represented by sampleUserProfile
 ];
 
 
@@ -303,9 +302,9 @@ export const sampleAppointments: Appointment[] = [
 ];
 
 export const sampleWalletBalance: Wallet = {
-    tenantId: sampleUserProfile.tenantId, // Use the tenantId of the currently logged-in user
-    userId: sampleUserProfile.id, // Use the ID of the currently logged-in user
-    coins: sampleUserProfile.role === 'manager' ? 500 : 150, // Managers might have more coins or a different system
+    tenantId: sampleUserProfile.tenantId, 
+    userId: sampleUserProfile.id, 
+    coins: sampleUserProfile.role === 'manager' ? 500 : 150, 
     transactions: [
         { id: 'txn1', tenantId: sampleUserProfile.tenantId, userId: sampleUserProfile.id, date: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(), description: 'Reward for profile completion', amount: 50, type: 'credit' },
         { id: 'txn2', tenantId: sampleUserProfile.tenantId, userId: sampleUserProfile.id, date: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString(), description: 'Used for premium report', amount: -20, type: 'debit' },
@@ -443,6 +442,7 @@ export const sampleTenants: Tenant[] = [
       allowPublicSignup: false,
       primaryColor: 'hsl(221 83% 53%)', 
       accentColor: 'hsl(221 83% 63%)',
+      customLogoUrl: 'https://picsum.photos/seed/logo2/200/50',
       features: {
         communityFeedEnabled: false,
         jobBoardEnabled: true,
@@ -626,12 +626,12 @@ export const sampleAffiliates: Affiliate[] = [
     createdAt: new Date(Date.now() - 86400000 * 10).toISOString(),
   },
   {
-    id: 'currentUser', // This ID will match the main sampleUserProfile.id if 'currentUser' is used for it
-    userId: 'currentUser', // This should be consistent with the main sampleUserProfile.id
-    name: 'Alex Taylor (Admin)', // Or whatever the current sampleUserProfile.name is
-    email: 'admin@example.com', // Or current sampleUserProfile.email
+    id: 'managerUser1', 
+    userId: 'managerUser1', 
+    name: 'Manager Mike', 
+    email: 'manager.mike@tenant2.com', 
     status: 'approved' as AffiliateStatus,
-    affiliateCode: 'ADMINREF123', // This should match sampleUserProfile.affiliateCode
+    affiliateCode: 'MANAGERMIKE1', 
     commissionRate: 0.15,
     totalEarned: 125.50,
     createdAt: new Date(Date.now() - 86400000 * 30).toISOString(),
@@ -639,18 +639,18 @@ export const sampleAffiliates: Affiliate[] = [
 ];
 
 export const sampleAffiliateClicks: AffiliateClick[] = [
-  { id: 'click1', affiliateId: 'currentUser', timestamp: new Date(Date.now() - 86400000 * 2).toISOString(), convertedToSignup: true },
-  { id: 'click2', affiliateId: 'currentUser', timestamp: new Date(Date.now() - 86400000 * 1).toISOString(), convertedToSignup: false },
+  { id: 'click1', affiliateId: 'managerUser1', timestamp: new Date(Date.now() - 86400000 * 2).toISOString(), convertedToSignup: true },
+  { id: 'click2', affiliateId: 'managerUser1', timestamp: new Date(Date.now() - 86400000 * 1).toISOString(), convertedToSignup: false },
   { id: 'click3', affiliateId: 'affiliateuser1', timestamp: new Date(Date.now() - 86400000 * 3).toISOString(), convertedToSignup: true }, 
-  { id: 'click4', affiliateId: 'currentUser', timestamp: new Date(Date.now() - 0.5 * 86400000).toISOString(), convertedToSignup: false },
+  { id: 'click4', affiliateId: 'managerUser1', timestamp: new Date(Date.now() - 0.5 * 86400000).toISOString(), convertedToSignup: false },
   { id: 'click5', affiliateId: 'affiliateuser1', timestamp: new Date(Date.now() - 86400000 * 4).toISOString(), convertedToSignup: false }, 
   { id: 'click6', affiliateId: 'affiliateuser2', timestamp: new Date(Date.now() - 86400000 * 1).toISOString(), convertedToSignup: false }, 
 ];
 
 export const sampleAffiliateSignups: AffiliateSignup[] = [
-  { id: 'signup1', affiliateId: 'currentUser', newUserId: 'newUser1', signupDate: new Date(Date.now() - 86400000 * 2).toISOString(), commissionEarned: 7.50 },
+  { id: 'signup1', affiliateId: 'managerUser1', newUserId: 'newUser1', signupDate: new Date(Date.now() - 86400000 * 2).toISOString(), commissionEarned: 7.50 },
   { id: 'signup2', affiliateId: 'affiliateuser1', newUserId: 'newUser2', signupDate: new Date(Date.now() - 86400000 * 3).toISOString(), commissionEarned: 5.00 }, 
-  { id: 'signup3', affiliateId: 'currentUser', newUserId: 'newUser3', signupDate: new Date(Date.now() - 86400000 * 1).toISOString(), commissionEarned: 10.00 }, 
+  { id: 'signup3', affiliateId: 'managerUser1', newUserId: 'newUser3', signupDate: new Date(Date.now() - 86400000 * 1).toISOString(), commissionEarned: 10.00 }, 
   { id: 'signup4', affiliateId: 'affiliateuser1', newUserId: 'newUser4', signupDate: new Date(Date.now() - 86400000 * 5).toISOString(), commissionEarned: 5.00 }, 
 ];
 
@@ -1298,7 +1298,7 @@ export let sampleCreatedQuizzes: MockInterviewSession[] = [
   },
   {
     id: 'quiz-pm-roleplay',
-    userId: 'currentUser', 
+    userId: 'managerUser1', // Changed from 'currentUser' to 'managerUser1'
     topic: 'Product Manager Role Scenarios',
     description: "A challenging quiz with scenario-based questions for aspiring Product Managers. Tests decision-making and prioritization skills.",
     questions: sampleInterviewQuestions.filter(q => q.category === 'Role-Specific' && q.tags?.includes('product management') && q.isMCQ).slice(0, 3).map(q => ({ id: q.id, questionText: q.question, category: q.category, difficulty: q.difficulty })),
