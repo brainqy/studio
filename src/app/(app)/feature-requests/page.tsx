@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { PlusCircle, ShieldQuestion, Lightbulb, Send, Edit3, CheckCircle, Zap, Clock, RefreshCw } from "lucide-react";
+import { PlusCircle, ShieldQuestion, Lightbulb, Send, Edit3, CheckCircle, Zap, Clock, RefreshCw, ShieldAlert, ThumbsUp } from "lucide-react";
 import { sampleFeatureRequests, sampleUserProfile } from "@/lib/sample-data";
 import type { FeatureRequest } from "@/types";
 import { useToast } from "@/hooks/use-toast";
@@ -17,6 +17,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 const featureRequestSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters").max(100, "Title too long"),
@@ -26,6 +27,7 @@ const featureRequestSchema = z.object({
 type FeatureRequestFormData = z.infer<typeof featureRequestSchema>;
 
 export default function FeatureRequestsPage() {
+  const currentUser = sampleUserProfile;
   const [requests, setRequests] = useState<FeatureRequest[]>(sampleFeatureRequests);
   const [isSuggestDialogOpen, setIsSuggestDialogOpen] = useState(false);
   const [editingRequest, setEditingRequest] = useState<FeatureRequest | null>(null);
@@ -33,6 +35,19 @@ export default function FeatureRequestsPage() {
   const { control, handleSubmit, reset, setValue, formState: { errors } } = useForm<FeatureRequestFormData>({
     resolver: zodResolver(featureRequestSchema)
   });
+
+  if (currentUser.role !== 'admin') {
+    return (
+      <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)]">
+        <ShieldAlert className="w-16 h-16 text-destructive mb-4" />
+        <h1 className="text-2xl font-bold text-foreground mb-2">Access Denied</h1>
+        <p className="text-muted-foreground">You do not have permission to view this page.</p>
+        <Button asChild className="mt-6">
+          <Link href="/dashboard">Go to Dashboard</Link>
+        </Button>
+      </div>
+    );
+  }
 
   const onSubmitSuggestion = (data: FeatureRequestFormData) => {
     if (editingRequest) {
@@ -43,6 +58,7 @@ export default function FeatureRequestsPage() {
     } else {
       const newRequest: FeatureRequest = {
         id: String(Date.now()),
+        tenantId: sampleUserProfile.tenantId, 
         userId: sampleUserProfile.id, 
         userName: sampleUserProfile.name,
         userAvatar: sampleUserProfile.profilePictureUrl,
@@ -77,8 +93,10 @@ export default function FeatureRequestsPage() {
   };
 
   const openEditRequestDialog = (request: FeatureRequest) => {
-    if (request.userId !== sampleUserProfile.id || request.status !== 'Pending') {
-      toast({ title: "Cannot Edit", description: "You can only edit your own pending requests.", variant: "destructive"});
+    // Allow admin to edit any request for status changes, etc.
+    // Regular users can only edit their own PENDING requests.
+    if (currentUser.role !== 'admin' && (request.userId !== sampleUserProfile.id || request.status !== 'Pending')) {
+      toast({ title: "Cannot Edit", description: "You can only edit your own pending requests, or admins can edit any.", variant: "destructive"});
       return;
     }
     setEditingRequest(request);
@@ -176,11 +194,11 @@ export default function FeatureRequestsPage() {
                         <StatusIcon className="h-3.5 w-3.5" />
                         {request.status}
                     </span>
-                    {request.userId === sampleUserProfile.id && request.status === 'Pending' && (
+                    {(request.userId === sampleUserProfile.id && request.status === 'Pending') || currentUser.role === 'admin' ? (
                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary" onClick={() => openEditRequestDialog(request)}>
                          <Edit3 className="h-4 w-4"/>
                        </Button>
-                    )}
+                    ): null}
                   </div>
                 <CardTitle className="text-lg line-clamp-2" title={request.title}>{request.title}</CardTitle>
                 <CardDescription className="text-xs">

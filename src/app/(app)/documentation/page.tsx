@@ -3,9 +3,27 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { BookText, Code2, Share2 } from "lucide-react";
+import { BookText, Code2, Share2, ShieldAlert } from "lucide-react";
+import { sampleUserProfile } from "@/lib/sample-data";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export default function DocumentationPage() {
+  const currentUser = sampleUserProfile;
+
+  if (currentUser.role !== 'admin') {
+    return (
+      <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)]">
+        <ShieldAlert className="w-16 h-16 text-destructive mb-4" />
+        <h1 className="text-2xl font-bold text-foreground mb-2">Access Denied</h1>
+        <p className="text-muted-foreground">You do not have permission to view this page.</p>
+        <Button asChild className="mt-6">
+          <Link href="/dashboard">Go to Dashboard</Link>
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
       <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
@@ -99,21 +117,68 @@ export default function DocumentationPage() {
               <AccordionTrigger className="text-md font-semibold">Resume Analysis API</AccordionTrigger>
               <AccordionContent className="space-y-2 text-muted-foreground">
                 <p><strong>Endpoint:</strong> <code>POST /api/resumes/analyze</code></p>
-                <p><strong>Description:</strong> Analyzes a resume against a job description.</p>
+                <p><strong>Description:</strong> Analyzes a resume against a job description using the detailed schema.</p>
                 <p className="font-medium text-card-foreground">Request Payload (application/json):</p>
                 <pre className="bg-secondary p-3 rounded-md text-xs overflow-x-auto"><code>{`{
   "resumeText": "Full text of the user's resume...",
   "jobDescriptionText": "Full text of the job description..."
 }`}</code></pre>
-                <p className="font-medium text-card-foreground">Success Response (200 OK):</p>
+                <p className="font-medium text-card-foreground">Success Response (200 OK) - Example Snippet:</p>
                 <pre className="bg-secondary p-3 rounded-md text-xs overflow-x-auto"><code>{`{
-  "matchScore": 85,
-  "matchingSkills": ["JavaScript", "React", "Node.js"],
+  "hardSkillsScore": 75,
+  "matchingSkills": ["JavaScript", "React"],
   "missingSkills": ["TypeScript", "GraphQL"],
-  "resumeKeyStrengths": "Strong experience in full-stack development with React and Node.js...",
-  "jobDescriptionKeyRequirements": "Requires expertise in TypeScript, React, and GraphQL for building scalable web applications...",
+  "resumeKeyStrengths": "Strong experience in full-stack development...",
+  "jobDescriptionKeyRequirements": "Requires expertise in TypeScript...",
+  "overallQualityScore": 80,
+  "recruiterTips": [
+    {
+      "category": "Word Count",
+      "finding": "Resume word count is within the optimal range.",
+      "status": "positive"
+    }
+  ],
+  "overallFeedback": "The resume is a good starting point but could be improved by highlighting TypeScript skills.",
   "searchabilityScore": 90,
-  // ... other fields from AnalyzeResumeAndJobDescriptionOutput
+  "searchabilityDetails": {
+    "hasPhoneNumber": true,
+    "hasEmail": true,
+    "hasAddress": false,
+    "jobTitleMatchesJD": true,
+    "hasWorkExperienceSection": true,
+    "hasEducationSection": true,
+    "hasProfessionalSummary": true,
+    "keywordDensityFeedback": "Good keyword density for core requirements."
+  },
+  "quantifiableAchievementDetails": {
+    "score": 70,
+    "examplesFound": ["Increased sales by 15%"],
+    "areasLackingQuantification": ["Managed a team of developers (consider specifying team size or project impact)."]
+  },
+  "actionVerbDetails": {
+    "score": 85,
+    "strongVerbsUsed": ["Led", "Developed", "Implemented"],
+    "weakVerbsUsed": ["Responsible for"],
+    "suggestedStrongerVerbs": [{"original": "Responsible for", "suggestion": "Managed"}]
+  },
+  "impactStatementDetails": {
+    "clarityScore": 80,
+    "exampleWellWrittenImpactStatements": ["Achieved a 20% reduction in bug reports by implementing a new testing strategy."]
+  },
+  "readabilityDetails": {
+    "fleschKincaidGradeLevel": 10.5,
+    "fleschReadingEase": 65.2,
+    "readabilityFeedback": "The resume is generally easy to read."
+  },
+  "atsParsingConfidence": {
+    "overall": 88
+  },
+  "atsStandardFormattingComplianceScore": 92,
+  "standardFormattingIssues": [
+    { "issue": "Minor use of non-standard font in one section.", "recommendation": "Use standard fonts like Arial, Calibri, or Times New Roman throughout."}
+  ],
+  "undefinedAcronyms": ["JIRA (Consider defining if not universally known in context)"]
+  // ... other fields from AnalyzeResumeAndJobDescriptionOutput might be present
 }`}</code></pre>
               </AccordionContent>
             </AccordionItem>
@@ -177,3 +242,4 @@ export default function DocumentationPage() {
     </div>
   );
 }
+
