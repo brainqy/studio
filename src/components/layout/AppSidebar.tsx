@@ -41,9 +41,9 @@ const navItems = [
 const utilityItems = [
   { href: "/appointments", label: "Appointments", icon: CalendarDays },
   { href: "/wallet", label: "Digital Wallet", icon: Wallet },
-  { href: "/feature-requests", label: "Feature Requests", icon: ShieldQuestion },
+  { href: "/feature-requests", label: "Feature Requests", icon: ShieldQuestion, adminOnly: true },
   { href: "/settings", label: "Settings", icon: Settings },
-  { href: "/documentation", label: "Documentation", icon: BookTextIcon },
+  { href: "/documentation", label: "Documentation", icon: BookTextIcon, adminOnly: true },
 ];
 
 const gamificationItems = [
@@ -79,6 +79,11 @@ export function AppSidebar() {
   const renderMenuItem = (item: any, isSubItem = false) => {
     const isActive = pathname === item.href || (item.href && item.href !== "/dashboard" && pathname.startsWith(item.href));
     const isAdminDashboardActive = item.href === "/dashboard" && item.label === "Admin Dashboard" && pathname === "/dashboard" && currentUser.role === 'admin';
+
+    // Hide adminOnly items if user is not admin
+    if (item.adminOnly && currentUser.role !== 'admin') {
+      return null;
+    }
 
     return (
       <SidebarMenuItem key={item.href || item.label}>
