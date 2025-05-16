@@ -23,9 +23,15 @@ const navItems = [
       { href: "/cover-letter-generator", label: "Cover Letter Generator", icon: FileType },
     ]
   },
-  { href: "/my-resumes", label: "My Resumes", icon: Layers3 },
-  { href: "/resume-builder", label: "Resume Builder", icon: FilePlus2 },
-  { href: "/resume-templates", label: "Resume Templates", icon: Layers3 },
+  {
+    label: "Resume Tools", // New Group
+    icon: FileText,
+    subItems: [
+      { href: "/my-resumes", label: "My Resumes", icon: Layers3 },
+      { href: "/resume-builder", label: "Resume Builder", icon: FilePlus2 },
+      { href: "/resume-templates", label: "Resume Templates", icon: Layers3 },
+    ]
+  },
   { href: "/gallery", label: "Event Gallery", icon: GalleryVerticalEnd },
   { href: "/activity-log", label: "Activity Log", icon: BarChart2 },
   { href: "/profile", label: "My Profile", icon: User },
@@ -50,7 +56,7 @@ const blogItems = [
 ];
 
 const adminItems = [
-   { href: "/dashboard", label: "Admin Dashboard", icon: Activity },
+   { href: "/dashboard", label: "Admin Dashboard", icon: Activity }, // Ensure this one is distinct if admin has a separate dashboard view
    { href: "/admin/tenants", label: "Tenant Management", icon: Building2 },
    { href: "/admin/tenant-onboarding", label: "Tenant Onboarding", icon: Layers3 },
    { href: "/admin/user-management", label: "User Management", icon: UserCog },
@@ -75,6 +81,10 @@ export function AppSidebar() {
     if (item.adminOnly && currentUser.role !== 'admin') {
       return null;
     }
+    if (item.managerOnly && currentUser.role !== 'manager' && currentUser.role !== 'admin') { // Admins can also see manager items
+        return null;
+    }
+
 
     return (
       <SidebarMenuItem key={item.href || item.label}>
@@ -138,13 +148,28 @@ export function AppSidebar() {
           </SidebarMenu>
         </SidebarGroup>
 
-        {currentUser.role === 'admin' && (
+        {(currentUser.role === 'admin' || currentUser.role === 'manager') && (
           <>
             <SidebarSeparator className="my-4" />
             <SidebarGroup className="p-0">
-              <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden text-xs text-sidebar-foreground/60 px-2">Admin Panel</SidebarGroupLabel>
+              <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden text-xs text-sidebar-foreground/60 px-2">
+                {currentUser.role === 'admin' ? "Admin Panel" : "Manager Panel"}
+              </SidebarGroupLabel>
               <SidebarMenu>
-                {adminItems.map(item => renderMenuItem(item))}
+                {adminItems.filter(item => {
+                    if(currentUser.role === 'manager') {
+                        // Manager specific items (or items accessible by manager)
+                        const managerAccessible = [
+                            "/admin/user-management", 
+                            "/admin/content-moderation",
+                            "/admin/gallery-management",
+                            "/admin/announcements",
+                            // Add other pages managers can access, e.g., some analytics
+                        ];
+                        return managerAccessible.includes(item.href);
+                    }
+                    return true; // Admin sees all
+                }).map(item => renderMenuItem(item))}
               </SidebarMenu>
             </SidebarGroup>
           </>

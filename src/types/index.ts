@@ -149,8 +149,8 @@ export interface CommunityPost {
   eventDate?: string;
   eventLocation?: string;
   eventTitle?: string; 
-  attendees?: number; // Added for event registration
-  capacity?: number;  // Added for event registration
+  attendees?: number; 
+  capacity?: number;  
   assignedTo?: string; 
   status?: 'open' | 'assigned' | 'completed'; 
   moderationStatus: CommunityPostModerationStatus;
@@ -181,7 +181,9 @@ export interface GalleryEvent {
   dataAiHint?: string; 
   isPlatformGlobal?: boolean; 
   location?: string; 
-  approved?: boolean; // For manager approval if needed
+  approved?: boolean;
+  createdByUserId?: string; // Added
+  attendeeUserIds?: string[]; // Added
 }
 
 export interface JobOpening {
@@ -796,4 +798,185 @@ export interface Announcement {
   updatedAt: string;
   createdBy: string; // User ID of admin who created it
   tenantId?: string; // Added to scope announcements for managers
+}
+
+export interface AtsFormattingIssue { // Explicitly defining this as it's used in analysis
+  issue: string;
+  recommendation: string;
+}
+
+// AI Flow Specific Types (if not already present or for clarity)
+export interface AnalyzeResumeAndJobDescriptionInput {
+  resumeText: string;
+  jobDescriptionText: string;
+}
+
+export interface SearchabilityDetails {
+  hasPhoneNumber: boolean;
+  hasEmail: boolean;
+  hasAddress?: boolean; // Added
+  jobTitleMatchesJD: boolean;
+  hasWorkExperienceSection: boolean;
+  hasEducationSection: boolean;
+  hasProfessionalSummary?: boolean;
+  keywordDensityFeedback?: string;
+}
+
+export interface RecruiterTipItem {
+    category: string;
+    finding: string;
+    status: 'positive' | 'neutral' | 'negative';
+    suggestion?: string;
+}
+
+export interface AtsParsingConfidenceDetails {
+    overall?: number;
+    warnings?: string[];
+}
+
+export interface QuantifiableAchievementDetails {
+    score?: number;
+    examplesFound?: string[];
+    areasLackingQuantification?: string[];
+}
+
+export interface ActionVerbDetails {
+    score?: number;
+    strongVerbsUsed?: string[]; // Added
+    weakVerbsUsed?: string[];
+    overusedVerbs?: string[];
+    suggestedStrongerVerbs?: { original: string; suggestion: string }[];
+}
+
+export interface ImpactStatementDetails {
+    clarityScore?: number;
+    unclearImpactStatements?: string[];
+    exampleWellWrittenImpactStatements?: string[];
+}
+
+export interface ReadabilityDetails {
+    fleschKincaidGradeLevel?: number;
+    fleschReadingEase?: number;
+    readabilityFeedback?: string;
+}
+
+
+export interface AnalyzeResumeAndJobDescriptionOutput {
+  hardSkillsScore: number;
+  matchingSkills: string[];
+  missingSkills: string[];
+  resumeKeyStrengths: string;
+  jobDescriptionKeyRequirements: string;
+  overallQualityScore?: number;
+  recruiterTips: RecruiterTipItem[];
+  overallFeedback?: string;
+  
+  searchabilityScore?: number;
+  recruiterTipsScore?: number;
+  formattingScore?: number;
+  highlightsScore?: number;
+  softSkillsScore?: number;
+  identifiedSoftSkills?: string[];
+  
+  searchabilityDetails?: SearchabilityDetails;
+  formattingDetails?: AtsFormattingIssue[]; 
+  
+  atsParsingConfidence?: AtsParsingConfidenceDetails;
+  atsStandardFormattingComplianceScore?: number;
+  standardFormattingIssues?: AtsFormattingIssue[];
+  undefinedAcronyms?: string[];
+
+  quantifiableAchievementDetails?: QuantifiableAchievementDetails;
+  actionVerbDetails?: ActionVerbDetails;
+  impactStatementDetails?: ImpactStatementDetails;
+  readabilityDetails?: ReadabilityDetails;
+}
+
+export interface CalculateMatchScoreInput {
+  resumeText: string;
+  jobDescription: string;
+}
+
+export interface CalculateMatchScoreOutput {
+  matchScore: number;
+  missingKeywords: string[];
+  relevantKeywords: string[];
+}
+
+export interface SuggestResumeImprovementsInput {
+  resumeText: string;
+  jobDescription: string;
+}
+
+export interface SuggestResumeImprovementsOutput {
+  improvedResumeSections: Array<{
+    sectionTitle: string;
+    suggestedImprovements: string[];
+  }>;
+}
+
+export interface GenerateResumeVariantInput {
+  baseResumeText: string;
+  targetRole: string;
+  targetIndustry?: string;
+  skillsToHighlight?: string[];
+  tone?: 'professional' | 'creative' | 'concise' | 'technical';
+  additionalInstructions?: string;
+}
+export interface GenerateResumeVariantOutput {
+  generatedResumeText: string;
+}
+
+export interface GenerateCoverLetterInput {
+  userProfileText: string;
+  jobDescriptionText: string;
+  companyName: string;
+  jobTitle: string;
+  userName: string;
+  additionalNotes?: string;
+}
+export interface GenerateCoverLetterOutput {
+  generatedCoverLetterText: string;
+}
+
+export interface PersonalizedJobRecommendationsInput {
+  userProfileText: string;
+  careerInterests: string;
+  availableJobs: Array<Pick<JobOpening, 'id' | 'title' | 'company' | 'description' | 'location' | 'type'>>;
+}
+
+export interface PersonalizedJobRecommendationsOutput {
+  recommendedJobs: Array<{
+    jobId: string;
+    title: string;
+    company: string;
+    reasoning: string;
+    matchStrength: number;
+  }>;
+}
+
+export interface SuggestDynamicSkillsInput {
+  currentSkills: string[];
+  contextText: string;
+}
+
+export interface SuggestDynamicSkillsOutput {
+  suggestedSkills: Array<{
+    skill: string;
+    reasoning: string;
+    relevanceScore: number;
+  }>;
+}
+
+export interface GenerateAiBlogPostInput {
+  topic: string;
+  style?: 'informative' | 'casual' | 'formal' | 'technical' | 'storytelling';
+  targetAudience?: string;
+  keywords?: string[];
+}
+export interface GenerateAiBlogPostOutput {
+  title: string;
+  content: string;
+  excerpt: string;
+  suggestedTags: string[];
 }

@@ -74,10 +74,8 @@ const PATH_LABEL_MAP: Record<string, string> = {
   '/admin/gallery-management': 'Gallery Management',
   '/admin/blog-settings': 'AI Blog Settings',
   '/admin/platform-settings': 'Platform Settings',
-  // Ensure /events is removed if page is removed
-  // '/events': 'Events Registration', 
   '/resume-history': 'Resume Scan History (in Analyzer)',
-  '/leaderboard': 'Leaderboard (in Rewards)',
+  // '/leaderboard': 'Leaderboard (in Rewards)', // Removed as it's integrated
 };
 
 export function getLabelForPath(path: string): string {

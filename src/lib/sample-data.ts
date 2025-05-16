@@ -3,7 +3,7 @@
 import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem, Appointment, Wallet, ResumeProfile, Tenant, Badge, BlogPost, ReferralHistoryItem, GamificationRule, UserStatus, SurveyResponse, Affiliate, AffiliateClick, AffiliateSignup, AffiliateStatus, SurveyStep, ResumeTemplate, TourStep, CommunityComment, InterviewQuestion, InterviewQuestionCategory, BlogGenerationSettings, MockInterviewSession, InterviewQuestionDifficulty, InterviewQuestionUserComment, PracticeSession, PracticeSessionStatus, JobApplicationStatus, KanbanColumnId, PlatformSettings, Announcement, AnnouncementStatus, AnnouncementAudience } from '@/types';
 import { AreasOfSupport, AppointmentStatuses, Genders, DegreePrograms, Industries, TimeCommitments, EngagementModes, SupportTypesSought, JOB_APPLICATION_STATUSES, KANBAN_COLUMNS_CONFIG, PREDEFINED_INTERVIEW_TOPICS, PRACTICE_FOCUS_AREAS, ALL_CATEGORIES, ALL_DIFFICULTIES, MOCK_INTERVIEW_STEPS, RESUME_BUILDER_STEPS, PreferredTimeSlots, AnnouncementStatuses, AnnouncementAudiences } from '@/types'; 
 
-export let SAMPLE_TENANT_ID = 'Brainqy'; // Default tenant for most sample data
+export let SAMPLE_TENANT_ID = 'Brainqy'; 
 
 export let sampleJobApplications: JobApplication[] = [
   { id: '1', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', companyName: 'Tech Solutions Inc.', jobTitle: 'Software Engineer', status: 'Applied', dateApplied: '2024-07-01', notes: 'Applied via company portal.', location: 'Remote', resumeUsed: 'resume1', reminderDate: new Date(Date.now() + 86400000 * 7).toISOString(), applicationUrl: 'https://example.com/apply/job1' }, 
@@ -202,9 +202,10 @@ export const sampleFeatureRequests: FeatureRequest[] = [
 ];
 
 export let sampleEvents: GalleryEvent[] = [ 
-  { id: 'event1', tenantId: SAMPLE_TENANT_ID, title: 'Annual Alumni Meet 2023', date: '2023-10-15T10:00:00Z', imageUrls: ['https://picsum.photos/seed/event1/600/400', 'https://picsum.photos/seed/event1-extra1/600/400'], description: 'A wonderful evening connecting with fellow alumni.' , dataAiHint: 'conference networking', approved: true},
-  { id: 'event2', tenantId: SAMPLE_TENANT_ID, title: 'Tech Talk Series: AI Today', date: '2024-03-22T10:00:00Z', imageUrls: ['https://picsum.photos/seed/event2/600/400'], description: 'Insightful talks on the future of Artificial Intelligence.' , dataAiHint: 'presentation seminar', approved: true},
-  { id: 'event3', tenantId: SAMPLE_TENANT_ID, title: 'Campus Job Fair Spring 2024', date: '2024-04-10T10:00:00Z', imageUrls: ['https://picsum.photos/seed/event3/600/400', 'https://picsum.photos/seed/event3-extra2/600/400', 'https://picsum.photos/seed/event3-extra3/600/400'], description: 'Connecting students with top employers.', dataAiHint: 'job fair students', approved: false },
+  { id: 'event1', tenantId: SAMPLE_TENANT_ID, title: 'Annual Alumni Meet 2023', date: '2023-10-15T10:00:00Z', imageUrls: ['https://picsum.photos/seed/event1/600/400', 'https://picsum.photos/seed/event1-extra1/600/400'], description: 'A wonderful evening connecting with fellow alumni.' , dataAiHint: 'conference networking', approved: true, createdByUserId: 'alumni4', attendeeUserIds: ['alumni1', 'alumni2', 'currentUser', 'user123']},
+  { id: 'event2', tenantId: SAMPLE_TENANT_ID, title: 'Tech Talk Series: AI Today', date: '2024-03-22T10:00:00Z', imageUrls: ['https://picsum.photos/seed/event2/600/400'], description: 'Insightful talks on the future of Artificial Intelligence.' , dataAiHint: 'presentation seminar', approved: true, createdByUserId: 'alumni1', attendeeUserIds: ['alumni2', 'alumni4', 'currentUser']},
+  { id: 'event3', tenantId: SAMPLE_TENANT_ID, title: 'Campus Job Fair Spring 2024', date: '2024-04-10T10:00:00Z', imageUrls: ['https://picsum.photos/seed/event3/600/400', 'https://picsum.photos/seed/event3-extra2/600/400', 'https://picsum.photos/seed/event3-extra3/600/400'], description: 'Connecting students with top employers.', dataAiHint: 'job fair students', approved: false, createdByUserId: 'managerUser1', attendeeUserIds: ['currentUser', 'user456'] },
+  { id: 'event4', tenantId: 'tenant-2', title: 'Tenant 2 Networking Mixer', date: '2024-05-10T10:00:00Z', imageUrls: ['https://picsum.photos/seed/event4/600/400'], description: 'Exclusive networking event for Corporate Partner Inc. members.', dataAiHint: 'corporate networking', approved: true, createdByUserId: 'managerUser1', attendeeUserIds: ['alumni3', 'user789'] },
 ];
 
 export const sampleJobOpenings: JobOpening[] = [
@@ -422,9 +423,9 @@ export const sampleTenants: Tenant[] = [
     createdAt: new Date().toISOString(),
     settings: {
       allowPublicSignup: true,
-      customLogoUrl: 'https://picsum.photos/seed/brainqy_logo/200/50', 
-      primaryColor: 'hsl(180 100% 25%)', // Default Teal
-      accentColor: 'hsl(180 100% 30%)',  // Slightly Lighter Teal
+      customLogoUrl: 'https://placehold.co/200x50/E0F7FA/008080&text=Brainqy', 
+      primaryColor: 'hsl(190 67% 92%)', // Default Light Blue from globals.css
+      accentColor: 'hsl(180 100% 25%)',  // Default Teal from globals.css
       features: {
         communityFeedEnabled: true,
         jobBoardEnabled: true,
@@ -445,7 +446,7 @@ export const sampleTenants: Tenant[] = [
       allowPublicSignup: false,
       primaryColor: 'hsl(221 83% 53%)', 
       accentColor: 'hsl(221 83% 63%)',
-      customLogoUrl: 'https://picsum.photos/seed/logo2/200/50',
+      customLogoUrl: 'https://placehold.co/200x50/222E50/FFFFFF&text=CorpPartner',
       features: {
         communityFeedEnabled: false,
         jobBoardEnabled: true,
@@ -463,6 +464,7 @@ export const sampleTenants: Tenant[] = [
       allowPublicSignup: true,
       primaryColor: 'hsl(39 100% 50%)', 
       accentColor: 'hsl(39 100% 55%)',
+      customLogoUrl: 'https://placehold.co/200x50/FFBF00/000000&text=CCC',
       features: {
         communityFeedEnabled: true,
         jobBoardEnabled: true,

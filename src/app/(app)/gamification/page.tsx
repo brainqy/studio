@@ -3,16 +3,15 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Award, Flame, Star, CheckCircle, Trophy, UserCircle } from "lucide-react"; // Added Trophy, UserCircle
-import { sampleUserProfile, sampleBadges, samplePlatformUsers } from "@/lib/sample-data"; // Added samplePlatformUsers
+import { Award, Flame, Star, CheckCircle, Trophy, UserCircle } from "lucide-react"; 
+import { sampleUserProfile, sampleBadges, samplePlatformUsers } from "@/lib/sample-data"; 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import * as React from "react";
 import * as LucideIcons from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button"; // Added Button for potential pagination
-import { useState, useEffect, useMemo } from "react"; // Added useState, useEffect, useMemo
+import { useState, useEffect, useMemo } from "react"; 
 
 type IconName = keyof typeof LucideIcons;
 
@@ -48,8 +47,8 @@ export default function GamificationPage() {
 
   const getRankIcon = (rank: number) => {
     if (rank === 1) return <Trophy className="h-5 w-5 text-yellow-500" />;
-    if (rank === 2) return <Award className="h-5 w-5 text-gray-400" />; // Using Award as a placeholder for silver
-    if (rank === 3) return <Star className="h-5 w-5 text-orange-400" />; // Using Star as a placeholder for bronze
+    if (rank === 2) return <Award className="h-5 w-5 text-gray-400" />; 
+    if (rank === 3) return <Star className="h-5 w-5 text-orange-400" />; 
     return <span className="text-sm font-medium w-5 text-center">{rank}</span>;
   };
 
