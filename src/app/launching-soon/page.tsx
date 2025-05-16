@@ -5,6 +5,7 @@ import { useState, type FormEvent } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox"; // Added Checkbox
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Mail, Rocket, Sparkles, Send } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -12,6 +13,7 @@ import Link from 'next/link';
 
 export default function LaunchingSoonPage() {
   const [email, setEmail] = useState('');
+  const [termsAccepted, setTermsAccepted] = useState(false); // State for checkbox
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -21,12 +23,17 @@ export default function LaunchingSoonPage() {
       toast({ title: "Email Required", description: "Please enter your email address.", variant: "destructive" });
       return;
     }
+    if (!termsAccepted) {
+      toast({ title: "Terms Not Accepted", description: "Please accept the Terms and Conditions to proceed.", variant: "destructive" });
+      return;
+    }
     setIsLoading(true);
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1500));
-    console.log("Notify email submitted:", email);
+    console.log("Notify email submitted:", email, "Terms Accepted:", termsAccepted);
     toast({ title: "You're on the list!", description: `We'll notify you at ${email} when we launch.` });
     setEmail('');
+    setTermsAccepted(false); // Reset checkbox
     setIsLoading(false);
   };
 
@@ -68,10 +75,28 @@ export default function LaunchingSoonPage() {
                 />
               </div>
             </div>
+
+            <div className="flex items-center space-x-2 justify-center">
+              <Checkbox 
+                id="terms" 
+                checked={termsAccepted}
+                onCheckedChange={(checked) => setTermsAccepted(Boolean(checked))}
+                disabled={isLoading}
+              />
+              <Label
+                htmlFor="terms"
+                className="text-xs text-muted-foreground leading-snug"
+              >
+                I agree to the 
+                <Link href="/terms" className="underline hover:text-primary" target="_blank"> Terms and Conditions</Link> and 
+                <Link href="/privacy" className="underline hover:text-primary" target="_blank"> Privacy Policy</Link>.
+              </Label>
+            </div>
+
             <Button 
               type="submit" 
               className="w-full h-12 text-lg bg-accent hover:bg-accent/90 text-accent-foreground"
-              disabled={isLoading}
+              disabled={isLoading || !termsAccepted}
             >
               {isLoading ? (
                 <>
@@ -100,6 +125,11 @@ export default function LaunchingSoonPage() {
 
       <footer className="mt-8 text-sm text-muted-foreground">
         &copy; {new Date().getFullYear()} ResumeMatch AI. All rights reserved.
+        <div className="mt-1 space-x-2">
+            <Link href="/privacy" className="hover:text-primary">Privacy Policy</Link>
+            <span className="text-gray-400">|</span>
+            <Link href="/terms" className="hover:text-primary">Terms of Service</Link>
+        </div>
       </footer>
     </div>
   );
