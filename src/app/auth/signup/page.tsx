@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { FileText, Mail, User, Lock, Building } from "lucide-react"; // Added Building icon
+import { FileText, Mail, User, Lock, Building } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
@@ -27,7 +27,7 @@ export default function SignupPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [termsAccepted, setTermsAccepted] = useState(false);
-  const [tenantId, setTenantId] = useState(''); // State for Tenant ID
+  const [tenantIdInput, setTenantIdInput] = useState(''); // Renamed to avoid conflict with any potential 'tenantId' prop
 
   const handleSignup = (event: React.FormEvent) => {
     event.preventDefault();
@@ -40,9 +40,12 @@ export default function SignupPage() {
       return;
     }
     // Mock signup logic
-    // In a real app, you'd send tenantId along with other data to your backend.
-    console.log("Signup attempt for tenant:", tenantId || "Default/Public Tenant");
-    toast({ title: "Signup Successful", description: "Account created. Redirecting to dashboard..." });
+    let signupMessage = "Account created. Redirecting to dashboard...";
+    if (tenantIdInput.trim()) {
+      signupMessage = `Account created for tenant "${tenantIdInput.trim()}". Redirecting...`;
+    }
+    console.log("Signup attempt for tenant:", tenantIdInput.trim() || "Default/Public Tenant");
+    toast({ title: "Signup Successful", description: signupMessage });
     router.push("/dashboard");
   };
 
@@ -60,7 +63,7 @@ export default function SignupPage() {
             <FileText className="h-12 w-12 text-primary mx-auto" />
           </Link>
           <CardTitle className="text-3xl font-bold">Create Account</CardTitle>
-          <CardDescription>Join ResumeMatch AI and supercharge your job search.</CardDescription>
+          <CardDescription>Join ResumeMatch AI and supercharge your career journey.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSignup} className="space-y-6">
@@ -87,15 +90,15 @@ export default function SignupPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="tenantId">Tenant ID / Organization Code (Optional)</Label>
+              <Label htmlFor="tenantIdInput">Tenant ID / Organization Code (Optional)</Label>
               <div className="relative">
                 <Building className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input 
-                  id="tenantId" 
+                  id="tenantIdInput" 
                   type="text" 
-                  placeholder="Enter code if provided" 
-                  value={tenantId}
-                  onChange={(e) => setTenantId(e.target.value)}
+                  placeholder="Enter code if provided by your organization" 
+                  value={tenantIdInput}
+                  onChange={(e) => setTenantIdInput(e.target.value)}
                   className="pl-10" 
                 />
               </div>
@@ -157,4 +160,3 @@ export default function SignupPage() {
     </div>
   );
 }
-
