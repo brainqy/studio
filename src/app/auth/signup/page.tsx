@@ -1,13 +1,13 @@
 
 "use client";
 
-import { useState, type FormEvent } from "react"; // Added useState and FormEvent
+import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox"; // Added Checkbox import
-import { FileText, Mail, User, Lock } from "lucide-react"; // Removed Smartphone
+import { Checkbox } from "@/components/ui/checkbox";
+import { FileText, Mail, User, Lock, Building } from "lucide-react"; // Added Building icon
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
@@ -27,6 +27,7 @@ export default function SignupPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [tenantId, setTenantId] = useState(''); // State for Tenant ID
 
   const handleSignup = (event: React.FormEvent) => {
     event.preventDefault();
@@ -39,14 +40,14 @@ export default function SignupPage() {
       return;
     }
     // Mock signup logic
+    // In a real app, you'd send tenantId along with other data to your backend.
+    console.log("Signup attempt for tenant:", tenantId || "Default/Public Tenant");
     toast({ title: "Signup Successful", description: "Account created. Redirecting to dashboard..." });
     router.push("/dashboard");
   };
 
   const handleGoogleSignup = () => {
     // Mock Google signup logic
-    // In a real scenario, check if terms are accepted if Google signup skips the main form.
-    // For now, we'll assume Google flow implies acceptance or handles it separately.
     toast({ title: "Google Sign-Up", description: "Successfully signed up with Google (Mock). Redirecting..." });
     router.push("/dashboard");
   };
@@ -82,6 +83,21 @@ export default function SignupPage() {
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input id="password" type="password" placeholder="••••••••" required className="pl-10" />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="tenantId">Tenant ID / Organization Code (Optional)</Label>
+              <div className="relative">
+                <Building className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input 
+                  id="tenantId" 
+                  type="text" 
+                  placeholder="Enter code if provided" 
+                  value={tenantId}
+                  onChange={(e) => setTenantId(e.target.value)}
+                  className="pl-10" 
+                />
               </div>
             </div>
 
@@ -141,3 +157,4 @@ export default function SignupPage() {
     </div>
   );
 }
+
