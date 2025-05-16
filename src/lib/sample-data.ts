@@ -2,7 +2,7 @@
 import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem, Appointment, Wallet, ResumeProfile, Tenant, Badge, BlogPost, ReferralHistoryItem, GamificationRule, UserStatus, SurveyResponse, Affiliate, AffiliateClick, AffiliateSignup, AffiliateStatus, SurveyStep, ResumeTemplate, TourStep, CommunityComment, InterviewQuestion, InterviewQuestionCategory, BlogGenerationSettings, MockInterviewSession, InterviewQuestionDifficulty, InterviewQuestionUserComment, PracticeSession, PracticeSessionStatus, JobApplicationStatus, KanbanColumnId, PlatformSettings, Announcement, AnnouncementStatus, AnnouncementAudience } from '@/types';
 import { AreasOfSupport, AppointmentStatuses, Genders, DegreePrograms, Industries, TimeCommitments, EngagementModes, SupportTypesSought, JOB_APPLICATION_STATUSES, KANBAN_COLUMNS_CONFIG, PREDEFINED_INTERVIEW_TOPICS, PRACTICE_FOCUS_AREAS, ALL_CATEGORIES, ALL_DIFFICULTIES, MOCK_INTERVIEW_STEPS, RESUME_BUILDER_STEPS, PreferredTimeSlots, AnnouncementStatuses, AnnouncementAudiences } from '@/types'; 
 
-export const SAMPLE_TENANT_ID = 'tenant-1'; // Default tenant for most sample data
+export const SAMPLE_TENANT_ID = 'Brainqy'; // Default tenant for most sample data
 
 export let sampleJobApplications: JobApplication[] = [
   { id: '1', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', companyName: 'Tech Solutions Inc.', jobTitle: 'Software Engineer', status: 'Applied', dateApplied: '2024-07-01', notes: 'Applied via company portal.', location: 'Remote', resumeUsed: 'resume1', reminderDate: new Date(Date.now() + 86400000 * 7).toISOString(), applicationUrl: 'https://example.com/apply/job1' }, 
@@ -16,7 +16,7 @@ export let sampleJobApplications: JobApplication[] = [
 export let sampleAlumni: AlumniProfile[] = [
   {
     id: 'alumni1',
-    tenantId: SAMPLE_TENANT_ID,
+    tenantId: SAMPLE_TENANT_ID, 
     name: 'Alice Wonderland',
     profilePictureUrl: 'https://picsum.photos/seed/alice/200/200',
     currentJobTitle: 'Senior Software Engineer',
@@ -37,7 +37,7 @@ export let sampleAlumni: AlumniProfile[] = [
   },
   {
     id: 'alumni2',
-    tenantId: SAMPLE_TENANT_ID,
+    tenantId: SAMPLE_TENANT_ID, 
     name: 'Bob The Builder (Manager)',
     profilePictureUrl: 'https://picsum.photos/seed/bob/200/200',
     currentJobTitle: 'Product Manager',
@@ -58,7 +58,7 @@ export let sampleAlumni: AlumniProfile[] = [
   },
   {
     id: 'alumni3',
-    tenantId: 'tenant-2', // Moved to tenant-2
+    tenantId: 'tenant-2', 
     name: 'Charlie Brown',
     profilePictureUrl: 'https://picsum.photos/seed/charlie/200/200',
     currentJobTitle: 'Data Scientist',
@@ -75,11 +75,11 @@ export let sampleAlumni: AlumniProfile[] = [
     appointmentCoinCost: 10,
     xpPoints: 1200,
     createdAt: new Date(Date.now() - 86400000 * 500).toISOString(), // ~1.5 years ago
-    isDistinguished: false, // Explicitly not distinguished initially
+    isDistinguished: false, 
   },
   {
     id: 'alumni4',
-    tenantId: SAMPLE_TENANT_ID,
+    tenantId: SAMPLE_TENANT_ID, 
     name: 'Diana Prince (Admin)', 
     profilePictureUrl: 'https://picsum.photos/seed/diana/200/200',
     currentJobTitle: 'Marketing Lead',
@@ -414,14 +414,14 @@ export const graduationYears = Array.from({ length: 56 }, (_, i) => (2030 - i).t
 
 export const sampleTenants: Tenant[] = [
   {
-    id: 'tenant-1',
-    name: 'Default University',
+    id: 'Brainqy', // Changed ID
+    name: 'Brainqy University', // Changed name
     createdAt: new Date().toISOString(),
     settings: {
       allowPublicSignup: true,
-      customLogoUrl: 'https://picsum.photos/seed/logo1/200/50',
-      primaryColor: 'hsl(180 100% 25%)', 
-      accentColor: 'hsl(180 100% 30%)',
+      customLogoUrl: 'https://picsum.photos/seed/brainqy_logo/200/50', // New logo for Brainqy
+      primaryColor: 'hsl(210 100% 50%)', // Example: A nice blue for Brainqy
+      accentColor: 'hsl(210 100% 55%)',  // Example: Slightly lighter blue
       features: {
         communityFeedEnabled: true,
         jobBoardEnabled: true,
@@ -430,7 +430,7 @@ export const sampleTenants: Tenant[] = [
         eventRegistrationEnabled: true,
       },
       emailTemplates: {
-        welcomeEmail: 'Welcome to Default University Alumni Network!',
+        welcomeEmail: 'Welcome to Brainqy University Alumni Network!',
       }
     }
   },
@@ -503,14 +503,14 @@ export let sampleBlogPosts: BlogPost[] = [
     userId: 'alumni4', 
     userName: 'Diana Prince (Admin)',
     userAvatar: 'https://picsum.photos/seed/diana/50/50',
-    title: 'Networking Success Stories from State University Alumni',
-    slug: 'state-uni-networking-success',
-    author: 'Alumni Relations (State University)',
+    title: 'Networking Success Stories from Brainqy University Alumni',
+    slug: 'brainqy-uni-networking-success', // Updated slug
+    author: 'Alumni Relations (Brainqy University)', // Updated author
     date: '2024-07-15T14:30:00Z',
     imageUrl: 'https://picsum.photos/seed/blognetwork/800/400',
     content: 'Hear inspiring stories from fellow alumni who found opportunities through the ResumeMatch AI network. Discover tips for effective networking...\n\nAlice Wonderland (Class of \'15) shares how a connection made through the platform led to her current role at Google. "The recommendation feature pointed me towards someone I hadn\'t considered, and it turned out to be the perfect connection," she says.\n\nBob The Builder (Manager) (Class of \'18) used the Alumni Directory filters to find mentors in Product Management. "Being able to filter by skills and industry was invaluable," Bob notes.\n\n**Networking Tips:**\n1. Personalize your connection requests.\n2. Be clear about what you\'re seeking (advice, referral, chat).\n3. Follow up respectfully.\n\n*This is sample content. More details would follow in a real post.*',
     excerpt: 'Hear inspiring stories from fellow alumni who found opportunities through the ResumeMatch AI network...',
-    tags: ['networking', 'career', 'success stories', 'state university'],
+    tags: ['networking', 'career', 'success stories', 'brainqy university'], // Updated tag
     comments: [],
   },
   {
@@ -1429,3 +1429,5 @@ export let sampleAnnouncements: Announcement[] = [
     createdBy: 'adminUser1',
   },
 ];
+
+    
