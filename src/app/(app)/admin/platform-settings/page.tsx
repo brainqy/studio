@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Settings, ShieldAlert, Server, Users, Briefcase, Zap, Handshake, Gift, Target, MessageSquare, ListChecks, Palette, Columns, HelpCircle, Coins, Settings2, UploadCloud, SunMoon, UserCheck, Clock as ClockIcon } from "lucide-react";
+import { Settings, Server, Users, Briefcase, Zap, Handshake, Gift, Target, MessageSquare, ListChecks, Palette, Columns, HelpCircle, Coins, Settings2, UploadCloud, SunMoon, UserCheck, Clock as ClockIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { PlatformSettings, ProfileVisibility } from "@/types";
 import { samplePlatformSettings, sampleUserProfile } from "@/lib/sample-data";
@@ -18,6 +18,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Textarea } from "@/components/ui/textarea"; 
+import AccessDeniedMessage from "@/components/ui/AccessDeniedMessage";
 
 const settingsSchema = z.object({
   platformName: z.string().min(3, "Platform name must be at least 3 characters"),
@@ -67,16 +68,7 @@ export default function PlatformSettingsPage() {
   }, [currentSettings, reset]);
 
   if (currentUser.role !== 'admin') {
-    return (
-      <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)]">
-        <ShieldAlert className="w-16 h-16 text-destructive mb-4" />
-        <h1 className="text-2xl font-bold text-foreground mb-2">Access Denied</h1>
-        <p className="text-muted-foreground">You do not have permission to view this page.</p>
-        <Button asChild className="mt-6">
-          <Link href="/dashboard">Go to Dashboard</Link>
-        </Button>
-      </div>
-    );
+    return <AccessDeniedMessage />;
   }
 
   const onSubmit = (data: SettingsFormData) => {

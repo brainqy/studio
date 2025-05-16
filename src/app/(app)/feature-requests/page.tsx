@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { PlusCircle, ShieldQuestion, Lightbulb, Send, Edit3, CheckCircle, Zap, Clock, RefreshCw, ShieldAlert, ThumbsUp } from "lucide-react";
+import { PlusCircle, ShieldQuestion, Lightbulb, Send, Edit3, CheckCircle, Zap, Clock, RefreshCw, ThumbsUp } from "lucide-react";
 import { sampleFeatureRequests, sampleUserProfile } from "@/lib/sample-data";
 import type { FeatureRequest } from "@/types";
 import { useToast } from "@/hooks/use-toast";
@@ -18,6 +18,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import AccessDeniedMessage from "@/components/ui/AccessDeniedMessage"; // Ensure this path is correct
 
 const featureRequestSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters").max(100, "Title too long"),
@@ -37,16 +38,7 @@ export default function FeatureRequestsPage() {
   });
 
   if (currentUser.role !== 'admin') {
-    return (
-      <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)]">
-        <ShieldAlert className="w-16 h-16 text-destructive mb-4" />
-        <h1 className="text-2xl font-bold text-foreground mb-2">Access Denied</h1>
-        <p className="text-muted-foreground">You do not have permission to view this page.</p>
-        <Button asChild className="mt-6">
-          <Link href="/dashboard">Go to Dashboard</Link>
-        </Button>
-      </div>
-    );
+    return <AccessDeniedMessage />;
   }
 
   const onSubmitSuggestion = (data: FeatureRequestFormData) => {
@@ -81,7 +73,7 @@ export default function FeatureRequestsPage() {
       case 'Pending': return { icon: Clock, color: 'text-yellow-600 bg-yellow-100 border-yellow-300' };
       case 'In Progress': return { icon: RefreshCw, color: 'text-blue-600 bg-blue-100 border-blue-300' };
       case 'Completed': return { icon: CheckCircle, color: 'text-green-600 bg-green-100 border-green-300' };
-      case 'Rejected': return { icon: ShieldAlert, color: 'text-red-600 bg-red-100 border-red-300' };
+      case 'Rejected': return { icon: XCircle, color: 'text-red-600 bg-red-100 border-red-300' }; // Changed from ShieldAlert to XCircle
       default: return { icon: ShieldQuestion, color: 'text-gray-600 bg-gray-100 border-gray-300' };
     }
   };
@@ -93,8 +85,6 @@ export default function FeatureRequestsPage() {
   };
 
   const openEditRequestDialog = (request: FeatureRequest) => {
-    // Allow admin to edit any request for status changes, etc.
-    // Regular users can only edit their own PENDING requests.
     if (currentUser.role !== 'admin' && (request.userId !== sampleUserProfile.id || request.status !== 'Pending')) {
       toast({ title: "Cannot Edit", description: "You can only edit your own pending requests, or admins can edit any.", variant: "destructive"});
       return;
@@ -224,4 +214,3 @@ export default function FeatureRequestsPage() {
     </div>
   );
 }
-

@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Settings, Loader2, Sparkles, Send, CalendarClock, Tag, Info, ShieldAlert } from "lucide-react";
+import { Settings, Loader2, Sparkles, Send, CalendarClock, Tag, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { BlogGenerationSettings, BlogPost } from "@/types";
 import { sampleBlogGenerationSettings, sampleBlogPosts, sampleUserProfile } from "@/lib/sample-data";
@@ -18,6 +18,7 @@ import * as z from "zod";
 import { generateAiBlogPost, type GenerateAiBlogPostInput, type GenerateAiBlogPostOutput } from "@/ai/flows/generate-ai-blog-post";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
+import AccessDeniedMessage from "@/components/ui/AccessDeniedMessage";
 
 const settingsSchema = z.object({
   generationIntervalHours: z.coerce.number().min(1, "Interval must be at least 1 hour").max(720, "Interval too long (max 30 days)"),
@@ -54,16 +55,7 @@ export default function AdminBlogSettingsPage() {
   }, [settings, reset]);
 
   if (currentUser.role !== 'admin') {
-    return (
-      <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)]">
-        <ShieldAlert className="w-16 h-16 text-destructive mb-4" />
-        <h1 className="text-2xl font-bold text-foreground mb-2">Access Denied</h1>
-        <p className="text-muted-foreground">You do not have permission to view this page.</p>
-        <Button asChild className="mt-6">
-          <Link href="/dashboard">Go to Dashboard</Link>
-        </Button>
-      </div>
-    );
+    return <AccessDeniedMessage />;
   }
 
   const onSettingsSubmit = (data: SettingsFormData) => {

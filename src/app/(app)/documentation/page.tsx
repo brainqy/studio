@@ -3,25 +3,16 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { BookText, Code2, Share2, ShieldAlert } from "lucide-react";
+import { BookText, Code2, Share2 } from "lucide-react";
 import { sampleUserProfile } from "@/lib/sample-data";
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import AccessDeniedMessage from "@/components/ui/AccessDeniedMessage";
 
 export default function DocumentationPage() {
   const currentUser = sampleUserProfile;
 
   if (currentUser.role !== 'admin') {
-    return (
-      <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)]">
-        <ShieldAlert className="w-16 h-16 text-destructive mb-4" />
-        <h1 className="text-2xl font-bold text-foreground mb-2">Access Denied</h1>
-        <p className="text-muted-foreground">You do not have permission to view this page.</p>
-        <Button asChild className="mt-6">
-          <Link href="/dashboard">Go to Dashboard</Link>
-        </Button>
-      </div>
-    );
+    return <AccessDeniedMessage />;
   }
 
   return (
@@ -242,4 +233,3 @@ export default function DocumentationPage() {
     </div>
   );
 }
-

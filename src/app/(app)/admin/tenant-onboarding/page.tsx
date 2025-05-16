@@ -12,10 +12,11 @@ import { useToast } from "@/hooks/use-toast";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Building2, Palette, Settings, UserPlus, Eye, Layers3, ChevronLeft, ChevronRight, ShieldAlert } from "lucide-react";
+import { Building2, Palette, Settings, UserPlus, Eye, Layers3, ChevronLeft, ChevronRight } from "lucide-react";
 import type { Tenant, TenantSettings } from "@/types";
 import { sampleTenants, sampleUserProfile } from "@/lib/sample-data"; 
 import Link from "next/link";
+import AccessDeniedMessage from "@/components/ui/AccessDeniedMessage";
 
 const tenantOnboardingSchema = z.object({
   tenantName: z.string().min(3, "Tenant name must be at least 3 characters"),
@@ -63,16 +64,7 @@ export default function TenantOnboardingPage() {
 
   const currentUser = sampleUserProfile; 
     if (currentUser.role !== 'admin') {
-    return (
-        <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)]">
-            <ShieldAlert className="w-16 h-16 text-destructive mb-4" />
-            <h1 className="text-2xl font-bold text-foreground mb-2">Access Denied</h1>
-            <p className="text-muted-foreground">You do not have permission to view this page.</p>
-            <Button asChild className="mt-6">
-                <Link href="/dashboard">Go to Dashboard</Link>
-            </Button>
-        </div>
-    );
+    return <AccessDeniedMessage />;
   }
 
 

@@ -6,12 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { Target, CheckCircle, XCircle, Users, BarChart3, DollarSign, Search, UserCheck, ShieldAlert } from "lucide-react";
+import { Target, CheckCircle, XCircle, Users, BarChart3, DollarSign, Search, UserCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Affiliate, AffiliateStatus } from "@/types";
 import { sampleAffiliates, sampleAffiliateClicks, sampleAffiliateSignups, sampleUserProfile } from "@/lib/sample-data";
 import { format } from "date-fns";
 import Link from "next/link";
+import AccessDeniedMessage from "@/components/ui/AccessDeniedMessage";
 
 export default function AffiliateManagementPage() {
   const [affiliates, setAffiliates] = useState<Affiliate[]>(sampleAffiliates);
@@ -20,16 +21,7 @@ export default function AffiliateManagementPage() {
   const currentUser = sampleUserProfile;
 
   if (currentUser.role !== 'admin') {
-    return (
-        <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)]">
-            <ShieldAlert className="w-16 h-16 text-destructive mb-4" />
-            <h1 className="text-2xl font-bold text-foreground mb-2">Access Denied</h1>
-            <p className="text-muted-foreground">You do not have permission to view this page.</p>
-            <Button asChild className="mt-6">
-                <Link href="/dashboard">Go to Dashboard</Link>
-            </Button>
-        </div>
-    );
+    return <AccessDeniedMessage />;
   }
 
   // Update local state if global sampleAffiliates changes (for demo persistence)

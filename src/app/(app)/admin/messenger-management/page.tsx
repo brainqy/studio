@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BotMessageSquare, Eye, PlusCircle, Edit3, AlertTriangle, UserCheck, ShieldAlert, ListFilter, BarChart3, CheckSquare, Users, Info, FileText, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
+import { BotMessageSquare, Eye, PlusCircle, Edit3, AlertTriangle, UserCheck, ListFilter, BarChart3, CheckSquare, Users, Info, FileText, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { SurveyResponse, SurveyStep, SurveyOption as SurveyOptionType } from "@/types";
 import { sampleSurveyResponses, sampleUserProfile, profileCompletionSurveyDefinition } from "@/lib/sample-data";
@@ -19,6 +19,7 @@ import Link from "next/link";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
+import AccessDeniedMessage from "@/components/ui/AccessDeniedMessage";
 
 interface SurveyDefinitionListItem {
   id: string;
@@ -70,17 +71,8 @@ export default function MessengerManagementPage() {
   const [currentStepOptions, setCurrentStepOptions] = useState<NewSurveyOption[]>([]);
   const [currentStepDropdownOptions, setCurrentStepDropdownOptions] = useState<{tempId: string, label: string, value: string}[]>([]);
 
-  if (currentUser.role !== 'admin' && currentUser.role !== 'manager') {
-    return (
-        <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)]">
-            <ShieldAlert className="w-16 h-16 text-destructive mb-4" />
-            <h1 className="text-2xl font-bold text-foreground mb-2">Access Denied</h1>
-            <p className="text-muted-foreground">You do not have permission to view this page.</p>
-            <Button asChild className="mt-6">
-                <Link href="/dashboard">Go to Dashboard</Link>
-            </Button>
-        </div>
-    );
+  if (currentUser.role !== 'admin') {
+    return <AccessDeniedMessage />;
   }
   
   useEffect(() => {

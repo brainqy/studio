@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Award, Star, PlusCircle, Edit3, Trash2, ListChecks, HelpCircle, ShieldAlert } from "lucide-react";
+import { Award, Star, PlusCircle, Edit3, Trash2, ListChecks, HelpCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Badge, GamificationRule } from "@/types";
 import { sampleBadges as initialBadges, sampleXpRules as initialXpRules, sampleUserProfile } from "@/lib/sample-data";
@@ -19,6 +19,7 @@ import * as z from "zod";
 import * as LucideIcons from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import Link from "next/link";
+import AccessDeniedMessage from "@/components/ui/AccessDeniedMessage";
 
 type IconName = keyof typeof LucideIcons;
 
@@ -73,16 +74,7 @@ export default function GamificationRulesPage() {
   });
 
   if (currentUser.role !== 'admin') {
-    return (
-      <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)]">
-        <ShieldAlert className="w-16 h-16 text-destructive mb-4" />
-        <h1 className="text-2xl font-bold text-foreground mb-2">Access Denied</h1>
-        <p className="text-muted-foreground">You do not have permission to view this page.</p>
-        <Button asChild className="mt-6">
-          <Link href="/dashboard">Go to Dashboard</Link>
-        </Button>
-      </div>
-    );
+    return <AccessDeniedMessage />;
   }
 
   const onBadgeFormSubmit = (data: BadgeFormData) => {

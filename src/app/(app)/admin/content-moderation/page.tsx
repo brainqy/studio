@@ -12,6 +12,7 @@ import type { CommunityPost } from "@/types";
 import { formatDistanceToNow } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
+import AccessDeniedMessage from "@/components/ui/AccessDeniedMessage";
 
 export default function ContentModerationPage() {
   const currentUser = sampleUserProfile;
@@ -60,16 +61,7 @@ export default function ContentModerationPage() {
 
 
   if (currentUser.role !== 'admin' && currentUser.role !== 'manager') {
-    return (
-        <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)]">
-            <ShieldAlert className="w-16 h-16 text-destructive mb-4" />
-            <h1 className="text-2xl font-bold text-foreground mb-2">Access Denied</h1>
-            <p className="text-muted-foreground">You do not have permission to view this page.</p>
-            <Button asChild className="mt-6">
-                <Link href="/dashboard">Go to Dashboard</Link>
-            </Button>
-        </div>
-    );
+    return <AccessDeniedMessage />;
   }
 
   return (
