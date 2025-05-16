@@ -1,8 +1,9 @@
 
+
 import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem, Appointment, Wallet, ResumeProfile, Tenant, Badge, BlogPost, ReferralHistoryItem, GamificationRule, UserStatus, SurveyResponse, Affiliate, AffiliateClick, AffiliateSignup, AffiliateStatus, SurveyStep, ResumeTemplate, TourStep, CommunityComment, InterviewQuestion, InterviewQuestionCategory, BlogGenerationSettings, MockInterviewSession, InterviewQuestionDifficulty, InterviewQuestionUserComment, PracticeSession, PracticeSessionStatus, JobApplicationStatus, KanbanColumnId, PlatformSettings, Announcement, AnnouncementStatus, AnnouncementAudience } from '@/types';
 import { AreasOfSupport, AppointmentStatuses, Genders, DegreePrograms, Industries, TimeCommitments, EngagementModes, SupportTypesSought, JOB_APPLICATION_STATUSES, KANBAN_COLUMNS_CONFIG, PREDEFINED_INTERVIEW_TOPICS, PRACTICE_FOCUS_AREAS, ALL_CATEGORIES, ALL_DIFFICULTIES, MOCK_INTERVIEW_STEPS, RESUME_BUILDER_STEPS, PreferredTimeSlots, AnnouncementStatuses, AnnouncementAudiences } from '@/types'; 
 
-export const SAMPLE_TENANT_ID = 'Brainqy'; // Default tenant for most sample data
+export let SAMPLE_TENANT_ID = 'Brainqy'; // Default tenant for most sample data
 
 export let sampleJobApplications: JobApplication[] = [
   { id: '1', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', companyName: 'Tech Solutions Inc.', jobTitle: 'Software Engineer', status: 'Applied', dateApplied: '2024-07-01', notes: 'Applied via company portal.', location: 'Remote', resumeUsed: 'resume1', reminderDate: new Date(Date.now() + 86400000 * 7).toISOString(), applicationUrl: 'https://example.com/apply/job1' }, 
@@ -151,12 +152,14 @@ export let sampleCommunityPosts: CommunityPost[] = [
     userName: 'Alice Wonderland', 
     userAvatar: 'https://picsum.photos/seed/alice/50/50', 
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(), 
-    content: 'Upcoming Workshop: Intro to Cloud Native', 
+    content: 'Join our upcoming workshop: Intro to Cloud Native! Learn the fundamentals and best practices from industry experts.', 
     type: 'event', 
     eventTitle: 'Intro to Cloud Native', 
     eventDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString(), 
-    eventLocation: 'Online (Zoom)', 
-    tags: ['workshop', 'cloud'], 
+    eventLocation: 'Online (Zoom)',
+    attendees: 55,
+    capacity: 100, 
+    tags: ['workshop', 'cloud', 'tech'], 
     moderationStatus: 'visible', 
     flagCount: 0,
     comments: [
@@ -414,14 +417,14 @@ export const graduationYears = Array.from({ length: 56 }, (_, i) => (2030 - i).t
 
 export const sampleTenants: Tenant[] = [
   {
-    id: 'Brainqy', // Changed ID
-    name: 'Brainqy University', // Changed name
+    id: 'Brainqy', 
+    name: 'Brainqy University', 
     createdAt: new Date().toISOString(),
     settings: {
       allowPublicSignup: true,
-      customLogoUrl: 'https://picsum.photos/seed/brainqy_logo/200/50', // New logo for Brainqy
-      primaryColor: 'hsl(210 100% 50%)', // Example: A nice blue for Brainqy
-      accentColor: 'hsl(210 100% 55%)',  // Example: Slightly lighter blue
+      customLogoUrl: 'https://picsum.photos/seed/brainqy_logo/200/50', 
+      primaryColor: 'hsl(180 100% 25%)', // Default Teal
+      accentColor: 'hsl(180 100% 30%)',  // Slightly Lighter Teal
       features: {
         communityFeedEnabled: true,
         jobBoardEnabled: true,
@@ -504,13 +507,13 @@ export let sampleBlogPosts: BlogPost[] = [
     userName: 'Diana Prince (Admin)',
     userAvatar: 'https://picsum.photos/seed/diana/50/50',
     title: 'Networking Success Stories from Brainqy University Alumni',
-    slug: 'brainqy-uni-networking-success', // Updated slug
-    author: 'Alumni Relations (Brainqy University)', // Updated author
+    slug: 'brainqy-uni-networking-success', 
+    author: 'Alumni Relations (Brainqy University)', 
     date: '2024-07-15T14:30:00Z',
     imageUrl: 'https://picsum.photos/seed/blognetwork/800/400',
     content: 'Hear inspiring stories from fellow alumni who found opportunities through the ResumeMatch AI network. Discover tips for effective networking...\n\nAlice Wonderland (Class of \'15) shares how a connection made through the platform led to her current role at Google. "The recommendation feature pointed me towards someone I hadn\'t considered, and it turned out to be the perfect connection," she says.\n\nBob The Builder (Manager) (Class of \'18) used the Alumni Directory filters to find mentors in Product Management. "Being able to filter by skills and industry was invaluable," Bob notes.\n\n**Networking Tips:**\n1. Personalize your connection requests.\n2. Be clear about what you\'re seeking (advice, referral, chat).\n3. Follow up respectfully.\n\n*This is sample content. More details would follow in a real post.*',
     excerpt: 'Hear inspiring stories from fellow alumni who found opportunities through the ResumeMatch AI network...',
-    tags: ['networking', 'career', 'success stories', 'brainqy university'], // Updated tag
+    tags: ['networking', 'career', 'success stories', 'brainqy university'], 
     comments: [],
   },
   {
@@ -983,7 +986,7 @@ export let sampleInterviewQuestions: InterviewQuestion[] = [
     ratingsCount: 10,
     userComments: [{id: 'uc3-1', userId: 'currentUser', userName: 'Alex Taylor (Admin)', comment: 'The options are a bit tricky, good test!', timestamp: new Date().toISOString()}],
     comments: "Fundamental OOP concept.",
-    createdBy: "adminUser1",
+    createdBy: "managerUser1",
     approved: true,
     createdAt: new Date(Date.now() - 86400000 * 8).toISOString(),
     bookmarkedBy: ['alumni1', 'currentUser']
@@ -1007,7 +1010,7 @@ export let sampleInterviewQuestions: InterviewQuestion[] = [
     ratingsCount: 18,
     userComments: [],
     comments: "Tests understanding of product lifecycle.",
-    createdBy: "adminUser2",
+    createdBy: "managerUser1",
     approved: true,
     createdAt: new Date(Date.now() - 86400000 * 7).toISOString(),
     bookmarkedBy: []
@@ -1079,7 +1082,7 @@ export let sampleInterviewQuestions: InterviewQuestion[] = [
     ratingsCount: 9,
     userComments: [],
     comments: "Crucial for backend roles.",
-    createdBy: "adminUser1",
+    createdBy: "managerUser1",
     approved: true,
     createdAt: new Date(Date.now() - 86400000 * 4).toISOString(),
     bookmarkedBy: []
@@ -1138,7 +1141,7 @@ export let sampleInterviewQuestions: InterviewQuestion[] = [
     rating: 4.3,
     ratingsCount: 13,
     userComments: [],
-    createdBy: "adminUser2",
+    createdBy: "managerUser1",
     approved: true,
     createdAt: new Date(Date.now() - 86400000 * 1).toISOString(),
     bookmarkedBy: ['currentUser']
@@ -1207,7 +1210,7 @@ export let sampleInterviewQuestions: InterviewQuestion[] = [
     rating: 4.6,
     ratingsCount: 11,
     userComments: [],
-    createdBy: "adminUser1",
+    createdBy: "managerUser1",
     approved: true,
     createdAt: new Date(Date.now() - 86400000 * 0.5).toISOString(),
     bookmarkedBy: []
@@ -1298,7 +1301,7 @@ export let sampleCreatedQuizzes: MockInterviewSession[] = [
   },
   {
     id: 'quiz-pm-roleplay',
-    userId: 'managerUser1', // Changed from 'currentUser' to 'managerUser1'
+    userId: 'managerUser1', 
     topic: 'Product Manager Role Scenarios',
     description: "A challenging quiz with scenario-based questions for aspiring Product Managers. Tests decision-making and prioritization skills.",
     questions: sampleInterviewQuestions.filter(q => q.category === 'Role-Specific' && q.tags?.includes('product management') && q.isMCQ).slice(0, 3).map(q => ({ id: q.id, questionText: q.question, category: q.category, difficulty: q.difficulty })),
@@ -1400,7 +1403,7 @@ export let sampleAnnouncements: Announcement[] = [
     status: 'Published',
     createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
     updatedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-    createdBy: 'adminUser1',
+    createdBy: 'managerUser1',
   },
   {
     id: 'announce-2',
@@ -1413,7 +1416,7 @@ export let sampleAnnouncements: Announcement[] = [
     status: 'Published',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-    createdBy: 'adminUser1',
+    createdBy: 'managerUser1',
   },
   {
     id: 'announce-3',
@@ -1426,8 +1429,6 @@ export let sampleAnnouncements: Announcement[] = [
     status: 'Draft',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-    createdBy: 'adminUser1',
+    createdBy: 'managerUser1',
   },
 ];
-
-    

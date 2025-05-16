@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import type { RecentPageItem } from '@/types';
@@ -51,7 +52,6 @@ const PATH_LABEL_MAP: Record<string, string> = {
   '/alumni-connect': 'Alumni Directory',
   '/job-board': 'Job Board',
   '/community-feed': 'Community Feed',
-  '/events': 'Events Registration',
   '/gallery': 'Event Gallery',
   '/activity-log': 'Activity Log',
   '/profile': 'My Profile',
@@ -61,7 +61,6 @@ const PATH_LABEL_MAP: Record<string, string> = {
   '/settings': 'Settings',
   '/documentation': 'Documentation',
   '/gamification': 'Rewards & Badges',
-  // '/leaderboard': 'Leaderboard', // Removed
   '/referrals': 'Referrals',
   '/affiliates': 'Affiliates Program',
   '/blog': 'Blog',
@@ -74,6 +73,11 @@ const PATH_LABEL_MAP: Record<string, string> = {
   '/admin/affiliate-management': 'Affiliate Management',
   '/admin/gallery-management': 'Gallery Management',
   '/admin/blog-settings': 'AI Blog Settings',
+  '/admin/platform-settings': 'Platform Settings',
+  // Ensure /events is removed if page is removed
+  // '/events': 'Events Registration', 
+  '/resume-history': 'Resume Scan History (in Analyzer)',
+  '/leaderboard': 'Leaderboard (in Rewards)',
 };
 
 export function getLabelForPath(path: string): string {
@@ -82,6 +86,13 @@ export function getLabelForPath(path: string): string {
     const title = slug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
     return `Blog: ${title}`;
   }
+   if (path.startsWith('/interview-prep/quiz/edit/')) {
+    const quizId = path.substring('/interview-prep/quiz/edit/'.length);
+    return quizId === 'new' ? 'Create New Quiz' : `Edit Quiz: ${quizId.substring(0,8)}...`;
+  }
+  if (path.startsWith('/interview-prep/quiz')) {
+    const quizId = new URLSearchParams(path.split('?')[1]).get('quizId');
+    return quizId ? `Quiz: ${quizId.substring(0,8)}...` : 'Take Quiz';
+  }
   return PATH_LABEL_MAP[path] || path;
 }
-

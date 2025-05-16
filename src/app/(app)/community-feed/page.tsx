@@ -1,7 +1,8 @@
 
+
 "use client";
 
-import { useState, useMemo } from "react"; // Added useMemo
+import { useState, useMemo } from "react"; 
 import { Button } from "@/components/ui/button";
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter} from "@/components/ui/card";
@@ -11,10 +12,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MessageSquare, PlusCircle, ThumbsUp, MessageCircle as MessageIcon, Share2, Send, Filter, Edit3, Calendar, MapPin, Flag, ShieldCheck, Trash2, User as UserIcon, TrendingUp, Star } from "lucide-react";
-import { sampleCommunityPosts, sampleUserProfile, samplePlatformUsers } from "@/lib/sample-data"; // Added samplePlatformUsers
-import type { CommunityPost, CommunityComment, UserProfile } from "@/types"; // Added UserProfile
-import { formatDistanceToNow, parseISO } from 'date-fns';
+import { MessageSquare, PlusCircle, ThumbsUp, MessageCircle as MessageIcon, Share2, Send, Filter, Edit3, Calendar, MapPin, Flag, ShieldCheck, Trash2, User as UserIcon, TrendingUp, Star, Ticket, Users as UsersIcon } from "lucide-react"; // Added Ticket, UsersIcon
+import { sampleCommunityPosts, sampleUserProfile, samplePlatformUsers } from "@/lib/sample-data"; 
+import type { CommunityPost, CommunityComment, UserProfile } from "@/types"; 
+import { formatDistanceToNow, parseISO, isFuture as dateIsFuture } from 'date-fns'; // Added isFuture
 import { useToast } from "@/hooks/use-toast";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -30,6 +31,9 @@ const postSchema = z.object({
   pollOptions: z.array(z.object({ option: z.string(), votes: z.number() })).optional(),
   eventDate: z.string().optional(),
   eventLocation: z.string().optional(),
+  eventTitle: z.string().optional(), // Added eventTitle
+  attendees: z.coerce.number().optional(), // Added attendees
+  capacity: z.coerce.number().optional(), // Added capacity
   assignedTo: z.string().optional(),
   status: z.enum(['open', 'assigned', 'completed']).optional(),
 });
@@ -52,7 +56,7 @@ export default function CommunityFeedPage() {
   const [newCommentText, setNewCommentText] = useState(""); 
   const [commentingOnPostId, setCommentingOnPostId] = useState<string | null>(null);
 
-  const { control, handleSubmit, reset, setValue, formState: { errors } } = useForm<PostFormData>({
+  const { control, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<PostFormData>({ // Added watch
     resolver: zodResolver(postSchema),
     defaultValues: {
       content: '',
@@ -61,14 +65,16 @@ export default function CommunityFeedPage() {
     }
   });
   
+  const postType = watch("type"); // Watch the type field
+
   const currentUser = sampleUserProfile; 
 
   const mostActiveUsers = useMemo(() => {
-    return [...samplePlatformUsers] // Create a copy to sort
-      .filter(user => user.xpPoints && user.xpPoints > 0 && user.status === 'active') // Filter for active users with XP
+    return [...samplePlatformUsers] 
+      .filter(user => user.xpPoints && user.xpPoints > 0 && user.status === 'active') 
       .sort((a, b) => (b.xpPoints || 0) - (a.xpPoints || 0))
-      .slice(0, 5); // Get top 5
-  }, []); // Depends only on samplePlatformUsers, which is static for now
+      .slice(0, 5); 
+  }, []); 
 
   const handleFormSubmit = (data: PostFormData) => {
     if (editingPost) {
@@ -81,6 +87,9 @@ export default function CommunityFeedPage() {
           pollOptions: data.type === 'poll' ? data.pollOptions : undefined,
           eventDate: data.type === 'event' ? data.eventDate : undefined,
           eventLocation: data.type === 'event' ? data.eventLocation : undefined,
+          eventTitle: data.type === 'event' ? data.eventTitle : undefined,
+          attendees: data.type === 'event' ? (data.attendees || 0) : undefined,
+          capacity: data.type === 'event' ? (data.capacity || 0) : undefined,
         }
         : p
       ));
@@ -98,6 +107,9 @@ export default function CommunityFeedPage() {
         pollOptions: data.type === 'poll' ? data.pollOptions : undefined,
         eventDate: data.type === 'event' ? data.eventDate : undefined,
         eventLocation: data.type === 'event' ? data.eventLocation : undefined,
+        eventTitle: data.type === 'event' ? data.eventTitle : undefined,
+        attendees: data.type === 'event' ? (data.attendees || 0) : undefined,
+        capacity: data.type === 'event' ? (data.capacity || 0) : undefined,
         tags: data.tags?.split(',').map(tag => tag.trim()).filter(tag => tag) || [],
         moderationStatus: 'visible', 
         flagCount: 0,
@@ -159,6 +171,16 @@ export default function CommunityFeedPage() {
     }));
     toast({ title: "Request Assigned", description: "You have been assigned to this request." });
   };
+  
+  const handleRegisterForEvent = (postId: string, eventTitle?: string) => {
+    setPosts(prevPosts => prevPosts.map(post => {
+      if (post.id === postId && post.type === 'event' && post.attendees !== undefined && post.capacity !== undefined && post.attendees < post.capacity) {
+        return { ...post, attendees: (post.attendees || 0) + 1 };
+      }
+      return post;
+    }));
+    toast({ title: "Registered for Event!", description: `You've successfully registered for "${eventTitle || 'the event'}".`});
+  };
 
   const openNewPostDialog = () => {
     setEditingPost(null);
@@ -172,8 +194,13 @@ export default function CommunityFeedPage() {
     setValue('tags', post.tags?.join(', ') || '');
     setValue('type', post.type);
     if (post.type === 'poll') setValue('pollOptions', post.pollOptions);
-    if (post.type === 'event') setValue('eventDate', post.eventDate);
-    if (post.type === 'event') setValue('eventLocation', post.eventLocation);
+    if (post.type === 'event') {
+      setValue('eventDate', post.eventDate);
+      setValue('eventLocation', post.eventLocation);
+      setValue('eventTitle', post.eventTitle);
+      setValue('attendees', post.attendees);
+      setValue('capacity', post.capacity);
+    }
     setIsPostDialogOpen(true);
   };
 
@@ -283,50 +310,44 @@ export default function CommunityFeedPage() {
                 />
               </div>
             </div>
-             <Controller
-                name="type"
-                control={control}
-                render={({ field }) => {
-                  if (field.value === 'poll') {
-                    return (
-                      <div>
-                        <Label>Poll Options</Label>
-                        <Input placeholder="Option 1" className="mb-2"/>
-                        <Input placeholder="Option 2" className="mb-2"/>
-                        <Button type="button" variant="outline" size="sm" className="mt-2">
-                          <PlusCircle className="mr-2 h-4 w-4"/> Add Option
-                        </Button>
-                      </div>
-                    );
-                  } else if (field.value === 'event') {
-                    return (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                           <Label htmlFor="event-date">Event Date</Label>
-                           <Controller
-                            name="eventDate"
-                            control={control}
-                             render={({ field: eventDateField }) => (
-                              <Input id="event-date" {...eventDateField} type="datetime-local" />
-                             )}
-                          />
-                         </div>
-                        <div>
-                           <Label htmlFor="event-location">Event Location</Label>
-                           <Controller
-                             name="eventLocation"
-                            control={control}
-                            render={({ field: eventLocationField }) => (
-                               <Input id="event-location" {...eventLocationField} placeholder="e.g., Zoom, Community Hall" />
-                             )}
-                           />
-                        </div>
-                      </div>
-                    );
-                  }
-                  return null;
-                }}
-               />
+             {postType === 'poll' && (
+                <div>
+                  <Label>Poll Options</Label>
+                  <Input placeholder="Option 1" className="mb-2"/>
+                  <Input placeholder="Option 2" className="mb-2"/>
+                  <Button type="button" variant="outline" size="sm" className="mt-2">
+                    <PlusCircle className="mr-2 h-4 w-4"/> Add Option
+                  </Button>
+                </div>
+              )}
+              {postType === 'event' && (
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="event-title">Event Title</Label>
+                    <Controller name="eventTitle" control={control} render={({ field }) => <Input id="event-title" {...field} placeholder="e.g., Alumni Networking Night" />} />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <Label htmlFor="event-date">Event Date</Label>
+                        <Controller name="eventDate" control={control} render={({ field }) => <Input id="event-date" {...field} type="datetime-local" />} />
+                    </div>
+                    <div>
+                        <Label htmlFor="event-location">Event Location</Label>
+                        <Controller name="eventLocation" control={control} render={({ field }) => <Input id="event-location" {...field} placeholder="e.g., Zoom, Community Hall" />} />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <div>
+                        <Label htmlFor="event-attendees">Attendees (Optional)</Label>
+                        <Controller name="attendees" control={control} render={({ field }) => <Input id="event-attendees" {...field} type="number" placeholder="e.g., 50" />} />
+                    </div>
+                    <div>
+                        <Label htmlFor="event-capacity">Capacity (Optional)</Label>
+                        <Controller name="capacity" control={control} render={({ field }) => <Input id="event-capacity" {...field} type="number" placeholder="e.g., 100" />} />
+                    </div>
+                  </div>
+                </div>
+              )}
             <DialogFooter>
               <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
               <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={!!errors.content}>
@@ -415,13 +436,27 @@ export default function CommunityFeedPage() {
                             ))}
                         </div>
                         )}
-                        {post.type === 'event' && post.content && (
+                        {post.type === 'event' && (
                           <div>
-                            <p className="text-sm font-semibold text-foreground mb-2">{post.content}</p>
-                            <div className="border rounded-md p-3 space-y-1">
-                              <p className="text-sm font-medium">{post.eventTitle || 'Event Details'}</p>
-                              <p className="text-xs text-muted-foreground flex items-center gap-1"><Calendar className="h-3 w-3"/> {post.eventDate ? new Date(post.eventDate).toLocaleString() : 'Date TBD'}</p>
-                              <p className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3"/> {post.eventLocation || 'Location TBD'}</p>
+                            {post.content && <p className="text-sm text-foreground whitespace-pre-line mb-2">{post.content}</p>}
+                            <div className="border rounded-md p-3 space-y-1 bg-secondary/30">
+                              <p className="text-md font-semibold text-primary">{post.eventTitle || 'Event Details'}</p>
+                              {post.eventDate && <p className="text-xs text-muted-foreground flex items-center gap-1"><Calendar className="h-3 w-3"/> {new Date(post.eventDate).toLocaleString()}</p>}
+                              {post.eventLocation && <p className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3"/> {post.eventLocation}</p>}
+                              {post.capacity !== undefined && (
+                                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                  <UsersIcon className="h-3 w-3" /> 
+                                  {post.capacity - (post.attendees || 0)} seats available ({post.attendees || 0}/{post.capacity})
+                                </p>
+                              )}
+                              {post.eventDate && dateIsFuture(parseISO(post.eventDate)) && (post.attendees || 0) < (post.capacity || Infinity) && (
+                                <Button variant="outline" size="sm" className="mt-2 text-primary border-primary hover:bg-primary/10" onClick={() => handleRegisterForEvent(post.id, post.eventTitle)}>
+                                  <Ticket className="mr-1 h-4 w-4"/> Register Now
+                                </Button>
+                              )}
+                               {post.eventDate && dateIsFuture(parseISO(post.eventDate)) && (post.attendees || 0) >= (post.capacity || Infinity) && (
+                                <Badge variant="warning">Event Full</Badge>
+                              )}
                             </div>
                         </div>
                         )}
@@ -555,14 +590,15 @@ export default function CommunityFeedPage() {
             </CardContent>
             <CardFooter>
                 <Button variant="link" size="sm" asChild className="text-xs p-0">
-                    <Link href="/leaderboard">View Full Leaderboard</Link>
+                    <Link href="/gamification">View Full Leaderboard</Link>
                 </Button>
             </CardFooter>
           </Card>
-           {/* You can add other sidebar cards here, e.g., Trending Tags, Upcoming Events */}
         </aside>
       </div>
     </React.Fragment>
   );
 }
 
+
+```

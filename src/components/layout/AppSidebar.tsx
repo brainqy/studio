@@ -26,7 +26,6 @@ const navItems = [
   { href: "/my-resumes", label: "My Resumes", icon: Layers3 },
   { href: "/resume-builder", label: "Resume Builder", icon: FilePlus2 },
   { href: "/resume-templates", label: "Resume Templates", icon: Layers3 },
-  { href: "/events", label: "Events Registration", icon: CalendarDays },
   { href: "/gallery", label: "Event Gallery", icon: GalleryVerticalEnd },
   { href: "/activity-log", label: "Activity Log", icon: BarChart2 },
   { href: "/profile", label: "My Profile", icon: User },
@@ -41,7 +40,7 @@ const utilityItems = [
 ];
 
 const gamificationItems = [
-  { href: "/gamification", label: "Rewards & Badges", icon: Award }, // Leaderboard will be inside this page
+  { href: "/gamification", label: "Rewards & Badges", icon: Award },
   { href: "/referrals", label: "Referrals", icon: Gift },
   { href: "/affiliates", label: "Affiliates Program", icon: Target, adminOnly: true },
 ];
@@ -168,4 +167,3 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
-

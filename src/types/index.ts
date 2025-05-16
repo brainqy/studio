@@ -149,6 +149,8 @@ export interface CommunityPost {
   eventDate?: string;
   eventLocation?: string;
   eventTitle?: string; 
+  attendees?: number; // Added for event registration
+  capacity?: number;  // Added for event registration
   assignedTo?: string; 
   status?: 'open' | 'assigned' | 'completed'; 
   moderationStatus: CommunityPostModerationStatus;
@@ -794,3 +796,5 @@ export interface Announcement {
   createdBy: string; // User ID of admin who created it
   tenantId?: string; // Added to scope announcements for managers
 }
+
+```
