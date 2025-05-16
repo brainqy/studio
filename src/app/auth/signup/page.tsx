@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FileText, Mail, User, Lock, Building } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation"; // Added useSearchParams
 import { useToast } from "@/hooks/use-toast";
 
 // Google Icon SVG
@@ -25,9 +25,17 @@ const GoogleIcon = () => (
 
 export default function SignupPage() {
   const router = useRouter();
+  const searchParams = useSearchParams(); // Hook to get query params
   const { toast } = useToast();
   const [termsAccepted, setTermsAccepted] = useState(false);
-  const [tenantIdInput, setTenantIdInput] = useState(''); // Renamed to avoid conflict with any potential 'tenantId' prop
+  const [tenantIdInput, setTenantIdInput] = useState('');
+
+  useEffect(() => {
+    const tenantIdFromQuery = searchParams.get('tenantId');
+    if (tenantIdFromQuery) {
+      setTenantIdInput(tenantIdFromQuery);
+    }
+  }, [searchParams]); // Re-run effect if searchParams change
 
   const handleSignup = (event: React.FormEvent) => {
     event.preventDefault();
