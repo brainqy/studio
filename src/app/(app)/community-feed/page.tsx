@@ -22,6 +22,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
+import { Badge } from "@/components/ui/badge"; // Added Badge import
 
 
 const postSchema = z.object({
@@ -599,6 +600,3 @@ export default function CommunityFeedPage() {
     </React.Fragment>
   );
 }
-
-
-```

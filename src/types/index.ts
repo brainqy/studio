@@ -163,6 +163,7 @@ export interface FeatureRequest {
   tenantId: string; 
   userId: string;
   userName: string;
+  userAvatar?: string;
   timestamp: string;
   title: string;
   description: string;
@@ -796,5 +797,3 @@ export interface Announcement {
   createdBy: string; // User ID of admin who created it
   tenantId?: string; // Added to scope announcements for managers
 }
-
-```
