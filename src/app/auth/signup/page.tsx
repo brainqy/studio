@@ -1,11 +1,13 @@
 
 "use client";
 
+import { useState, type FormEvent } from "react"; // Added useState and FormEvent
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FileText, Smartphone, Mail, User, Lock } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox"; // Added Checkbox import
+import { FileText, Mail, User, Lock } from "lucide-react"; // Removed Smartphone
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
@@ -24,9 +26,18 @@ const GoogleIcon = () => (
 export default function SignupPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   const handleSignup = (event: React.FormEvent) => {
     event.preventDefault();
+    if (!termsAccepted) {
+      toast({
+        title: "Terms Not Accepted",
+        description: "Please accept the Terms and Conditions and Privacy Policy to continue.",
+        variant: "destructive",
+      });
+      return;
+    }
     // Mock signup logic
     toast({ title: "Signup Successful", description: "Account created. Redirecting to dashboard..." });
     router.push("/dashboard");
@@ -34,6 +45,8 @@ export default function SignupPage() {
 
   const handleGoogleSignup = () => {
     // Mock Google signup logic
+    // In a real scenario, check if terms are accepted if Google signup skips the main form.
+    // For now, we'll assume Google flow implies acceptance or handles it separately.
     toast({ title: "Google Sign-Up", description: "Successfully signed up with Google (Mock). Redirecting..." });
     router.push("/dashboard");
   };
@@ -71,6 +84,30 @@ export default function SignupPage() {
                 <Input id="password" type="password" placeholder="••••••••" required className="pl-10" />
               </div>
             </div>
+
+            <div className="flex items-start space-x-2">
+              <Checkbox
+                id="terms-signup"
+                checked={termsAccepted}
+                onCheckedChange={(checked) => setTermsAccepted(Boolean(checked))}
+                aria-label="Accept terms and conditions"
+              />
+              <Label
+                htmlFor="terms-signup"
+                className="text-xs text-muted-foreground leading-snug [&_a]:text-primary [&_a:hover]:underline"
+              >
+                I agree to the ResumeMatch AI{" "}
+                <Link href="/terms" target="_blank" rel="noopener noreferrer">
+                  Terms and Conditions
+                </Link>{" "}
+                and{" "}
+                <Link href="/privacy" target="_blank" rel="noopener noreferrer">
+                  Privacy Policy
+                </Link>
+                .
+              </Label>
+            </div>
+
             <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
               Sign Up
             </Button>
@@ -90,10 +127,6 @@ export default function SignupPage() {
               <GoogleIcon />
               Sign up with Google
             </Button>
-            {/* Mobile OTP button can be kept or removed based on requirements */}
-            {/* <Button variant="outline">
-              <Smartphone className="mr-2 h-4 w-4" /> Mobile OTP
-            </Button> */}
           </div>
         </CardContent>
         <CardFooter className="justify-center">
