@@ -3,15 +3,15 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { GalleryVerticalEnd, CalendarDays, Users, UserCircle, Eye, ChevronLeft, ChevronRight } from "lucide-react";
 import { sampleEvents, sampleUserProfile, samplePlatformUsers } from "@/lib/sample-data";
 import Image from "next/image";
-import type { UserProfile, GalleryEvent } from "@/types"; // Added GalleryEvent
+import type { UserProfile, GalleryEvent } from "@/types"; 
 import { useState } from "react";
-import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel"; // Added Carousel
+import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel"; 
 
 export default function GalleryPage() {
   const currentUser = sampleUserProfile;
@@ -68,7 +68,7 @@ export default function GalleryPage() {
 
             return (
               <Card key={event.id} className="shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden flex flex-col">
-                <DialogTrigger asChild>
+                
                     <button onClick={() => openImageViewer(event)} className="block w-full aspect-video relative cursor-pointer group">
                       {event.imageUrls && event.imageUrls.length > 0 ? (
                         <Image
@@ -88,7 +88,7 @@ export default function GalleryPage() {
                           <Eye className="h-8 w-8 text-white" />
                        </div>
                     </button>
-                </DialogTrigger>
+                
                 <CardHeader className="pt-4 pb-2">
                   <CardTitle className="text-lg line-clamp-2">{event.title}</CardTitle>
                 </CardHeader>
