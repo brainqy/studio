@@ -12,37 +12,42 @@ import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, type FormEvent } from "react";
 import { sampleUserProfile, sampleTenants, samplePlatformSettings } from "@/lib/sample-data"; 
 import type { Tenant, UserProfile, PlatformSettings } from "@/types";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function SettingsPage() {
   const { toast } = useToast();
   const [currentUser, setCurrentUser] = useState<UserProfile>(sampleUserProfile);
   const [platformSettings, setPlatformSettings] = useState<PlatformSettings>(samplePlatformSettings);
 
-  // Theme state
   const [isDarkMode, setIsDarkMode] = useState(false);
 
-  // Notification states
   const [emailNotificationsEnabled, setEmailNotificationsEnabled] = useState(true);
   const [appNotificationsEnabled, setAppNotificationsEnabled] = useState(true);
   const [gamificationNotificationsEnabled, setGamificationNotificationsEnabled] = useState(true);
   const [referralNotificationsEnabled, setReferralNotificationsEnabled] = useState(true);
   
-  // Feature states
   const [walletEnabled, setWalletEnabled] = useState(platformSettings.walletEnabled);
 
-  // Tenant specific states (for manager role)
   const [tenantNameInput, setTenantNameInput] = useState("");
   const [tenantLogoUrlInput, setTenantLogoUrlInput] = useState("");
   const [currentPrimaryColor, setCurrentPrimaryColor] = useState("");
   const [currentAccentColor, setCurrentAccentColor] = useState("");
 
-  // Change Password states
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
 
   useEffect(() => {
-    // Check initial theme from localStorage or system preference
     const storedTheme = localStorage.getItem('theme');
     if (storedTheme) {
       setIsDarkMode(storedTheme === 'dark');
@@ -52,7 +57,6 @@ export default function SettingsPage() {
       document.documentElement.classList.add('dark');
     }
 
-    // Load settings based on user role
     if (currentUser.role === 'manager' && currentUser.tenantId) {
       const currentTenant = sampleTenants.find(t => t.id === currentUser.tenantId);
       if (currentTenant) {
@@ -62,7 +66,6 @@ export default function SettingsPage() {
         setCurrentAccentColor(currentTenant.settings?.accentColor || "#009688");
       }
     }
-    // Initialize platform feature toggles (could be from fetched settings)
     setWalletEnabled(platformSettings.walletEnabled);
 
   }, [currentUser.role, currentUser.tenantId, platformSettings.walletEnabled]);
@@ -79,46 +82,39 @@ export default function SettingsPage() {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
       toast({ title: "Logo Selected (Mock)", description: `${file.name} selected. Click "Save All Settings" to apply for tenant.` });
-      // Mock: In a real app, you might set a temporary URL or preview
-      // For now, this action doesn't directly change tenantLogoUrlInput until save
     }
   };
 
   const handleTenantColorChange = (colorType: 'primary' | 'accent', value: string) => {
     if (colorType === 'primary') setCurrentPrimaryColor(value);
     if (colorType === 'accent') setCurrentAccentColor(value);
-    // Note: Actual application of these colors would be more complex, involving CSS variables or backend logic.
   };
 
   const handleSaveSettings = () => {
-    // Mock saving general settings
     console.log("General settings saved (mocked):", {
       isDarkMode, emailNotificationsEnabled, appNotificationsEnabled,
       gamificationNotificationsEnabled, referralNotificationsEnabled, walletEnabled
     });
     
-    // For platform settings (if admin)
     if(currentUser.role === 'admin'){
-        // Update the global samplePlatformSettings object
         Object.assign(samplePlatformSettings, { walletEnabled });
         toast({ title: "Platform Settings Saved", description: "Platform feature preferences have been updated." });
     }
 
-    // If manager, save tenant specific settings
     if (currentUser.role === 'manager' && currentUser.tenantId) {
       const tenantIndex = sampleTenants.findIndex(t => t.id === currentUser.tenantId);
       if (tenantIndex !== -1) {
         const updatedTenant = { ...sampleTenants[tenantIndex] };
         updatedTenant.name = tenantNameInput;
-        if (!updatedTenant.settings) updatedTenant.settings = { allowPublicSignup: true }; // Ensure settings object exists
+        if (!updatedTenant.settings) updatedTenant.settings = { allowPublicSignup: true };
         updatedTenant.settings.customLogoUrl = tenantLogoUrlInput;
         updatedTenant.settings.primaryColor = currentPrimaryColor;
         updatedTenant.settings.accentColor = currentAccentColor;
         
-        sampleTenants[tenantIndex] = updatedTenant; // Update the in-memory sample data
+        sampleTenants[tenantIndex] = updatedTenant;
         toast({ title: "Tenant Branding Saved", description: `Branding for "${tenantNameInput}" updated.` });
       }
-    } else if (currentUser.role !== 'admin') { // For regular users
+    } else if (currentUser.role !== 'admin') {
       toast({ title: "Settings Saved", description: "Your preferences have been updated." });
     }
   };
@@ -133,7 +129,6 @@ export default function SettingsPage() {
       toast({ title: "Password Too Short", description: "New password must be at least 8 characters.", variant: "destructive" });
       return;
     }
-    // Mock password change
     console.log("Attempting to change password (mocked):", { currentPassword, newPassword });
     toast({ title: "Password Changed (Mock)", description: "Your password has been successfully updated." });
     setCurrentPassword("");
@@ -141,6 +136,9 @@ export default function SettingsPage() {
     setConfirmNewPassword("");
   };
 
+  const handleDataDeletionRequest = () => {
+    toast({title: "Data Deletion Request (Mock)", description:"Your data deletion request has been initiated. This is a mock action."});
+  };
 
   return (
     <div className="space-y-8 max-w-3xl mx-auto">
@@ -164,7 +162,6 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Tenant Branding Settings - Visible only to Managers */}
       {currentUser.role === 'manager' && (
         <Card className="shadow-lg">
           <CardHeader>
@@ -251,7 +248,6 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Platform Feature Toggles - Visible only to Admins */}
       {currentUser.role === 'admin' && (
         <Card className="shadow-lg">
           <CardHeader>
@@ -266,12 +262,10 @@ export default function SettingsPage() {
                 checked={walletEnabled} 
                 onCheckedChange={(checked) => {
                     setWalletEnabled(checked);
-                    // This would also update platformSettings in a real backend call
                     setPlatformSettings(prev => ({...prev, walletEnabled: checked}));
                 }} 
               />
             </div>
-            {/* Add more global feature toggles here as needed by admin */}
           </CardContent>
         </Card>
       )}
@@ -337,9 +331,26 @@ export default function SettingsPage() {
                 <Switch id="two-factor-auth" onCheckedChange={() => toast({ title: "Mock Action", description: "Platform 2FA setting toggled." })} />
             </div>
           )}
-          <Button variant="destructive" onClick={() => toast({title: "Data Deletion (Mock)", description:"Data deletion request initiated."})}>
-            Request Data Deletion
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive">Request Data Deletion</Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Confirm Data Deletion Request</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to request the deletion of your account and all associated data? 
+                  This action cannot be undone. We will process your request in accordance with our privacy policy.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDataDeletionRequest} className="bg-destructive hover:bg-destructive/80">
+                  Confirm Deletion Request
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </CardContent>
       </Card>
 
