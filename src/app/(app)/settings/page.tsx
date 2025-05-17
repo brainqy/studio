@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription as DialogUIDescription, DialogFooter as DialogUIFooter, DialogTrigger, DialogClose } from "@/components/ui/dialog"; // Added Dialog components
 import { Settings, Palette, UploadCloud, Bell, Lock, WalletCards, Sun, Moon, Award, Gift, Paintbrush, KeyRound } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, type FormEvent } from "react";
@@ -46,13 +46,14 @@ export default function SettingsPage() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [isChangePasswordDialogOpen, setIsChangePasswordDialogOpen] = useState(false); // State for dialog
 
   useEffect(() => {
     const storedTheme = localStorage.getItem('theme');
     if (storedTheme) {
       setIsDarkMode(storedTheme === 'dark');
       document.documentElement.classList.toggle('dark', storedTheme === 'dark');
-    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    } else if (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches) {
       setIsDarkMode(true);
       document.documentElement.classList.add('dark');
     }
@@ -134,6 +135,7 @@ export default function SettingsPage() {
     setCurrentPassword("");
     setNewPassword("");
     setConfirmNewPassword("");
+    setIsChangePasswordDialogOpen(false); // Close dialog on success
   };
 
   const handleDataDeletionRequest = () => {
@@ -270,58 +272,69 @@ export default function SettingsPage() {
         </Card>
       )}
 
-
       <Card className="shadow-lg">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><KeyRound className="h-5 w-5 text-primary"/>Change Password</CardTitle>
-          <CardDescription>Update your account password.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleChangePassword} className="space-y-4">
-            <div>
-              <Label htmlFor="current-password">Current Password</Label>
-              <Input 
-                id="current-password" 
-                type="password" 
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                required 
-              />
-            </div>
-            <div>
-              <Label htmlFor="new-password">New Password</Label>
-              <Input 
-                id="new-password" 
-                type="password" 
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                required 
-              />
-            </div>
-            <div>
-              <Label htmlFor="confirm-new-password">Confirm New Password</Label>
-              <Input 
-                id="confirm-new-password" 
-                type="password" 
-                value={confirmNewPassword}
-                onChange={(e) => setConfirmNewPassword(e.target.value)}
-                required 
-              />
-            </div>
-            <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground">
-              Change Password
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-
-      <Card className="shadow-lg">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Lock className="h-5 w-5 text-primary"/>Privacy & Security</CardTitle>
-          <CardDescription>Manage your data and privacy settings.</CardDescription>
+          <CardTitle className="flex items-center gap-2"><Lock className="h-5 w-5 text-primary"/>Account Security</CardTitle>
+          <CardDescription>Manage your account security settings.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-           <div className="flex items-center justify-between p-3 rounded-md border hover:bg-secondary/30">
+          <Dialog open={isChangePasswordDialogOpen} onOpenChange={setIsChangePasswordDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <KeyRound className="mr-2 h-4 w-4" /> Change Password
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Change Your Password</DialogTitle>
+                <DialogUIDescription>
+                  Enter your current password and a new password.
+                </DialogUIDescription>
+              </DialogHeader>
+              <form onSubmit={handleChangePassword} className="space-y-4 py-4">
+                <div>
+                  <Label htmlFor="dialog-current-password">Current Password</Label>
+                  <Input 
+                    id="dialog-current-password" 
+                    type="password" 
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    required 
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="dialog-new-password">New Password</Label>
+                  <Input 
+                    id="dialog-new-password" 
+                    type="password" 
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    required 
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="dialog-confirm-new-password">Confirm New Password</Label>
+                  <Input 
+                    id="dialog-confirm-new-password" 
+                    type="password" 
+                    value={confirmNewPassword}
+                    onChange={(e) => setConfirmNewPassword(e.target.value)}
+                    required 
+                  />
+                </div>
+                <DialogUIFooter>
+                  <DialogClose asChild>
+                    <Button type="button" variant="outline">Cancel</Button>
+                  </DialogClose>
+                  <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                    Update Password
+                  </Button>
+                </DialogUIFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+
+           <div className="flex items-center justify-between p-3 rounded-md border hover:bg-secondary/30 mt-4">
              <Label htmlFor="data-sharing" className="text-sm font-medium">Data Sharing with Alumni Network</Label>
             <Switch id="data-sharing" defaultChecked />
           </div>
@@ -333,7 +346,7 @@ export default function SettingsPage() {
           )}
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="destructive">Request Data Deletion</Button>
+              <Button variant="destructive" className="mt-4">Request Data Deletion</Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
@@ -362,3 +375,4 @@ export default function SettingsPage() {
     </div>
   );
 }
+
