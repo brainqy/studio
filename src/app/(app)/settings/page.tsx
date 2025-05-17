@@ -6,11 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription as DialogUIDescription, DialogFooter as DialogUIFooter, DialogTrigger, DialogClose } from "@/components/ui/dialog"; // Added Dialog components
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription as DialogUIDescription, DialogFooter as DialogUIFooter, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { Settings, Palette, UploadCloud, Bell, Lock, WalletCards, Sun, Moon, Award, Gift, Paintbrush, KeyRound } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, type FormEvent } from "react";
-import { sampleUserProfile, sampleTenants, samplePlatformSettings } from "@/lib/sample-data"; 
+import { sampleUserProfile, sampleTenants, samplePlatformSettings } from "@/lib/sample-data";
 import type { Tenant, UserProfile, PlatformSettings } from "@/types";
 import {
   AlertDialog,
@@ -35,7 +35,7 @@ export default function SettingsPage() {
   const [appNotificationsEnabled, setAppNotificationsEnabled] = useState(true);
   const [gamificationNotificationsEnabled, setGamificationNotificationsEnabled] = useState(true);
   const [referralNotificationsEnabled, setReferralNotificationsEnabled] = useState(true);
-  
+
   const [walletEnabled, setWalletEnabled] = useState(platformSettings.walletEnabled);
 
   const [tenantNameInput, setTenantNameInput] = useState("");
@@ -46,7 +46,8 @@ export default function SettingsPage() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
-  const [isChangePasswordDialogOpen, setIsChangePasswordDialogOpen] = useState(false); // State for dialog
+  const [isChangePasswordDialogOpen, setIsChangePasswordDialogOpen] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState(""); // New state for delete confirmation
 
   useEffect(() => {
     const storedTheme = localStorage.getItem('theme');
@@ -63,8 +64,8 @@ export default function SettingsPage() {
       if (currentTenant) {
         setTenantNameInput(currentTenant.name);
         setTenantLogoUrlInput(currentTenant.settings?.customLogoUrl || "");
-        setCurrentPrimaryColor(currentTenant.settings?.primaryColor || "#008080");
-        setCurrentAccentColor(currentTenant.settings?.accentColor || "#009688");
+        setCurrentPrimaryColor(currentTenant.settings?.primaryColor || "hsl(180 100% 25%)"); // Default to theme if undefined
+        setCurrentAccentColor(currentTenant.settings?.accentColor || "hsl(180 100% 30%)");  // Default to theme if undefined
       }
     }
     setWalletEnabled(platformSettings.walletEnabled);
@@ -82,7 +83,10 @@ export default function SettingsPage() {
   const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
-      toast({ title: "Logo Selected (Mock)", description: `${file.name} selected. Click "Save All Settings" to apply for tenant.` });
+      // Mock: In real app, upload file then set URL state.
+      // For now, we'll just use this to show a toast and let user paste URL.
+      setTenantLogoUrlInput(`https://placehold.co/200x50?text=${file.name.substring(0,10)}`);
+      toast({ title: "Logo Selected (Mock)", description: `${file.name} selected. URL field updated with placeholder. Click "Save All Settings" to apply for tenant.` });
     }
   };
 
@@ -96,7 +100,7 @@ export default function SettingsPage() {
       isDarkMode, emailNotificationsEnabled, appNotificationsEnabled,
       gamificationNotificationsEnabled, referralNotificationsEnabled, walletEnabled
     });
-    
+
     if(currentUser.role === 'admin'){
         Object.assign(samplePlatformSettings, { walletEnabled });
         toast({ title: "Platform Settings Saved", description: "Platform feature preferences have been updated." });
@@ -107,11 +111,11 @@ export default function SettingsPage() {
       if (tenantIndex !== -1) {
         const updatedTenant = { ...sampleTenants[tenantIndex] };
         updatedTenant.name = tenantNameInput;
-        if (!updatedTenant.settings) updatedTenant.settings = { allowPublicSignup: true };
+        if (!updatedTenant.settings) updatedTenant.settings = { allowPublicSignup: true }; // Ensure settings object exists
         updatedTenant.settings.customLogoUrl = tenantLogoUrlInput;
         updatedTenant.settings.primaryColor = currentPrimaryColor;
         updatedTenant.settings.accentColor = currentAccentColor;
-        
+
         sampleTenants[tenantIndex] = updatedTenant;
         toast({ title: "Tenant Branding Saved", description: `Branding for "${tenantNameInput}" updated.` });
       }
@@ -119,7 +123,7 @@ export default function SettingsPage() {
       toast({ title: "Settings Saved", description: "Your preferences have been updated." });
     }
   };
-  
+
   const handleChangePassword = (event: FormEvent) => {
     event.preventDefault();
     if (newPassword !== confirmNewPassword) {
@@ -135,12 +139,16 @@ export default function SettingsPage() {
     setCurrentPassword("");
     setNewPassword("");
     setConfirmNewPassword("");
-    setIsChangePasswordDialogOpen(false); // Close dialog on success
+    setIsChangePasswordDialogOpen(false);
   };
 
   const handleDataDeletionRequest = () => {
+    // Reset confirm text for next time
+    setDeleteConfirmText("");
     toast({title: "Data Deletion Request (Mock)", description:"Your data deletion request has been initiated. This is a mock action."});
   };
+
+  const CONFIRMATION_PHRASE = "delete my account";
 
   return (
     <div className="space-y-8 max-w-3xl mx-auto">
@@ -168,24 +176,24 @@ export default function SettingsPage() {
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><Paintbrush className="h-5 w-5 text-primary"/>Tenant Branding Settings</CardTitle>
-            <CardDescription>Customize the branding for your tenant: {currentUser.currentOrganization || currentUser.tenantId}.</CardDescription>
+            <CardDescription>Customize the branding for your tenant: {tenantNameInput || currentUser.currentOrganization || currentUser.tenantId}.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
               <Label htmlFor="tenant-name-input">Tenant Name</Label>
-              <Input 
-                id="tenant-name-input" 
-                value={tenantNameInput} 
-                onChange={(e) => setTenantNameInput(e.target.value)} 
+              <Input
+                id="tenant-name-input"
+                value={tenantNameInput}
+                onChange={(e) => setTenantNameInput(e.target.value)}
                 placeholder="Your Organization's Name"
               />
             </div>
             <div>
               <Label htmlFor="tenant-logo-url-input">Tenant Logo URL</Label>
-              <Input 
-                id="tenant-logo-url-input" 
-                value={tenantLogoUrlInput} 
-                onChange={(e) => setTenantLogoUrlInput(e.target.value)} 
+              <Input
+                id="tenant-logo-url-input"
+                value={tenantLogoUrlInput}
+                onChange={(e) => setTenantLogoUrlInput(e.target.value)}
                 placeholder="https://example.com/logo.png"
               />
             </div>
@@ -259,13 +267,13 @@ export default function SettingsPage() {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between p-3 rounded-md border hover:bg-secondary/30">
               <Label htmlFor="wallet-enable-platform" className="text-sm font-medium">Digital Wallet System (Platform-wide)</Label>
-              <Switch 
-                id="wallet-enable-platform" 
-                checked={walletEnabled} 
+              <Switch
+                id="wallet-enable-platform"
+                checked={walletEnabled}
                 onCheckedChange={(checked) => {
                     setWalletEnabled(checked);
                     setPlatformSettings(prev => ({...prev, walletEnabled: checked}));
-                }} 
+                }}
               />
             </div>
           </CardContent>
@@ -278,7 +286,14 @@ export default function SettingsPage() {
           <CardDescription>Manage your account security settings.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Dialog open={isChangePasswordDialogOpen} onOpenChange={setIsChangePasswordDialogOpen}>
+          <Dialog open={isChangePasswordDialogOpen} onOpenChange={(isOpen) => {
+            setIsChangePasswordDialogOpen(isOpen);
+            if (!isOpen) { // Reset fields when dialog closes
+              setCurrentPassword("");
+              setNewPassword("");
+              setConfirmNewPassword("");
+            }
+          }}>
             <DialogTrigger asChild>
               <Button variant="outline">
                 <KeyRound className="mr-2 h-4 w-4" /> Change Password
@@ -294,32 +309,32 @@ export default function SettingsPage() {
               <form onSubmit={handleChangePassword} className="space-y-4 py-4">
                 <div>
                   <Label htmlFor="dialog-current-password">Current Password</Label>
-                  <Input 
-                    id="dialog-current-password" 
-                    type="password" 
+                  <Input
+                    id="dialog-current-password"
+                    type="password"
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
-                    required 
+                    required
                   />
                 </div>
                 <div>
                   <Label htmlFor="dialog-new-password">New Password</Label>
-                  <Input 
-                    id="dialog-new-password" 
-                    type="password" 
+                  <Input
+                    id="dialog-new-password"
+                    type="password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    required 
+                    required
                   />
                 </div>
                 <div>
                   <Label htmlFor="dialog-confirm-new-password">Confirm New Password</Label>
-                  <Input 
-                    id="dialog-confirm-new-password" 
-                    type="password" 
+                  <Input
+                    id="dialog-confirm-new-password"
+                    type="password"
                     value={confirmNewPassword}
                     onChange={(e) => setConfirmNewPassword(e.target.value)}
-                    required 
+                    required
                   />
                 </div>
                 <DialogUIFooter>
@@ -352,13 +367,27 @@ export default function SettingsPage() {
               <AlertDialogHeader>
                 <AlertDialogTitle>Confirm Data Deletion Request</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Are you sure you want to request the deletion of your account and all associated data? 
-                  This action cannot be undone. We will process your request in accordance with our privacy policy.
+                  To confirm, please type "<strong className="text-destructive">{CONFIRMATION_PHRASE}</strong>" in the box below.
+                  This action cannot be undone. This will permanently delete your account and all associated data.
+                  We will process your request in accordance with our privacy policy.
                 </AlertDialogDescription>
               </AlertDialogHeader>
+              <div className="py-4">
+                <Label htmlFor="delete-confirm-input" className="sr-only">Confirm deletion phrase</Label>
+                <Input
+                  id="delete-confirm-input"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder={`Type "${CONFIRMATION_PHRASE}" here`}
+                />
+              </div>
               <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDataDeletionRequest} className="bg-destructive hover:bg-destructive/80">
+                <AlertDialogCancel onClick={() => setDeleteConfirmText("")}>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDataDeletionRequest}
+                  className="bg-destructive hover:bg-destructive/80 text-destructive-foreground"
+                  disabled={deleteConfirmText !== CONFIRMATION_PHRASE}
+                >
                   Confirm Deletion Request
                 </AlertDialogAction>
               </AlertDialogFooter>
@@ -375,4 +404,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-
