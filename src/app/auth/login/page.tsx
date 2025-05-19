@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FileText, Smartphone, Mail, Lock } from "lucide-react";
+import { FileText, Smartphone, Mail, Lock, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation"; // Added useSearchParams
 import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 // Google Icon SVG
 const GoogleIcon = () => (
@@ -23,19 +24,84 @@ const GoogleIcon = () => (
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = (event: React.FormEvent) => {
+  const handleLogin = async (event: React.FormEvent) => {
     event.preventDefault();
-    // Mock login logic
-    toast({ title: "Login Successful", description: "Redirecting to dashboard..." });
-    router.push("/dashboard");
+    setIsLoading(true);
+
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+    if (!API_BASE_URL) {
+      toast({ title: "Configuration Error", description: "API URL is not configured.", variant: "destructive" });
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const responseData = await response.json();
+
+      if (response.ok) {
+        toast({ title: "Login Successful", description: "Session initiated by backend. Redirecting..." });
+        
+        // IMPORTANT FOR PRODUCTION:
+        // The Spring Boot backend should set an HTTP-only cookie named 'authToken'.
+        // The Next.js frontend does NOT directly handle the JWT for security.
+        // The middleware will read this HttpOnly cookie.
+
+        // For UI purposes (displaying name, role etc.) and demonstration,
+        // we can store non-sensitive user info from the response body into localStorage.
+        if (responseData.userId && responseData.name && responseData.email && responseData.role) {
+          localStorage.setItem('currentUserInfo', JSON.stringify({
+            id: responseData.userId,
+            name: responseData.name,
+            email: responseData.email,
+            role: responseData.role,
+          }));
+        }
+        // For demonstration, if the token is also in the response body (not ideal for security if it's the main auth mechanism)
+        // if (responseData.accessToken) {
+        //   localStorage.setItem('demoAuthToken', responseData.accessToken);
+        //   console.warn("DEMO: Auth token stored in localStorage. In production, backend MUST set an HttpOnly cookie for 'authToken'.");
+        // }
+
+
+        // Redirect after login
+        const redirectPath = searchParams.get('redirect') || '/dashboard';
+        router.push(redirectPath);
+
+      } else {
+        toast({
+          title: "Login Failed",
+          description: responseData.message || "Invalid credentials or server error.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      toast({
+        title: "Login Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleGoogleLogin = () => {
     // Mock Google login logic
-    toast({ title: "Google Sign-In", description: "Successfully signed in with Google (Mock). Redirecting..." });
-    router.push("/dashboard");
+    toast({ title: "Google Sign-In (Mock)", description: "This feature is for demonstration. Redirecting..." });
+    router.push("/dashboard"); // Mock redirect
   };
 
   return (
@@ -54,7 +120,16 @@ export default function LoginPage() {
               <Label htmlFor="email">Email</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input id="email" type="email" placeholder="you@example.com" required className="pl-10" />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  required
+                  className="pl-10"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={isLoading}
+                />
               </div>
             </div>
             <div className="space-y-2">
@@ -66,10 +141,20 @@ export default function LoginPage() {
               </div>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input id="password" type="password" placeholder="••••••••" required className="pl-10" />
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  required
+                  className="pl-10"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLoading}
+                />
               </div>
             </div>
-            <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
+            <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isLoading}>
+              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Login
             </Button>
           </form>
@@ -84,14 +169,10 @@ export default function LoginPage() {
             </div>
           </div>
           <div className="mt-6 grid grid-cols-1 gap-4">
-            <Button variant="outline" onClick={handleGoogleLogin}>
+            <Button variant="outline" onClick={handleGoogleLogin} disabled={isLoading}>
               <GoogleIcon />
               Sign in with Google
             </Button>
-            {/* Mobile OTP button can be kept or removed based on requirements */}
-            {/* <Button variant="outline">
-              <Smartphone className="mr-2 h-4 w-4" /> Mobile OTP
-            </Button> */}
           </div>
         </CardContent>
         <CardFooter className="justify-center">

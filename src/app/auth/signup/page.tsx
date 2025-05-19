@@ -7,9 +7,9 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { FileText, Mail, User, Lock, Building } from "lucide-react";
+import { FileText, Mail, User, Lock, Building, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation"; // Added useSearchParams
+import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 
 // Google Icon SVG
@@ -25,19 +25,23 @@ const GoogleIcon = () => (
 
 export default function SignupPage() {
   const router = useRouter();
-  const searchParams = useSearchParams(); // Hook to get query params
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [tenantIdInput, setTenantIdInput] = useState('');
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const tenantIdFromQuery = searchParams.get('tenantId');
     if (tenantIdFromQuery) {
       setTenantIdInput(tenantIdFromQuery);
     }
-  }, [searchParams]); // Re-run effect if searchParams change
+  }, [searchParams]);
 
-  const handleSignup = (event: React.FormEvent) => {
+  const handleSignup = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!termsAccepted) {
       toast({
@@ -47,20 +51,57 @@ export default function SignupPage() {
       });
       return;
     }
-    // Mock signup logic
-    let signupMessage = "Account created. Redirecting to dashboard...";
-    if (tenantIdInput.trim()) {
-      signupMessage = `Account created for tenant "${tenantIdInput.trim()}". Redirecting...`;
+    setIsLoading(true);
+
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+    if (!API_BASE_URL) {
+      toast({ title: "Configuration Error", description: "API URL is not configured.", variant: "destructive" });
+      setIsLoading(false);
+      return;
     }
-    console.log("Signup attempt for tenant:", tenantIdInput.trim() || "Default/Public Tenant");
-    toast({ title: "Signup Successful", description: signupMessage });
-    router.push("/dashboard");
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          email,
+          password,
+          tenantId: tenantIdInput.trim() || undefined, // Send undefined if empty
+        }),
+      });
+
+      if (response.status === 201) { // Or whatever success status your backend returns for registration
+        let signupMessage = "Account created. Please login.";
+        if (tenantIdInput.trim()) {
+          signupMessage = `Account created for tenant "${tenantIdInput.trim()}". Please login.`;
+        }
+        toast({ title: "Signup Successful", description: signupMessage });
+        router.push("/auth/login");
+      } else {
+        const errorData = await response.json();
+        toast({
+          title: "Signup Failed",
+          description: errorData.message || "Could not create account. Email might be taken or server error.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Signup error:", error);
+      toast({
+        title: "Signup Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleGoogleSignup = () => {
-    // Mock Google signup logic
-    toast({ title: "Google Sign-Up", description: "Successfully signed up with Google (Mock). Redirecting..." });
-    router.push("/dashboard");
+    toast({ title: "Google Sign-Up (Mock)", description: "This feature is for demonstration. Redirecting..." });
+    router.push("/auth/login"); // Mock redirect
   };
 
   return (
@@ -79,21 +120,48 @@ export default function SignupPage() {
               <Label htmlFor="name">Full Name</Label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input id="name" type="text" placeholder="John Doe" required className="pl-10" />
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder="John Doe"
+                  required
+                  className="pl-10"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  disabled={isLoading}
+                />
               </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input id="email" type="email" placeholder="you@example.com" required className="pl-10" />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  required
+                  className="pl-10"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={isLoading}
+                />
               </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input id="password" type="password" placeholder="••••••••" required className="pl-10" />
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="•••••••• (min. 8 characters)"
+                  required
+                  className="pl-10"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLoading}
+                />
               </div>
             </div>
 
@@ -101,13 +169,14 @@ export default function SignupPage() {
               <Label htmlFor="tenantIdInput">Tenant ID / Organization Code (Optional)</Label>
               <div className="relative">
                 <Building className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input 
-                  id="tenantIdInput" 
-                  type="text" 
-                  placeholder="Enter code if provided by your organization" 
+                <Input
+                  id="tenantIdInput"
+                  type="text"
+                  placeholder="Enter code if provided by your organization"
                   value={tenantIdInput}
                   onChange={(e) => setTenantIdInput(e.target.value)}
-                  className="pl-10" 
+                  className="pl-10"
+                  disabled={isLoading}
                 />
               </div>
             </div>
@@ -118,6 +187,7 @@ export default function SignupPage() {
                 checked={termsAccepted}
                 onCheckedChange={(checked) => setTermsAccepted(Boolean(checked))}
                 aria-label="Accept terms and conditions"
+                disabled={isLoading}
               />
               <Label
                 htmlFor="terms-signup"
@@ -135,7 +205,8 @@ export default function SignupPage() {
               </Label>
             </div>
 
-            <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
+            <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isLoading || !termsAccepted}>
+              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Sign Up
             </Button>
           </form>
@@ -150,7 +221,7 @@ export default function SignupPage() {
             </div>
           </div>
           <div className="mt-6 grid grid-cols-1 gap-4">
-            <Button variant="outline" onClick={handleGoogleSignup}>
+            <Button variant="outline" onClick={handleGoogleSignup} disabled={isLoading}>
               <GoogleIcon />
               Sign up with Google
             </Button>
