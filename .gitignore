@@ -1,86 +1,52 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # Dependencies
-/node_modules
-/.pnp
+node_modules
+.pnp
 .pnp.js
 
-# Testing
-/coverage
-
 # Next.js build output
-/.next/
-/out/
-
-# Production
-/build
-
-# اصحاب
-.DS_Store
-*.pem
-
-# Local Environment Variables
-.env
-.env*.local
-.env.development.local
-.env.test.local
-.env.production.local
+.next
+out
 
 # TypeScript cache
 *.tsbuildinfo
 
-# Misc
-.idea/
-*.iml
-*.sublime-project
-*.sublime-workspace
+# Optional Sentry folder
+.sentryclirc
+
+# Environment variables
+.env.local
+.env.development.local
+.env.production.local
+# .env # Consider adding .env if it ever contains secrets and you prefer all envs to be uncommitted
+
+# macOS
+.DS_Store
+*.AppleDouble
+
+# Editor directories and files
+.vscode/*
+!.vscode/settings.json # Keep shared settings if desired
+!.vscode/extensions.json
+.idea
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+
+# Logs
+logs
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+lerna-debug.log*
 
-# Editor directories and files
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-*.code-workspace
-
-# Firebase
-.firebase/
-firebase-debug.log
-firebase-debug.*.log
-*-debug.log
-*-debug.*.log
-
-# Workaround for https://github.com/vercel/next.js/issues/8239
-# TODO: Remove this workaround when the issue is fixed
-# /pages/api/hello.js
-
-# System Files
-.AppleDouble
-.LSOverride
-
-# Temporary files
-.fuse_hidden*
-.swp
-*~
-Thumbs.db
-ehthumbs.db
-ehthumbs_vista.db
-
-# Cache
-.cache
-npm-cache
-yarn-cache
-pnpm-cache
-
-# Log files
-*.log
-logs
+# Test results
+coverage
+dist/
+temp/
+tmp/
