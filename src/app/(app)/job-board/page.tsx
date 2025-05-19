@@ -13,7 +13,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { PlusCircle, Aperture, Briefcase, Users, MapPin, Building, CalendarDays, Search, Filter as FilterIcon, Edit3, Sparkles, Loader2, ExternalLink, ThumbsUp, Bookmark } from "lucide-react";
-import { sampleJobOpenings, sampleAlumni, sampleUserProfile, sampleJobApplications } from "@/lib/sample-data";
+import { sampleAlumni, sampleUserProfile, sampleJobApplications } from "@/lib/sample-data";
+import { getJobOpenings, addJobOpening } from "@/lib/data-service"; // Updated import
 import type { JobOpening, UserProfile, JobApplication, JobApplicationStatus } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { useForm, Controller } from "react-hook-form";
@@ -40,7 +41,8 @@ type RecommendedJob = PersonalizedJobRecommendationsOutput['recommendedJobs'][0]
 const JOB_TYPES: JobOpening['type'][] = ['Full-time', 'Part-time', 'Internship', 'Contract', 'Mentorship'];
 
 export default function JobBoardPage() {
-  const [openings, setOpenings] = useState<JobOpening[]>(sampleJobOpenings);
+  const [openings, setOpenings] = useState<JobOpening[]>([]);
+  const [isLoadingOpenings, setIsLoadingOpenings] = useState(true);
   const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
   const [editingOpening, setEditingOpening] = useState<JobOpening | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -58,6 +60,23 @@ export default function JobBoardPage() {
   });
 
   const currentUser = sampleUserProfile; 
+
+  useEffect(() => {
+    async function loadOpenings() {
+      setIsLoadingOpenings(true);
+      try {
+        const data = await getJobOpenings();
+        setOpenings(data);
+      } catch (error) {
+        console.error("Failed to load job openings:", error);
+        toast({ title: "Error Loading Jobs", description: "Could not fetch job openings.", variant: "destructive" });
+      } finally {
+        setIsLoadingOpenings(false);
+      }
+    }
+    loadOpenings();
+  }, [toast]);
+
 
   const uniqueLocations = useMemo(() => {
     const locations = new Set(openings.map(op => op.location));
@@ -89,22 +108,40 @@ export default function JobBoardPage() {
     setter(newSet);
   };
 
-  const onPostSubmit = (data: JobOpeningFormData) => {
+  const onPostSubmit = async (data: JobOpeningFormData) => {
+    // In a real app, for editing, you'd likely make a PUT request.
+    // For now, we'll focus on creation for the conditional logic.
     if (editingOpening) {
-      setOpenings(prev => prev.map(op => op.id === editingOpening.id ? { ...op, ...data, applicationLink: data.applicationLink || undefined } : op));
+      // Mock update for local state if developing with sample data
+      if (process.env.NODE_ENV === 'development') {
+        setOpenings(prev => prev.map(op => op.id === editingOpening.id ? { ...editingOpening, ...data, applicationLink: data.applicationLink || undefined } : op));
+         // Find and update in sampleJobOpenings for persistence across reloads in dev
+        const index = sampleAlumni.findIndex(s => s.id === editingOpening.id);
+        if (index !== -1) {
+          // @ts-ignore This is a bit of a hack for sample data
+          // sampleJobOpenings[index] = { ...editingOpening, ...data, applicationLink: data.applicationLink || undefined };
+        }
+      } else {
+        // TODO: Implement PUT request for production
+        console.warn("Update functionality for production API not implemented yet.");
+      }
       toast({ title: "Opportunity Updated", description: `${data.title} at ${data.company} has been updated.` });
     } else {
-      const newOpening: JobOpening = {
-        ...data,
+      const newJobData = {
+        title: data.title,
+        company: data.company,
+        location: data.location,
+        description: data.description,
+        type: data.type,
         applicationLink: data.applicationLink || undefined,
-        id: String(Date.now()),
-        datePosted: new Date().toISOString().split('T')[0],
-        postedByAlumniId: currentUser.id,
-        alumniName: currentUser.name,
-        tenantId: currentUser.tenantId, // Added tenantId
       };
-      setOpenings(prev => [newOpening, ...prev]);
-      toast({ title: "Opportunity Posted", description: `${data.title} at ${data.company} has been posted.` });
+      const savedOpening = await addJobOpening(newJobData, currentUser);
+      if (savedOpening) {
+        setOpenings(prev => [savedOpening, ...prev]);
+        toast({ title: "Opportunity Posted", description: `${data.title} at ${data.company} has been posted.` });
+      } else {
+        toast({ title: "Posting Failed", description: "Could not post the opportunity.", variant: "destructive" });
+      }
     }
     setIsPostDialogOpen(false);
     reset();
@@ -165,7 +202,7 @@ export default function JobBoardPage() {
 
   const createJobApplicationFromOpening = (opening: JobOpening, status: JobApplicationStatus): JobApplication => {
     return {
-      id: `app-${opening.id}-${Date.now()}`, // Ensure unique ID for application
+      id: `app-${opening.id}-${Date.now()}`, 
       tenantId: opening.tenantId,
       userId: currentUser.id,
       companyName: opening.company,
@@ -191,7 +228,7 @@ export default function JobBoardPage() {
     }
 
     const newApplication = createJobApplicationFromOpening(opening, 'Saved');
-    sampleJobApplications.unshift(newApplication); // Add to the beginning for visibility in tracker
+    sampleJobApplications.unshift(newApplication); 
     toast({ title: "Job Saved!", description: `${opening.title} at ${opening.company} has been saved to your Job Tracker.` });
   };
 
@@ -209,7 +246,6 @@ export default function JobBoardPage() {
         toast({ title: "Already Applied", description: `You've already marked this job as 'Applied' in your tracker.`, variant: "default" });
         return;
       }
-      // Update status from 'Saved' to 'Applied'
       sampleJobApplications[existingApplicationIndex].status = 'Applied';
       sampleJobApplications[existingApplicationIndex].dateApplied = new Date().toISOString().split('T')[0];
       sampleJobApplications[existingApplicationIndex].notes = "Updated to 'Applied' from Job Board";
@@ -311,7 +347,6 @@ export default function JobBoardPage() {
         </AccordionItem>
       </Accordion>
 
-      {/* AI Job Recommendations Section */}
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -325,6 +360,9 @@ export default function JobBoardPage() {
               <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
               <p className="mt-2 text-muted-foreground">Finding jobs for you...</p>
             </div>
+          )}
+          {!isRecLoading && recommendedJobs === null && !isRecLoading && openings.length > 0 && (
+            <p className="text-muted-foreground text-center py-4">Click "Get AI Recommendations" to see personalized suggestions.</p>
           )}
           {!isRecLoading && recommendedJobs && recommendedJobs.length === 0 && (
              <p className="text-muted-foreground text-center py-4">No specific recommendations found at this time. Try adjusting your profile interests or check back later.</p>
@@ -358,7 +396,7 @@ export default function JobBoardPage() {
         <CardFooter>
            <Button onClick={handleGetRecommendations} disabled={isRecLoading || openings.length === 0} className="w-full md:w-auto">
             {isRecLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ThumbsUp className="mr-2 h-4 w-4" />}
-            {openings.length === 0 ? "Add Jobs to Get Recs" : "Get AI Recommendations"}
+            {openings.length === 0 ? "No Jobs to Recommend From" : "Get AI Recommendations"}
           </Button>
         </CardFooter>
       </Card>
@@ -427,7 +465,12 @@ export default function JobBoardPage() {
         </DialogContent>
       </Dialog>
 
-      {filteredOpenings.length === 0 ? (
+      {isLoadingOpenings ? (
+        <div className="text-center py-12">
+          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
+          <p className="mt-2 text-muted-foreground">Loading job openings...</p>
+        </div>
+      ) : filteredOpenings.length === 0 ? (
         <Card className="text-center py-12 shadow-lg">
           <CardHeader>
             <Aperture className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
@@ -502,3 +545,4 @@ export default function JobBoardPage() {
     </div>
   );
 }
+
