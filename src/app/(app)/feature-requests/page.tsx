@@ -1,14 +1,13 @@
-
 "use client";
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription as DialogUIDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { PlusCircle, ShieldQuestion, Lightbulb, Send, Edit3, CheckCircle, Zap, Clock, RefreshCw, ThumbsUp } from "lucide-react";
+import { PlusCircle, ShieldQuestion, Lightbulb, Send, Edit3, CheckCircle, Zap, Clock, RefreshCw, ThumbsUp, XCircle } from "lucide-react"; // Added XCircle
 import { sampleFeatureRequests, sampleUserProfile } from "@/lib/sample-data";
 import type { FeatureRequest } from "@/types";
 import { useToast } from "@/hooks/use-toast";
@@ -18,7 +17,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import AccessDeniedMessage from "@/components/ui/AccessDeniedMessage"; // Ensure this path is correct
+import AccessDeniedMessage from "@/components/ui/AccessDeniedMessage";
+// Removed useTranslations
 
 const featureRequestSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters").max(100, "Title too long"),
@@ -33,6 +33,7 @@ export default function FeatureRequestsPage() {
   const [isSuggestDialogOpen, setIsSuggestDialogOpen] = useState(false);
   const [editingRequest, setEditingRequest] = useState<FeatureRequest | null>(null);
   const { toast } = useToast();
+  // const t = useTranslations('FeatureRequestsPage'); // Removed
   const { control, handleSubmit, reset, setValue, formState: { errors } } = useForm<FeatureRequestFormData>({
     resolver: zodResolver(featureRequestSchema)
   });
@@ -73,7 +74,7 @@ export default function FeatureRequestsPage() {
       case 'Pending': return { icon: Clock, color: 'text-yellow-600 bg-yellow-100 border-yellow-300' };
       case 'In Progress': return { icon: RefreshCw, color: 'text-blue-600 bg-blue-100 border-blue-300' };
       case 'Completed': return { icon: CheckCircle, color: 'text-green-600 bg-green-100 border-green-300' };
-      case 'Rejected': return { icon: XCircle, color: 'text-red-600 bg-red-100 border-red-300' }; // Changed from ShieldAlert to XCircle
+      case 'Rejected': return { icon: XCircle, color: 'text-red-600 bg-red-100 border-red-300' };
       default: return { icon: ShieldQuestion, color: 'text-gray-600 bg-gray-100 border-gray-300' };
     }
   };
@@ -129,9 +130,9 @@ export default function FeatureRequestsPage() {
               <Zap className="h-6 w-6 text-primary"/>
               {editingRequest ? "Edit Feature Suggestion" : "Suggest a New Feature"}
             </DialogTitle>
-            <CardDescription className="pt-1">
+            <DialogUIDescription className="pt-1">
               {editingRequest ? "Modify your existing suggestion." : "We value your input! Let us know what you'd like to see."}
-            </CardDescription>
+            </DialogUIDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit(onSubmitSuggestion)} className="space-y-4 py-4">
             <div>

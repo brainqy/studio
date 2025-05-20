@@ -11,18 +11,20 @@ const publicPaths = [
   '/auth/signup',
   '/launching-soon',
   '/maintenance',
-  // Add any other public static pages like /terms, /privacy if they exist at root
+  '/terms', // Assuming these are public
+  '/privacy', // Assuming these are public
+  // Add any other public static pages if they exist at root
 ];
 
 // Define paths that should be considered part of the authenticated app
 // This helps differentiate from other root-level pages that might be public
-const appPathsPrefix = '/(app)/'; // This is a convention, Next.js (app) router groups are not part of URL
+// const appPathsPrefix = '/(app)/'; // Not directly used in logic this way
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Check if the path is public or an internal Next.js asset
-  const isPublicPath = publicPaths.includes(pathname) ||
+  const isPublicPath = publicPaths.some(p => pathname === p) ||
                        pathname.startsWith('/_next/') ||
                        pathname.startsWith('/api/') || // API routes might have their own auth
                        pathname.includes('.'); // Typically files like .png, .ico
@@ -42,14 +44,14 @@ export async function middleware(request: NextRequest) {
   }
 
   if (!JWT_SECRET) {
-    console.error('JWT_SECRET is not set. Authentication checks will be skipped.');
-    // In a real production scenario, you might want to return an error or redirect
-    // For now, in dev, we might allow if JWT_SECRET is missing, with a warning.
-    // Or, more strictly:
+    console.error('JWT_SECRET is not set. Authentication checks will be skipped in dev. THIS IS A SECURITY RISK IN PRODUCTION.');
+    // In a real production scenario, you MUST return an error or redirect
+    // For now, in dev, we allow if JWT_SECRET is missing for easier setup, with a warning.
+    // Production:
     // const loginUrl = new URL('/auth/login', request.url);
     // loginUrl.searchParams.set('error', 'auth_config_error');
     // return NextResponse.redirect(loginUrl);
-    return NextResponse.next(); // For now, allow if secret is missing in dev for easier setup
+    return NextResponse.next(); // For now, allow if secret is missing in dev
   }
 
   try {
@@ -74,6 +76,13 @@ export const config = {
     // Match all request paths except for API routes, Next.js static files,
     // Next.js image optimization files, and files with extensions (e.g. .ico, .png)
     '/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).*)',
-    '/', // Ensure root is also matched if not explicitly public
+    // Explicitly include root and other key public paths if they are not caught by the negative lookahead
+    '/',
+    '/auth/login',
+    '/auth/signup',
+    '/launching-soon',
+    '/maintenance',
+    '/terms',
+    '/privacy'
   ],
 };

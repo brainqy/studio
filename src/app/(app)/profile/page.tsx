@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, type FormEvent } from "react";
@@ -25,7 +24,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription as DialogUIDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { suggestDynamicSkills, type SuggestDynamicSkillsInput, type SuggestDynamicSkillsOutput } from '@/ai/flows/suggest-dynamic-skills';
-import { useTranslations, useLocale } from 'next-intl';
+// Removed useTranslations and useLocale
 
 const profileSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -75,8 +74,8 @@ export default function ProfilePage() {
   const [isSkillsLoading, setIsSkillsLoading] = useState(false);
   const [isProfileSavedDialogOpen, setIsProfileSavedDialogOpen] = useState(false);
   const { toast } = useToast();
-  const t = useTranslations('ProfilePage');
-  const locale = useLocale();
+  // const t = useTranslations('ProfilePage'); // Removed
+  // const locale = useLocale(); // Removed
 
   const { control, handleSubmit, watch, reset, setValue, formState: { errors, isDirty } } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -162,15 +161,11 @@ export default function ProfilePage() {
     }
     setIsEditing(false); 
     console.log("Updated Profile Data (mock):", updatedProfileData);
-    setIsProfileSavedDialogOpen(true); // Open success dialog
-    // toast({ title: t('profileUpdatedTitle'), description: t('profileUpdatedDesc') }); // Toast can be secondary or removed
+    setIsProfileSavedDialogOpen(true);
   };
   
-  const renderSectionHeader = (titleKey: string, icon: React.ElementType, tooltipTextKey?: string) => {
+  const renderSectionHeader = (title: string, icon: React.ElementType, tooltipText?: string) => { // Changed titleKey to title, tooltipTextKey to tooltipText
     const IconComponent = icon;
-    const title = t(titleKey as any); // Use type assertion for now
-    const tooltipText = tooltipTextKey ? t(tooltipTextKey as any) : undefined;
-
     return (
       <>
         <Separator className="my-6" />
@@ -199,7 +194,7 @@ export default function ProfilePage() {
       const currentSkills = watchedFields.skills?.split(',').map(s => s.trim()).filter(s => s) || [];
       const contextText = `${watchedFields.bio || ''} ${watchedFields.careerInterests || ''} ${watchedFields.currentJobTitle || ''} ${watchedFields.industry || ''}`.trim();
       if (!contextText) {
-        toast({ title: t('skillSuggestError.noInfoTitle'), description: t('skillSuggestError.noInfoDesc'), variant: "destructive" });
+        toast({ title: "Cannot Suggest Skills", description: "Please provide more information in your bio, career interests, job title, or industry for better skill suggestions.", variant: "destructive" });
         setIsSkillsLoading(false);
         return;
       }
@@ -209,10 +204,10 @@ export default function ProfilePage() {
       };
       const result = await suggestDynamicSkills(input);
       setSuggestedSkills(result.suggestedSkills);
-      toast({ title: t('skillSuggestSuccess.title'), description: t('skillSuggestSuccess.desc') });
+      toast({ title: "Skill Suggestions Ready!", description: "AI has suggested some skills for you below." });
     } catch (error) {
       console.error("Skill suggestion error:", error);
-      toast({ title: t('skillSuggestError.fetchFailTitle'), description: t('skillSuggestError.fetchFailDesc'), variant: "destructive" });
+      toast({ title: "Skill Suggestion Failed", description: "An error occurred while fetching skill suggestions.", variant: "destructive" });
     } finally {
       setIsSkillsLoading(false);
     }
@@ -224,9 +219,9 @@ export default function ProfilePage() {
     if (!skillsArray.includes(skill)) {
         const newSkillsString = [...skillsArray, skill].join(', ');
         setValue('skills', newSkillsString, { shouldDirty: true });
-        toast({title: t('skillAddSuccess.title'), description: t('skillAddSuccess.desc', { skillName: skill })});
+        toast({title: "Skill Added!", description: `"${skill}" has been added to your skills list.`});
     } else {
-        toast({title: t('skillAddError.existsTitle'), description: t('skillAddError.existsDesc', { skillName: skill }), variant: "default"});
+        toast({title: "Skill Already Exists", description: `"${skill}" is already in your skills list.`, variant: "default"});
     }
   };
 
@@ -235,10 +230,10 @@ export default function ProfilePage() {
     <div className="space-y-8">
     <TooltipProvider>
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">{t('title')}</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">My Profile</h1>
         {!isEditing && (
           <Button onClick={() => setIsEditing(true)} variant="outline">
-            <Edit3 className="mr-2 h-4 w-4" /> {t('editButton')}
+            <Edit3 className="mr-2 h-4 w-4" /> Edit Profile
           </Button>
         )}
       </div>
@@ -247,20 +242,20 @@ export default function ProfilePage() {
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-primary"/>{t('completionCard.title')}
+            <Sparkles className="h-6 w-6 text-primary"/>Profile Completion
             <Tooltip>
               <TooltipTrigger asChild>
                 <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
               </TooltipTrigger>
               <TooltipContent>
-                <p>{t('completionCard.tooltip')}</p>
+                <p>Complete your profile to unlock more features and get better recommendations.</p>
               </TooltipContent>
             </Tooltip>
             </CardTitle>
         </CardHeader>
         <CardContent>
           <Progress value={profileCompletion} className="w-full h-3 [&>div]:bg-primary" />
-          <p className="text-sm text-muted-foreground mt-2 text-center">{t('completionCard.progressText', { percentage: profileCompletion })}</p>
+          <p className="text-sm text-muted-foreground mt-2 text-center">Your profile is {profileCompletion}% complete.</p>
         </CardContent>
       </Card>
 
@@ -279,7 +274,7 @@ export default function ProfilePage() {
                     <label htmlFor="avatarUpload" className="absolute inset-0 flex items-center justify-center bg-black/50 text-white opacity-0 group-hover:opacity-100 rounded-full cursor-pointer transition-opacity">
                       <Upload className="h-8 w-8" />
                     </label>
-                    <input type="file" id="avatarUpload" className="hidden" accept="image/*" onChange={() => toast({title: t('avatarUpload.title'), description: t('avatarUpload.desc')})}/>
+                    <input type="file" id="avatarUpload" className="hidden" accept="image/*" onChange={() => toast({title: "Avatar Upload (Mock)", description: "File selected. In a real app, this would upload and update the URL."})}/>
                     </>
                   )}
                 </div>
@@ -290,53 +285,53 @@ export default function ProfilePage() {
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
-              {renderSectionHeader("sections.personal.title", User)}
+              {renderSectionHeader("Personal Information", User)}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-1">
-                  <Label htmlFor="name">{t('sections.personal.fullNameLabel')}</Label>
+                  <Label htmlFor="name">Full Name</Label>
                   <Controller name="name" control={control} render={({ field }) => <Input id="name" {...field} />} />
                   {errors.name && <p className="text-sm text-destructive mt-1">{errors.name.message}</p>}
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="email">{t('sections.personal.emailLabel')}</Label>
+                  <Label htmlFor="email">Email Address</Label>
                   <Controller name="email" control={control} render={({ field }) => <Input id="email" type="email" {...field} />} />
                   {errors.email && <p className="text-sm text-destructive mt-1">{errors.email.message}</p>}
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="dateOfBirth">{t('sections.personal.dobLabel')}</Label>
+                  <Label htmlFor="dateOfBirth">Date of Birth</Label>
                   <Controller name="dateOfBirth" control={control} render={({ field }) => <DatePicker date={field.value} setDate={field.onChange} />} />
                   {errors.dateOfBirth && <p className="text-sm text-destructive mt-1">{errors.dateOfBirth.message}</p>}
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="gender">{t('sections.personal.genderLabel')}</Label>
+                  <Label htmlFor="gender">Gender</Label>
                   <Controller name="gender" control={control} render={({ field }) => (
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <SelectTrigger id="gender"><SelectValue placeholder={t('sections.personal.genderPlaceholder')} /></SelectTrigger>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger id="gender"><SelectValue placeholder="Select Gender" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Male">{t('genderOptions.male')}</SelectItem>
-                        <SelectItem value="Female">{t('genderOptions.female')}</SelectItem>
-                        <SelectItem value="Prefer not to say">{t('genderOptions.preferNotToSay')}</SelectItem>
+                        <SelectItem value="Male">Male</SelectItem>
+                        <SelectItem value="Female">Female</SelectItem>
+                        <SelectItem value="Prefer not to say">Prefer not to say</SelectItem>
                       </SelectContent>
                     </Select>
                   )} />
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="mobileNumber" className="flex items-center gap-1"><Phone className="h-4 w-4 text-muted-foreground"/>{t('sections.personal.mobileLabel')}</Label>
-                  <Controller name="mobileNumber" control={control} render={({ field }) => <Input id="mobileNumber" placeholder={t('sections.personal.mobilePlaceholder')} {...field} />} />
+                  <Label htmlFor="mobileNumber" className="flex items-center gap-1"><Phone className="h-4 w-4 text-muted-foreground"/>Mobile Number</Label>
+                  <Controller name="mobileNumber" control={control} render={({ field }) => <Input id="mobileNumber" placeholder="e.g., +1 555 123 4567" {...field} />} />
                 </div>
                 <div className="space-y-1 md:col-span-2">
-                  <Label htmlFor="currentAddress" className="flex items-center gap-1"><MapPin className="h-4 w-4 text-muted-foreground"/>{t('sections.personal.addressLabel')}</Label>
-                  <Controller name="currentAddress" control={control} render={({ field }) => <Textarea id="currentAddress" placeholder={t('sections.personal.addressPlaceholder')} {...field} />} />
+                  <Label htmlFor="currentAddress" className="flex items-center gap-1"><MapPin className="h-4 w-4 text-muted-foreground"/>Current Address</Label>
+                  <Controller name="currentAddress" control={control} render={({ field }) => <Textarea id="currentAddress" placeholder="City, State, Country" {...field} />} />
                 </div>
               </div>
                 
-              {renderSectionHeader("sections.academic.title", GraduationCap)}
+              {renderSectionHeader("Academic Information", GraduationCap)}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="space-y-1">
-                  <Label htmlFor="graduationYear">{t('sections.academic.gradYearLabel')}</Label>
+                  <Label htmlFor="graduationYear">Graduation Year</Label>
                   <Controller name="graduationYear" control={control} render={({ field }) => (
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <SelectTrigger id="graduationYear"><SelectValue placeholder={t('sections.academic.gradYearPlaceholder')} /></SelectTrigger>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger id="graduationYear"><SelectValue placeholder="Select Year" /></SelectTrigger>
                       <SelectContent>
                         {graduationYears.map(year => <SelectItem key={year} value={year}>{year}</SelectItem>)}
                       </SelectContent>
@@ -344,10 +339,10 @@ export default function ProfilePage() {
                   )} />
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="degreeProgram">{t('sections.academic.degreeLabel')}</Label>
+                  <Label htmlFor="degreeProgram">Degree / Program</Label>
                   <Controller name="degreeProgram" control={control} render={({ field }) => (
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <SelectTrigger id="degreeProgram"><SelectValue placeholder={t('sections.academic.degreePlaceholder')} /></SelectTrigger>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger id="degreeProgram"><SelectValue placeholder="Select Degree" /></SelectTrigger>
                       <SelectContent>
                         {DegreePrograms.map(deg => <SelectItem key={deg} value={deg}>{deg}</SelectItem>)}
                       </SelectContent>
@@ -355,26 +350,26 @@ export default function ProfilePage() {
                   )} />
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="department">{t('sections.academic.departmentLabel')}</Label>
-                  <Controller name="department" control={control} render={({ field }) => <Input id="department" placeholder={t('sections.academic.departmentPlaceholder')} {...field} />} />
+                  <Label htmlFor="department">Department</Label>
+                  <Controller name="department" control={control} render={({ field }) => <Input id="department" placeholder="e.g., Computer Science" {...field} />} />
                 </div>
               </div>
               
-              {renderSectionHeader("sections.professional.title", Briefcase)}
+              {renderSectionHeader("Professional Information", Briefcase)}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-1">
-                  <Label htmlFor="currentJobTitle">{t('sections.professional.jobTitleLabel')}</Label>
+                  <Label htmlFor="currentJobTitle">Current Job Title</Label>
                   <Controller name="currentJobTitle" control={control} render={({ field }) => <Input id="currentJobTitle" {...field} />} />
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="currentOrganization" className="flex items-center gap-1"><Building className="h-4 w-4 text-muted-foreground"/>{t('sections.professional.organizationLabel')}</Label>
+                  <Label htmlFor="currentOrganization" className="flex items-center gap-1"><Building className="h-4 w-4 text-muted-foreground"/>Current Organization</Label>
                   <Controller name="currentOrganization" control={control} render={({ field }) => <Input id="currentOrganization" {...field} />} />
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="industry">{t('sections.professional.industryLabel')}</Label>
+                  <Label htmlFor="industry">Industry</Label>
                   <Controller name="industry" control={control} render={({ field }) => (
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <SelectTrigger id="industry"><SelectValue placeholder={t('sections.professional.industryPlaceholder')} /></SelectTrigger>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger id="industry"><SelectValue placeholder="Select Industry" /></SelectTrigger>
                       <SelectContent>
                         {Industries.map(ind => <SelectItem key={ind} value={ind}>{ind}</SelectItem>)}
                       </SelectContent>
@@ -382,27 +377,27 @@ export default function ProfilePage() {
                   )} />
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="workLocation">{t('sections.professional.workLocationLabel')}</Label>
+                  <Label htmlFor="workLocation">Work Location</Label>
                   <Controller name="workLocation" control={control} render={({ field }) => <Input id="workLocation" {...field} />} />
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="linkedInProfile" className="flex items-center gap-1"><LinkIcon className="h-4 w-4 text-muted-foreground"/>{t('sections.professional.linkedinLabel')}</Label>
+                  <Label htmlFor="linkedInProfile" className="flex items-center gap-1"><LinkIcon className="h-4 w-4 text-muted-foreground"/>LinkedIn Profile URL</Label>
                   <Controller name="linkedInProfile" control={control} render={({ field }) => <Input id="linkedInProfile" type="url" {...field} />} />
                   {errors.linkedInProfile && <p className="text-sm text-destructive mt-1">{errors.linkedInProfile.message}</p>}
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="yearsOfExperience">{t('sections.professional.experienceLabel')}</Label>
-                  <Controller name="yearsOfExperience" control={control} render={({ field }) => <Input id="yearsOfExperience" type="text" placeholder={t('sections.professional.experiencePlaceholder')} {...field} />} />
+                  <Label htmlFor="yearsOfExperience">Years of Experience</Label>
+                  <Controller name="yearsOfExperience" control={control} render={({ field }) => <Input id="yearsOfExperience" type="text" placeholder="e.g., 5 or 5+" {...field} />} />
                 </div>
                 <div className="space-y-1 md:col-span-2">
-                  <Label htmlFor="skills" className="flex items-center gap-1"><Brain className="h-4 w-4 text-muted-foreground"/>{t('sections.professional.skillsLabel')}</Label>
-                  <Controller name="skills" control={control} render={({ field }) => <Textarea id="skills" placeholder={t('sections.professional.skillsPlaceholder')} {...field} />} />
+                  <Label htmlFor="skills" className="flex items-center gap-1"><Brain className="h-4 w-4 text-muted-foreground"/>Skills (comma-separated)</Label>
+                  <Controller name="skills" control={control} render={({ field }) => <Textarea id="skills" placeholder="e.g., React, Python, Project Management" {...field} />} />
                 </div>
               </div>
 
-              {renderSectionHeader("sections.engagement.title", Handshake, "sections.engagement.tooltip")}
+              {renderSectionHeader("Alumni Engagement", Handshake, "How you'd like to engage with and support the alumni community.")}
               <div className="space-y-4">
-                <Label className="flex items-center gap-1 text-md"><Users className="h-4 w-4 text-muted-foreground"/>{t('sections.engagement.supportAreasLabel')}</Label>
+                <Label className="flex items-center gap-1 text-md"><Users className="h-4 w-4 text-muted-foreground"/>Areas You Can Support</Label>
                 <Controller
                   name="areasOfSupport"
                   control={control}
@@ -422,7 +417,7 @@ export default function ProfilePage() {
                               }
                             }}
                           />
-                          <Label htmlFor={`support-${area.replace(/\s+/g, '-')}`} className="font-normal text-sm">{t(`areasOfSupportOptions.${area.replace(/\s+/g, '').replace('/', '')}` as any)}</Label>
+                          <Label htmlFor={`support-${area.replace(/\s+/g, '-')}`} className="font-normal text-sm">{area}</Label>
                         </div>
                       ))}
                     </div>
@@ -431,111 +426,111 @@ export default function ProfilePage() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-1">
-                  <Label htmlFor="timeCommitment" className="flex items-center gap-1"><Clock className="h-4 w-4 text-muted-foreground"/>{t('sections.engagement.timeCommitmentLabel')}</Label>
+                  <Label htmlFor="timeCommitment" className="flex items-center gap-1"><Clock className="h-4 w-4 text-muted-foreground"/>Time Commitment (per month)</Label>
                   <Controller name="timeCommitment" control={control} render={({ field }) => (
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <SelectTrigger id="timeCommitment"><SelectValue placeholder={t('sections.engagement.timeCommitmentPlaceholder')} /></SelectTrigger>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger id="timeCommitment"><SelectValue placeholder="Select Time Commitment" /></SelectTrigger>
                       <SelectContent>
-                        {TimeCommitments.map(tc => <SelectItem key={tc} value={tc}>{t(`timeCommitmentOptions.${tc.replace(/\s+/g, '').replace('+', 'plus')}` as any)}</SelectItem>)}
+                        {TimeCommitments.map(tc => <SelectItem key={tc} value={tc}>{tc}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   )} />
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="preferredEngagementMode" className="flex items-center gap-1"><MessageCircle className="h-4 w-4 text-muted-foreground"/>{t('sections.engagement.engagementModeLabel')}</Label>
+                  <Label htmlFor="preferredEngagementMode" className="flex items-center gap-1"><MessageCircle className="h-4 w-4 text-muted-foreground"/>Preferred Engagement Mode</Label>
                   <Controller name="preferredEngagementMode" control={control} render={({ field }) => (
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <SelectTrigger id="preferredEngagementMode"><SelectValue placeholder={t('sections.engagement.engagementModePlaceholder')} /></SelectTrigger>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger id="preferredEngagementMode"><SelectValue placeholder="Select Engagement Mode" /></SelectTrigger>
                       <SelectContent>
-                        {EngagementModes.map(mode => <SelectItem key={mode} value={mode}>{t(`engagementModeOptions.${mode.toLowerCase()}` as any)}</SelectItem>)}
+                        {EngagementModes.map(mode => <SelectItem key={mode} value={mode}>{mode}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   )} />
                 </div>
               </div>
               <div className="space-y-1">
-                <Label htmlFor="otherComments" className="flex items-center gap-1"><Info className="h-4 w-4 text-muted-foreground"/>{t('sections.engagement.otherCommentsLabel')}</Label>
-                <Controller name="otherComments" control={control} render={({ field }) => <Textarea id="otherComments" {...field} />} />
+                <Label htmlFor="otherComments" className="flex items-center gap-1"><Info className="h-4 w-4 text-muted-foreground"/>Other Engagement Comments/Notes</Label>
+                <Controller name="otherComments" control={control} render={({ field }) => <Textarea id="otherComments" placeholder="Any other ways you'd like to contribute..." {...field} />} />
               </div>
 
-              {renderSectionHeader("sections.helpSought.title", HelpCircle, "sections.helpSought.tooltip")}
+              {renderSectionHeader("Support You're Looking For", HelpCircle, "What kind of help or connections are you seeking from the alumni network?")}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-1">
-                  <Label htmlFor="lookingForSupportType">{t('sections.helpSought.supportTypeLabel')}</Label>
+                  <Label htmlFor="lookingForSupportType">Type of Support</Label>
                   <Controller name="lookingForSupportType" control={control} render={({ field }) => (
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <SelectTrigger id="lookingForSupportType"><SelectValue placeholder={t('sections.helpSought.supportTypePlaceholder')} /></SelectTrigger>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger id="lookingForSupportType"><SelectValue placeholder="Select Support Type (Optional)" /></SelectTrigger>
                       <SelectContent>
-                        {SupportTypesSoughtOptions.map(st => <SelectItem key={st} value={st}>{t(`supportTypesSoughtOptions.${st.replace(/\s+/g, '')}` as any)}</SelectItem>)}
+                        {SupportTypesSoughtOptions.map(st => <SelectItem key={st} value={st}>{st}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   )} />
                 </div>
               </div>
               <div className="space-y-1">
-                <Label htmlFor="helpNeededDescription">{t('sections.helpSought.helpNeededDescriptionLabel')}</Label>
-                <Controller name="helpNeededDescription" control={control} render={({ field }) => <Textarea id="helpNeededDescription" {...field} />} />
+                <Label htmlFor="helpNeededDescription">Brief Description of Help Needed</Label>
+                <Controller name="helpNeededDescription" control={control} render={({ field }) => <Textarea id="helpNeededDescription" placeholder="e.g., Looking for advice on transitioning to a Product Manager role." {...field} />} />
               </div>
 
-              {renderSectionHeader("sections.consent.title", CheckSquare, "sections.consent.tooltip")}
+              {renderSectionHeader("Visibility & Consent", CheckSquare, "Manage how your profile information is shared.")}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label>{t('sections.consent.shareProfileLabel')}</Label>
+                  <Label>Share profile with other alumni for relevant collaboration?</Label>
                   <Controller name="shareProfileConsent" control={control} render={({ field }) => (
-                    <RadioGroup onValueChange={(val) => field.onChange(val === "true")} defaultValue={String(field.value)} className="flex space-x-4">
-                      <div className="flex items-center space-x-2"><RadioGroupItem value="true" id="share-yes" /><Label htmlFor="share-yes" className="font-normal">{t('yes')}</Label></div>
-                      <div className="flex items-center space-x-2"><RadioGroupItem value="false" id="share-no" /><Label htmlFor="share-no" className="font-normal">{t('no')}</Label></div>
+                    <RadioGroup onValueChange={(val) => field.onChange(val === "true")} value={String(field.value)} className="flex space-x-4">
+                      <div className="flex items-center space-x-2"><RadioGroupItem value="true" id="share-yes" /><Label htmlFor="share-yes" className="font-normal">Yes</Label></div>
+                      <div className="flex items-center space-x-2"><RadioGroupItem value="false" id="share-no" /><Label htmlFor="share-no" className="font-normal">No</Label></div>
                     </RadioGroup>
                   )} />
                 </div>
                 <div className="space-y-2">
-                  <Label>{t('sections.consent.featureSpotlightLabel')}</Label>
+                  <Label>Feature on alumni dashboard or spotlight?</Label>
                   <Controller name="featureInSpotlightConsent" control={control} render={({ field }) => (
-                    <RadioGroup onValueChange={(val) => field.onChange(val === "true")} defaultValue={String(field.value)} className="flex space-x-4">
-                      <div className="flex items-center space-x-2"><RadioGroupItem value="true" id="feature-yes" /><Label htmlFor="feature-yes" className="font-normal">{t('yes')}</Label></div>
-                      <div className="flex items-center space-x-2"><RadioGroupItem value="false" id="feature-no" /><Label htmlFor="feature-no" className="font-normal">{t('no')}</Label></div>
+                    <RadioGroup onValueChange={(val) => field.onChange(val === "true")} value={String(field.value)} className="flex space-x-4">
+                      <div className="flex items-center space-x-2"><RadioGroupItem value="true" id="feature-yes" /><Label htmlFor="feature-yes" className="font-normal">Yes</Label></div>
+                      <div className="flex items-center space-x-2"><RadioGroupItem value="false" id="feature-no" /><Label htmlFor="feature-no" className="font-normal">No</Label></div>
                     </RadioGroup>
                   )} />
                 </div>
               </div>
               
-              {renderSectionHeader("sections.additionalInfo.title", SettingsIcon)}
+              {renderSectionHeader("Additional Information", SettingsIcon)}
               <div className="space-y-1">
-                  <Label htmlFor="profilePictureUrl" className="flex items-center gap-1"><User className="h-4 w-4 text-muted-foreground"/>{t('sections.additionalInfo.profilePictureUrlLabel')}</Label>
-                  <Controller name="profilePictureUrl" control={control} render={({ field }) => <Input id="profilePictureUrl" placeholder={t('sections.additionalInfo.profilePictureUrlPlaceholder')} {...field} />} />
+                  <Label htmlFor="profilePictureUrl" className="flex items-center gap-1"><User className="h-4 w-4 text-muted-foreground"/>Profile Picture URL</Label>
+                  <Controller name="profilePictureUrl" control={control} render={({ field }) => <Input id="profilePictureUrl" placeholder="URL to your profile picture" {...field} />} />
                   {errors.profilePictureUrl && <p className="text-sm text-destructive mt-1">{errors.profilePictureUrl.message}</p>}
               </div>
               <div className="space-y-1">
-                <Label htmlFor="bio" className="flex items-center gap-1"><Briefcase className="h-4 w-4 text-muted-foreground"/>{t('sections.additionalInfo.bioLabel')}</Label>
-                <Controller name="bio" control={control} render={({ field }) => <Textarea id="bio" rows={4} placeholder={t('sections.additionalInfo.bioPlaceholder')} {...field} />} />
+                <Label htmlFor="bio" className="flex items-center gap-1"><Briefcase className="h-4 w-4 text-muted-foreground"/>Short Bio / Professional Overview</Label>
+                <Controller name="bio" control={control} render={({ field }) => <Textarea id="bio" rows={4} placeholder="A brief professional bio (2-3 sentences)" {...field} />} />
               </div>
               <div className="space-y-1">
-                <Label htmlFor="careerInterests" className="flex items-center gap-1"><Sparkles className="h-4 w-4 text-muted-foreground"/>{t('sections.additionalInfo.careerInterestsLabel')}</Label>
-                <Controller name="careerInterests" control={control} render={({ field }) => <Input id="careerInterests" placeholder={t('sections.additionalInfo.careerInterestsPlaceholder')} {...field} />} />
+                <Label htmlFor="careerInterests" className="flex items-center gap-1"><Sparkles className="h-4 w-4 text-muted-foreground"/>Career Interests</Label>
+                <Controller name="careerInterests" control={control} render={({ field }) => <Input id="careerInterests" placeholder="e.g., AI, Product Management, Fintech" {...field} />} />
               </div>
               <div className="space-y-1">
                 <Label htmlFor="resumeText" className="flex items-center gap-1">
-                  <User className="h-4 w-4 text-muted-foreground"/>{t('sections.additionalInfo.resumeTextLabel')}
+                  <User className="h-4 w-4 text-muted-foreground"/>Primary Resume Text (for AI features)
                   <Tooltip>
                       <TooltipTrigger asChild>
                         <HelpCircle className="h-3 w-3 text-muted-foreground cursor-help" />
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p className="max-w-xs">{t('sections.additionalInfo.resumeTextTooltip')}</p>
+                        <p className="max-w-xs">Paste your main resume text here. This will be used by AI features like skill suggestions and cover letter generation if no specific resume is selected.</p>
                       </TooltipContent>
                     </Tooltip>
                 </Label>
-                <Controller name="resumeText" control={control} render={({ field }) => <Textarea id="resumeText" rows={8} placeholder={t('sections.additionalInfo.resumeTextPlaceholder')} {...field} />} />
+                <Controller name="resumeText" control={control} render={({ field }) => <Textarea id="resumeText" rows={8} placeholder="Paste your full resume text here..." {...field} />} />
               </div>
             </CardContent>
             <CardFooter>
               {isEditing && (
                 <div className="flex gap-2">
                    <Button type="submit" disabled={!isDirty} className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                    <Save className="mr-2 h-4 w-4" /> {t('saveChangesButton')}
+                    <Save className="mr-2 h-4 w-4" /> Save Changes
                   </Button>
                   <Button type="button" variant="outline" onClick={() => { setIsEditing(false); reset(); }}>
-                    {t('cancelButton')}
+                    Cancel
                   </Button>
                 </div>
               )}
@@ -547,19 +542,19 @@ export default function ProfilePage() {
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-primary" /> {t('skillSuggestCard.title')}
+            <Sparkles className="h-6 w-6 text-primary" /> AI Skill Suggestions
           </CardTitle>
-          <CardDescription>{t('skillSuggestCard.desc')}</CardDescription>
+          <CardDescription>Get AI-powered skill suggestions based on your profile.</CardDescription>
         </CardHeader>
         <CardContent>
           {isSkillsLoading && (
             <div className="text-center py-4">
               <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
-              <p className="mt-2 text-muted-foreground">{t('skillSuggestCard.loadingText')}</p>
+              <p className="mt-2 text-muted-foreground">AI is analyzing your profile for skill suggestions...</p>
             </div>
           )}
           {!isSkillsLoading && suggestedSkills && suggestedSkills.length === 0 && (
-            <p className="text-muted-foreground text-center py-4">{t('skillSuggestCard.noSuggestionsText')}</p>
+            <p className="text-muted-foreground text-center py-4">No new skill suggestions at this time. Ensure your bio and career interests are filled out!</p>
           )}
           {!isSkillsLoading && suggestedSkills && suggestedSkills.length > 0 && (
             <div className="space-y-3">
@@ -568,24 +563,24 @@ export default function ProfilePage() {
                   <div className="flex justify-between items-start gap-2">
                     <div>
                       <h4 className="font-semibold text-foreground">{skillRec.skill}</h4>
-                      <p className="text-xs text-muted-foreground">{t('skillSuggestCard.relevanceLabel')}: <span className="text-primary font-bold">{skillRec.relevanceScore}%</span></p>
+                      <p className="text-xs text-muted-foreground">Relevance: <span className="text-primary font-bold">{skillRec.relevanceScore}%</span></p>
                     </div>
                     {isEditing && (
                        <Button size="sm" variant="outline" onClick={() => handleAddSuggestedSkill(skillRec.skill)}>
-                        <PlusCircleIcon className="mr-1 h-4 w-4" /> {t('skillSuggestCard.addSkillButton')}
+                        <PlusCircleIcon className="mr-1 h-4 w-4" /> Add Skill
                       </Button>
                     )}
                   </div>
-                  <p className="text-sm text-muted-foreground mt-1 italic">{t('skillSuggestCard.reasoningLabel')}: {skillRec.reasoning}</p>
+                  <p className="text-sm text-muted-foreground mt-1 italic">Reasoning: {skillRec.reasoning}</p>
                 </Card>
               ))}
             </div>
           )}
         </CardContent>
         <CardFooter>
-          <Button onClick={handleGetSkillSuggestions} disabled={isSkillsLoading} className="w-full md:w-auto">
+          <Button onClick={handleGetSkillSuggestions} disabled={isSkillsLoading || !isEditing} className="w-full md:w-auto">
             {isSkillsLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ThumbsUp className="mr-2 h-4 w-4" />}
-            {t('skillSuggestCard.getSuggestionsButton')}
+            {isEditing ? "Get Skill Suggestions" : "Edit Profile to Get Suggestions"}
           </Button>
         </CardFooter>
       </Card>
@@ -597,15 +592,15 @@ export default function ProfilePage() {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <CheckCircleIcon className="h-6 w-6 text-green-500" />
-            {t('profileSavedDialog.title')}
+            Profile Saved Successfully!
           </DialogTitle>
           <DialogUIDescription>
-            {t('profileSavedDialog.desc')}
+            Your profile information has been updated.
           </DialogUIDescription>
         </DialogHeader>
         <DialogFooter>
           <DialogClose asChild>
-            <Button onClick={() => setIsProfileSavedDialogOpen(false)}>{t('profileSavedDialog.okButton')}</Button>
+            <Button onClick={() => setIsProfileSavedDialogOpen(false)}>OK</Button>
           </DialogClose>
         </DialogFooter>
       </DialogContent>

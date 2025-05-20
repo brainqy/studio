@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { RecentPageItem } from '@/types';
@@ -23,18 +22,15 @@ export function addRecentPage(path: string, label: string): void {
   if (typeof window === 'undefined') {
     return;
   }
-   // Remove locale prefix like /en, /hi, /mr before storing
-  const pathWithoutLocale = path.replace(/^\/(en|es|hi|mr|zh|vi)/, '') || '/';
+  // No longer need to remove locale prefix as paths will be direct
+  const pathWithoutLocale = path;
 
-
-  if (pathWithoutLocale.startsWith('/auth') || pathWithoutLocale === '/') {
-    // Avoid adding auth pages or the bare landing page if it's not the dashboard
-    if (pathWithoutLocale === '/' && label !== 'Dashboard') return; 
+  if (pathWithoutLocale.startsWith('/auth') || (pathWithoutLocale === '/' && label !== 'Dashboard')) {
+    return;
   }
 
   try {
     let currentPages = getRecentPages();
-    // Use pathWithoutLocale for uniqueness check and storage
     currentPages = currentPages.filter(page => page.path !== pathWithoutLocale);
     currentPages.unshift({ path: pathWithoutLocale, label, timestamp: Date.now() });
     const updatedPages = currentPages.slice(0, MAX_RECENT_PAGES);
@@ -85,7 +81,8 @@ const PATH_LABEL_MAP: Record<string, string> = {
 };
 
 export function getLabelForPath(path: string): string {
-  const pathWithoutLocale = path.replace(/^\/(en|es|hi|mr|zh|vi)/, '') || '/';
+  // No longer need to remove locale prefix
+  const pathWithoutLocale = path;
 
   if (pathWithoutLocale.startsWith('/blog/')) {
     const slug = pathWithoutLocale.substring('/blog/'.length);

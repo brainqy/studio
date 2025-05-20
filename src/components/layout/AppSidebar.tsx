@@ -1,13 +1,11 @@
-
 "use client";
 
 import { Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarMenuItem, SidebarMenuButton, SidebarSeparator, SidebarGroup, SidebarGroupLabel, SidebarMenu } from "@/components/ui/sidebar";
-import { Aperture, Award, BarChart2, BookOpen, Briefcase, Building2, CalendarDays, FileText, GalleryVerticalEnd, GitFork, Gift, Handshake, History, Home, Layers3, ListChecks, MessageSquare, Settings, ShieldAlert, ShieldQuestion, User, Users, Wallet, Zap, UserCog, BotMessageSquare, Target, Users2, BookText as BookTextIcon, Activity, Edit, FileType, Brain, FilePlus2, Trophy, Settings2Icon, Puzzle as PuzzleIcon, Mic, Server, Megaphone, Video, PlusCircle } from "lucide-react"; // Added PlusCircle
+import { Aperture, Award, BarChart2, BookOpen, Briefcase, Building2, CalendarDays, FileText, GalleryVerticalEnd, GitFork, Gift, Handshake, History, Home, Layers3, ListChecks, MessageSquare, Settings, ShieldAlert, ShieldQuestion, User, Users, Wallet, Zap, UserCog, BotMessageSquare, Target, Users2, BookText as BookTextIcon, Activity, Edit, FileType, Brain, FilePlus2, Trophy, Settings2Icon, Puzzle as PuzzleIcon, Mic, Server, Megaphone, Video, PlusCircle } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { sampleUserProfile } from "@/lib/sample-data";
-import { useLocale } from "next-intl";
-import type { Locale } from '@/types';
+// Removed useLocale and Locale type
 
 const navItems = [
   { href: "/community-feed", label: "Community Feed", icon: MessageSquare },
@@ -83,23 +81,23 @@ const adminItems = [
 ];
 
 export function AppSidebar() {
-  const pathnameWithoutLocale = usePathname();
-  const locale = useLocale();
+  const pathname = usePathname(); // No longer needs locale prefix removal
   const currentUser = sampleUserProfile;
   
-  const getLocalePrefixedPath = (path: string) => `/${locale}${path}`;
+  // No longer needs getLocalePrefixedPath, direct paths are used
 
   const renderMenuItem = (item: any, isSubItem = false) => {
-    const localePrefixedHref = item.href ? getLocalePrefixedPath(item.href) : undefined;
+    const href = item.href; // Direct href
     let isActive;
-    if (item.href === "/dashboard") {
-        isActive = pathnameWithoutLocale === localePrefixedHref;
-    } else {
-        isActive = localePrefixedHref ? pathnameWithoutLocale.startsWith(localePrefixedHref) : false;
+    if (href === "/dashboard" && item.label !== "Admin Dashboard") { // Special handling for user dashboard
+        isActive = pathname === href && currentUser.role !== 'admin';
+    } else if (item.href === "/dashboard" && item.label === "Admin Dashboard") {
+        isActive = pathname === href && currentUser.role === 'admin';
+    }
+     else {
+        isActive = href ? pathname.startsWith(href) : false;
     }
     
-    const isAdminDashboardActive = item.href === "/dashboard" && item.label === "Admin Dashboard" && pathnameWithoutLocale === getLocalePrefixedPath("/dashboard") && currentUser.role === 'admin';
-
     if (item.adminOnly && currentUser.role !== 'admin') {
       return null;
     }
@@ -108,12 +106,12 @@ export function AppSidebar() {
     }
 
     return (
-      <SidebarMenuItem key={localePrefixedHref || item.label}>
-         {localePrefixedHref ? (
-           <Link href={localePrefixedHref} passHref legacyBehavior>
-            <SidebarMenuButton isActive={isActive || isAdminDashboardActive} size={isSubItem ? "sm" : "default"} className="w-full justify-start">
-              <item.icon className={`h-5 w-5 ${(isActive || isAdminDashboardActive) ? "text-sidebar-primary-foreground" : "text-sidebar-foreground/80"}`} />
-              <span className={`${(isActive || isAdminDashboardActive) ? "text-sidebar-primary-foreground" : ""} group-data-[collapsible=icon]:hidden`}>{item.label}</span>
+      <SidebarMenuItem key={href || item.label}>
+         {href ? (
+           <Link href={href} passHref legacyBehavior>
+            <SidebarMenuButton isActive={isActive} size={isSubItem ? "sm" : "default"} className="w-full justify-start">
+              <item.icon className={`h-5 w-5 ${isActive ? "text-sidebar-primary-foreground" : "text-sidebar-foreground/80"}`} />
+              <span className={`${isActive ? "text-sidebar-primary-foreground" : ""} group-data-[collapsible=icon]:hidden`}>{item.label}</span>
             </SidebarMenuButton>
            </Link>
          ) : (
@@ -129,7 +127,7 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon" variant="sidebar" side="left">
       <SidebarHeader className="p-4 border-b border-sidebar-border">
-        <Link href={getLocalePrefixedPath("/dashboard")} className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
+        <Link href={"/dashboard"} className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
           <FileText className="h-7 w-7 text-primary" />
           <span className="font-semibold text-lg text-sidebar-foreground group-data-[collapsible=icon]:hidden">ResumeMatch</span>
         </Link>

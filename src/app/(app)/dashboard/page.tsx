@@ -1,18 +1,16 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
 import { sampleUserProfile } from "@/lib/sample-data";
 import type { UserRole } from "@/types";
-// import { useTranslations } from 'next-intl'; // Example for next-intl
-
 import AdminDashboard from "@/components/dashboards/AdminDashboard";
 import ManagerDashboard from "@/components/dashboards/ManagerDashboard";
 import UserDashboard from "@/components/dashboards/UserDashboard";
-import { Skeleton } from "@/components/ui/skeleton"; // For loading state
+import { Skeleton } from "@/components/ui/skeleton"; 
 import DailyStreakPopup from "@/components/features/DailyStreakPopup"; 
 import WelcomeTourDialog from '@/components/features/WelcomeTourDialog';
 import { userDashboardTourSteps, adminDashboardTourSteps, managerDashboardTourSteps } from "@/lib/sample-data";
+// Removed useTranslations
 
 export default function DashboardPage() {
   const [userRole, setUserRole] = useState<UserRole | null>(null);
@@ -22,7 +20,6 @@ export default function DashboardPage() {
   const [tourSteps, setTourSteps] = useState<any[]>([]);
   const [tourKey, setTourKey] = useState('');
   const [tourTitle, setTourTitle] = useState('');
-  // const t = useTranslations('Dashboard'); // Example for next-intl
 
   useEffect(() => {
     const role = sampleUserProfile.role; 
@@ -46,15 +43,15 @@ export default function DashboardPage() {
       if (role === 'admin') {
         currentTourKey = 'adminDashboardTourSeen';
         currentTourSteps = adminDashboardTourSteps;
-        currentTourTitle = "Welcome Admin!"; // This would be t('greeting_admin_tour')
+        currentTourTitle = "Welcome Admin!";
       } else if (role === 'manager') {
         currentTourKey = 'managerDashboardTourSeen';
         currentTourSteps = managerDashboardTourSteps;
-        currentTourTitle = "Welcome Manager!"; // This would be t('greeting_manager_tour')
+        currentTourTitle = "Welcome Manager!";
       } else { // user
         currentTourKey = 'userDashboardTourSeen';
         currentTourSteps = userDashboardTourSteps;
-        currentTourTitle = "Welcome to Your Dashboard!"; // This would be t('greeting_user_tour')
+        currentTourTitle = "Welcome to Your Dashboard!";
       }
       
       setTourKey(currentTourKey);
@@ -82,7 +79,6 @@ export default function DashboardPage() {
   if (isLoading) {
     return (
       <div className="space-y-8">
-        {/* i18n-comment: "Loading..." */}
         <Skeleton className="h-10 w-1/4" /> 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <Skeleton className="h-28 w-full" />
@@ -101,13 +97,12 @@ export default function DashboardPage() {
   const renderDashboard = () => {
     switch (userRole) {
       case 'admin':
-        // Pass t function or translated strings as props if AdminDashboard needs them
-        return <AdminDashboard /* title={t('title')} description={t('description_admin')} */ />;
+        return <AdminDashboard />;
       case 'manager':
-        return <ManagerDashboard /* title={t('title')} description={t('description_manager')} */ />;
+        return <ManagerDashboard />;
       case 'user':
       default:
-        return <UserDashboard /* title={t('title')} description={t('description_user')} */ />;
+        return <UserDashboard />;
     }
   };
 
@@ -127,7 +122,7 @@ export default function DashboardPage() {
           onClose={handleCloseWelcomeTour}
           tourKey={tourKey}
           steps={tourSteps}
-          title={tourTitle} // This title would be translated
+          title={tourTitle}
         />
       )}
     </>

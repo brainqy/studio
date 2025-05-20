@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -25,8 +23,9 @@ import { sampleUserProfile, sampleWalletBalance } from "@/lib/sample-data";
 import { useState, useEffect } from 'react'; 
 import { getRecentPages } from '@/lib/recent-pages'; 
 import type { RecentPageItem } from '@/types'; 
-import { usePathname } from "next/navigation"; 
+import { usePathname, useRouter } from "next/navigation"; 
 import AnnouncementBanner from '@/components/features/AnnouncementBanner';
+// Removed next-intl imports
 
 export function AppHeader() {
   const { toast } = useToast();
@@ -34,49 +33,47 @@ export function AppHeader() {
   const wallet = sampleWalletBalance;
   const [recentPages, setRecentPages] = useState<RecentPageItem[]>([]);
   const pathname = usePathname(); 
-  // const { t } = useTranslations('AppHeader'); // Example for next-intl
+  const router = useRouter(); // Added useRouter
 
-  // Mock logout function
   const handleLogout = () => {
     toast({ title: "Logged Out", description: "You have been logged out." });
-    // In a real app, redirect to login: router.push('/auth/login');
+    // In a real app, clear session/token and redirect:
+    localStorage.removeItem('currentUserInfo');
+    localStorage.removeItem('authToken'); // Or clear cookie
+    router.push('/auth/login');
   };
 
   useEffect(() => {
-    // Load recent pages on component mount and when pathname changes
     setRecentPages(getRecentPages());
-  }, [pathname]); // Depend on pathname to re-fetch when navigation occurs
+  }, [pathname]);
 
   const handleLanguageChange = (lang: string) => {
-    // In a real app, this would set the locale and redirect or update context
-    toast({ title: "Language Switched (Mock)", description: `Language set to ${lang}. Page would reload.` });
-    // Example: router.push(pathname, { locale: lang });
+    toast({ title: "Language Switch (Mock)", description: `Language would switch to ${lang}. This app is currently single-language.` });
+    // To re-enable next-intl, you'd use: router.push(`/${lang}${pathnameWithoutLocale}`);
   };
 
   return (
     <TooltipProvider>
       <header className="sticky top-0 z-10 border-b bg-card shadow-sm">
-        <AnnouncementBanner /> {/* Display announcements at the very top */}
-        {/* Top row for main controls */}
+        <AnnouncementBanner />
         <div className="flex h-16 items-center gap-4 px-4 md:px-6">
           <SidebarTrigger />
-          
           <div className="flex-1">
-            {/* Optionally, add a search bar or breadcrumbs here */}
+            {/* Optional search bar or breadcrumbs */}
           </div>
-          <div className="flex items-center gap-2 sm:gap-4"> {/* Adjusted gap for smaller screens */}
-            {/* Language Switcher Placeholder */}
+          <div className="flex items-center gap-2 sm:gap-4">
+            {/* Language Switcher (Placeholder - actual switching logic removed) */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="rounded-full">
                   <Globe className="h-5 w-5 text-muted-foreground" />
-                  <span className="sr-only">{"AppHeader.languageSwitcherLabel"}</span> {/* Placeholder for t('languageSwitcherLabel') */}
+                  <span className="sr-only">Language</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => handleLanguageChange('en')}>English</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleLanguageChange('es')}>Español</DropdownMenuItem>
-                {/* Add more languages as needed */}
+                <DropdownMenuItem onClick={() => handleLanguageChange('hi')}>हिन्दी (Mock)</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleLanguageChange('mr')}>मराठी (Mock)</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
@@ -88,7 +85,7 @@ export function AppHeader() {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={user.profilePictureUrl || "https://picsum.photos/seed/useravatar/100/100"} alt={user.name} data-ai-hint="person portrait" />
+                    <AvatarImage src={user.profilePictureUrl || "https://avatar.vercel.sh/placeholder.png"} alt={user.name} data-ai-hint="person portrait" />
                     <AvatarFallback>{user.name?.substring(0,1).toUpperCase() || 'U'}</AvatarFallback>
                   </Avatar>
                 </Button>
@@ -103,7 +100,6 @@ export function AppHeader() {
                   </DropdownMenuItem>
                 </Link>
 
-                {/* Recent Visited Pages Sub-Menu */}
                 {recentPages.length > 0 && (
                   <DropdownMenuSub>
                     <DropdownMenuSubTrigger>
@@ -123,51 +119,14 @@ export function AppHeader() {
                     </DropdownMenuPortal>
                   </DropdownMenuSub>
                 )}
-
                 <DropdownMenuSeparator /> 
-                
-                <Link href="/job-tracker" passHref>
-                  <DropdownMenuItem>
-                    <Briefcase className="mr-2 h-4 w-4" />
-                    Job Tracker
-                  </DropdownMenuItem>
-                </Link>
-                <Link href="/gamification" passHref>
-                  <DropdownMenuItem>
-                    <Award className="mr-2 h-4 w-4" />
-                    Rewards & Badges
-                  </DropdownMenuItem>
-                </Link>
-                <Link href="/wallet" passHref>
-                  <DropdownMenuItem>
-                    <WalletCards className="mr-2 h-4 w-4" />
-                    Wallet
-                  </DropdownMenuItem>
-                </Link>
-                <Link href="/my-resumes" passHref>
-                  <DropdownMenuItem>
-                    <Layers3 className="mr-2 h-4 w-4" />
-                    Resume Manager
-                  </DropdownMenuItem>
-                </Link>
-                 <Link href="/settings" passHref>
-                  <DropdownMenuItem>
-                    <SettingsIcon className="mr-2 h-4 w-4" />
-                    Settings
-                  </DropdownMenuItem>
-                </Link>
-                <Link href="/blog" passHref>
-                  <DropdownMenuItem>
-                    <BookOpen className="mr-2 h-4 w-4" />
-                    Blog
-                  </DropdownMenuItem>
-                </Link>
-                <Link href="/activity-log" passHref>
-                  <DropdownMenuItem>
-                    <ActivityIcon className="mr-2 h-4 w-4" />
-                    Activity
-                  </DropdownMenuItem>
-                </Link>
+                <Link href="/job-tracker" passHref><DropdownMenuItem><Briefcase className="mr-2 h-4 w-4" />Job Tracker</DropdownMenuItem></Link>
+                <Link href="/gamification" passHref><DropdownMenuItem><Award className="mr-2 h-4 w-4" />Rewards & Badges</DropdownMenuItem></Link>
+                <Link href="/wallet" passHref><DropdownMenuItem><WalletCards className="mr-2 h-4 w-4" />Wallet</DropdownMenuItem></Link>
+                <Link href="/my-resumes" passHref><DropdownMenuItem><Layers3 className="mr-2 h-4 w-4" />Resume Manager</DropdownMenuItem></Link>
+                <Link href="/settings" passHref><DropdownMenuItem><SettingsIcon className="mr-2 h-4 w-4" />Settings</DropdownMenuItem></Link>
+                <Link href="/blog" passHref><DropdownMenuItem><BookOpen className="mr-2 h-4 w-4" />Blog</DropdownMenuItem></Link>
+                <Link href="/activity-log" passHref><DropdownMenuItem><ActivityIcon className="mr-2 h-4 w-4" />Activity</DropdownMenuItem></Link>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout}>
                   <LogOut className="mr-2 h-4 w-4" />
@@ -178,7 +137,6 @@ export function AppHeader() {
           </div>
         </div>
 
-        {/* Bottom row for gamification stats */}
         <div className="hidden sm:flex h-10 items-center justify-end gap-4 border-t bg-secondary/30 px-4 md:px-6">
            <Tooltip>
             <TooltipTrigger asChild>
@@ -187,11 +145,8 @@ export function AppHeader() {
                 <span>{user.dailyStreak || 0}</span>
               </div>
             </TooltipTrigger>
-            <TooltipContent>
-              <p>Daily Login Streak</p>
-            </TooltipContent>
+            <TooltipContent><p>Daily Login Streak</p></TooltipContent>
           </Tooltip>
-
           <Tooltip>
             <TooltipTrigger asChild>
               <div className="flex items-center gap-1 text-sm font-medium text-muted-foreground cursor-default">
@@ -199,11 +154,8 @@ export function AppHeader() {
                 <span>{user.xpPoints || 0} XP</span>
               </div>
             </TooltipTrigger>
-            <TooltipContent>
-              <p>Total Experience Points</p>
-            </TooltipContent>
+            <TooltipContent><p>Total Experience Points</p></TooltipContent>
           </Tooltip>
-
           <Tooltip>
              <TooltipTrigger asChild>
                 <Link href="/wallet" passHref>
@@ -213,9 +165,7 @@ export function AppHeader() {
                   </div>
                  </Link>
             </TooltipTrigger>
-             <TooltipContent>
-              <p>Coin Balance</p>
-            </TooltipContent>
+             <TooltipContent><p>Coin Balance</p></TooltipContent>
           </Tooltip>
         </div>
       </header>
