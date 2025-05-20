@@ -2,14 +2,14 @@
 "use client";
 
 import { Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarMenuItem, SidebarMenuButton, SidebarSeparator, SidebarGroup, SidebarGroupLabel, SidebarMenu } from "@/components/ui/sidebar";
-import { Aperture, Award, BarChart2, BookOpen, Briefcase, Building2, CalendarDays, FileText, GalleryVerticalEnd, GitFork, Gift, Handshake, History, Home, Layers3, ListChecks, MessageSquare, Settings, ShieldAlert, ShieldQuestion, User, Users, Wallet, Zap, UserCog, BotMessageSquare, Target, Users2, BookText as BookTextIcon, Activity, Edit, FileType, Brain, FilePlus2, Trophy, Settings2Icon, Puzzle as PuzzleIcon, Mic, Server, Megaphone, Video } from "lucide-react";
+import { Aperture, Award, BarChart2, BookOpen, Briefcase, Building2, CalendarDays, FileText, GalleryVerticalEnd, GitFork, Gift, Handshake, History, Home, Layers3, ListChecks, MessageSquare, Settings, ShieldAlert, ShieldQuestion, User, Users, Wallet, Zap, UserCog, BotMessageSquare, Target, Users2, BookText as BookTextIcon, Activity, Edit, FileType, Brain, FilePlus2, Trophy, Settings2Icon, Puzzle as PuzzleIcon, Mic, Server, Megaphone, Video, PlusCircle } from "lucide-react"; // Added PlusCircle
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { sampleUserProfile } from "@/lib/sample-data";
 import { useLocale } from "next-intl";
-import type { Locale } from "@/types";
+import type { Locale } from '@/types';
 
-const navItemsBase = [
+const navItems = [
   { href: "/community-feed", label: "Community Feed", icon: MessageSquare },
   { href: "/dashboard", label: "Dashboard", icon: Home },
   { href: "/alumni-connect", label: "Alumni Network", icon: Handshake },
@@ -17,10 +17,10 @@ const navItemsBase = [
   { href: "/job-tracker", label: "Job Tracker", icon: Briefcase },
   { href: "/interview-prep", label: "Practice Hub", icon: Brain },
   {
-    label: "Live Interviews", // New Top-Level for Video Conferencing
+    label: "Live Interviews",
     icon: Video,
     subItems: [
-      { href: "/live-interview/new", label: "Start New Interview", icon: PlusCircle }, // Placeholder, could go to a setup/lobby page
+      { href: "/live-interview/new", label: "Start New Interview", icon: PlusCircle },
       { href: "/interview-queue", label: "Interview Queue", icon: ListChecks },
     ]
   },
@@ -53,6 +53,7 @@ const utilityItems = [
   { href: "/feature-requests", label: "Feature Requests", icon: ShieldQuestion, adminOnly: true },
   { href: "/settings", label: "Settings", icon: Settings },
   { href: "/documentation", label: "Documentation", icon: BookTextIcon, adminOnly: true },
+  { href: "/db-test", label: "DB Test", icon: GitFork, adminOnly: true}
 ];
 
 const gamificationItems = [
@@ -78,7 +79,7 @@ const adminItems = [
    { href: "/admin/gallery-management", label: "Gallery Mgt.", icon: GalleryVerticalEnd },
    { href: "/admin/blog-settings", label: "Blog Settings", icon: Settings2Icon },
    { href: "/admin/platform-settings", label: "Platform Settings", icon: Server },
-   { href: "/interview-queue", label: "Interview Queue (Admin)", icon: ListChecks }, // Also adding here for admin
+   { href: "/interview-queue", label: "Interview Queue (Admin)", icon: ListChecks },
 ];
 
 export function AppSidebar() {
@@ -90,8 +91,6 @@ export function AppSidebar() {
 
   const renderMenuItem = (item: any, isSubItem = false) => {
     const localePrefixedHref = item.href ? getLocalePrefixedPath(item.href) : undefined;
-    // For dashboard, ensure it matches /<locale>/dashboard exactly, not /<locale>/dashboard/anything-else
-    // For other links, allow startsWith for active state in nested routes.
     let isActive;
     if (item.href === "/dashboard") {
         isActive = pathnameWithoutLocale === localePrefixedHref;
@@ -137,7 +136,7 @@ export function AppSidebar() {
       </SidebarHeader>
       <SidebarContent className="p-2">
         <SidebarMenu>
-          {navItemsBase.map((item) =>
+          {navItems.map((item) =>
             item.subItems && item.subItems.length > 0 ? (
               <SidebarGroup key={item.label} className="p-0">
                  {renderMenuItem(item, false)}
@@ -185,7 +184,7 @@ export function AppSidebar() {
                             "/admin/content-moderation",
                             "/admin/gallery-management",
                             "/admin/announcements",
-                            "/interview-queue", // Allow manager to see their tenant's queue
+                            "/interview-queue", 
                         ];
                         return managerAccessible.includes(item.href);
                     }
