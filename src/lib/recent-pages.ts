@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import type { RecentPageItem } from '@/types';
@@ -24,13 +23,20 @@ export function addRecentPage(path: string, label: string): void {
   if (typeof window === 'undefined') {
     return;
   }
-  if (path.startsWith('/auth') || path === '/') {
-    return;
+   // Remove locale prefix like /en, /hi, /mr before storing
+  const pathWithoutLocale = path.replace(/^\/(en|es|hi|mr|zh|vi)/, '') || '/';
+
+
+  if (pathWithoutLocale.startsWith('/auth') || pathWithoutLocale === '/') {
+    // Avoid adding auth pages or the bare landing page if it's not the dashboard
+    if (pathWithoutLocale === '/' && label !== 'Dashboard') return; 
   }
+
   try {
     let currentPages = getRecentPages();
-    currentPages = currentPages.filter(page => page.path !== path);
-    currentPages.unshift({ path, label, timestamp: Date.now() });
+    // Use pathWithoutLocale for uniqueness check and storage
+    currentPages = currentPages.filter(page => page.path !== pathWithoutLocale);
+    currentPages.unshift({ path: pathWithoutLocale, label, timestamp: Date.now() });
     const updatedPages = currentPages.slice(0, MAX_RECENT_PAGES);
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedPages));
   } catch (error) {
@@ -48,7 +54,9 @@ const PATH_LABEL_MAP: Record<string, string> = {
   '/resume-builder': 'Resume Builder',
   '/resume-templates': 'Resume Templates',
   '/job-tracker': 'Job Tracker',
-  '/interview-prep': 'Interview Prep',
+  '/interview-prep': 'Interview Prep Hub',
+  '/live-interview/new': 'Start Live Interview',
+  '/interview-queue': 'Interview Queue',
   '/alumni-connect': 'Alumni Directory',
   '/job-board': 'Job Board',
   '/community-feed': 'Community Feed',
@@ -74,23 +82,27 @@ const PATH_LABEL_MAP: Record<string, string> = {
   '/admin/gallery-management': 'Gallery Management',
   '/admin/blog-settings': 'AI Blog Settings',
   '/admin/platform-settings': 'Platform Settings',
-  '/resume-history': 'Resume Scan History (in Analyzer)',
-  // '/leaderboard': 'Leaderboard (in Rewards)', // Removed as it's integrated
 };
 
 export function getLabelForPath(path: string): string {
-  if (path.startsWith('/blog/')) {
-    const slug = path.substring('/blog/'.length);
+  const pathWithoutLocale = path.replace(/^\/(en|es|hi|mr|zh|vi)/, '') || '/';
+
+  if (pathWithoutLocale.startsWith('/blog/')) {
+    const slug = pathWithoutLocale.substring('/blog/'.length);
     const title = slug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
     return `Blog: ${title}`;
   }
-   if (path.startsWith('/interview-prep/quiz/edit/')) {
-    const quizId = path.substring('/interview-prep/quiz/edit/'.length);
+   if (pathWithoutLocale.startsWith('/interview-prep/quiz/edit/')) {
+    const quizId = pathWithoutLocale.substring('/interview-prep/quiz/edit/'.length);
     return quizId === 'new' ? 'Create New Quiz' : `Edit Quiz: ${quizId.substring(0,8)}...`;
   }
-  if (path.startsWith('/interview-prep/quiz')) {
-    const quizId = new URLSearchParams(path.split('?')[1]).get('quizId');
+  if (pathWithoutLocale.startsWith('/interview-prep/quiz')) {
+    const quizId = new URLSearchParams(pathWithoutLocale.split('?')[1]).get('quizId');
     return quizId ? `Quiz: ${quizId.substring(0,8)}...` : 'Take Quiz';
   }
-  return PATH_LABEL_MAP[path] || path;
+  if (pathWithoutLocale.startsWith('/live-interview/') && pathWithoutLocale !== '/live-interview/new') {
+    const interviewId = pathWithoutLocale.substring('/live-interview/'.length);
+    return `Live Interview: ${interviewId.substring(0,8)}...`;
+  }
+  return PATH_LABEL_MAP[pathWithoutLocale] || pathWithoutLocale;
 }

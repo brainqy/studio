@@ -1,6 +1,5 @@
 
-
-import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem, Appointment, Wallet, ResumeProfile, Tenant, Badge, BlogPost, ReferralHistoryItem, GamificationRule, UserStatus, SurveyResponse, Affiliate, AffiliateClick, AffiliateSignup, AffiliateStatus, SurveyStep, ResumeTemplate, TourStep, CommunityComment, InterviewQuestion, InterviewQuestionCategory, BlogGenerationSettings, MockInterviewSession, InterviewQuestionDifficulty, InterviewQuestionUserComment, PracticeSession, PracticeSessionStatus, JobApplicationStatus, KanbanColumnId, PlatformSettings, Announcement, AnnouncementStatus, AnnouncementAudience } from '@/types';
+import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem, Appointment, Wallet, ResumeProfile, Tenant, Badge, BlogPost, ReferralHistoryItem, GamificationRule, UserStatus, SurveyResponse, Affiliate, AffiliateClick, AffiliateSignup, AffiliateStatus, SurveyStep, ResumeTemplate, TourStep, CommunityComment, InterviewQuestion, InterviewQuestionCategory, BlogGenerationSettings, MockInterviewSession, InterviewQuestionDifficulty, InterviewQuestionUserComment, PracticeSession, PracticeSessionStatus, JobApplicationStatus, KanbanColumnId, PlatformSettings, Announcement, AnnouncementStatus, AnnouncementAudience, LiveInterviewSession, LiveInterviewParticipant, RecordingReference, LiveInterviewSessionStatus } from '@/types';
 import { AreasOfSupport, AppointmentStatuses, Genders, DegreePrograms, Industries, TimeCommitments, EngagementModes, SupportTypesSought, JOB_APPLICATION_STATUSES, KANBAN_COLUMNS_CONFIG, PREDEFINED_INTERVIEW_TOPICS, PRACTICE_FOCUS_AREAS, ALL_CATEGORIES, ALL_DIFFICULTIES, MOCK_INTERVIEW_STEPS, RESUME_BUILDER_STEPS, PreferredTimeSlots, AnnouncementStatuses, AnnouncementAudiences } from '@/types'; 
 
 export let SAMPLE_TENANT_ID = 'Brainqy'; 
@@ -75,7 +74,7 @@ export let sampleAlumni: AlumniProfile[] = [
     offersHelpWith: [AreasOfSupport[0], AreasOfSupport[7]], 
     appointmentCoinCost: 10,
     xpPoints: 1200,
-    createdAt: new Date(Date.now() - 86400000 * 500).toISOString(), // ~1.5 years ago
+    createdAt: new Date(Date.now() - 86400000 * 500).toISOString(), 
     isDistinguished: false, 
   },
   {
@@ -96,7 +95,7 @@ export let sampleAlumni: AlumniProfile[] = [
     offersHelpWith: [AreasOfSupport[2], AreasOfSupport[5], AreasOfSupport[9]], 
     appointmentCoinCost: 20,
     xpPoints: 5000,
-    createdAt: new Date(Date.now() - 86400000 * 700).toISOString(), // ~2 years ago
+    createdAt: new Date(Date.now() - 86400000 * 700).toISOString(), 
     isDistinguished: true,
   },
 ];
@@ -197,8 +196,8 @@ export let sampleCommunityPosts: CommunityPost[] = [
 ];
 
 export const sampleFeatureRequests: FeatureRequest[] = [
-  { id: 'fr1', tenantId: SAMPLE_TENANT_ID, userId: 'user789', userName: 'Sam Wilson', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(), title: 'Integrate with LinkedIn for profile import', description: 'It would be great to automatically pull resume data from LinkedIn.', status: 'Pending', upvotes: 15 },
-  { id: 'fr2', tenantId: SAMPLE_TENANT_ID, userId: 'user101', userName: 'Maria Hill', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 72).toISOString(), title: 'Dark mode for the dashboard', description: 'A dark theme option would be easier on the eyes.', status: 'In Progress', upvotes: 28 },
+  { id: 'fr1', tenantId: SAMPLE_TENANT_ID, userId: 'user789', userName: 'Sam Wilson', userAvatar: 'https://picsum.photos/seed/samwilson/50/50', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(), title: 'Integrate with LinkedIn for profile import', description: 'It would be great to automatically pull resume data from LinkedIn.', status: 'Pending', upvotes: 15 },
+  { id: 'fr2', tenantId: SAMPLE_TENANT_ID, userId: 'user101', userName: 'Maria Hill', userAvatar: 'https://picsum.photos/seed/mariahill/50/50', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 72).toISOString(), title: 'Dark mode for the dashboard', description: 'A dark theme option would be easier on the eyes.', status: 'In Progress', upvotes: 28 },
 ];
 
 export let sampleEvents: GalleryEvent[] = [ 
@@ -399,7 +398,7 @@ export const sampleResumeScanHistory: ResumeScanHistoryItem[] = [
   },
    {
     id: 'scan4',
-    tenantId: 'tenant-2', // Different tenant
+    tenantId: 'tenant-2', 
     userId: 'managerUser1',
     resumeId: 'resumeTenant2-1',
     resumeName: 'CorpStrategyResume.pdf',
@@ -423,9 +422,9 @@ export const sampleTenants: Tenant[] = [
     createdAt: new Date().toISOString(),
     settings: {
       allowPublicSignup: true,
-      customLogoUrl: 'https://placehold.co/200x50/E0F7FA/008080&text=Brainqy', 
-      primaryColor: 'hsl(190 67% 92%)', // Default Light Blue from globals.css
-      accentColor: 'hsl(180 100% 25%)',  // Default Teal from globals.css
+      customLogoUrl: 'https://placehold.co/200x50/008080/E0F7FA&text=Brainqy', 
+      primaryColor: 'hsl(180 100% 25%)', 
+      accentColor: 'hsl(180 100% 30%)',  
       features: {
         communityFeedEnabled: true,
         jobBoardEnabled: true,
@@ -939,7 +938,6 @@ export let sampleInterviewQuestions: InterviewQuestion[] = [
         { id: 'uc1-1', userId: 'alumni2', userName: 'Bob The Builder (Manager)', comment: 'Good standard question. The tip is helpful!', timestamp: new Date(Date.now() - 86400000 * 1).toISOString()},
         { id: 'uc1-2', userId: 'alumni3', userName: 'Charlie Brown', comment: 'Could use a more complex failure example in options.', timestamp: new Date(Date.now() - 86400000 * 2).toISOString()}
     ],
-    comments: "Standard behavioral question, good for assessing self-awareness.", 
     createdBy: "system",
     approved: true,
     createdAt: new Date(Date.now() - 86400000 * 10).toISOString(),
@@ -963,7 +961,6 @@ export let sampleInterviewQuestions: InterviewQuestion[] = [
     rating: 4.8,
     ratingsCount: 22,
     userComments: [],
-    comments: "Assesses conflict resolution and interpersonal skills.",
     createdBy: "system",
     approved: true,
     createdAt: new Date(Date.now() - 86400000 * 9).toISOString(),
@@ -987,7 +984,6 @@ export let sampleInterviewQuestions: InterviewQuestion[] = [
     rating: 4.0,
     ratingsCount: 10,
     userComments: [{id: 'uc3-1', userId: 'currentUser', userName: 'Alex Taylor (Admin)', comment: 'The options are a bit tricky, good test!', timestamp: new Date().toISOString()}],
-    comments: "Fundamental OOP concept.",
     createdBy: "managerUser1",
     approved: true,
     createdAt: new Date(Date.now() - 86400000 * 8).toISOString(),
@@ -1011,7 +1007,6 @@ export let sampleInterviewQuestions: InterviewQuestion[] = [
     rating: 4.5,
     ratingsCount: 18,
     userComments: [],
-    comments: "Tests understanding of product lifecycle.",
     createdBy: "managerUser1",
     approved: true,
     createdAt: new Date(Date.now() - 86400000 * 7).toISOString(),
@@ -1035,7 +1030,6 @@ export let sampleInterviewQuestions: InterviewQuestion[] = [
     rating: 3.9,
     ratingsCount: 30,
     userComments: [],
-    comments: "Good for screening initial interest.",
     createdBy: "system",
     approved: true,
     createdAt: new Date(Date.now() - 86400000 * 6).toISOString(),
@@ -1059,7 +1053,6 @@ export let sampleInterviewQuestions: InterviewQuestion[] = [
     rating: 3.5,
     ratingsCount: 12,
     userComments: [],
-    comments: "Needs review for phrasing.",
     createdBy: "system",
     approved: false, 
     createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
@@ -1083,7 +1076,6 @@ export let sampleInterviewQuestions: InterviewQuestion[] = [
     rating: 4.7,
     ratingsCount: 9,
     userComments: [],
-    comments: "Crucial for backend roles.",
     createdBy: "managerUser1",
     approved: true,
     createdAt: new Date(Date.now() - 86400000 * 4).toISOString(),
@@ -1433,4 +1425,50 @@ export let sampleAnnouncements: Announcement[] = [
     updatedAt: new Date().toISOString(),
     createdBy: 'managerUser1',
   },
+];
+
+export const sampleLiveInterviewSessions: LiveInterviewSession[] = [
+  {
+    id: 'live-session-1',
+    tenantId: SAMPLE_TENANT_ID,
+    title: 'Frontend Developer Screening',
+    participants: [
+      { userId: 'alumni1', name: 'Alice Wonderland', role: 'interviewer', profilePictureUrl: 'https://picsum.photos/seed/alice/50/50' },
+      { userId: 'currentUser', name: sampleUserProfile.name, role: 'candidate', profilePictureUrl: sampleUserProfile.profilePictureUrl }
+    ],
+    scheduledTime: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(), // In 2 days
+    status: 'Scheduled',
+    meetingLink: 'https://meet.example.com/live123',
+    interviewTopics: ['React', 'JavaScript', 'CSS'],
+    jobRoleId: 'job1'
+  },
+  {
+    id: 'live-session-2',
+    tenantId: SAMPLE_TENANT_ID,
+    title: 'Product Manager - Behavioral Round',
+    participants: [
+      { userId: 'alumni2', name: 'Bob The Builder (Manager)', role: 'interviewer', profilePictureUrl: 'https://picsum.photos/seed/bob/50/50' },
+      { userId: 'user456', name: 'Jane Smith', role: 'candidate', profilePictureUrl: 'https://picsum.photos/seed/janesmith/50/50' }
+    ],
+    scheduledTime: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // Yesterday
+    actualStartTime: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000 + 5 * 60 * 1000).toISOString(), // Started 5 mins late
+    actualEndTime: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000 + 65 * 60 * 1000).toISOString(), // Lasted 1 hour
+    status: 'Completed',
+    recordingReferences: [
+      { id: 'rec1', sessionId: 'live-session-2', startTime: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000 + 5 * 60 * 1000).toISOString(), durationSeconds: 3600, localStorageKey: 'recording_live-session-2_rec1'}
+    ],
+    interviewTopics: ['Behavioral Questions', 'Prioritization', 'Stakeholder Management'],
+  },
+  {
+    id: 'live-session-3',
+    tenantId: 'tenant-2',
+    title: 'Data Science - Technical Deep Dive',
+    participants: [
+      { userId: 'managerUser1', name: 'Manager Mike', role: 'interviewer', profilePictureUrl: sampleUserProfile.profilePictureUrl },
+      { userId: 'alumni3', name: 'Charlie Brown', role: 'candidate', profilePictureUrl: 'https://picsum.photos/seed/charlie/50/50' }
+    ],
+    scheduledTime: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(), // In 5 days
+    status: 'Scheduled',
+    interviewTopics: ['Machine Learning Algorithms', 'Python', 'Statistics'],
+  }
 ];

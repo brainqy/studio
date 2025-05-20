@@ -2,18 +2,28 @@
 "use client";
 
 import { Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarMenuItem, SidebarMenuButton, SidebarSeparator, SidebarGroup, SidebarGroupLabel, SidebarMenu } from "@/components/ui/sidebar";
-import { Aperture, Award, BarChart2, BookOpen, Briefcase, Building2, CalendarDays, FileText, GalleryVerticalEnd, GitFork, Gift, Handshake, History, Home, Layers3, ListChecks, MessageSquare, Settings, ShieldAlert, ShieldQuestion, User, Users, Wallet, Zap, UserCog, BotMessageSquare, Target, Users2, BookText as BookTextIcon, Activity, Edit, FileType, Brain, FilePlus2, Trophy, Settings2Icon, Puzzle as PuzzleIcon, Mic, Server, Megaphone } from "lucide-react";
+import { Aperture, Award, BarChart2, BookOpen, Briefcase, Building2, CalendarDays, FileText, GalleryVerticalEnd, GitFork, Gift, Handshake, History, Home, Layers3, ListChecks, MessageSquare, Settings, ShieldAlert, ShieldQuestion, User, Users, Wallet, Zap, UserCog, BotMessageSquare, Target, Users2, BookText as BookTextIcon, Activity, Edit, FileType, Brain, FilePlus2, Trophy, Settings2Icon, Puzzle as PuzzleIcon, Mic, Server, Megaphone, Video } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { sampleUserProfile } from "@/lib/sample-data";
+import { useLocale } from "next-intl";
+import type { Locale } from "@/types";
 
-const navItems = [
+const navItemsBase = [
   { href: "/community-feed", label: "Community Feed", icon: MessageSquare },
   { href: "/dashboard", label: "Dashboard", icon: Home },
   { href: "/alumni-connect", label: "Alumni Network", icon: Handshake },
   { href: "/job-board", label: "Job Board", icon: Aperture },
   { href: "/job-tracker", label: "Job Tracker", icon: Briefcase },
   { href: "/interview-prep", label: "Practice Hub", icon: Brain },
+  {
+    label: "Live Interviews", // New Top-Level for Video Conferencing
+    icon: Video,
+    subItems: [
+      { href: "/live-interview/new", label: "Start New Interview", icon: PlusCircle }, // Placeholder, could go to a setup/lobby page
+      { href: "/interview-queue", label: "Interview Queue", icon: ListChecks },
+    ]
+  },
   {
     label: "AI Tools",
     icon: Zap,
@@ -24,7 +34,7 @@ const navItems = [
     ]
   },
   {
-    label: "Resume Tools", // New Group
+    label: "Resume Tools",
     icon: FileText,
     subItems: [
       { href: "/my-resumes", label: "My Resumes", icon: Layers3 },
@@ -56,7 +66,7 @@ const blogItems = [
 ];
 
 const adminItems = [
-   { href: "/dashboard", label: "Admin Dashboard", icon: Activity }, // Ensure this one is distinct if admin has a separate dashboard view
+   { href: "/dashboard", label: "Admin Dashboard", icon: Activity },
    { href: "/admin/tenants", label: "Tenant Management", icon: Building2 },
    { href: "/admin/tenant-onboarding", label: "Tenant Onboarding", icon: Layers3 },
    { href: "/admin/user-management", label: "User Management", icon: UserCog },
@@ -68,28 +78,40 @@ const adminItems = [
    { href: "/admin/gallery-management", label: "Gallery Mgt.", icon: GalleryVerticalEnd },
    { href: "/admin/blog-settings", label: "Blog Settings", icon: Settings2Icon },
    { href: "/admin/platform-settings", label: "Platform Settings", icon: Server },
+   { href: "/interview-queue", label: "Interview Queue (Admin)", icon: ListChecks }, // Also adding here for admin
 ];
 
 export function AppSidebar() {
-  const pathname = usePathname();
+  const pathnameWithoutLocale = usePathname();
+  const locale = useLocale();
   const currentUser = sampleUserProfile;
+  
+  const getLocalePrefixedPath = (path: string) => `/${locale}${path}`;
 
   const renderMenuItem = (item: any, isSubItem = false) => {
-    const isActive = pathname === item.href || (item.href && item.href !== "/dashboard" && pathname.startsWith(item.href));
-    const isAdminDashboardActive = item.href === "/dashboard" && item.label === "Admin Dashboard" && pathname === "/dashboard" && currentUser.role === 'admin';
+    const localePrefixedHref = item.href ? getLocalePrefixedPath(item.href) : undefined;
+    // For dashboard, ensure it matches /<locale>/dashboard exactly, not /<locale>/dashboard/anything-else
+    // For other links, allow startsWith for active state in nested routes.
+    let isActive;
+    if (item.href === "/dashboard") {
+        isActive = pathnameWithoutLocale === localePrefixedHref;
+    } else {
+        isActive = localePrefixedHref ? pathnameWithoutLocale.startsWith(localePrefixedHref) : false;
+    }
+    
+    const isAdminDashboardActive = item.href === "/dashboard" && item.label === "Admin Dashboard" && pathnameWithoutLocale === getLocalePrefixedPath("/dashboard") && currentUser.role === 'admin';
 
     if (item.adminOnly && currentUser.role !== 'admin') {
       return null;
     }
-    if (item.managerOnly && currentUser.role !== 'manager' && currentUser.role !== 'admin') { // Admins can also see manager items
+    if (item.managerOnly && currentUser.role !== 'manager' && currentUser.role !== 'admin') {
         return null;
     }
 
-
     return (
-      <SidebarMenuItem key={item.href || item.label}>
-         {item.href ? (
-           <Link href={item.href} passHref legacyBehavior>
+      <SidebarMenuItem key={localePrefixedHref || item.label}>
+         {localePrefixedHref ? (
+           <Link href={localePrefixedHref} passHref legacyBehavior>
             <SidebarMenuButton isActive={isActive || isAdminDashboardActive} size={isSubItem ? "sm" : "default"} className="w-full justify-start">
               <item.icon className={`h-5 w-5 ${(isActive || isAdminDashboardActive) ? "text-sidebar-primary-foreground" : "text-sidebar-foreground/80"}`} />
               <span className={`${(isActive || isAdminDashboardActive) ? "text-sidebar-primary-foreground" : ""} group-data-[collapsible=icon]:hidden`}>{item.label}</span>
@@ -108,14 +130,14 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon" variant="sidebar" side="left">
       <SidebarHeader className="p-4 border-b border-sidebar-border">
-        <Link href="/dashboard" className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
+        <Link href={getLocalePrefixedPath("/dashboard")} className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
           <FileText className="h-7 w-7 text-primary" />
           <span className="font-semibold text-lg text-sidebar-foreground group-data-[collapsible=icon]:hidden">ResumeMatch</span>
         </Link>
       </SidebarHeader>
       <SidebarContent className="p-2">
         <SidebarMenu>
-          {navItems.map((item) =>
+          {navItemsBase.map((item) =>
             item.subItems && item.subItems.length > 0 ? (
               <SidebarGroup key={item.label} className="p-0">
                  {renderMenuItem(item, false)}
@@ -158,17 +180,16 @@ export function AppSidebar() {
               <SidebarMenu>
                 {adminItems.filter(item => {
                     if(currentUser.role === 'manager') {
-                        // Manager specific items (or items accessible by manager)
                         const managerAccessible = [
                             "/admin/user-management", 
                             "/admin/content-moderation",
                             "/admin/gallery-management",
                             "/admin/announcements",
-                            // Add other pages managers can access, e.g., some analytics
+                            "/interview-queue", // Allow manager to see their tenant's queue
                         ];
                         return managerAccessible.includes(item.href);
                     }
-                    return true; // Admin sees all
+                    return true; 
                 }).map(item => renderMenuItem(item))}
               </SidebarMenu>
             </SidebarGroup>

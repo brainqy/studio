@@ -1,5 +1,4 @@
 
-
 export type UserRole = 'admin' | 'manager' | 'user';
 export type UserStatus = 'active' | 'inactive' | 'pending' | 'suspended';
 
@@ -146,9 +145,9 @@ export interface CommunityPost {
   type: 'text' | 'poll' | 'event' | 'request';
   tags?: string[];
   pollOptions?: { option: string, votes: number }[];
+  eventTitle?: string; 
   eventDate?: string;
   eventLocation?: string;
-  eventTitle?: string; 
   attendees?: number; 
   capacity?: number;  
   assignedTo?: string; 
@@ -182,8 +181,8 @@ export interface GalleryEvent {
   isPlatformGlobal?: boolean; 
   location?: string; 
   approved?: boolean;
-  createdByUserId?: string; // Added
-  attendeeUserIds?: string[]; // Added
+  createdByUserId?: string;
+  attendeeUserIds?: string[];
 }
 
 export interface JobOpening {
@@ -284,7 +283,7 @@ export interface UserProfile extends AlumniProfile {
   affiliateCode?: string; 
   pastInterviewSessions?: string[]; 
   interviewCredits?: number;
-  createdAt?: string; // Added for tracking new signups
+  createdAt?: string;
 }
 
 export interface ResumeProfile {
@@ -563,7 +562,6 @@ export interface InterviewQuestion {
   rating?: number; 
   ratingsCount?: number; 
   userRatings?: InterviewQuestionUserRating[]; 
-  comments?: string; 
   userComments?: InterviewQuestionUserComment[]; 
   createdBy?: string; 
   approved?: boolean;
@@ -800,12 +798,11 @@ export interface Announcement {
   tenantId?: string; // Added to scope announcements for managers
 }
 
-export interface AtsFormattingIssue { // Explicitly defining this as it's used in analysis
+export interface AtsFormattingIssue { 
   issue: string;
   recommendation: string;
 }
 
-// AI Flow Specific Types (if not already present or for clarity)
 export interface AnalyzeResumeAndJobDescriptionInput {
   resumeText: string;
   jobDescriptionText: string;
@@ -814,7 +811,7 @@ export interface AnalyzeResumeAndJobDescriptionInput {
 export interface SearchabilityDetails {
   hasPhoneNumber: boolean;
   hasEmail: boolean;
-  hasAddress?: boolean; // Added
+  hasAddress?: boolean; 
   jobTitleMatchesJD: boolean;
   hasWorkExperienceSection: boolean;
   hasEducationSection: boolean;
@@ -842,7 +839,7 @@ export interface QuantifiableAchievementDetails {
 
 export interface ActionVerbDetails {
     score?: number;
-    strongVerbsUsed?: string[]; // Added
+    strongVerbsUsed?: string[]; 
     weakVerbsUsed?: string[];
     overusedVerbs?: string[];
     suggestedStrongerVerbs?: { original: string; suggestion: string }[];
@@ -980,3 +977,90 @@ export interface GenerateAiBlogPostOutput {
   excerpt: string;
   suggestedTags: string[];
 }
+
+
+// Phase 2: Live Interview Features
+export interface LiveInterviewParticipant {
+  userId: string;
+  name: string;
+  role: 'interviewer' | 'candidate' | 'observer';
+  profilePictureUrl?: string;
+}
+
+export type LiveInterviewSessionStatus = 'Scheduled' | 'InProgress' | 'Completed' | 'Cancelled';
+
+export interface RecordingReference {
+  id: string;
+  sessionId: string;
+  startTime: string; // ISO Date string
+  durationSeconds: number;
+  localStorageKey: string; // Key to find a mock reference in local storage
+  // In a real app, this might be a URL to a cloud storage location
+}
+
+export interface LiveInterviewSession {
+  id: string;
+  tenantId: string;
+  title: string;
+  description?: string;
+  participants: LiveInterviewParticipant[];
+  scheduledTime: string; // ISO Date string
+  actualStartTime?: string; // ISO Date string
+  actualEndTime?: string; // ISO Date string
+  status: LiveInterviewSessionStatus;
+  meetingLink?: string; // Could be auto-generated or link to external service
+  recordingReferences?: RecordingReference[];
+  aiSuggestedQuestionsLog?: Array<{ question: string, timestamp: string }>;
+  jobRoleId?: string; // Optional, to link to a job description for context
+  interviewTopics?: string[]; // For AI question generation
+  notes?: string; // General notes by interviewer or admin
+}
+
+// AI Flow for Live Interview Suggested Questions
+export interface GenerateLiveInterviewQuestionsInput {
+  jobTitle?: string;
+  interviewTopics?: string[];
+  companyCulture?: string; // Could be fetched from tenant settings or company profile
+  previousQuestions?: string[]; // To avoid repetition
+  candidateSkills?: string[]; // From candidate's profile
+  difficulty?: InterviewQuestionDifficulty;
+  count?: number; // Number of questions to generate
+}
+
+export interface GenerateLiveInterviewQuestionsOutput {
+  suggestedQuestions: Array<{
+    questionText: string;
+    category?: InterviewQuestionCategory;
+    followUpSuggestions?: string[];
+  }>;
+}
+
+export interface CountyData {
+  id: string;
+  name: string;
+  population: number;
+  medianIncome: number;
+}
+
+export interface GenerateRegionSummaryInput {
+  region: string;
+  language: string;
+  dataPoints: string;
+}
+
+export interface GenerateRegionSummaryOutput {
+  summary: string;
+}
+
+export type Locale = 'en' | 'es' | 'hi' | 'mr' | 'zh' | 'vi';
+
+export const locales: Locale[] = ['en', 'es', 'hi', 'mr', 'zh', 'vi'];
+
+export const localeDisplayNames: Record<Locale, string> = {
+  en: 'English',
+  es: 'Español',
+  hi: 'हिन्दी',
+  mr: 'मराठी',
+  zh: '中文',
+  vi: 'Tiếng Việt',
+};
