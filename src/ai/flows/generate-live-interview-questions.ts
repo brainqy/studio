@@ -1,4 +1,3 @@
-
 'use server';
 /**
  * @fileOverview Generates relevant interview questions on-the-fly for an interviewer during a live session.
@@ -17,7 +16,7 @@ const ALL_CATEGORIES_ZOD = z.enum(['Common', 'Behavioral', 'Technical', 'Coding'
 const ALL_DIFFICULTIES_ZOD = z.enum(['Easy', 'Medium', 'Hard']);
 
 
-export const GenerateLiveInterviewQuestionsInputSchema = z.object({
+const GenerateLiveInterviewQuestionsInputSchema = z.object({
   jobTitle: z.string().optional().describe('The job title the candidate is being interviewed for. Provides context.'),
   interviewTopics: z.array(z.string()).optional().describe('Specific topics or skills to focus on for questions.'),
   companyCulture: z.string().optional().describe('Brief description of company culture to tailor behavioral questions if possible.'),
@@ -34,7 +33,7 @@ const SuggestedQuestionSchema = z.object({
   followUpSuggestions: z.array(z.string()).optional().describe("Optional follow-up questions or probing points related to this question."),
 });
 
-export const GenerateLiveInterviewQuestionsOutputSchema = z.object({
+const GenerateLiveInterviewQuestionsOutputSchema = z.object({
   suggestedQuestions: z.array(SuggestedQuestionSchema).describe("A list of suggested questions for the interviewer."),
 });
 export type GenerateLiveInterviewQuestionsOutput = z.infer<typeof GenerateLiveInterviewQuestionsOutputSchema>;
