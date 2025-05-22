@@ -58,9 +58,9 @@ export let sampleAlumni: AlumniProfile[] = [
     createdAt: new Date(Date.now() - 86400000 * 180).toISOString(), 
     isDistinguished: true,
   },
-  {
-    id: 'alumni3', // Charlie Brown
-    tenantId: 'tenant-2', // Moved to tenant-2 for manager testing
+  { 
+    id: 'alumni3', 
+    tenantId: 'tenant-2', 
     name: 'Charlie Brown',
     profilePictureUrl: 'https://picsum.photos/seed/charlie/200/200',
     currentJobTitle: 'Data Scientist',
@@ -221,90 +221,107 @@ export const sampleJobOpenings: JobOpening[] = [
 ];
 
 export let sampleUserProfile: UserProfile = {
-  id: 'managerUser1', 
-  tenantId: 'tenant-2', 
-  role: 'manager', 
-  name: 'Manager Mike', 
-  email: 'manager.mike@tenant2.com', 
+  id: 'alumni1', // Changed to Alice Wonderland for interviewer testing
+  tenantId: 'Brainqy', 
+  role: 'admin', // Alice is admin, can be interviewer
+  name: 'Alice Wonderland', 
+  email: 'alice.wonderland@example.com', 
   status: 'active',
-  lastLogin: new Date().toISOString(),
-  dateOfBirth: '1985-08-15', 
-  gender: 'Male', 
-  mobileNumber: '+15552223333', 
-  currentAddress: '123 Corporate Ave, Business City, TX, USA', 
-  graduationYear: '2007', 
-  degreeProgram: 'Bachelor of Business Administration (BBA)', 
-  department: 'Management', 
-  currentJobTitle: 'Engagement Lead', 
-  company: 'Corporate Partner Inc.', 
-  currentOrganization: 'Corporate Partner Inc.', 
-  industry: 'Consulting', 
-  workLocation: 'Dallas, TX', 
-  linkedInProfile: 'https://linkedin.com/in/managermike', 
-  yearsOfExperience: '15', 
-  skills: ['Team Leadership', 'Project Management', 'Alumni Relations', 'Strategic Planning', 'Communication'], 
-  areasOfSupport: ['Mentoring Students', 'Sharing Job Referrals', 'Organizing Alumni Events'], 
-  timeCommitment: '3-5 hours', 
+  lastLogin: new Date(Date.now() - 86400000 * 0.5).toISOString(),
+  dateOfBirth: '1993-03-15', 
+  gender: 'Female', 
+  mobileNumber: '+15551112222', 
+  currentAddress: '123 Main St, Anytown, CA, USA', 
+  graduationYear: '2015', 
+  degreeProgram: 'Master of Science (M.Sc)', 
+  department: 'Computer Science', 
+  currentJobTitle: 'Senior Software Engineer', 
+  company: 'Google', 
+  currentOrganization: 'Google', 
+  industry: 'IT/Software', 
+  workLocation: 'Mountain View, CA', 
+  linkedInProfile: 'https://linkedin.com/in/alicewonder', 
+  yearsOfExperience: '7', 
+  skills: ['Java', 'Python', 'Machine Learning', 'Cloud Computing', 'Algorithms', 'React', 'Next.js'], 
+  areasOfSupport: ['Mentoring Students', 'Sharing Job Referrals', 'Guest Lecturing'], 
+  timeCommitment: '1-2 hours', 
   preferredEngagementMode: 'Online', 
-  otherComments: 'Leading engagement initiatives and fostering alumni connections for Corporate Partner Inc.', 
-  lookingForSupportType: 'General Networking', 
-  helpNeededDescription: 'Interested in connecting with other managers and sharing best practices for alumni engagement.', 
+  otherComments: 'Happy to help with technical interview prep!', 
+  lookingForSupportType: undefined, 
+  helpNeededDescription: undefined, 
   shareProfileConsent: true, 
-  featureInSpotlightConsent: false,
-  shortBio: 'Dedicated Engagement Lead at Corporate Partner Inc., focused on maximizing alumni potential and fostering a strong professional network within Tenant-2. My expertise includes team leadership, project management, and strategic planning for alumni relations. Committed to creating valuable connections and opportunities for our members.', 
-  university: 'Business School of Excellence', 
-  profilePictureUrl: 'https://avatar.vercel.sh/managermike.png', 
-  interests: ['Leadership Development', 'Corporate Strategy', 'Golf'], 
-  offersHelpWith: [AreasOfSupport[0], AreasOfSupport[2], AreasOfSupport[8]], 
-  appointmentCoinCost: 0,
-  resumeText: `Manager Mike
-Email: manager.mike@tenant2.com | LinkedIn: linkedin.com/in/managermike | Mobile: +15552223333
+  featureInSpotlightConsent: true,
+  shortBio: 'Passionate about AI and cloud computing. Graduated in 2015. Currently a Senior Software Engineer at Google.', 
+  university: 'State University', 
+  profilePictureUrl: 'https://picsum.photos/seed/alice/200/200', 
+  interests: ['Hiking', 'Photography', 'Open Source Contributions', 'AI Ethics'], 
+  offersHelpWith: [AreasOfSupport[0], AreasOfSupport[2], AreasOfSupport[4]], 
+  appointmentCoinCost: 10, 
+  resumeText: `Alice Wonderland
+(123) 456-7890 | alice.wonderland@email.com | linkedin.com/in/alicewonder | github.com/alicew | alicew.dev
 
-Summary:
-Results-oriented Engagement Lead with 15 years of experience in fostering alumni relations and driving community growth for Corporate Partner Inc. (Tenant-2). Expertise in strategic planning, team leadership, and project management. Passionate about creating impactful programs that connect alumni and enhance their professional development.
+Summary
+Highly skilled Senior Software Engineer with 7+ years of experience at Google, specializing in AI-driven cloud solutions and distributed systems. Proven track record of leading impactful projects, mentoring junior engineers, and contributing to open-source communities. Seeking to leverage expertise in a challenging role that pushes the boundaries of technology.
 
-Experience:
-Engagement Lead, Corporate Partner Inc. (Tenant-2) (Present)
-- Spearhead alumni engagement strategies and initiatives for Tenant-2.
-- Manage a team to organize networking events, mentorship programs, and communication campaigns.
-- Develop and implement programs to increase alumni participation and satisfaction.
-- Collaborate with stakeholders to align alumni activities with organizational goals.
+Skills
+Languages: Java, Python, Go, C++, JavaScript, TypeScript
+Frameworks/Libraries: Spring Boot, Django, React, Next.js, TensorFlow, PyTorch, Kubernetes, Docker
+Databases: PostgreSQL, MongoDB, Cassandra
+Cloud: Google Cloud Platform (GCP), AWS
+Methodologies: Agile, Scrum, TDD, CI/CD
+Other: Distributed Systems, Machine Learning, Natural Language Processing, Microservices, System Design
 
-Senior Project Manager, Global Solutions Ltd. (Previous)
-- Led cross-functional teams to deliver complex projects on time and within budget.
-- Managed stakeholder expectations and communication across all project phases.
+Experience
+Senior Software Engineer | Google | Mountain View, CA | June 2018 – Present
+- Led a team of 5 engineers in developing and launching a new machine learning platform on GCP, used by 10+ internal teams and reducing data processing time by 40%.
+- Designed and implemented scalable microservices for real-time data ingestion and analysis, handling over 1 million requests per second.
+- Contributed core components to Google's internal AI framework, improving model training efficiency by 25%.
+- Mentored and onboarded 8 junior engineers, receiving consistently positive feedback.
+- Presented research on distributed AI systems at 3 internal Google tech talks.
 
-Education:
-Bachelor of Business Administration (BBA), Business School of Excellence (2003 - 2007)
+Software Engineer | Tech Startup Inc. | San Francisco, CA | May 2015 – May 2018
+- Developed key features for a SaaS analytics platform using Java, Spring Boot, and React.
+- Optimized database queries, reducing average API response time by 200ms.
+- Implemented a CI/CD pipeline using Jenkins and Docker, automating build and deployment processes.
 
-Skills:
-Team Leadership, Project Management, Alumni Relations, Strategic Planning, Stakeholder Management, Event Management, Communication, Public Speaking, Data Analysis (for engagement tracking).
+Education
+Master of Science in Computer Science | State University | Berkeley, CA | May 2015
+- Thesis: "Scalable Architectures for Real-time Machine Learning"
+Bachelor of Science in Computer Science | State University | Berkeley, CA | May 2013
+- Graduated Summa Cum Laude
+
+Projects
+Open-Source AI Library (Contributor) | github.com/alicew/ai-lib
+- Contributed modules for natural language understanding and sentiment analysis.
+
+Publications
+- Wonderland, A. et al. (2020). "Efficient Data Pipelines for Large-Scale AI". Journal of Cloud Computing.
 `, 
-  careerInterests: 'Executive Leadership, Organizational Development, Alumni Network Growth', 
-  xpPoints: 3200, 
-  dailyStreak: 15, 
-  longestStreak: 40, 
-  totalActiveDays: 200, 
-  weeklyActivity: [true, false, true, true, false, true, true], 
-  referralCode: 'MANAGERMIKE1',
-  earnedBadges: ['networker', 'contributor', 'profile-pro'], 
-  affiliateCode: 'AFFMIKE789',
-  pastInterviewSessions: [], 
-  interviewCredits: 5, 
-  createdAt: new Date(Date.now() - 86400000 * 90).toISOString(), 
-  isDistinguished: false,
+  careerInterests: 'AI Research, Large-Scale Systems, Technical Leadership', 
+  xpPoints: 3500, 
+  dailyStreak: 25, 
+  longestStreak: 50, 
+  totalActiveDays: 300, 
+  weeklyActivity: [true, true, true, false, true, true, true], 
+  referralCode: 'ALICEWONDER1',
+  earnedBadges: ['networker', 'contributor', 'profile-pro', 'analyzer-ace', 'admin-master'], 
+  affiliateCode: 'AFFALICE123',
+  pastInterviewSessions: ['session-hist-1'], 
+  interviewCredits: 8, 
+  createdAt: new Date(Date.now() - 86400000 * 365).toISOString(), 
+  isDistinguished: true,
 };
 
 
 export const samplePlatformUsers: UserProfile[] = [
-  { // Alice Wonderland (Admin)
+  { // Alice Wonderland (Admin) - Already defined above but repeated here for clarity if used directly
     id: 'alumni1',
     tenantId: 'Brainqy', 
     role: 'admin', 
     name: 'Alice Wonderland', 
     email: 'alice.wonderland@example.com', 
     status: 'active',
-    lastLogin: new Date(Date.now() - 86400000 * 0.5).toISOString(), // Active more recently
+    lastLogin: new Date(Date.now() - 86400000 * 0.5).toISOString(),
     dateOfBirth: '1993-03-15', 
     gender: 'Female', 
     mobileNumber: '+15551112222', 
@@ -416,7 +433,7 @@ Publications
     referralCode: 'BOB123',
     currentOrganization: 'Microsoft',
   },
-  { // Charlie Brown, now correctly in tenant-2
+  { 
     id: 'alumni3',
     tenantId: 'tenant-2', 
     name: 'Charlie Brown',
@@ -472,7 +489,80 @@ Publications
     referralCode: 'DIANA456',
     currentOrganization: 'SecureNet Solutions',
   },
-  sampleUserProfile, // Manager Mike from tenant-2
+  { // Manager Mike for tenant-2
+    id: 'managerUser1', 
+    tenantId: 'tenant-2', 
+    role: 'manager', 
+    name: 'Manager Mike', 
+    email: 'manager.mike@tenant2.com', 
+    status: 'active',
+    lastLogin: new Date().toISOString(),
+    dateOfBirth: '1985-08-15', 
+    gender: 'Male', 
+    mobileNumber: '+15552223333', 
+    currentAddress: '123 Corporate Ave, Business City, TX, USA', 
+    graduationYear: '2007', 
+    degreeProgram: 'Bachelor of Business Administration (BBA)', 
+    department: 'Management', 
+    currentJobTitle: 'Engagement Lead', 
+    company: 'Corporate Partner Inc.', 
+    currentOrganization: 'Corporate Partner Inc.', 
+    industry: 'Consulting', 
+    workLocation: 'Dallas, TX', 
+    linkedInProfile: 'https://linkedin.com/in/managermike', 
+    yearsOfExperience: '15', 
+    skills: ['Team Leadership', 'Project Management', 'Alumni Relations', 'Strategic Planning', 'Communication'], 
+    areasOfSupport: ['Mentoring Students', 'Sharing Job Referrals', 'Organizing Alumni Events'], 
+    timeCommitment: '3-5 hours', 
+    preferredEngagementMode: 'Online', 
+    otherComments: 'Leading engagement initiatives and fostering alumni connections for Corporate Partner Inc.', 
+    lookingForSupportType: 'General Networking', 
+    helpNeededDescription: 'Interested in connecting with other managers and sharing best practices for alumni engagement.', 
+    shareProfileConsent: true, 
+    featureInSpotlightConsent: false,
+    shortBio: 'Dedicated Engagement Lead at Corporate Partner Inc., focused on maximizing alumni potential and fostering a strong professional network within Tenant-2. My expertise includes team leadership, project management, and strategic planning for alumni relations. Committed to creating valuable connections and opportunities for our members.', 
+    university: 'Business School of Excellence', 
+    profilePictureUrl: 'https://avatar.vercel.sh/managermike.png', 
+    interests: ['Leadership Development', 'Corporate Strategy', 'Golf'], 
+    offersHelpWith: [AreasOfSupport[0], AreasOfSupport[2], AreasOfSupport[8]], 
+    appointmentCoinCost: 0,
+    resumeText: `Manager Mike
+Email: manager.mike@tenant2.com | LinkedIn: linkedin.com/in/managermike | Mobile: +15552223333
+
+Summary:
+Results-oriented Engagement Lead with 15 years of experience in fostering alumni relations and driving community growth for Corporate Partner Inc. (Tenant-2). Expertise in strategic planning, team leadership, and project management. Passionate about creating impactful programs that connect alumni and enhance their professional development.
+
+Experience:
+Engagement Lead, Corporate Partner Inc. (Tenant-2) (Present)
+- Spearhead alumni engagement strategies and initiatives for Tenant-2.
+- Manage a team to organize networking events, mentorship programs, and communication campaigns.
+- Develop and implement programs to increase alumni participation and satisfaction.
+- Collaborate with stakeholders to align alumni activities with organizational goals.
+
+Senior Project Manager, Global Solutions Ltd. (Previous)
+- Led cross-functional teams to deliver complex projects on time and within budget.
+- Managed stakeholder expectations and communication across all project phases.
+
+Education:
+Bachelor of Business Administration (BBA), Business School of Excellence (2003 - 2007)
+
+Skills:
+Team Leadership, Project Management, Alumni Relations, Strategic Planning, Stakeholder Management, Event Management, Communication, Public Speaking, Data Analysis (for engagement tracking).
+`, 
+    careerInterests: 'Executive Leadership, Organizational Development, Alumni Network Growth', 
+    xpPoints: 3200, 
+    dailyStreak: 15, 
+    longestStreak: 40, 
+    totalActiveDays: 200, 
+    weeklyActivity: [true, false, true, true, false, true, true], 
+    referralCode: 'MANAGERMIKE1',
+    earnedBadges: ['networker', 'contributor', 'profile-pro'], 
+    affiliateCode: 'AFFMIKE789',
+    pastInterviewSessions: [], 
+    interviewCredits: 5, 
+    createdAt: new Date(Date.now() - 86400000 * 90).toISOString(), 
+    isDistinguished: false,
+  },
 ];
 
 
@@ -541,10 +631,10 @@ export const sampleResumeScanHistory: ResumeScanHistoryItem[] = [
     userId: 'alumni1',
     resumeId: 'resume1',
     resumeName: 'Software_Engineer_Resume_v2.pdf',
-    jobTitle: 'Senior Software Engineer',
+    jobTitle: `Senior Software Engineer - ${new Date().toLocaleTimeString()}`, // To ensure different titles for testing
     companyName: 'Innovate LLC',
     resumeTextSnapshot: placeholderResumeText.replace("professional", "software engineer for Innovate LLC"),
-    jobDescriptionText: placeholderJobDescription.replace("Sample Job", "Senior Software Engineer").replace("Sample Corp", "Innovate LLC"),
+    jobDescriptionText: `Title: Senior Software Engineer\nCompany: Innovate LLC\n${placeholderJobDescription}`,
     scanDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(), 
     matchScore: 85,
     bookmarked: true, 
@@ -555,10 +645,10 @@ export const sampleResumeScanHistory: ResumeScanHistoryItem[] = [
     userId: 'alumni2',
     resumeId: 'resume2',
     resumeName: 'Product_Manager_Profile.docx',
-    jobTitle: 'Product Lead',
+    jobTitle: `Product Lead - ${new Date().toLocaleTimeString()}`,
     companyName: 'FutureTech Corp',
     resumeTextSnapshot: placeholderResumeText.replace("professional", "product manager for FutureTech"),
-    jobDescriptionText: placeholderJobDescription.replace("Sample Job", "Product Lead").replace("Sample Corp", "FutureTech Corp"),
+    jobDescriptionText: `Title: Product Lead\nCompany: FutureTech Corp\n${placeholderJobDescription}`,
     scanDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(), 
     matchScore: 72,
     bookmarked: false,
@@ -569,10 +659,10 @@ export const sampleResumeScanHistory: ResumeScanHistoryItem[] = [
     userId: 'alumni3',
     resumeId: 'resume3',
     resumeName: 'General_Data_Resume.pdf',
-    jobTitle: 'Data Analyst',
+    jobTitle: `Data Analyst - ${new Date().toLocaleTimeString()}`,
     companyName: 'Data Corp',
     resumeTextSnapshot: placeholderResumeText.replace("professional", "data analyst for Data Corp"),
-    jobDescriptionText: placeholderJobDescription.replace("Sample Job", "Data Analyst").replace("Sample Corp", "Data Corp"),
+    jobDescriptionText: `Title: Data Analyst\nCompany: Data Corp\n${placeholderJobDescription}`,
     scanDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(), 
     matchScore: 91,
     bookmarked: false,
@@ -583,10 +673,10 @@ export const sampleResumeScanHistory: ResumeScanHistoryItem[] = [
     userId: 'managerUser1',
     resumeId: 'resumeManager1',
     resumeName: 'CorpStrategyResume.pdf',
-    jobTitle: 'Strategy Consultant',
+    jobTitle: `Strategy Consultant - ${new Date().toLocaleTimeString()}`,
     companyName: 'McKinsey',
     resumeTextSnapshot: samplePlatformUsers.find(u => u.id === 'managerUser1')?.resumeText || "Strategic resume content for McKinsey...",
-    jobDescriptionText: placeholderJobDescription.replace("Sample Job", "Strategy Consultant").replace("Sample Corp", "McKinsey"),
+    jobDescriptionText: `Title: Strategy Consultant\nCompany: McKinsey\n${placeholderJobDescription}`,
     scanDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
     matchScore: 88,
     bookmarked: false,
@@ -1134,7 +1224,7 @@ export let sampleInterviewQuestions: InterviewQuestion[] = [
   {
     id: 'iq1',
     category: 'Behavioral',
-    question: "Tell me about a time you failed.",
+    questionText: "Tell me about a time you failed.",
     isMCQ: true,
     mcqOptions: [
       "I've never truly failed; I see everything as a learning opportunity.",
@@ -1160,7 +1250,7 @@ export let sampleInterviewQuestions: InterviewQuestion[] = [
   {
     id: 'iq2',
     category: 'Behavioral',
-    question: "Describe a situation where you had to work with a difficult team member.",
+    questionText: "Describe a situation where you had to work with a difficult team member.",
     isMCQ: true,
     mcqOptions: [
       "I avoided them as much as possible and did my work independently.",
@@ -1183,7 +1273,7 @@ export let sampleInterviewQuestions: InterviewQuestion[] = [
   {
     id: 'iq3',
     category: 'Technical',
-    question: "Explain the difference between an abstract class and an interface.",
+    questionText: "Explain the difference between an abstract class and an interface.",
     isMCQ: true,
     mcqOptions: [
       "Abstract classes can have constructors, interfaces cannot.",
@@ -1206,7 +1296,7 @@ export let sampleInterviewQuestions: InterviewQuestion[] = [
   {
     id: 'iq4',
     category: 'Role-Specific',
-    question: "How would you approach designing a new feature for our product? (For Product Managers)",
+    questionText: "How would you approach designing a new feature for our product? (For Product Managers)",
     isMCQ: true,
     mcqOptions: [
       "Start coding immediately based on my gut feeling for what users want.",
@@ -1229,7 +1319,7 @@ export let sampleInterviewQuestions: InterviewQuestion[] = [
   {
     id: 'iq5',
     category: 'Common',
-    question: "Why are you interested in this role?",
+    questionText: "Why are you interested in this role?",
     isMCQ: true,
     mcqOptions: [
       "I need a job, and this one was available.",
@@ -1252,7 +1342,7 @@ export let sampleInterviewQuestions: InterviewQuestion[] = [
   {
     id: 'iq6',
     category: 'Common',
-    question: "Where do you see yourself in 5 years?",
+    questionText: "Where do you see yourself in 5 years?",
     isMCQ: true,
     mcqOptions: [
       "Running this company.",
@@ -1275,7 +1365,7 @@ export let sampleInterviewQuestions: InterviewQuestion[] = [
   {
     id: 'iq7',
     category: 'Technical',
-    question: "What are the principles of RESTful API design?",
+    questionText: "What are the principles of RESTful API design?",
     isMCQ: true,
     mcqOptions: [
       "Stateful, Client-Server, Uniform Interface, Cacheable.",
@@ -1298,7 +1388,7 @@ export let sampleInterviewQuestions: InterviewQuestion[] = [
   {
     id: 'iq8',
     category: 'Behavioral',
-    question: "Give an example of a goal you reached and tell me how you achieved it.",
+    questionText: "Give an example of a goal you reached and tell me how you achieved it.",
     isMCQ: true,
     mcqOptions: [
       "I wanted to get a promotion, so I worked hard.",
@@ -1321,7 +1411,7 @@ export let sampleInterviewQuestions: InterviewQuestion[] = [
   {
     id: 'mcq1',
     category: 'Technical',
-    question: "Which of the following is NOT a valid HTTP method?",
+    questionText: "Which of the following is NOT a valid HTTP method?",
     isMCQ: true,
     mcqOptions: ["GET", "POST", "PUSH", "DELETE"],
     correctAnswer: "PUSH",
@@ -1339,7 +1429,7 @@ export let sampleInterviewQuestions: InterviewQuestion[] = [
   {
     id: 'mcq2',
     category: 'Analytical',
-    question: "A project's critical path is delayed by 2 days. What is the most likely impact on the project completion date?",
+    questionText: "A project's critical path is delayed by 2 days. What is the most likely impact on the project completion date?",
     isMCQ: true,
     mcqOptions: ["No impact", "Completion delayed by 1 day", "Completion delayed by 2 days", "Completion delayed by more than 2 days"],
     correctAnswer: "Completion delayed by 2 days",
@@ -1357,7 +1447,7 @@ export let sampleInterviewQuestions: InterviewQuestion[] = [
   {
     id: 'hr1',
     category: 'HR',
-    question: "How do you handle stress and pressure?",
+    questionText: "How do you handle stress and pressure?",
     isMCQ: true,
     mcqOptions: [
         "I avoid stressful situations as much as possible.",
@@ -1380,7 +1470,7 @@ export let sampleInterviewQuestions: InterviewQuestion[] = [
   {
     id: 'coding1',
     category: 'Coding',
-    question: "Write a function to reverse a string in JavaScript.",
+    questionText: "Write a function to reverse a string in JavaScript.",
     isMCQ: true,
     mcqOptions: [
         "str.split('').reverse().join('')",
@@ -1403,7 +1493,7 @@ export let sampleInterviewQuestions: InterviewQuestion[] = [
   {
     id: 'coding2',
     category: 'Coding',
-    question: "Explain Big O notation and provide an example of O(n) and O(log n).",
+    questionText: "Explain Big O notation and provide an example of O(n) and O(log n).",
     isMCQ: true,
     mcqOptions: [
         "It measures exact execution time. O(n) is fast, O(log n) is slow.",
@@ -1439,10 +1529,10 @@ export const sampleMockInterviewSessions: MockInterviewSession[] = [
     userId: sampleUserProfile.id, 
     topic: 'Frontend Developer Interview',
     jobDescription: 'Looking for a skilled frontend dev for a challenging role requiring React, TypeScript, and state management expertise.',
-    questions: sampleInterviewQuestions.slice(0, 2).map(q => ({ id: q.id, questionText: q.question, category: q.category, difficulty: q.difficulty })),
+    questions: sampleInterviewQuestions.slice(0, 2).map(q => ({ id: q.id, questionText: q.questionText, category: q.category, difficulty: q.difficulty })),
     answers: [
-      { questionId: 'iq1', questionText: sampleInterviewQuestions[0].question, userAnswer: "I once tried to implement a feature too quickly without fully understanding the requirements, which led to significant rework. I learned the importance of thorough planning and asking clarifying questions upfront. Since then, I always create a detailed plan and confirm requirements before starting development, which has greatly reduced errors and delays.", aiFeedback: "Good attempt at STAR, but be more specific about the situation and the exact results of your corrective actions. Quantify if possible.", aiScore: 70, strengths: ["Honesty", "Acknowledged learning"], areasForImprovement: ["Specificity (STAR)", "Quantifiable results"] },
-      { questionId: 'iq2', questionText: sampleInterviewQuestions[1].question, userAnswer: "In a previous project, a senior team member was consistently dismissive of junior developers' ideas. I scheduled a one-on-one with them, explained how their approach was impacting team morale and innovation, and suggested they actively solicit input during design reviews. They were receptive, and the team dynamic improved.", aiFeedback: "Excellent use of the STAR method. Clear actions and positive outcome. Well done.", aiScore: 90, strengths: ["Proactive communication", "Problem-solving", "Empathy"], areasForImprovement: ["Could mention the specific positive impact on a project metric if applicable."] },
+      { questionId: 'iq1', questionText: sampleInterviewQuestions[0].questionText, userAnswer: "I once tried to implement a feature too quickly without fully understanding the requirements, which led to significant rework. I learned the importance of thorough planning and asking clarifying questions upfront. Since then, I always create a detailed plan and confirm requirements before starting development, which has greatly reduced errors and delays.", aiFeedback: "Good attempt at STAR, but be more specific about the situation and the exact results of your corrective actions. Quantify if possible.", aiScore: 70, strengths: ["Honesty", "Acknowledged learning"], areasForImprovement: ["Specificity (STAR)", "Quantifiable results"] },
+      { questionId: 'iq2', questionText: sampleInterviewQuestions[1].questionText, userAnswer: "In a previous project, a senior team member was consistently dismissive of junior developers' ideas. I scheduled a one-on-one with them, explained how their approach was impacting team morale and innovation, and suggested they actively solicit input during design reviews. They were receptive, and the team dynamic improved.", aiFeedback: "Excellent use of the STAR method. Clear actions and positive outcome. Well done.", aiScore: 90, strengths: ["Proactive communication", "Problem-solving", "Empathy"], areasForImprovement: ["Could mention the specific positive impact on a project metric if applicable."] },
     ],
     overallFeedback: {
       overallSummary: 'The user demonstrated good problem-solving approaches and an ability to learn from past experiences. Answers could be more consistently structured using the STAR method for maximum impact.',
@@ -1462,9 +1552,9 @@ export const sampleMockInterviewSessions: MockInterviewSession[] = [
     id: 'session-hist-2',
     userId: sampleUserProfile.id, 
     topic: 'Data Analyst Role',
-    questions: sampleInterviewQuestions.slice(2, 3).map(q => ({ id: q.id, questionText: q.question, category: q.category, difficulty: q.difficulty })), 
+    questions: sampleInterviewQuestions.slice(2, 3).map(q => ({ id: q.id, questionText: q.questionText, category: q.category, difficulty: q.difficulty })), 
     answers: [
-      { questionId: 'iq3', questionText: sampleInterviewQuestions[2].question, userAnswer: 'An abstract class can have constructors and implemented methods, while an interface traditionally only defines a contract with method signatures and constants. A class can inherit from only one abstract class but implement multiple interfaces.', aiFeedback: 'Correct and comprehensive explanation of the key differences.', aiScore: 95, strengths: ["Technical accuracy", "Clarity"], areasForImprovement: ["None for this answer"] },
+      { questionId: 'iq3', questionText: sampleInterviewQuestions[2].questionText, userAnswer: 'An abstract class can have constructors and implemented methods, while an interface traditionally only defines a contract with method signatures and constants. A class can inherit from only one abstract class but implement multiple interfaces.', aiFeedback: 'Correct and comprehensive explanation of the key differences.', aiScore: 95, strengths: ["Technical accuracy", "Clarity"], areasForImprovement: ["None for this answer"] },
     ],
     overallFeedback: {
       overallSummary: 'Strong technical knowledge demonstrated regarding OOP principles.',
@@ -1488,7 +1578,7 @@ export let sampleCreatedQuizzes: MockInterviewSession[] = [
     userId: 'system', 
     topic: 'Java Basics Quiz',
     description: "Test your fundamental knowledge of Java programming concepts. Covers data types, OOP, and common library functions.",
-    questions: sampleInterviewQuestions.filter(q => q.tags?.includes('java') && q.isMCQ).slice(0, 5).map(q => ({ id: q.id, questionText: q.question, category: q.category, difficulty: q.difficulty })),
+    questions: sampleInterviewQuestions.filter(q => q.tags?.includes('java') && q.isMCQ).slice(0, 5).map(q => ({ id: q.id, questionText: q.questionText, category: q.category, difficulty: q.difficulty })),
     answers: [], 
     status: 'pending', 
     createdAt: new Date(Date.now() - 86400000 * 10).toISOString(), 
@@ -1500,7 +1590,7 @@ export let sampleCreatedQuizzes: MockInterviewSession[] = [
     userId: 'system',
     topic: 'Common Behavioral Questions',
     description: "Practice how you'd respond to frequently asked behavioral interview questions. Focus on structuring your answers using STAR.",
-    questions: sampleInterviewQuestions.filter(q => q.category === 'Behavioral' && q.isMCQ).slice(0, 7).map(q => ({ id: q.id, questionText: q.question, category: q.category, difficulty: q.difficulty })),
+    questions: sampleInterviewQuestions.filter(q => q.category === 'Behavioral' && q.isMCQ).slice(0, 7).map(q => ({ id: q.id, questionText: q.questionText, category: q.category, difficulty: q.difficulty })),
     answers: [],
     status: 'pending',
     createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
@@ -1512,7 +1602,7 @@ export let sampleCreatedQuizzes: MockInterviewSession[] = [
     userId: 'managerUser1', 
     topic: 'Product Manager Role Scenarios',
     description: "A challenging quiz with scenario-based questions for aspiring Product Managers. Tests decision-making and prioritization skills.",
-    questions: sampleInterviewQuestions.filter(q => q.category === 'Role-Specific' && q.tags?.includes('product management') && q.isMCQ).slice(0, 3).map(q => ({ id: q.id, questionText: q.question, category: q.category, difficulty: q.difficulty })),
+    questions: sampleInterviewQuestions.filter(q => q.category === 'Role-Specific' && q.tags?.includes('product management') && q.isMCQ).slice(0, 3).map(q => ({ id: q.id, questionText: q.questionText, category: q.category, difficulty: q.difficulty })),
     answers: [],
     status: 'pending',
     createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
@@ -1596,21 +1686,21 @@ export let sampleAnnouncements: Announcement[] = [
   },
 ];
 
-
-export let samplePracticeSessions: PracticeSession[] = [
+// These were commented out previously, restoring them
+export const samplePracticeSessions: PracticeSession[] = [
   {
     id: "ps1",
-    userId: "managerUser1", // Manager Mike is the user who scheduled this practice
+    userId: "managerUser1", 
     date: new Date(Date.now() + 86400000 * 3).toISOString(), 
-    category: "Practice with Experts", // This determines who the other participant might be conceptually
-    type: "Angular Frontend", // Topic of the practice
+    category: "Practice with Experts", 
+    type: "Angular Frontend", 
     language: "English",
     status: "SCHEDULED" as PracticeSessionStatus,
     notes: "Focus on advanced component architecture and state management.",
   },
   {
     id: "ps2",
-    userId: "alumni1", // Alice Wonderland scheduled this
+    userId: "alumni1", 
     date: new Date(Date.now() + 86400000 * 7).toISOString(), 
     category: "Practice with AI",
     type: "Java Backend Developer",
@@ -1627,12 +1717,11 @@ export let samplePracticeSessions: PracticeSession[] = [
 export const sampleLiveInterviewSessions: LiveInterviewSession[] = [
   {
     id: 'ps1', // Corresponds to PracticeSession ps1
-    tenantId: 'tenant-2', // Manager Mike's tenant
+    tenantId: 'tenant-2',
     title: 'Angular Frontend Practice (Expert Mock)',
     participants: [
-      // Manager Mike is now the interviewer for this session
+      // Manager Mike is now the interviewer
       { userId: 'managerUser1', name: 'Manager Mike', role: 'interviewer', profilePictureUrl: samplePlatformUsers.find(u => u.id === 'managerUser1')?.profilePictureUrl },
-      // A conceptual expert (not a full UserProfile for simplicity here)
       { userId: 'expert-angular-1', name: 'Expert Angular Interviewer', role: 'candidate', profilePictureUrl: 'https://picsum.photos/seed/expert1/50/50' }
     ],
     scheduledTime: new Date(Date.now() + 86400000 * 3).toISOString(),
@@ -1640,10 +1729,9 @@ export const sampleLiveInterviewSessions: LiveInterviewSession[] = [
     meetingLink: 'https://meet.example.com/angular-live-ps1',
     interviewTopics: ['Angular Core Concepts', 'TypeScript', 'RxJS Problem Solving'],
     preSelectedQuestions: [ 
-        sampleInterviewQuestions.find(q=>q.id === 'iq3') as MockInterviewQuestion, // Explain abstract vs interface
-        sampleInterviewQuestions.find(q=>q.id === 'coding1') as MockInterviewQuestion, // Reverse string
-        // Add a generic Angular question if specific ones aren't in sampleInterviewQuestions
-        sampleInterviewQuestions.find(q => q.questionText.toLowerCase().includes("angular")) || {id: 'angular-generic-1', questionText: "Describe the role of NgModules in Angular.", category: "Technical", difficulty: "Medium"},
+        sampleInterviewQuestions.find(q=>q.id === 'iq3') as MockInterviewQuestion,
+        sampleInterviewQuestions.find(q=>q.id === 'coding1') as MockInterviewQuestion,
+        sampleInterviewQuestions.find(q => q.questionText && q.questionText.toLowerCase().includes("angular")) || {id: 'angular-generic-1', questionText: "Describe the role of NgModules in Angular.", category: "Technical", difficulty: "Medium"},
     ].filter(Boolean) as MockInterviewQuestion[],
     recordingReferences: [],
   },
@@ -1682,7 +1770,7 @@ export const sampleLiveInterviewSessions: LiveInterviewSession[] = [
       { id: 'rec1', sessionId: 'live-session-2', startTime: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000 + 5 * 60 * 1000).toISOString(), durationSeconds: 3600, localStorageKey: 'recording_live-session-2_rec1', type: 'video', fileName: 'rec1.webm', blobUrl: ''}
     ],
     interviewTopics: ['Behavioral Questions', 'Prioritization', 'Stakeholder Management'],
-    preSelectedQuestions: sampleInterviewQuestions.filter(q => q.category === "Behavioral").slice(0,3).map(q=> ({id: q.id, questionText: q.question, category: q.category, difficulty: q.difficulty})),
+    preSelectedQuestions: sampleInterviewQuestions.filter(q => q.category === "Behavioral").slice(0,3).map(q=> ({id: q.id, questionText: q.questionText, category: q.category, difficulty: q.difficulty})),
   },
   {
     id: 'live-session-3',
@@ -1695,7 +1783,7 @@ export const sampleLiveInterviewSessions: LiveInterviewSession[] = [
     scheduledTime: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(), 
     status: 'Scheduled' as LiveInterviewSessionStatus,
     interviewTopics: ['Machine Learning Algorithms', 'Python', 'Statistics'],
-    preSelectedQuestions: sampleInterviewQuestions.filter(q => q.category === "Technical" && q.tags?.includes("python")).slice(0,2).map(q=> ({id: q.id, questionText: q.question, category: q.category, difficulty: q.difficulty})),
+    preSelectedQuestions: sampleInterviewQuestions.filter(q => q.category === "Technical" && q.tags?.includes("python")).slice(0,2).map(q=> ({id: q.id, questionText: q.questionText, category: q.category, difficulty: q.difficulty})),
   }
 ];
     
