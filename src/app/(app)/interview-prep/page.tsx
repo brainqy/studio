@@ -1,3 +1,4 @@
+
 "use client";
 
 import type React from 'react';
@@ -8,12 +9,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle as DialogUITitle, DialogDescription as DialogUIDescription, DialogFooter as DialogUIFooter, DialogClose } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Brain, Calendar, Users, ShieldAlert, Type, Languages, MessageSquare, CheckCircle, XCircle, Mic, ListChecks, Search, ChevronLeft, ChevronRight, Tag, Settings2, Puzzle, Lightbulb, Code, Eye, Edit3, Play, PlusCircle, Star as StarIcon, Send, Mail, ChevronDown, ListFilter, Bookmark as BookmarkIcon } from "lucide-react"; 
+import { Brain, Calendar, Users, ShieldAlert, Type, Languages, MessageSquare, CheckCircle, XCircle, Mic, ListChecks, Search, ChevronLeft, ChevronRight, Tag, Settings2, Puzzle, Lightbulb, Code, Eye, Edit3, Play, PlusCircle, Star as StarIcon, Send, Mail, ChevronDown, ListFilter, Bookmark as BookmarkIcon, Video } from "lucide-react"; 
 import { useToast } from "@/hooks/use-toast";
 import { sampleUserProfile, samplePracticeSessions, sampleInterviewQuestions, sampleCreatedQuizzes } from "@/lib/sample-data";
 import type { PracticeSession, InterviewQuestion, InterviewQuestionCategory, MockInterviewSession, DialogStep, PracticeSessionConfig, InterviewQuestionUserComment, InterviewQuestionDifficulty, PracticeFocusArea, BankQuestionSortOrder, BankQuestionFilterView, GenerateMockInterviewQuestionsInput } from '@/types';
 import { ALL_CATEGORIES, PREDEFINED_INTERVIEW_TOPICS, PRACTICE_FOCUS_AREAS } from '@/types';
-import { format, parseISO, isFuture as dateIsFuture } from "date-fns"; 
+import { format, parseISO, isFuture as dateIsFuture, isPast, addMinutes } from "date-fns"; 
 import { cn } from "@/lib/utils";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -113,11 +114,11 @@ export default function InterviewPracticeHubPage() {
     resolver: zodResolver(questionFormSchema),
     defaultValues: { isMCQ: false, mcqOptions: ["", "", "", ""], category: 'Common', difficulty: 'Medium' }
   });
-  const questionFormErrors = formState.errors; 
+  const questionFormErrors = questionFormControl.formState.errors; 
   const isMCQSelected = watchQuestionForm("isMCQ");
 
 
-  const upcomingSessions = practiceSessions.filter(s => s.status === 'SCHEDULED' && dateIsFuture(parseISO(s.date)));
+  const upcomingSessions = practiceSessions.filter(s => s.status === 'SCHEDULED' && (dateIsFuture(parseISO(s.date)) || isPast(addMinutes(parseISO(s.date), 60)) ) ); // Allow joining if within 1 hour past start
   const allUserSessions = practiceSessions; 
   const cancelledSessions = practiceSessions.filter(s => s.status === 'CANCELLED');
 
@@ -153,19 +154,21 @@ export default function InterviewPracticeHubPage() {
         }
         setFriendEmailError(null);
         toast({ title: "Invitation Sent (Mock)", description: `Invitation sent to ${practiceSessionConfig.friendEmail}.` });
-        setIsSetupDialogOpen(false);
+        // For friends, we might create a session and then they get a link to join.
+        // Or directly go to a waiting room. For now, just closes.
+        setIsSetupDialogOpen(false); 
         return;
       }
       setDialogStep('selectTopics'); // For experts
-    } else if (dialogStep === 'selectTopics') { // For Expert type or AI initial topics
+    } else if (dialogStep === 'selectTopics') { 
       if (practiceSessionConfig.topics.length === 0) {
         toast({ title: "Error", description: "Please select at least one topic.", variant: "destructive" });
         return;
       }
-      if (practiceSessionConfig.type === 'ai') { // AI flow specific step
-        setPracticeSessionConfig(prev => ({...prev, aiTopicOrRole: prev.topics.join(', ')})); // Use selected topics for AI main topic
+      if (practiceSessionConfig.type === 'ai') { 
+        setPracticeSessionConfig(prev => ({...prev, aiTopicOrRole: prev.topics.join(', ')})); 
         setDialogStep('aiSetupBasic');
-      } else { // Expert flow
+      } else { 
         setDialogStep('selectTimeSlot');
       }
     } else if (dialogStep === 'aiSetupBasic') {
@@ -187,7 +190,6 @@ export default function InterviewPracticeHubPage() {
     else if (dialogStep === 'aiSetupAdvanced') setDialogStep('aiSetupBasic');
     else if (dialogStep === 'aiSetupBasic') {
       if (practiceSessionConfig.type === 'ai' && practiceSessionConfig.topics.length > 0 && practiceSessionConfig.aiTopicOrRole === practiceSessionConfig.topics.join(', ')) {
-        // If AI topic was derived from 'selectTopics' step, go back there
         setDialogStep('selectTopics');
       } else {
         setDialogStep('selectType');
@@ -212,11 +214,13 @@ export default function InterviewPracticeHubPage() {
             date: practiceSessionConfig.dateTime.toISOString(),
             category: "Practice with Experts",
             type: practiceSessionConfig.topics.join(', ') || "General",
-            language: "English",
+            language: "English", // Assuming English for now
             status: "SCHEDULED",
             notes: `Scheduled expert session for topics: ${practiceSessionConfig.topics.join(', ')}.`,
         };
         setPracticeSessions(prev => [newSession, ...prev]);
+        // Update global sample data for persistence in demo
+        samplePracticeSessions.unshift(newSession);
         toast({ title: "Expert Session Booked (Mock)", description: `Session for ${practiceSessionConfig.topics.join(', ')} on ${format(practiceSessionConfig.dateTime, 'PPp')} scheduled.` });
     } else if (practiceSessionConfig.type === 'ai') {
         if (!practiceSessionConfig.aiTopicOrRole?.trim()) {
@@ -239,7 +243,7 @@ export default function InterviewPracticeHubPage() {
         if(aiConfigPayload.difficulty) queryParams.append('difficulty', aiConfigPayload.difficulty);
         if(aiConfigPayload.timerPerQuestion) queryParams.append('timerPerQuestion', String(aiConfigPayload.timerPerQuestion));
         if(aiConfigPayload.questionCategories && aiConfigPayload.questionCategories.length > 0) queryParams.append('categories', aiConfigPayload.questionCategories.join(','));
-        queryParams.append('autoFullScreen', 'true'); // Add fullscreen parameter
+        queryParams.append('autoFullScreen', 'true'); 
 
         router.push(`/ai-mock-interview?${queryParams.toString()}`);
     }
@@ -248,11 +252,10 @@ export default function InterviewPracticeHubPage() {
 
 
   const handleCancelPracticeSession = (sessionId: string) => {
-    setPracticeSessions(prev =>
-      prev.map(session =>
-        session.id === sessionId ? { ...session, status: 'CANCELLED' } : session
-      )
-    );
+    const updater = (session: PracticeSession) => session.id === sessionId ? { ...session, status: 'CANCELLED' as PracticeSessionStatus } : session;
+    setPracticeSessions(prev => prev.map(updater));
+    const globalIndex = samplePracticeSessions.findIndex(s => s.id === sessionId);
+    if (globalIndex !== -1) samplePracticeSessions[globalIndex].status = 'CANCELLED';
     toast({ title: "Session Cancelled", description: "The practice session has been cancelled.", variant: "destructive" });
   };
   
@@ -319,6 +322,8 @@ export default function InterviewPracticeHubPage() {
 
     if (editingQuestion) {
       setAllBankQuestions(prev => prev.map(q => q.id === editingQuestion.id ? { ...editingQuestion, ...questionPayload, difficulty: data.difficulty || 'Medium' } : q));
+      const globalQIndex = sampleInterviewQuestions.findIndex(q => q.id === editingQuestion.id);
+      if (globalQIndex !== -1) Object.assign(sampleInterviewQuestions[globalQIndex], { ...editingQuestion, ...questionPayload, difficulty: data.difficulty || 'Medium' });
       toast({ title: "Question Updated", description: "The interview question has been updated." });
     } else {
       const newQuestion: InterviewQuestion = {
@@ -330,6 +335,7 @@ export default function InterviewPracticeHubPage() {
         userComments: [],
       };
       setAllBankQuestions(prev => [newQuestion, ...prev]);
+      sampleInterviewQuestions.unshift(newQuestion);
       toast({ title: "Question Added", description: "New question added to the bank." });
     }
     setIsQuestionFormOpen(false);
@@ -358,6 +364,8 @@ export default function InterviewPracticeHubPage() {
   
   const handleDeleteQuestion = (questionId: string) => {
     setAllBankQuestions(prev => prev.filter(q => q.id !== questionId));
+    const globalQIndex = sampleInterviewQuestions.findIndex(q => q.id === questionId);
+    if (globalQIndex !== -1) sampleInterviewQuestions.splice(globalQIndex, 1);
     toast({ title: "Question Deleted", description: "Question removed from the bank.", variant: "destructive" });
   };
 
@@ -403,6 +411,11 @@ export default function InterviewPracticeHubPage() {
     setAllBankQuestions(prevQs => prevQs.map(q => 
         q.id === questionId ? { ...q, userComments: [...(q.userComments || []), newComment] } : q
     ));
+    const globalQIndex = sampleInterviewQuestions.findIndex(q => q.id === questionId);
+    if (globalQIndex !== -1) {
+      const currentComments = sampleInterviewQuestions[globalQIndex].userComments || [];
+      sampleInterviewQuestions[globalQIndex].userComments = [...currentComments, newComment];
+    }
     resetCommentForm();
     setCommentingQuestionId(null);
     toast({ title: "Comment Added", description: "Your comment has been posted." });
@@ -424,6 +437,22 @@ export default function InterviewPracticeHubPage() {
         }
         return q;
     }));
+    
+    const globalQIndex = sampleInterviewQuestions.findIndex(q => q.id === questionId);
+    if (globalQIndex !== -1) {
+      const existingRatingIndex = sampleInterviewQuestions[globalQIndex].userRatings?.findIndex(r => r.userId === currentUser.id);
+      let newUserRatings = [...(sampleInterviewQuestions[globalQIndex].userRatings || [])];
+       if (existingRatingIndex !== undefined && existingRatingIndex !== -1) {
+          newUserRatings[existingRatingIndex] = { userId: currentUser.id, rating };
+      } else {
+          newUserRatings.push({ userId: currentUser.id, rating });
+      }
+      const totalRatingSum = newUserRatings.reduce((sum, r) => sum + r.rating, 0);
+      sampleInterviewQuestions[globalQIndex].userRatings = newUserRatings;
+      sampleInterviewQuestions[globalQIndex].rating = newUserRatings.length > 0 ? parseFloat((totalRatingSum / newUserRatings.length).toFixed(1)) : 0;
+      sampleInterviewQuestions[globalQIndex].ratingsCount = newUserRatings.length;
+    }
+
     setRatingQuestionId(null);
     setCurrentRating(0);
     toast({ title: "Rating Submitted", description: `You rated this question ${rating} stars.` });
@@ -441,20 +470,34 @@ export default function InterviewPracticeHubPage() {
         }
         return q;
     }));
-    const question = allBankQuestions.find(q=>q.id === questionId);
-    const isNowBookmarked = !question?.bookmarkedBy?.includes(currentUser.id); 
+    const globalQIndex = sampleInterviewQuestions.findIndex(q => q.id === questionId);
+    let isNowBookmarked = false;
+    if (globalQIndex !== -1) {
+      const currentBookmarks = sampleInterviewQuestions[globalQIndex].bookmarkedBy || [];
+      const userHasBookmarked = currentBookmarks.includes(currentUser.id);
+      isNowBookmarked = !userHasBookmarked;
+      sampleInterviewQuestions[globalQIndex].bookmarkedBy = isNowBookmarked
+          ? [...currentBookmarks, currentUser.id]
+          : currentBookmarks.filter(id => id !== currentUser.id);
+    }
     toast({ title: isNowBookmarked ? "Question Bookmarked" : "Bookmark Removed" });
   };
 
 
-  const renderSessionCard = (session: PracticeSession) => (
+  const renderSessionCard = (session: PracticeSession) => {
+    const sessionDate = parseISO(session.date);
+    const canJoin = session.status === 'SCHEDULED' && (dateIsFuture(sessionDate) || isPast(addMinutes(sessionDate, -60))); // Allow joining up to 1hr after start
+
+    return (
     <Card key={session.id} className="shadow-md hover:shadow-lg transition-shadow">
       <CardHeader>
         <div className="flex justify-between items-start">
-          <CardTitle className="text-lg">{format(parseISO(session.date), "MMM dd, yyyy")}</CardTitle>
+          <CardTitle className="text-lg">{format(sessionDate, "MMM dd, yyyy - p")}</CardTitle>
           <span className={cn(
             "px-2 py-1 text-xs font-semibold rounded-full",
-            session.status === 'SCHEDULED' ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+            session.status === 'SCHEDULED' ? "bg-green-100 text-green-700" : 
+            session.status === 'COMPLETED' ? "bg-blue-100 text-blue-700" :
+            "bg-red-100 text-red-700"
           )}>
             {session.status}
           </span>
@@ -462,10 +505,21 @@ export default function InterviewPracticeHubPage() {
         <CardDescription className="text-sm">{session.category}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-1 text-xs text-muted-foreground">
-        <p className="flex items-center gap-1"><Type className="h-3.5 w-3.5"/>Type: {session.type}</p>
+        <p className="flex items-center gap-1"><Type className="h-3.5 w-3.5"/>Focus: {session.type}</p>
         <p className="flex items-center gap-1"><Languages className="h-3.5 w-3.5"/>Language: {session.language}</p>
+        {session.notes && <p className="text-xs text-muted-foreground pt-1 italic">Notes: {session.notes}</p>}
       </CardContent>
       <CardFooter className="flex gap-2">
+        {canJoin && (
+          <Button asChild size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground">
+            <Link href={`/live-interview/${session.id}`}>
+              <Video className="mr-1 h-4 w-4"/>Join Interview
+            </Link>
+          </Button>
+        )}
+        {session.status === 'SCHEDULED' && !canJoin && (
+          <Button variant="outline" size="sm" disabled>Join (Too Early/Late)</Button>
+        )}
         {session.status === 'SCHEDULED' && (
           <>
             <Button variant="destructive" size="sm" onClick={() => handleCancelPracticeSession(session.id)}>
@@ -476,12 +530,16 @@ export default function InterviewPracticeHubPage() {
             </Button>
           </>
         )}
+        {session.status === 'COMPLETED' && (
+           <Button variant="outline" size="sm" onClick={() => toast({title: "View Report (Mock)"})}><Eye className="mr-1 h-4 w-4"/>View Report</Button>
+        )}
         {session.status === 'CANCELLED' && (
            <p className="text-xs text-red-500">This session was cancelled.</p>
         )}
       </CardFooter>
     </Card>
   );
+}
 
 
   return (
@@ -647,17 +705,17 @@ export default function InterviewPracticeHubPage() {
                     paginatedBankQuestions.map(q => (
                     <Accordion key={q.id} type="single" collapsible className="border rounded-md mb-2 bg-card shadow-sm hover:shadow-md transition-shadow">
                         <AccordionItem value={`item-${q.id}`} className="border-b-0">
-                          <AccordionTrigger className="px-4 py-3 text-left text-sm font-medium group hover:bg-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 data-[state=open]:bg-secondary/50 data-[state=open]:rounded-b-none rounded-t-md">
-                            <div className="flex items-start flex-1 gap-3">
-                              <Checkbox
-                                id={`select-q-${q.id}`}
-                                checked={selectedQuestionsForQuiz.has(q.id)}
-                                onCheckedChange={() => handleToggleQuestionForQuiz(q.id)}
-                                onClick={(e) => e.stopPropagation()} 
-                                className="mt-1 flex-shrink-0"
-                                aria-label={`Select question: ${q.question}`}
-                              />
-                              <div className="flex-1">
+                          <AccordionTrigger asChild className="px-4 py-3 text-left text-sm font-medium group hover:bg-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 data-[state=open]:bg-secondary/50 data-[state=open]:rounded-b-none rounded-t-md">
+                            <div className="flex items-start flex-1 gap-3 w-full">
+                                <div onClick={(e) => e.stopPropagation()} className="flex items-center pt-0.5">
+                                    <Checkbox
+                                        id={`select-q-${q.id}`}
+                                        checked={selectedQuestionsForQuiz.has(q.id)}
+                                        onCheckedChange={() => handleToggleQuestionForQuiz(q.id)}
+                                        aria-label={`Select question: ${q.question}`}
+                                    />
+                                </div>
+                              <div className="flex-1 text-left">
                                 <div className="flex items-center gap-2 mb-0.5">
                                   {getCategoryIcon(q.category)}
                                   <span className="font-medium text-foreground">{q.question}</span>
@@ -670,22 +728,22 @@ export default function InterviewPracticeHubPage() {
                                   {q.tags?.slice(0,2).map(tag => <Badge key={tag} variant="secondary" className="text-[10px] px-1 py-0 hidden sm:inline-flex">{tag}</Badge>)}
                                 </div>
                               </div>
-                            </div>
-                            <div className="flex items-center gap-1 ml-2 flex-shrink-0">
-                              <Button asChild variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); handleToggleBookmarkQuestion(q.id); }}>
-                                <span><BookmarkIcon className={cn("h-4 w-4", q.bookmarkedBy?.includes(currentUser.id) && "fill-yellow-400 text-yellow-500")}/></span>
-                              </Button>
-                              {(q.createdBy === currentUser.id || currentUser.role === 'admin') && (
-                                <Button asChild variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openEditQuestionDialog(q); }}>
-                                  <span><Edit3 className="h-4 w-4"/></span>
+                              <div className="flex items-center gap-1 ml-2 flex-shrink-0">
+                                <Button asChild variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); handleToggleBookmarkQuestion(q.id); }}>
+                                  <span><BookmarkIcon className={cn("h-4 w-4", q.bookmarkedBy?.includes(currentUser.id) && "fill-yellow-400 text-yellow-500")}/></span>
                                 </Button>
-                              )}
-                              {currentUser.role === 'admin' && (
-                                <Button asChild variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:bg-destructive/10" onClick={(e) => { e.stopPropagation(); handleDeleteQuestion(q.id);}}>
-                                   <span><XCircle className="h-4 w-4"/></span>
-                                </Button>
-                              )}
-                              <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                                {(q.createdBy === currentUser.id || currentUser.role === 'admin') && (
+                                  <Button asChild variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openEditQuestionDialog(q); }}>
+                                    <span><Edit3 className="h-4 w-4"/></span>
+                                  </Button>
+                                )}
+                                {currentUser.role === 'admin' && (
+                                  <Button asChild variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:bg-destructive/10" onClick={(e) => { e.stopPropagation(); handleDeleteQuestion(q.id);}}>
+                                     <span><XCircle className="h-4 w-4"/></span>
+                                  </Button>
+                                )}
+                                <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                              </div>
                             </div>
                           </AccordionTrigger>
                         <AccordionContent className="px-4 pb-3 pt-1 space-y-3">
@@ -882,7 +940,7 @@ export default function InterviewPracticeHubPage() {
                 <ToggleGroup
                   type="single"
                   value={practiceSessionConfig.type || ""}
-                  onValueChange={(value: PracticeSessionConfig['type']) => setPracticeSessionConfig(p => ({...p, type: value, friendEmail: '', topics: []}))} // Reset topics on type change
+                  onValueChange={(value: PracticeSessionConfig['type']) => setPracticeSessionConfig(p => ({...p, type: value, friendEmail: '', topics: []}))} 
                   className="grid grid-cols-3 gap-2"
                 >
                   {(['friends', 'experts', 'ai'] as InterviewType[]).map(type => (
@@ -915,7 +973,6 @@ export default function InterviewPracticeHubPage() {
               </>
             )}
             
-            {/* This step is now for experts OR for AI initial topic selection */}
             {dialogStep === 'selectTopics' && (practiceSessionConfig.type === 'experts' || practiceSessionConfig.type === 'ai') && (
               <PracticeTopicSelection
                 availableTopics={PREDEFINED_INTERVIEW_TOPICS} 
@@ -1027,3 +1084,4 @@ export default function InterviewPracticeHubPage() {
     </div>
   );
 }
+

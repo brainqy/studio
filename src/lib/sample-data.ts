@@ -16,7 +16,7 @@ export let sampleJobApplications: JobApplication[] = [
 export let sampleAlumni: AlumniProfile[] = [
   {
     id: 'alumni1',
-    tenantId: SAMPLE_TENANT_ID, 
+    tenantId: 'Brainqy', 
     name: 'Alice Wonderland',
     profilePictureUrl: 'https://picsum.photos/seed/alice/200/200',
     currentJobTitle: 'Senior Software Engineer',
@@ -37,7 +37,7 @@ export let sampleAlumni: AlumniProfile[] = [
   },
   {
     id: 'alumni2',
-    tenantId: SAMPLE_TENANT_ID, 
+    tenantId: 'Brainqy', 
     name: 'Bob The Builder (Manager)',
     profilePictureUrl: 'https://picsum.photos/seed/bob/200/200',
     currentJobTitle: 'Product Manager',
@@ -79,7 +79,7 @@ export let sampleAlumni: AlumniProfile[] = [
   },
   {
     id: 'alumni4',
-    tenantId: SAMPLE_TENANT_ID, 
+    tenantId: 'Brainqy', 
     name: 'Diana Prince (Admin)', 
     profilePictureUrl: 'https://picsum.photos/seed/diana/200/200',
     currentJobTitle: 'Marketing Lead',
@@ -101,20 +101,20 @@ export let sampleAlumni: AlumniProfile[] = [
 ];
 
 export const sampleActivities: Activity[] = [
-  { id: 'act1', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(), description: 'Uploaded resume "Software_Engineer_Resume.pdf".' },
-  { id: 'act2', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(), description: 'Analyzed resume for "Senior Product Manager" role at Innovate LLC.' },
-  { id: 'act3', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), description: 'Connected with Alice Wonderland.' },
-  { id: 'act4', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(), description: 'Tracked new job application for "Data Scientist" at Data Corp.' },
-  { id: 'act5', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(), description: 'Earned the "Profile Pro" badge.' },
-  { id: 'act6', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), description: 'Posted in Community Feed: "Interview Tips?".' },
-  { id: 'act7', tenantId: SAMPLE_TENANT_ID, userId: 'alumni1', timestamp: new Date(Date.now() - 1000 * 60 * 15).toISOString(), description: 'Shared a new job opening: "Junior Developer at Google".' },
-  { id: 'act8', tenantId: SAMPLE_TENANT_ID, userId: 'alumni2', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString(), description: 'Commented on "Interview Tips?" post.' },
+  { id: 'act1', tenantId: 'Brainqy', userId: 'currentUser', timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(), description: 'Uploaded resume "Software_Engineer_Resume.pdf".' },
+  { id: 'act2', tenantId: 'Brainqy', userId: 'currentUser', timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(), description: 'Analyzed resume for "Senior Product Manager" role at Innovate LLC.' },
+  { id: 'act3', tenantId: 'Brainqy', userId: 'currentUser', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), description: 'Connected with Alice Wonderland.' },
+  { id: 'act4', tenantId: 'Brainqy', userId: 'currentUser', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(), description: 'Tracked new job application for "Data Scientist" at Data Corp.' },
+  { id: 'act5', tenantId: 'Brainqy', userId: 'currentUser', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(), description: 'Earned the "Profile Pro" badge.' },
+  { id: 'act6', tenantId: 'Brainqy', userId: 'currentUser', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), description: 'Posted in Community Feed: "Interview Tips?".' },
+  { id: 'act7', tenantId: 'Brainqy', userId: 'alumni1', timestamp: new Date(Date.now() - 1000 * 60 * 15).toISOString(), description: 'Shared a new job opening: "Junior Developer at Google".' },
+  { id: 'act8', tenantId: 'Brainqy', userId: 'alumni2', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString(), description: 'Commented on "Interview Tips?" post.' },
 ];
 
 export let sampleCommunityPosts: CommunityPost[] = [ 
   { 
     id: 'post1', 
-    tenantId: SAMPLE_TENANT_ID, 
+    tenantId: 'Brainqy', 
     userId: 'user123', 
     userName: 'John Doe', 
     userAvatar: 'https://picsum.photos/seed/johndoe/50/50', 
@@ -131,7 +131,7 @@ export let sampleCommunityPosts: CommunityPost[] = [
   },
   { 
     id: 'post2', 
-    tenantId: SAMPLE_TENANT_ID, 
+    tenantId: 'Brainqy', 
     userId: 'user456', 
     userName: 'Jane Smith', 
     userAvatar: 'https://picsum.photos/seed/janesmith/50/50', 
@@ -146,7 +146,7 @@ export let sampleCommunityPosts: CommunityPost[] = [
   },
   { 
     id: 'post3', 
-    tenantId: SAMPLE_TENANT_ID, 
+    tenantId: 'Brainqy', 
     userId: 'alumni1', 
     userName: 'Alice Wonderland', 
     userAvatar: 'https://picsum.photos/seed/alice/50/50', 
@@ -167,7 +167,7 @@ export let sampleCommunityPosts: CommunityPost[] = [
   },
   { 
     id: 'post4', 
-    tenantId: SAMPLE_TENANT_ID, 
+    tenantId: 'Brainqy', 
     userId: 'user789', 
     userName: 'Bad Actor', 
     userAvatar: 'https://picsum.photos/seed/badactor/50/50', 
@@ -181,7 +181,7 @@ export let sampleCommunityPosts: CommunityPost[] = [
   },
   { 
     id: 'post5', 
-    tenantId: SAMPLE_TENANT_ID, 
+    tenantId: 'Brainqy', 
     userId: 'user101', 
     userName: 'Another User', 
     userAvatar: 'https://picsum.photos/seed/anotheruser/50/50', 
@@ -196,23 +196,23 @@ export let sampleCommunityPosts: CommunityPost[] = [
 ];
 
 export const sampleFeatureRequests: FeatureRequest[] = [
-  { id: 'fr1', tenantId: SAMPLE_TENANT_ID, userId: 'user789', userName: 'Sam Wilson', userAvatar: 'https://picsum.photos/seed/samwilson/50/50', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(), title: 'Integrate with LinkedIn for profile import', description: 'It would be great to automatically pull resume data from LinkedIn.', status: 'Pending', upvotes: 15 },
-  { id: 'fr2', tenantId: SAMPLE_TENANT_ID, userId: 'user101', userName: 'Maria Hill', userAvatar: 'https://picsum.photos/seed/mariahill/50/50', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 72).toISOString(), title: 'Dark mode for the dashboard', description: 'A dark theme option would be easier on the eyes.', status: 'In Progress', upvotes: 28 },
+  { id: 'fr1', tenantId: 'Brainqy', userId: 'user789', userName: 'Sam Wilson', userAvatar: 'https://picsum.photos/seed/samwilson/50/50', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(), title: 'Integrate with LinkedIn for profile import', description: 'It would be great to automatically pull resume data from LinkedIn.', status: 'Pending', upvotes: 15 },
+  { id: 'fr2', tenantId: 'Brainqy', userId: 'user101', userName: 'Maria Hill', userAvatar: 'https://picsum.photos/seed/mariahill/50/50', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 72).toISOString(), title: 'Dark mode for the dashboard', description: 'A dark theme option would be easier on the eyes.', status: 'In Progress', upvotes: 28 },
 ];
 
 export let sampleEvents: GalleryEvent[] = [ 
-  { id: 'event1', tenantId: SAMPLE_TENANT_ID, title: 'Annual Alumni Meet 2023', date: '2023-10-15T10:00:00Z', imageUrls: ['https://picsum.photos/seed/event1/600/400', 'https://picsum.photos/seed/event1-extra1/600/400'], description: 'A wonderful evening connecting with fellow alumni.' , dataAiHint: 'conference networking', approved: true, createdByUserId: 'alumni4', attendeeUserIds: ['alumni1', 'alumni2', 'currentUser', 'user123']},
-  { id: 'event2', tenantId: SAMPLE_TENANT_ID, title: 'Tech Talk Series: AI Today', date: '2024-03-22T10:00:00Z', imageUrls: ['https://picsum.photos/seed/event2/600/400'], description: 'Insightful talks on the future of Artificial Intelligence.' , dataAiHint: 'presentation seminar', approved: true, createdByUserId: 'alumni1', attendeeUserIds: ['alumni2', 'alumni4', 'currentUser']},
-  { id: 'event3', tenantId: SAMPLE_TENANT_ID, title: 'Campus Job Fair Spring 2024', date: '2024-04-10T10:00:00Z', imageUrls: ['https://picsum.photos/seed/event3/600/400', 'https://picsum.photos/seed/event3-extra2/600/400', 'https://picsum.photos/seed/event3-extra3/600/400'], description: 'Connecting students with top employers.', dataAiHint: 'job fair students', approved: false, createdByUserId: 'managerUser1', attendeeUserIds: ['currentUser', 'user456'] },
+  { id: 'event1', tenantId: 'Brainqy', title: 'Annual Alumni Meet 2023', date: '2023-10-15T10:00:00Z', imageUrls: ['https://picsum.photos/seed/event1/600/400', 'https://picsum.photos/seed/event1-extra1/600/400'], description: 'A wonderful evening connecting with fellow alumni.' , dataAiHint: 'conference networking', approved: true, createdByUserId: 'alumni4', attendeeUserIds: ['alumni1', 'alumni2', 'currentUser', 'user123']},
+  { id: 'event2', tenantId: 'Brainqy', title: 'Tech Talk Series: AI Today', date: '2024-03-22T10:00:00Z', imageUrls: ['https://picsum.photos/seed/event2/600/400'], description: 'Insightful talks on the future of Artificial Intelligence.' , dataAiHint: 'presentation seminar', approved: true, createdByUserId: 'alumni1', attendeeUserIds: ['alumni2', 'alumni4', 'currentUser']},
+  { id: 'event3', tenantId: 'Brainqy', title: 'Campus Job Fair Spring 2024', date: '2024-04-10T10:00:00Z', imageUrls: ['https://picsum.photos/seed/event3/600/400', 'https://picsum.photos/seed/event3-extra2/600/400', 'https://picsum.photos/seed/event3-extra3/600/400'], description: 'Connecting students with top employers.', dataAiHint: 'job fair students', approved: false, createdByUserId: 'managerUser1', attendeeUserIds: ['currentUser', 'user456'] },
   { id: 'event4', tenantId: 'tenant-2', title: 'Tenant 2 Networking Mixer', date: '2024-05-10T10:00:00Z', imageUrls: ['https://picsum.photos/seed/event4/600/400'], description: 'Exclusive networking event for Corporate Partner Inc. members.', dataAiHint: 'corporate networking', approved: true, createdByUserId: 'managerUser1', attendeeUserIds: ['alumni3', 'user789'] },
 ];
 
 export const sampleJobOpenings: JobOpening[] = [
-  { id: 'job1', tenantId: SAMPLE_TENANT_ID, title: 'Junior Developer', company: 'Google', postedByAlumniId: 'alumni1', alumniName: 'Alice Wonderland', description: 'Exciting opportunity for recent graduates to join our engineering team. Key skills: Java, Python, Problem Solving.', datePosted: '2024-07-10', location: 'Mountain View, CA', type: 'Full-time', applicationLink: 'https://careers.google.com/jobs/results/' },
-  { id: 'job2', tenantId: SAMPLE_TENANT_ID, title: 'Marketing Intern (Summer)', company: 'Amazon', postedByAlumniId: 'alumni4', alumniName: 'Diana Prince (Admin)', description: 'Gain hands-on experience in a fast-paced marketing environment. Focus on digital campaigns and market research.', datePosted: '2024-07-08', location: 'Seattle, WA', type: 'Internship', applicationLink: 'https://www.amazon.jobs/en/' },
-  { id: 'job3', tenantId: SAMPLE_TENANT_ID, title: 'Project Manager - Mentorship Program', company: 'Self-Employed (Mentorship)', postedByAlumniId: 'alumni2', alumniName: 'Bob The Builder (Manager)', description: 'Looking to mentor aspiring Product Managers. Part-time commitment. Focus on agile methodologies and product strategy.', datePosted: '2024-07-05', location: 'Remote', type: 'Mentorship' },
-  { id: 'job-board-cloudnetics-01', tenantId: SAMPLE_TENANT_ID, title: 'Cloud Engineer', company: 'CloudNetics', postedByAlumniId: 'alumni1', alumniName: 'Alice Wonderland', description: 'Join our innovative cloud solutions team. Experience with AWS/Azure required.', datePosted: '2024-07-03', location: 'Boston, MA', type: 'Full-time', applicationLink: 'https://example.com/cloudnetics/apply' },
-  { id: 'job-board-aifuture-02', tenantId: SAMPLE_TENANT_ID, title: 'Machine Learning Eng.', company: 'AI Future', postedByAlumniId: 'alumni3', alumniName: 'Charlie Brown', description: 'Work on cutting-edge ML projects. Strong Python and TensorFlow/PyTorch skills needed.', datePosted: '2024-07-14', location: 'Seattle, WA', type: 'Full-time' },
+  { id: 'job1', tenantId: 'Brainqy', title: 'Junior Developer', company: 'Google', postedByAlumniId: 'alumni1', alumniName: 'Alice Wonderland', description: 'Exciting opportunity for recent graduates to join our engineering team. Key skills: Java, Python, Problem Solving.', datePosted: '2024-07-10', location: 'Mountain View, CA', type: 'Full-time', applicationLink: 'https://careers.google.com/jobs/results/' },
+  { id: 'job2', tenantId: 'Brainqy', title: 'Marketing Intern (Summer)', company: 'Amazon', postedByAlumniId: 'alumni4', alumniName: 'Diana Prince (Admin)', description: 'Gain hands-on experience in a fast-paced marketing environment. Focus on digital campaigns and market research.', datePosted: '2024-07-08', location: 'Seattle, WA', type: 'Internship', applicationLink: 'https://www.amazon.jobs/en/' },
+  { id: 'job3', tenantId: 'Brainqy', title: 'Project Manager - Mentorship Program', company: 'Self-Employed (Mentorship)', postedByAlumniId: 'alumni2', alumniName: 'Bob The Builder (Manager)', description: 'Looking to mentor aspiring Product Managers. Part-time commitment. Focus on agile methodologies and product strategy.', datePosted: '2024-07-05', location: 'Remote', type: 'Mentorship' },
+  { id: 'job-board-cloudnetics-01', tenantId: 'Brainqy', title: 'Cloud Engineer', company: 'CloudNetics', postedByAlumniId: 'alumni1', alumniName: 'Alice Wonderland', description: 'Join our innovative cloud solutions team. Experience with AWS/Azure required.', datePosted: '2024-07-03', location: 'Boston, MA', type: 'Full-time', applicationLink: 'https://example.com/cloudnetics/apply' },
+  { id: 'job-board-aifuture-02', tenantId: 'Brainqy', title: 'Machine Learning Eng.', company: 'AI Future', postedByAlumniId: 'alumni3', alumniName: 'Charlie Brown', description: 'Work on cutting-edge ML projects. Strong Python and TensorFlow/PyTorch skills needed.', datePosted: '2024-07-14', location: 'Seattle, WA', type: 'Full-time' },
 ];
 
 export let sampleUserProfile: UserProfile = {
@@ -297,10 +297,10 @@ export const samplePlatformUsers: UserProfile[] = [
 
 
 export const sampleAppointments: Appointment[] = [
-    { id: 'appt1', tenantId: SAMPLE_TENANT_ID, requesterUserId: 'currentUser', alumniUserId: 'alumni1', title: 'Mentorship Session with Alice W.', dateTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3).toISOString(), withUser: 'Alice Wonderland', status: 'Confirmed', costInCoins: 10, meetingLink: 'https://zoom.us/j/1234567890', reminderDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 2).toISOString() },
-    { id: 'appt2', tenantId: SAMPLE_TENANT_ID, requesterUserId: 'currentUser', alumniUserId: 'alumni2', title: 'Networking Call with Bob B.', dateTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 5).toISOString(), withUser: 'Bob The Builder (Manager)', status: 'Pending', costInCoins: 15, reminderDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 4).toISOString() },
-    { id: 'appt3', tenantId: SAMPLE_TENANT_ID, requesterUserId: 'alumni3', alumniUserId: 'currentUser', title: 'Incoming Request: Career Advice', dateTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 0).toISOString(), withUser: 'Charlie Brown', status: 'Pending', costInCoins: 10, reminderDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 0).toISOString() }, 
-    { id: 'appt4', tenantId: SAMPLE_TENANT_ID, requesterUserId: 'currentUser', alumniUserId: 'alumni4', title: 'Discuss Marketing Strategy', dateTime: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(), withUser: 'Diana Prince (Admin)', status: 'Completed', costInCoins: 20 },
+    { id: 'appt1', tenantId: 'Brainqy', requesterUserId: 'currentUser', alumniUserId: 'alumni1', title: 'Mentorship Session with Alice W.', dateTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3).toISOString(), withUser: 'Alice Wonderland', status: 'Confirmed', costInCoins: 10, meetingLink: 'https://zoom.us/j/1234567890', reminderDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 2).toISOString() },
+    { id: 'appt2', tenantId: 'Brainqy', requesterUserId: 'currentUser', alumniUserId: 'alumni2', title: 'Networking Call with Bob B.', dateTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 5).toISOString(), withUser: 'Bob The Builder (Manager)', status: 'Pending', costInCoins: 15, reminderDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 4).toISOString() },
+    { id: 'appt3', tenantId: 'Brainqy', requesterUserId: 'alumni3', alumniUserId: 'currentUser', title: 'Incoming Request: Career Advice', dateTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 0).toISOString(), withUser: 'Charlie Brown', status: 'Pending', costInCoins: 10, reminderDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 0).toISOString() }, 
+    { id: 'appt4', tenantId: 'Brainqy', requesterUserId: 'currentUser', alumniUserId: 'alumni4', title: 'Discuss Marketing Strategy', dateTime: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(), withUser: 'Diana Prince (Admin)', status: 'Completed', costInCoins: 20 },
     { id: 'appt5', tenantId: 'tenant-2', requesterUserId: 'managerUser1', alumniUserId: 'someAlumniTenant2', title: 'Tenant 2 Strategy Meeting', dateTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 1).toISOString(), withUser: 'External Consultant', status: 'Confirmed', costInCoins: 0, reminderDate: new Date().toISOString() },
 ];
 
@@ -317,9 +317,9 @@ export const sampleWalletBalance: Wallet = {
 };
 
 export let sampleResumeProfiles: ResumeProfile[] = [
-  { id: 'resume1', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', name: "Software Engineer Focused", resumeText: "This is a resume focused on software engineering roles...", lastAnalyzed: "2024-07-15" },
-  { id: 'resume2', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', name: "Product Manager Application", resumeText: "A resume tailored for product management positions...", lastAnalyzed: "2024-07-10" },
-  { id: 'resume3', tenantId: SAMPLE_TENANT_ID, userId: 'currentUser', name: "General Tech Resume", resumeText: "A general purpose resume for various tech roles.", lastAnalyzed: "2024-06-20" },
+  { id: 'resume1', tenantId: 'Brainqy', userId: 'currentUser', name: "Software Engineer Focused", resumeText: "This is a resume focused on software engineering roles...", lastAnalyzed: "2024-07-15" },
+  { id: 'resume2', tenantId: 'Brainqy', userId: 'currentUser', name: "Product Manager Application", resumeText: "A resume tailored for product management positions...", lastAnalyzed: "2024-07-10" },
+  { id: 'resume3', tenantId: 'Brainqy', userId: 'currentUser', name: "General Tech Resume", resumeText: "A general purpose resume for various tech roles.", lastAnalyzed: "2024-06-20" },
   { id: 'resumeManager1', tenantId: 'tenant-2', userId: 'managerUser1', name: "Engagement Strategy Lead Resume", resumeText: "Resume for Manager Mike, focused on engagement and leadership.", lastAnalyzed: "2024-07-20" },
 ];
 
@@ -356,7 +356,7 @@ Qualifications:
 export const sampleResumeScanHistory: ResumeScanHistoryItem[] = [
   {
     id: 'scan1',
-    tenantId: SAMPLE_TENANT_ID,
+    tenantId: 'Brainqy',
     userId: 'currentUser',
     resumeId: 'resume1',
     resumeName: 'Software_Engineer_Resume_v2.pdf',
@@ -370,7 +370,7 @@ export const sampleResumeScanHistory: ResumeScanHistoryItem[] = [
   },
   {
     id: 'scan2',
-    tenantId: SAMPLE_TENANT_ID,
+    tenantId: 'Brainqy',
     userId: 'currentUser',
     resumeId: 'resume2',
     resumeName: 'Product_Manager_Profile.docx',
@@ -384,7 +384,7 @@ export const sampleResumeScanHistory: ResumeScanHistoryItem[] = [
   },
   {
     id: 'scan3',
-    tenantId: SAMPLE_TENANT_ID,
+    tenantId: 'Brainqy',
     userId: 'currentUser',
     resumeId: 'resume3',
     resumeName: 'General_Tech_Resume.pdf',
@@ -419,7 +419,7 @@ export const sampleTenants: Tenant[] = [
   {
     id: 'Brainqy', 
     name: 'Brainqy University', 
-    createdAt: new Date().toISOString(),
+    createdAt: new Date(Date.now() - 86400000 * 30).toISOString(), // Ensure it's older
     settings: {
       allowPublicSignup: true,
       customLogoUrl: 'https://placehold.co/200x50/008080/E0F7FA&text=Brainqy', 
@@ -503,7 +503,7 @@ export let sampleBlogPosts: BlogPost[] = [
   },
   {
     id: 'blog2',
-    tenantId: SAMPLE_TENANT_ID, 
+    tenantId: 'Brainqy', 
     userId: 'alumni4', 
     userName: 'Diana Prince (Admin)',
     userAvatar: 'https://picsum.photos/seed/diana/50/50',
@@ -983,7 +983,7 @@ export let sampleInterviewQuestions: InterviewQuestion[] = [
     difficulty: 'Medium',
     rating: 4.0,
     ratingsCount: 10,
-    userComments: [{id: 'uc3-1', userId: 'currentUser', userName: 'Alex Taylor (Admin)', comment: 'The options are a bit tricky, good test!', timestamp: new Date().toISOString()}],
+    userComments: [{id: 'uc3-1', userId: 'currentUser', userName: 'Manager Mike', comment: 'The options are a bit tricky, good test!', timestamp: new Date().toISOString()}],
     createdBy: "managerUser1",
     approved: true,
     createdAt: new Date(Date.now() - 86400000 * 8).toISOString(),
@@ -1310,23 +1310,23 @@ export let sampleCreatedQuizzes: MockInterviewSession[] = [
 export const samplePracticeSessions: PracticeSession[] = [
   {
     id: "ps1",
-    userId: "currentUser",
-    date: new Date(Date.now() + 86400000 * 3).toISOString(), 
+    userId: "currentUser", // This should match an ID in samplePlatformUsers or sampleUserProfile
+    date: new Date(Date.now() + 86400000 * 3).toISOString(), // In 3 days
     category: "Practice with Experts",
-    type: "Angular",
+    type: "Angular Frontend",
     language: "English",
-    status: "SCHEDULED",
-    notes: "Focus on advanced component architecture.",
+    status: "SCHEDULED" as PracticeSessionStatus,
+    notes: "Focus on advanced component architecture and state management.",
   },
   {
     id: "ps2",
     userId: "currentUser",
-    date: new Date(Date.now() + 86400000 * 7).toISOString(), 
+    date: new Date(Date.now() + 86400000 * 7).toISOString(), // In 7 days
     category: "Practice with AI",
-    type: "Java Backend",
+    type: "Java Backend Developer",
     language: "English",
-    status: "SCHEDULED",
-    notes: "Data structures and algorithms focus.",
+    status: "SCHEDULED" as PracticeSessionStatus,
+    notes: "Emphasis on data structures, algorithms, and common Java interview patterns.",
     aiQuestionCategories: ['Technical', 'Coding'],
     aiDifficulty: 'Hard',
     aiNumQuestions: 10,
@@ -1335,22 +1335,22 @@ export const samplePracticeSessions: PracticeSession[] = [
   {
     id: "ps3",
     userId: "currentUser",
-    date: new Date(Date.now() - 86400000 * 2).toISOString(), 
+    date: new Date(Date.now() - 86400000 * 2).toISOString(), // 2 days ago
     category: "Practice with Friends",
-    type: "Behavioral",
+    type: "Behavioral Interview",
     language: "English",
-    status: "COMPLETED",
-    notes: "Practiced STAR method.",
+    status: "COMPLETED" as PracticeSessionStatus,
+    notes: "Practiced STAR method with a friend. Received good feedback.",
   },
   {
     id: "ps4",
     userId: "currentUser",
-    date: new Date(Date.now() + 86400000 * 1).toISOString(), 
+    date: new Date(Date.now() + 86400000 * 1).toISOString(), // Tomorrow
     category: "Practice with Experts",
-    type: "System Design",
+    type: "System Design Interview",
     language: "English",
-    status: "CANCELLED",
-    notes: "Expert had to reschedule.",
+    status: "CANCELLED" as PracticeSessionStatus,
+    notes: "Expert mentor had an emergency and had to reschedule this session.",
   },
 ];
 
@@ -1383,6 +1383,7 @@ export let samplePlatformSettings: PlatformSettings = {
   maxEventRegistrationsPerUser: 3,
   globalAnnouncement: 'Welcome to the new and improved ResumeMatch AI platform!',
   pointsForAffiliateSignup: 50,
+  walletEnabled: true,
 };
 
 export let sampleAnnouncements: Announcement[] = [
@@ -1430,7 +1431,7 @@ export let sampleAnnouncements: Announcement[] = [
 export const sampleLiveInterviewSessions: LiveInterviewSession[] = [
   {
     id: 'live-session-1',
-    tenantId: SAMPLE_TENANT_ID,
+    tenantId: 'Brainqy',
     title: 'Frontend Developer Screening',
     participants: [
       { userId: 'alumni1', name: 'Alice Wonderland', role: 'interviewer', profilePictureUrl: 'https://picsum.photos/seed/alice/50/50' },
@@ -1444,7 +1445,7 @@ export const sampleLiveInterviewSessions: LiveInterviewSession[] = [
   },
   {
     id: 'live-session-2',
-    tenantId: SAMPLE_TENANT_ID,
+    tenantId: 'Brainqy',
     title: 'Product Manager - Behavioral Round',
     participants: [
       { userId: 'alumni2', name: 'Bob The Builder (Manager)', role: 'interviewer', profilePictureUrl: 'https://picsum.photos/seed/bob/50/50' },
