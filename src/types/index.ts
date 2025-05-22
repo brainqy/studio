@@ -1,6 +1,6 @@
 
 export type UserRole = 'admin' | 'manager' | 'user';
-export type UserStatus = 'active' | 'inactive' | 'pending' | 'suspended';
+export type UserStatus = 'active' | 'inactive' | 'pending' | 'suspended' | 'PENDING_DELETION';
 
 export const Genders = ['Male', 'Female', 'Prefer not to say'] as const;
 export type Gender = typeof Genders[number];
@@ -75,27 +75,28 @@ export const SupportTypesSought = [
 export type SupportTypeSought = typeof SupportTypesSought[number];
 
 export type JobApplicationStatus = 'Saved' | 'Applied' | 'Interviewing' | 'Offer' | 'Rejected';
+export const JOB_APPLICATION_STATUSES: JobApplicationStatus[] = ['Saved', 'Applied', 'Interviewing', 'Offer', 'Rejected'];
 
 export interface JobApplication {
   id: string;
   tenantId: string;
-  userId: string; 
+  userId: string;
   companyName: string;
   jobTitle: string;
   status: JobApplicationStatus;
   dateApplied: string;
   notes?: string;
   jobDescription?: string;
-  resumeUsed?: string; 
+  resumeUsed?: string;
   location?: string;
-  reminderDate?: string; 
-  sourceJobOpeningId?: string; 
-  applicationUrl?: string; 
+  reminderDate?: string;
+  sourceJobOpeningId?: string;
+  applicationUrl?: string;
 }
 
 export interface AlumniProfile {
   id: string;
-  tenantId: string; 
+  tenantId: string;
   name: string;
   profilePictureUrl?: string;
   currentJobTitle: string;
@@ -104,14 +105,14 @@ export interface AlumniProfile {
   university: string;
   skills: string[];
   email: string;
-  role?: UserRole; 
-  status?: UserStatus; 
-  lastLogin?: string; 
+  role?: UserRole;
+  status?: UserStatus;
+  lastLogin?: string;
   interests?: string[];
   offersHelpWith?: SupportArea[];
   appointmentCoinCost?: number;
-  xpPoints?: number; 
-  createdAt?: string; 
+  xpPoints?: number;
+  createdAt?: string;
   isDistinguished?: boolean;
 }
 
@@ -119,8 +120,8 @@ export interface Activity {
   id: string;
   tenantId: string;
   timestamp: string;
-  description: string; 
-  userId?: string; 
+  description: string;
+  userId?: string;
 }
 
 export type CommunityPostModerationStatus = 'visible' | 'flagged' | 'removed';
@@ -145,13 +146,13 @@ export interface CommunityPost {
   type: 'text' | 'poll' | 'event' | 'request';
   tags?: string[];
   pollOptions?: { option: string, votes: number }[];
-  eventTitle?: string; 
+  eventTitle?: string;
   eventDate?: string;
   eventLocation?: string;
-  attendees?: number; 
-  capacity?: number;  
-  assignedTo?: string; 
-  status?: 'open' | 'assigned' | 'completed'; 
+  attendees?: number;
+  capacity?: number;
+  assignedTo?: string;
+  status?: 'open' | 'assigned' | 'completed';
   moderationStatus: CommunityPostModerationStatus;
   flagCount: number;
   comments?: CommunityComment[];
@@ -159,7 +160,7 @@ export interface CommunityPost {
 
 export interface FeatureRequest {
   id: string;
-  tenantId: string; 
+  tenantId: string;
   userId: string;
   userName: string;
   userAvatar?: string;
@@ -167,19 +168,19 @@ export interface FeatureRequest {
   title: string;
   description: string;
   status: 'Pending' | 'In Progress' | 'Completed' | 'Rejected';
-  upvotes?: number; 
+  upvotes?: number;
 }
 
 export interface GalleryEvent {
   id: string;
   tenantId: string;
   title: string;
-  date: string; 
-  imageUrls: string[]; 
+  date: string;
+  imageUrls: string[];
   description?: string;
-  dataAiHint?: string; 
-  isPlatformGlobal?: boolean; 
-  location?: string; 
+  dataAiHint?: string;
+  isPlatformGlobal?: boolean;
+  location?: string;
   approved?: boolean;
   createdByUserId?: string;
   attendeeUserIds?: string[];
@@ -194,8 +195,8 @@ export interface JobOpening {
   description: string;
   datePosted: string;
   type: 'Full-time' | 'Part-time' | 'Internship' | 'Contract' | 'Mentorship';
-  postedByAlumniId: string; 
-  alumniName: string; 
+  postedByAlumniId: string;
+  alumniName: string;
   applicationLink?: string;
 }
 
@@ -203,85 +204,85 @@ export interface Badge {
   id: string;
   name: string;
   description: string;
-  icon: string; 
-  achieved?: boolean; 
-  xpReward?: number; 
-  triggerCondition?: string; 
+  icon: string;
+  achieved?: boolean;
+  xpReward?: number;
+  triggerCondition?: string;
 }
 
 export interface BlogPost {
   id: string;
-  tenantId?: string | 'platform'; 
-  userId: string; 
-  userName: string; 
-  userAvatar?: string; 
+  tenantId?: string | 'platform';
+  userId: string;
+  userName: string;
+  userAvatar?: string;
   title: string;
-  slug: string; 
-  author: string; 
-  date: string; 
+  slug: string;
+  author: string;
+  date: string;
   imageUrl?: string;
-  content: string; 
+  content: string;
   excerpt: string;
   tags?: string[];
-  comments?: CommunityComment[]; 
+  comments?: CommunityComment[];
 }
 
-export interface UserProfile extends AlumniProfile { 
+export interface UserProfile extends AlumniProfile {
   id: string;
-  tenantId: string; 
-  role: UserRole; 
+  tenantId: string;
+  role: UserRole;
   name: string;
-  email: string; 
-  status?: UserStatus; 
-  lastLogin?: string; 
-  
-  dateOfBirth?: string; 
+  email: string;
+  status?: UserStatus;
+  lastLogin?: string;
+
+  dateOfBirth?: string;
   gender?: Gender;
   mobileNumber?: string;
-  currentAddress?: string; 
+  currentAddress?: string;
 
-  graduationYear?: string; 
+  graduationYear?: string;
   degreeProgram?: DegreeProgram;
   department?: string;
 
-  currentJobTitle: string; 
+  currentJobTitle: string;
   company: string;
-  currentOrganization?: string; 
+  currentOrganization?: string;
   industry?: Industry;
-  workLocation?: string; 
-  linkedInProfile?: string; 
-  yearsOfExperience?: string; 
+  workLocation?: string;
+  linkedInProfile?: string;
+  yearsOfExperience?: string;
 
-  skills: string[]; 
+  skills: string[];
 
   areasOfSupport?: SupportArea[];
   timeCommitment?: TimeCommitment;
   preferredEngagementMode?: EngagementMode;
-  otherComments?: string; 
+  otherComments?: string;
 
   lookingForSupportType?: SupportTypeSought;
-  helpNeededDescription?: string; 
+  helpNeededDescription?: string;
 
-  shareProfileConsent?: boolean; 
-  featureInSpotlightConsent?: boolean; 
+  shareProfileConsent?: boolean;
+  featureInSpotlightConsent?: boolean;
 
   profilePictureUrl?: string;
-  resumeText?: string; 
+  resumeText?: string;
   careerInterests?: string;
-  bio: string; 
+  bio: string;
   interests?: string[];
 
-  offersHelpWith?: SupportArea[]; 
+  offersHelpWith?: SupportArea[];
 
   xpPoints?: number;
-  dailyStreak?: number; 
+  dailyStreak?: number;
   longestStreak?: number;
   totalActiveDays?: number;
   weeklyActivity?: boolean[];
   referralCode?: string;
-  earnedBadges?: string[]; 
-  affiliateCode?: string; 
-  pastInterviewSessions?: string[]; 
+  earnedBadges?: string[];
+  affiliateCode?: string;
+  pastInterviewSessions?: string[];
   interviewCredits?: number;
   createdAt?: string;
 }
@@ -289,9 +290,9 @@ export interface UserProfile extends AlumniProfile {
 export interface ResumeProfile {
   id: string;
   tenantId: string;
-  userId: string; 
-  name: string; 
-  resumeText: string; 
+  userId: string;
+  name: string;
+  resumeText: string;
   lastAnalyzed?: string;
 }
 
@@ -301,17 +302,17 @@ export type AppointmentStatus = typeof AppointmentStatuses[number];
 export type Appointment = {
   id: string;
   tenantId: string;
-  requesterUserId: string; 
-  alumniUserId: string; 
-  title: string; 
-  dateTime: string; 
+  requesterUserId: string;
+  alumniUserId: string;
+  title: string;
+  dateTime: string;
   status: AppointmentStatus;
-  meetingLink?: string; 
-  location?: string; 
-  notes?: string; 
-  costInCoins?: number; 
-  withUser: string; 
-  reminderDate?: string; 
+  meetingLink?: string;
+  location?: string;
+  notes?: string;
+  costInCoins?: number;
+  withUser: string;
+  reminderDate?: string;
 };
 
 export type WalletTransaction = {
@@ -320,7 +321,7 @@ export type WalletTransaction = {
   userId: string;
   date: string;
   description: string;
-  amount: number; 
+  amount: number;
   type: 'credit' | 'debit';
 };
 
@@ -338,25 +339,24 @@ export interface ResumeScanHistoryItem {
   id: string;
   tenantId: string;
   userId: string;
-  resumeId: string; 
-  resumeName: string; 
+  resumeId: string;
+  resumeName: string;
   jobTitle: string;
   companyName: string;
-  resumeTextSnapshot: string; 
-  jobDescriptionText: string; 
-  scanDate: string; 
+  resumeTextSnapshot: string;
+  jobDescriptionText: string;
+  scanDate: string;
   matchScore?: number;
-  bookmarked?: boolean; 
+  bookmarked?: boolean;
 }
 
 export type KanbanColumnId = 'Saved' | 'Applied' | 'Interviewing' | 'Offer';
-export const JOB_APPLICATION_STATUSES: JobApplicationStatus[] = ['Saved', 'Applied', 'Interviewing', 'Offer', 'Rejected'];
 
 export interface TenantSettings {
   allowPublicSignup: boolean;
   customLogoUrl?: string;
-  primaryColor?: string; 
-  accentColor?: string; 
+  primaryColor?: string;
+  accentColor?: string;
   features?: {
     communityFeedEnabled?: boolean;
     jobBoardEnabled?: boolean;
@@ -365,14 +365,14 @@ export interface TenantSettings {
     eventRegistrationEnabled?: boolean;
   };
   emailTemplates?: {
-    welcomeEmail?: string; 
+    welcomeEmail?: string;
   };
 }
 
 export interface Tenant {
   id: string;
   name: string;
-  domain?: string; 
+  domain?: string;
   settings?: TenantSettings;
   createdAt: string;
 }
@@ -381,15 +381,15 @@ export type ReferralStatus = 'Pending' | 'Signed Up' | 'Reward Earned' | 'Expire
 export interface ReferralHistoryItem {
     id: string;
     referrerUserId: string;
-    referredEmailOrName: string; 
-    referralDate: string; 
+    referredEmailOrName: string;
+    referralDate: string;
     status: ReferralStatus;
-    rewardAmount?: number; 
+    rewardAmount?: number;
 }
 
 export interface GamificationRule {
-    actionId: string; 
-    description: string; 
+    actionId: string;
+    description: string;
     xpPoints: number;
 }
 
@@ -402,13 +402,13 @@ export interface SurveyOption {
 export interface SurveyStep {
   id: string;
   type: 'botMessage' | 'userOptions' | 'userInput' | 'userDropdown';
-  text?: string; 
-  options?: SurveyOption[]; 
-  dropdownOptions?: { label: string; value: string }[]; 
-  placeholder?: string; 
-  inputType?: 'text' | 'textarea' | 'email' | 'tel' | 'url' | 'date'; 
-  nextStepId?: string; 
-  variableName?: string; 
+  text?: string;
+  options?: SurveyOption[];
+  dropdownOptions?: { label: string; value: string }[];
+  placeholder?: string;
+  inputType?: 'text' | 'textarea' | 'email' | 'tel' | 'url' | 'date';
+  nextStepId?: string;
+  variableName?: string;
   isLastStep?: boolean;
 }
 
@@ -417,35 +417,35 @@ export interface SurveyResponse {
   userId: string;
   userName: string;
   surveyId: string;
-  surveyName?: string; 
-  responseDate: string; 
-  data: Record<string, any>; 
+  surveyName?: string;
+  responseDate: string;
+  data: Record<string, any>;
 }
 
 export type AffiliateStatus = 'pending' | 'approved' | 'rejected';
 export interface Affiliate {
-  id: string; 
+  id: string;
   userId: string;
-  name: string; 
-  email: string; 
+  name: string;
+  email: string;
   status: AffiliateStatus;
   affiliateCode: string;
-  commissionRate: number; 
-  totalEarned: number; 
+  commissionRate: number;
+  totalEarned: number;
   createdAt: string;
 }
 
 export interface AffiliateClick {
   id: string;
-  affiliateId: string; 
+  affiliateId: string;
   timestamp: string;
-  ipAddress?: string; 
+  ipAddress?: string;
   convertedToSignup: boolean;
 }
 
 export interface AffiliateSignup {
   id: string;
-  affiliateId: string; 
+  affiliateId: string;
   newUserId: string;
   signupDate: string;
   commissionEarned?: number;
@@ -456,9 +456,9 @@ export interface ResumeTemplate {
   name: string;
   description: string;
   previewImageUrl: string;
-  category: string; 
+  category: string;
   dataAiHint?: string;
-  content: string; 
+  content: string;
 }
 
 export interface RecentPageItem {
@@ -470,7 +470,7 @@ export interface RecentPageItem {
 export interface TourStep {
   title: string;
   description: string;
-  targetId?: string; 
+  targetId?: string;
 }
 
 export interface ResumeHeaderData {
@@ -487,10 +487,10 @@ export interface ResumeExperienceEntry {
   jobTitle: string;
   company: string;
   location: string;
-  startDate: string; 
-  endDate: string;   
+  startDate: string;
+  endDate: string;
   isCurrent?: boolean;
-  responsibilities: string; 
+  responsibilities: string;
 }
 
 export interface ResumeEducationEntry {
@@ -500,7 +500,7 @@ export interface ResumeEducationEntry {
   university: string;
   location: string;
   graduationYear: string;
-  details?: string; 
+  details?: string;
 }
 
 export interface ResumeBuilderData {
@@ -515,7 +515,7 @@ export interface ResumeBuilderData {
     languages?: string;
     interests?: string;
   };
-  templateId: string; 
+  templateId: string;
 }
 
 export type ResumeBuilderStep = 'header' | 'experience' | 'education' | 'skills' | 'summary' | 'additional-details' | 'finalize';
@@ -553,20 +553,20 @@ export interface InterviewQuestion {
   id: string;
   category: InterviewQuestionCategory;
   question: string;
-  answerOrTip: string; 
+  answerOrTip: string;
   tags?: string[];
-  isMCQ?: boolean; 
-  mcqOptions?: string[]; 
-  correctAnswer?: string; 
+  isMCQ?: boolean;
+  mcqOptions?: string[];
+  correctAnswer?: string;
   difficulty?: InterviewQuestionDifficulty;
-  rating?: number; 
-  ratingsCount?: number; 
-  userRatings?: InterviewQuestionUserRating[]; 
-  userComments?: InterviewQuestionUserComment[]; 
-  createdBy?: string; 
+  rating?: number;
+  ratingsCount?: number;
+  userRatings?: InterviewQuestionUserRating[];
+  userComments?: InterviewQuestionUserComment[];
+  createdBy?: string;
   approved?: boolean;
-  createdAt?: string; 
-  bookmarkedBy?: string[]; 
+  createdAt?: string;
+  bookmarkedBy?: string[];
 }
 
 export type BankQuestionSortOrder = 'default' | 'highestRated' | 'mostRecent';
@@ -575,28 +575,28 @@ export type BankQuestionFilterView = 'all' | 'myBookmarks' | 'needsApproval';
 
 export interface BlogGenerationSettings {
   generationIntervalHours: number;
-  topics: string[]; 
-  style?: 'informative' | 'casual' | 'formal' | 'technical' | 'storytelling'; 
-  lastGenerated?: string; 
+  topics: string[];
+  style?: 'informative' | 'casual' | 'formal' | 'technical' | 'storytelling';
+  lastGenerated?: string;
 }
 
-export interface MockInterviewQuestion { 
-  id: string; 
+export interface MockInterviewQuestion {
+  id: string;
   questionText: string;
-  category?: InterviewQuestionCategory; 
+  category?: InterviewQuestionCategory;
   difficulty?: InterviewQuestionDifficulty;
 }
 
 export interface MockInterviewAnswer {
   questionId: string;
   questionText: string;
-  userAnswer: string; 
+  userAnswer: string;
   aiFeedback?: string;
-  aiScore?: number; 
+  aiScore?: number;
   strengths?: string[];
   areasForImprovement?: string[];
   suggestedImprovements?: string[];
-  isRecording?: boolean; 
+  isRecording?: boolean;
 }
 
 export interface GenerateOverallInterviewFeedbackOutput {
@@ -604,30 +604,30 @@ export interface GenerateOverallInterviewFeedbackOutput {
   keyStrengths: string[];
   keyAreasForImprovement: string[];
   finalTips: string[];
-  overallScore: number; 
+  overallScore: number;
 }
-export interface MockInterviewSession { 
+export interface MockInterviewSession {
   id: string;
   userId: string;
-  topic: string; 
-  description?: string; 
-  jobDescription?: string; 
-  questions: MockInterviewQuestion[]; 
-  answers: MockInterviewAnswer[]; 
-  overallFeedback?: GenerateOverallInterviewFeedbackOutput; 
-  overallScore?: number; 
-  status: 'pending' | 'in-progress' | 'completed'; 
+  topic: string;
+  description?: string;
+  jobDescription?: string;
+  questions: MockInterviewQuestion[];
+  answers: MockInterviewAnswer[];
+  overallFeedback?: GenerateOverallInterviewFeedbackOutput;
+  overallScore?: number;
+  status: 'pending' | 'in-progress' | 'completed';
   createdAt: string;
-  timerPerQuestion?: number; 
-  questionCategories?: InterviewQuestionCategory[]; 
-  difficulty?: InterviewQuestionDifficulty; 
-  
-  userQuizAnswers?: Record<string, string>; 
+  timerPerQuestion?: number;
+  questionCategories?: InterviewQuestionCategory[];
+  difficulty?: InterviewQuestionDifficulty;
+
+  userQuizAnswers?: Record<string, string>;
   quizScore?: number;
   quizPercentage?: number;
-  quizTimeTaken?: number; 
-  quizTotalTime?: number; 
-  quizCategoryStats?: Record<string, { correct: number; total: number; accuracy: number }>; 
+  quizTimeTaken?: number;
+  quizTotalTime?: number;
+  quizCategoryStats?: Record<string, { correct: number; total: number; accuracy: number }>;
   quizAnsweredCount?: number;
   quizMarkedForReviewCount?: number;
 }
@@ -636,27 +636,27 @@ export interface MockInterviewSession {
 export interface GenerateMockInterviewQuestionsInput {
   topic: string;
   jobDescription?: string;
-  numQuestions?: number; 
-  difficulty?: 'easy' | 'medium' | 'hard'; 
-  timerPerQuestion?: number; 
-  questionCategories?: InterviewQuestionCategory[]; 
+  numQuestions?: number;
+  difficulty?: 'easy' | 'medium' | 'hard';
+  timerPerQuestion?: number;
+  questionCategories?: InterviewQuestionCategory[];
 }
 export interface GenerateMockInterviewQuestionsOutput {
-  questions: MockInterviewQuestion[]; 
+  questions: MockInterviewQuestion[];
 }
 
 export interface EvaluateInterviewAnswerInput {
   questionText: string;
   userAnswer: string;
-  topic?: string; 
-  jobDescription?: string; 
+  topic?: string;
+  jobDescription?: string;
 }
 export interface EvaluateInterviewAnswerOutput {
-  feedback: string; 
+  feedback: string;
   strengths?: string[];
   areasForImprovement?: string[];
-  score: number; 
-  suggestedImprovements?: string[]; 
+  score: number;
+  suggestedImprovements?: string[];
 }
 
 export interface GenerateOverallInterviewFeedbackInput {
@@ -675,57 +675,57 @@ export const MOCK_INTERVIEW_STEPS: { id: MockInterviewStepId; title: string; des
 export interface QuizSession {
   id: string;
   userId: string;
-  questions: InterviewQuestion[]; 
-  userAnswers: Record<string, string>; 
-  score?: number; 
-  percentage?: number; 
-  startTime: string; 
-  endTime?: string; 
+  questions: InterviewQuestion[];
+  userAnswers: Record<string, string>;
+  score?: number;
+  percentage?: number;
+  startTime: string;
+  endTime?: string;
   status: 'in-progress' | 'completed';
-  title?: string; 
-  categoryStats?: Record<string, { correct: number; total: number; accuracy: number }>; 
-  timeTaken?: number; 
-  totalQuizTime?: number; 
+  title?: string;
+  categoryStats?: Record<string, { correct: number; total: number; accuracy: number }>;
+  timeTaken?: number;
+  totalQuizTime?: number;
   answeredCount?: number;
   markedForReviewCount?: number;
 }
 
 export type PracticeSessionStatus = 'SCHEDULED' | 'CANCELLED' | 'COMPLETED';
-export type PracticeSessionType = "friends" | "experts" | "ai"; 
+export type PracticeSessionType = "friends" | "experts" | "ai";
 
-export type DialogStep = 
-  | 'selectType' 
-  | 'selectTopics' 
-  | 'selectTimeSlot' 
-  | 'aiSetupBasic'   
+export type DialogStep =
+  | 'selectType'
+  | 'selectTopics'
+  | 'selectTimeSlot'
+  | 'aiSetupBasic'
   | 'aiSetupAdvanced'
-  | 'aiSetupCategories'; 
+  | 'aiSetupCategories';
 
 
 export interface PracticeSessionConfig {
   type: PracticeSessionType | null;
-  topics: string[]; 
+  topics: string[];
   dateTime: Date | null;
   friendEmail?: string;
   expertId?: string;
-  aiTopicOrRole?: string; 
+  aiTopicOrRole?: string;
   aiJobDescription?: string;
   aiNumQuestions?: number;
   aiDifficulty?: 'easy' | 'medium' | 'hard';
-  aiTimerPerQuestion?: number; 
-  aiQuestionCategories?: InterviewQuestionCategory[]; 
+  aiTimerPerQuestion?: number;
+  aiQuestionCategories?: InterviewQuestionCategory[];
 }
 
 
 export interface PracticeSession {
   id: string;
   userId: string;
-  date: string; 
+  date: string;
   category: "Practice with Friends" | "Practice with Experts" | "Practice with AI";
-  type: string; 
-  language: string; 
+  type: string;
+  language: string;
   status: PracticeSessionStatus;
-  notes?: string; 
+  notes?: string;
   aiNumQuestions?: number;
   aiDifficulty?: 'easy' | 'medium' | 'hard';
   aiTimerPerQuestion?: number;
@@ -750,7 +750,7 @@ export interface PlatformSettings {
   platformName: string;
   maintenanceMode: boolean;
   communityFeedEnabled: boolean;
-  autoModeratePosts: boolean; 
+  autoModeratePosts: boolean;
   jobBoardEnabled: boolean;
   maxJobPostingDays: number;
   gamificationEnabled: boolean;
@@ -765,16 +765,16 @@ export interface PlatformSettings {
   alumniConnectEnabled: boolean;
   defaultAppointmentCost: number;
   featureRequestsEnabled: boolean;
-  allowTenantCustomBranding: boolean; 
-  allowTenantEmailCustomization: boolean; 
+  allowTenantCustomBranding: boolean;
+  allowTenantEmailCustomization: boolean;
   defaultProfileVisibility: ProfileVisibility;
   maxResumeUploadsPerUser: number;
   defaultTheme: 'light' | 'dark';
   enablePublicProfilePages: boolean;
   sessionTimeoutMinutes: number;
-  maxEventRegistrationsPerUser?: number; 
-  globalAnnouncement?: string; 
-  pointsForAffiliateSignup?: number; 
+  maxEventRegistrationsPerUser?: number;
+  globalAnnouncement?: string;
+  pointsForAffiliateSignup?: number;
   walletEnabled?: boolean; // Added this field
 }
 
@@ -799,7 +799,7 @@ export interface Announcement {
   tenantId?: string; // Added to scope announcements for managers
 }
 
-export interface AtsFormattingIssue { 
+export interface AtsFormattingIssue {
   issue: string;
   recommendation: string;
 }
@@ -812,7 +812,7 @@ export interface AnalyzeResumeAndJobDescriptionInput {
 export interface SearchabilityDetails {
   hasPhoneNumber: boolean;
   hasEmail: boolean;
-  hasAddress?: boolean; 
+  hasAddress?: boolean;
   jobTitleMatchesJD: boolean;
   hasWorkExperienceSection: boolean;
   hasEducationSection: boolean;
@@ -829,6 +829,7 @@ export interface RecruiterTipItem {
 
 export interface AtsParsingConfidenceDetails {
     overall?: number;
+    // sections?: Record<string, number>; // Removed due to API schema error
     warnings?: string[];
 }
 
@@ -840,7 +841,7 @@ export interface QuantifiableAchievementDetails {
 
 export interface ActionVerbDetails {
     score?: number;
-    strongVerbsUsed?: string[]; 
+    strongVerbsUsed?: string[];
     weakVerbsUsed?: string[];
     overusedVerbs?: string[];
     suggestedStrongerVerbs?: { original: string; suggestion: string }[];
@@ -868,17 +869,17 @@ export interface AnalyzeResumeAndJobDescriptionOutput {
   overallQualityScore?: number;
   recruiterTips: RecruiterTipItem[];
   overallFeedback?: string;
-  
+
   searchabilityScore?: number;
   recruiterTipsScore?: number;
   formattingScore?: number;
   highlightsScore?: number;
   softSkillsScore?: number;
   identifiedSoftSkills?: string[];
-  
+
   searchabilityDetails?: SearchabilityDetails;
-  formattingDetails?: AtsFormattingIssue[]; 
-  
+  formattingDetails?: AtsFormattingIssue[];
+
   atsParsingConfidence?: AtsParsingConfidenceDetails;
   atsStandardFormattingComplianceScore?: number;
   standardFormattingIssues?: AtsFormattingIssue[];
@@ -990,6 +991,83 @@ export interface GenerateRegionSummaryOutput {
   summary: string;
 }
 
-export type Locale = 'en' | 'hi' | 'mr'; // Removed es, zh, vi for now
-export const locales: Locale[] = ['en', 'hi', 'mr']; // Removed es, zh, vi
-export const localeDisplayNames: Record<Locale
+export type CountyData = {
+  id: string;
+  name: string;
+  population?: number;
+  medianIncome?: number;
+  // Add other relevant data points as needed
+};
+
+export type Locale = 'en' | 'hi' | 'mr';
+export const locales: Locale[] = ['en', 'hi', 'mr'];
+export const localeDisplayNames: Record<Locale, string> = {
+  en: 'English',
+  hi: 'हिन्दी',
+  mr: 'मराठी',
+};
+export const localePrefix = 'as-needed'; // Or 'always', 'never'
+// Removed Live Interview Session types as per previous instruction
+// export type LiveInterviewSessionStatus = 'Scheduled' | 'InProgress' | 'Completed' | 'Cancelled';
+
+// export interface LiveInterviewParticipant {
+//   userId: string;
+//   name: string;
+//   role: 'interviewer' | 'candidate';
+//   profilePictureUrl?: string;
+// }
+
+// export interface RecordingReference {
+//   id: string;
+//   sessionId: string;
+//   startTime: string; // ISO date string
+//   durationSeconds: number;
+//   localStorageKey?: string; // Key for local storage if saved there initially
+//   cloudStorageUrl?: string; // URL if uploaded to cloud
+//   type: 'audio' | 'video'; // Type of recording
+//   fileName?: string;
+//   blobUrl?: string; // For temporary local playback
+// }
+
+// export interface LiveInterviewSession {
+//   id: string;
+//   tenantId: string;
+//   title: string;
+//   participants: LiveInterviewParticipant[];
+//   scheduledTime: string; // ISO date string
+//   actualStartTime?: string; // ISO date string
+//   actualEndTime?: string; // ISO date string
+//   status: LiveInterviewSessionStatus;
+//   meetingLink?: string;
+//   interviewTopics?: string[];
+//   notes?: string; // General notes about the session
+//   preSelectedQuestions?: MockInterviewQuestion[]; // Questions chosen beforehand
+//   aiSuggestedQuestionsLog?: Array<{ timestamp: string; contextSent: GenerateLiveInterviewQuestionsInput, suggestionsReceived: GenerateLiveInterviewQuestionsOutput['suggestedQuestions'] }>;
+//   recordingReferences?: RecordingReference[];
+// }
+
+// export const LiveInterviewSessionStatuses = ['Scheduled', 'InProgress', 'Completed', 'Cancelled'] as const;
+// export type LiveInterviewSessionStatus = typeof LiveInterviewSessionStatuses[number];
+// End of removed Live Interview Session types
+
+// Type for AI Flow: generate-live-interview-questions (Removed)
+// export interface GenerateLiveInterviewQuestionsInput {
+//   jobTitle?: string;
+//   interviewTopics?: string[];
+//   companyCulture?: string;
+//   previousQuestions?: string[];
+//   candidateSkills?: string[];
+//   difficulty?: InterviewQuestionDifficulty;
+//   count?: number; // 1-5
+// }
+
+// export interface SuggestedQuestion {
+//   questionText: string;
+//   category?: InterviewQuestionCategory;
+//   followUpSuggestions?: string[];
+// }
+
+// export interface GenerateLiveInterviewQuestionsOutput {
+//   suggestedQuestions: SuggestedQuestion[];
+// }
+// End of removed generate-live-interview-questions types

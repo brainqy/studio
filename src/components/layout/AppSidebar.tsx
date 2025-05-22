@@ -1,12 +1,13 @@
+
 "use client";
 
 import { Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarMenuItem, SidebarMenuButton, SidebarSeparator, SidebarGroup, SidebarGroupLabel, SidebarMenu } from "@/components/ui/sidebar";
-import { Aperture, Award, BarChart2, BookOpen, Briefcase, Building2, CalendarDays, FileText, GalleryVerticalEnd, GitFork, Gift, Handshake, History, Home, Layers3, ListChecks, MessageSquare, Settings, ShieldAlert, ShieldQuestion, User, Users, Wallet, Zap, UserCog, BotMessageSquare, Target, Users2, BookText as BookTextIcon, Activity, Edit, FileType, Brain, FilePlus2, Trophy, Settings2Icon, Puzzle as PuzzleIcon, Mic, Server, Megaphone, Video, PlusCircle } from "lucide-react";
+import { Aperture, Award, BarChart2, BookOpen, Briefcase, Building2, CalendarDays, FileText, GalleryVerticalEnd, GitFork, Gift, Handshake, History, Home, Layers3, ListChecks, MessageSquare, Settings, ShieldAlert, ShieldQuestion, User, Users, Wallet, Zap, UserCog, BotMessageSquare, Target, Users2, BookText as BookTextIcon, Activity, Edit, FileType, Brain, FilePlus2, Trophy, Settings2Icon, Puzzle as PuzzleIcon, Mic, Server, Megaphone } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { sampleUserProfile } from "@/lib/sample-data";
-import { useLocale } from 'next-intl';
-import type { Locale } from '@/i18n-config';
+// Removed: import { useLocale } from 'next-intl';
+// Removed: import type { Locale } from '@/i18n-config';
 
 const navItems = [
   { href: "/community-feed", label: "Community Feed", icon: MessageSquare },
@@ -15,14 +16,6 @@ const navItems = [
   { href: "/job-board", label: "Job Board", icon: Aperture },
   { href: "/job-tracker", label: "Job Tracker", icon: Briefcase },
   { href: "/interview-prep", label: "Practice Hub", icon: Brain },
-  // { // Live Interviews section removed
-  //   label: "Live Interviews",
-  //   icon: Video,
-  //   subItems: [
-  //     { href: "/live-interview/new", label: "Start New Interview", icon: PlusCircle },
-  //     { href: "/interview-queue", label: "Interview Queue", icon: ListChecks },
-  //   ]
-  // },
   {
     label: "AI Tools",
     icon: Zap,
@@ -66,7 +59,7 @@ const blogItems = [
 ];
 
 const adminItems = [
-   { href: "/dashboard", label: "Admin Dashboard", icon: Activity },
+   { href: "/admin/dashboard", label: "Admin Dashboard", icon: Activity }, // Corrected path if admin dashboard is different
    { href: "/admin/tenants", label: "Tenant Management", icon: Building2 },
    { href: "/admin/tenant-onboarding", label: "Tenant Onboarding", icon: Layers3 },
    { href: "/admin/user-management", label: "User Management", icon: UserCog },
@@ -78,26 +71,23 @@ const adminItems = [
    { href: "/admin/gallery-management", label: "Gallery Mgt.", icon: GalleryVerticalEnd },
    { href: "/admin/blog-settings", label: "Blog Settings", icon: Settings2Icon },
    { href: "/admin/platform-settings", label: "Platform Settings", icon: Server },
-   // { href: "/interview-queue", label: "Interview Queue (Admin)", icon: ListChecks }, // Removed
 ];
 
 export function AppSidebar() {
-  const pathnameWithoutLocale = usePathname();
-  const locale = useLocale() as Locale;
+  const pathname = usePathname(); // Direct pathname, no locale stripping needed now
   const currentUser = sampleUserProfile;
   
-  const getLocalePrefixedPath = (path: string) => `/${locale}${path}`;
+  // Removed getLocalePrefixedPath function
 
   const renderMenuItem = (item: any, isSubItem = false) => {
-    const href = item.href ? getLocalePrefixedPath(item.href) : undefined;
+    const href = item.href; // Direct href
     let isActive;
     if (item.href === "/dashboard" && item.label !== "Admin Dashboard") { 
-        isActive = pathnameWithoutLocale === href && currentUser.role !== 'admin';
-    } else if (item.href === "/dashboard" && item.label === "Admin Dashboard") {
-        isActive = pathnameWithoutLocale === href && currentUser.role === 'admin';
-    }
-     else {
-        isActive = href ? pathnameWithoutLocale.startsWith(href) : false;
+        isActive = pathname === href && currentUser.role !== 'admin';
+    } else if (item.href === "/admin/dashboard" && item.label === "Admin Dashboard") { // Ensure admin dashboard path matches
+        isActive = pathname === href && currentUser.role === 'admin';
+    } else {
+        isActive = href ? pathname.startsWith(href) : false;
     }
     
     if (item.adminOnly && currentUser.role !== 'admin') {
@@ -129,7 +119,7 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon" variant="sidebar" side="left">
       <SidebarHeader className="p-4 border-b border-sidebar-border">
-        <Link href={getLocalePrefixedPath("/dashboard")} className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
+        <Link href={"/dashboard"} className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
           <FileText className="h-7 w-7 text-primary" />
           <span className="font-semibold text-lg text-sidebar-foreground group-data-[collapsible=icon]:hidden">ResumeMatch</span>
         </Link>
@@ -179,12 +169,13 @@ export function AppSidebar() {
               <SidebarMenu>
                 {adminItems.filter(item => {
                     if(currentUser.role === 'manager') {
+                        // For managers, ensure the admin dashboard link is also adjusted or handled
+                        if (item.href === "/admin/dashboard") return true; // Assuming manager can see a version of admin dashboard
                         const managerAccessible = [
                             "/admin/user-management", 
                             "/admin/content-moderation",
                             "/admin/gallery-management",
                             "/admin/announcements",
-                            // "/interview-queue", // Removed
                         ];
                         return managerAccessible.includes(item.href);
                     }
