@@ -52,6 +52,7 @@ const commentFormSchema = z.object({
 type CommentFormData = z.infer<typeof commentFormSchema>;
 
 const friendEmailSchema = z.string().email("Please enter a valid email address.");
+const optionLetters = ['A', 'B', 'C', 'D', 'E', 'F'];
 
 
 export default function InterviewPracticeHubPage() { 
@@ -109,16 +110,15 @@ export default function InterviewPracticeHubPage() {
     reset: resetQuestionForm,
     setValue: setQuestionFormValue,
     watch: watchQuestionForm,
-    formState, 
+    formState: { errors: questionFormErrors } // Corrected: Destructure 'errors' and alias it
   } = useForm<QuestionFormData>({
     resolver: zodResolver(questionFormSchema),
     defaultValues: { isMCQ: false, mcqOptions: ["", "", "", ""], category: 'Common', difficulty: 'Medium' }
   });
-  const questionFormErrors = questionFormControl.formState.errors; 
   const isMCQSelected = watchQuestionForm("isMCQ");
 
 
-  const upcomingSessions = practiceSessions.filter(s => s.status === 'SCHEDULED' && (dateIsFuture(parseISO(s.date)) || isPast(addMinutes(parseISO(s.date), 60)) ) ); // Allow joining if within 1 hour past start
+  const upcomingSessions = practiceSessions.filter(s => s.status === 'SCHEDULED' && (dateIsFuture(parseISO(s.date)) || isPast(addMinutes(parseISO(s.date), 60)) ) ); 
   const allUserSessions = practiceSessions; 
   const cancelledSessions = practiceSessions.filter(s => s.status === 'CANCELLED');
 
@@ -154,12 +154,10 @@ export default function InterviewPracticeHubPage() {
         }
         setFriendEmailError(null);
         toast({ title: "Invitation Sent (Mock)", description: `Invitation sent to ${practiceSessionConfig.friendEmail}.` });
-        // For friends, we might create a session and then they get a link to join.
-        // Or directly go to a waiting room. For now, just closes.
         setIsSetupDialogOpen(false); 
         return;
       }
-      setDialogStep('selectTopics'); // For experts
+      setDialogStep('selectTopics'); 
     } else if (dialogStep === 'selectTopics') { 
       if (practiceSessionConfig.topics.length === 0) {
         toast({ title: "Error", description: "Please select at least one topic.", variant: "destructive" });
@@ -214,12 +212,11 @@ export default function InterviewPracticeHubPage() {
             date: practiceSessionConfig.dateTime.toISOString(),
             category: "Practice with Experts",
             type: practiceSessionConfig.topics.join(', ') || "General",
-            language: "English", // Assuming English for now
+            language: "English", 
             status: "SCHEDULED",
             notes: `Scheduled expert session for topics: ${practiceSessionConfig.topics.join(', ')}.`,
         };
         setPracticeSessions(prev => [newSession, ...prev]);
-        // Update global sample data for persistence in demo
         samplePracticeSessions.unshift(newSession);
         toast({ title: "Expert Session Booked (Mock)", description: `Session for ${practiceSessionConfig.topics.join(', ')} on ${format(practiceSessionConfig.dateTime, 'PPp')} scheduled.` });
     } else if (practiceSessionConfig.type === 'ai') {
@@ -252,7 +249,7 @@ export default function InterviewPracticeHubPage() {
 
 
   const handleCancelPracticeSession = (sessionId: string) => {
-    const updater = (session: PracticeSession) => session.id === sessionId ? { ...session, status: 'CANCELLED' as PracticeSessionStatus } : session;
+    const updater = (session: PracticeSession) => session.id === sessionId ? { ...session, status: 'CANCELLED' as PracticeSession['status'] } : session;
     setPracticeSessions(prev => prev.map(updater));
     const globalIndex = samplePracticeSessions.findIndex(s => s.id === sessionId);
     if (globalIndex !== -1) samplePracticeSessions[globalIndex].status = 'CANCELLED';
@@ -486,7 +483,7 @@ export default function InterviewPracticeHubPage() {
 
   const renderSessionCard = (session: PracticeSession) => {
     const sessionDate = parseISO(session.date);
-    const canJoin = session.status === 'SCHEDULED' && (dateIsFuture(sessionDate) || isPast(addMinutes(sessionDate, -60))); // Allow joining up to 1hr after start
+    const canJoin = session.status === 'SCHEDULED' && (dateIsFuture(sessionDate) || isPast(addMinutes(sessionDate, -60))); 
 
     return (
     <Card key={session.id} className="shadow-md hover:shadow-lg transition-shadow">
@@ -705,14 +702,15 @@ export default function InterviewPracticeHubPage() {
                     paginatedBankQuestions.map(q => (
                     <Accordion key={q.id} type="single" collapsible className="border rounded-md mb-2 bg-card shadow-sm hover:shadow-md transition-shadow">
                         <AccordionItem value={`item-${q.id}`} className="border-b-0">
-                          <AccordionTrigger asChild className="px-4 py-3 text-left text-sm font-medium group hover:bg-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 data-[state=open]:bg-secondary/50 data-[state=open]:rounded-b-none rounded-t-md">
+                          <AccordionTrigger className="px-4 py-3 text-left text-sm font-medium group hover:bg-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 data-[state=open]:bg-secondary/50 data-[state=open]:rounded-b-none rounded-t-md">
                             <div className="flex items-start flex-1 gap-3 w-full">
-                                <div onClick={(e) => e.stopPropagation()} className="flex items-center pt-0.5">
+                                <div className="flex items-center pt-0.5">
                                     <Checkbox
                                         id={`select-q-${q.id}`}
                                         checked={selectedQuestionsForQuiz.has(q.id)}
                                         onCheckedChange={() => handleToggleQuestionForQuiz(q.id)}
                                         aria-label={`Select question: ${q.question}`}
+                                        onClick={(e) => e.stopPropagation()} 
                                     />
                                 </div>
                               <div className="flex-1 text-left">
@@ -729,17 +727,17 @@ export default function InterviewPracticeHubPage() {
                                 </div>
                               </div>
                               <div className="flex items-center gap-1 ml-2 flex-shrink-0">
-                                <Button asChild variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); handleToggleBookmarkQuestion(q.id); }}>
-                                  <span><BookmarkIcon className={cn("h-4 w-4", q.bookmarkedBy?.includes(currentUser.id) && "fill-yellow-400 text-yellow-500")}/></span>
+                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); handleToggleBookmarkQuestion(q.id); }}>
+                                  <BookmarkIcon className={cn("h-4 w-4", q.bookmarkedBy?.includes(currentUser.id) && "fill-yellow-400 text-yellow-500")}/>
                                 </Button>
                                 {(q.createdBy === currentUser.id || currentUser.role === 'admin') && (
-                                  <Button asChild variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openEditQuestionDialog(q); }}>
-                                    <span><Edit3 className="h-4 w-4"/></span>
+                                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openEditQuestionDialog(q); }}>
+                                    <Edit3 className="h-4 w-4"/>
                                   </Button>
                                 )}
                                 {currentUser.role === 'admin' && (
-                                  <Button asChild variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:bg-destructive/10" onClick={(e) => { e.stopPropagation(); handleDeleteQuestion(q.id);}}>
-                                     <span><XCircle className="h-4 w-4"/></span>
+                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:bg-destructive/10" onClick={(e) => { e.stopPropagation(); handleDeleteQuestion(q.id);}}>
+                                     <XCircle className="h-4 w-4"/>
                                   </Button>
                                 )}
                                 <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180" />
@@ -756,7 +754,7 @@ export default function InterviewPracticeHubPage() {
                                 <p className="text-xs font-semibold text-muted-foreground">MCQ Options:</p>
                                 {q.mcqOptions.map((opt, i) => (
                                     <p key={i} className={cn("text-xs pl-2", q.correctAnswer === opt && "font-bold text-green-600 flex items-center gap-1")}>
-                                    {q.correctAnswer === opt && <CheckCircle className="h-3 w-3"/>} {String.fromCharCode(65 + i)}. {opt}
+                                    {q.correctAnswer === opt && <CheckCircle className="h-3 w-3"/>} {optionLetters[i]}. {opt}
                                     </p>
                                 ))}
                                 </div>
