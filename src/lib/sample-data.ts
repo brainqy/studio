@@ -11,6 +11,8 @@ export let sampleJobApplications: JobApplication[] = [
   { id: '4', tenantId: 'Brainqy', userId: 'managerUser1', companyName: 'Web Wizards', jobTitle: 'UX Designer', status: 'Rejected', dateApplied: '2024-06-20', notes: 'Did not proceed after initial screening.', location: 'Austin, TX', },
   { id: '5', tenantId: 'Brainqy', userId: 'managerUser1', companyName: 'CloudNetics', jobTitle: 'Cloud Engineer', status: 'Saved', dateApplied: '2024-07-05', notes: 'Interested, need to tailor resume.', location: 'Boston, MA', sourceJobOpeningId: 'job-board-cloudnetics-01' },
   { id: '6', tenantId: 'Brainqy', userId: 'managerUser1', companyName: 'AI Future', jobTitle: 'Machine Learning Eng.', status: 'Saved', dateApplied: '2024-07-15', notes: 'From scan report, good match.', location: 'Seattle, WA', sourceJobOpeningId: 'job-board-aifuture-02' },
+  { id: '7', tenantId: 'Brainqy', userId: 'alumni1', companyName: 'Innovatech Solutions Inc.', jobTitle: 'Senior Frontend Developer', status: 'Applied', dateApplied: '2024-07-20', notes: 'Applied using AI generated cover letter.', location: 'San Francisco, CA', reminderDate: new Date(Date.now() + 86400000 * 5).toISOString(), applicationUrl: 'https://example.com/innovatech/apply' },
+  { id: '8', tenantId: 'Brainqy', userId: 'alumni1', companyName: 'Web Solutions Co.', jobTitle: 'Frontend Developer', status: 'Interviewing', dateApplied: '2024-07-18', notes: 'Technical interview next week.', location: 'Remote', applicationUrl: 'https://example.com/websolutions/apply' },
 ];
 
 export let sampleAlumni: AlumniProfile[] = [
@@ -25,7 +27,7 @@ export let sampleAlumni: AlumniProfile[] = [
     university: 'State University',
     skills: ['Java', 'Python', 'Machine Learning', 'Cloud Computing', 'Algorithms'],
     email: "alice.wonderland@example.com",
-    role: 'user', 
+    role: 'admin', 
     status: 'active',
     lastLogin: new Date(Date.now() - 86400000 * 1).toISOString(), 
     interests: ['Hiking', 'Photography', 'Open Source'],
@@ -46,7 +48,7 @@ export let sampleAlumni: AlumniProfile[] = [
     university: 'Tech Institute',
     skills: ['Product Management', 'Agile', 'UX Research', 'Roadmapping'],
     email: "bob.builder@example.com",
-    role: 'manager', 
+    role: 'user', 
     status: 'active',
     lastLogin: new Date(Date.now() - 86400000 * 2).toISOString(), 
     interests: ['Woodworking', 'Community Volunteering', 'Travel'],
@@ -57,8 +59,8 @@ export let sampleAlumni: AlumniProfile[] = [
     isDistinguished: true,
   },
   {
-    id: 'alumni3',
-    tenantId: 'tenant-2', 
+    id: 'alumni3', // Charlie Brown
+    tenantId: 'tenant-2', // Moved to tenant-2 for manager testing
     name: 'Charlie Brown',
     profilePictureUrl: 'https://picsum.photos/seed/charlie/200/200',
     currentJobTitle: 'Data Scientist',
@@ -101,14 +103,16 @@ export let sampleAlumni: AlumniProfile[] = [
 ];
 
 export const sampleActivities: Activity[] = [
-  { id: 'act1', tenantId: 'Brainqy', userId: 'user1', timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(), description: 'Uploaded resume "Software_Engineer_Resume.pdf".' },
-  { id: 'act2', tenantId: 'Brainqy', userId: 'user1', timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(), description: 'Analyzed resume for "Senior Product Manager" role at Innovate LLC.' },
-  { id: 'act3', tenantId: 'Brainqy', userId: 'user1', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), description: 'Connected with Bob The Builder.' },
-  { id: 'act4', tenantId: 'Brainqy', userId: 'user1', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(), description: 'Tracked new job application for "Data Scientist" at Data Corp.' },
-  { id: 'act5', tenantId: 'Brainqy', userId: 'user1', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(), description: 'Earned the "Profile Pro" badge.' },
-  { id: 'act6', tenantId: 'Brainqy', userId: 'user1', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), description: 'Posted in Community Feed: "Interview Tips?".' },
+  { id: 'act1', tenantId: 'Brainqy', userId: 'alumni1', timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(), description: 'Uploaded resume "Software_Engineer_Resume.pdf".' },
+  { id: 'act2', tenantId: 'Brainqy', userId: 'alumni1', timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(), description: 'Analyzed resume for "Senior Product Manager" role at Innovate LLC.' },
+  { id: 'act3', tenantId: 'Brainqy', userId: 'alumni1', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), description: 'Connected with Bob The Builder.' },
+  { id: 'act4', tenantId: 'Brainqy', userId: 'alumni1', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(), description: 'Tracked new job application for "Data Scientist" at Data Corp.' },
+  { id: 'act5', tenantId: 'Brainqy', userId: 'alumni1', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(), description: 'Earned the "Profile Pro" badge.' },
+  { id: 'act6', tenantId: 'Brainqy', userId: 'alumni1', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), description: 'Posted in Community Feed: "Interview Tips?".' },
   { id: 'act7', tenantId: 'Brainqy', userId: 'alumni2', timestamp: new Date(Date.now() - 1000 * 60 * 15).toISOString(), description: 'Shared a new job opening: "Junior Developer at Google".' },
   { id: 'act8', tenantId: 'Brainqy', userId: 'alumni1', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString(), description: 'Commented on "Interview Tips?" post.' },
+  { id: 'act9', tenantId: 'tenant-2', userId: 'managerUser1', timestamp: new Date(Date.now() - 1000 * 60 * 10).toISOString(), description: 'Published a new announcement for Tenant-2.' },
+  { id: 'act10', tenantId: 'Brainqy', userId: 'alumni4', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 1).toISOString(), description: 'Registered for "Intro to Cloud Native" workshop.' },
 ];
 
 export let sampleCommunityPosts: CommunityPost[] = [ 
@@ -147,9 +151,9 @@ export let sampleCommunityPosts: CommunityPost[] = [
   { 
     id: 'post3', 
     tenantId: 'Brainqy', 
-    userId: 'managerUser1', 
-    userName: 'Manager Mike', 
-    userAvatar: 'https://avatar.vercel.sh/managermike.png', 
+    userId: 'alumni1', 
+    userName: 'Alice Wonderland', 
+    userAvatar: 'https://picsum.photos/seed/alice/50/50', 
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(), 
     content: 'Join our upcoming workshop: Intro to Cloud Native! Learn the fundamentals and best practices from industry experts.', 
     type: 'event', 
@@ -162,7 +166,7 @@ export let sampleCommunityPosts: CommunityPost[] = [
     moderationStatus: 'visible', 
     flagCount: 0,
     comments: [
-       { id: 'comment3-1', userId: 'alumni1', userName: 'Alice Wonderland', userAvatar: 'https://picsum.photos/seed/alice/50/50', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), text: 'Sounds interesting! Will there be a recording?' },
+       { id: 'comment3-1', userId: 'alumni2', userName: 'Bob The Builder', userAvatar: 'https://picsum.photos/seed/bob/50/50', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), text: 'Sounds interesting! Will there be a recording?' },
     ]
   },
   { 
@@ -198,13 +202,14 @@ export let sampleCommunityPosts: CommunityPost[] = [
 export const sampleFeatureRequests: FeatureRequest[] = [
   { id: 'fr1', tenantId: 'Brainqy', userId: 'alumni1', userName: 'Alice Wonderland', userAvatar: 'https://picsum.photos/seed/alice/50/50', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(), title: 'Integrate with LinkedIn for profile import', description: 'It would be great to automatically pull resume data from LinkedIn.', status: 'Pending', upvotes: 15 },
   { id: 'fr2', tenantId: 'Brainqy', userId: 'alumni2', userName: 'Bob The Builder', userAvatar: 'https://picsum.photos/seed/bob/50/50', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 72).toISOString(), title: 'Dark mode for the dashboard', description: 'A dark theme option would be easier on the eyes.', status: 'In Progress', upvotes: 28 },
+  { id: 'fr3', tenantId: 'tenant-2', userId: 'managerUser1', userName: 'Manager Mike', userAvatar: 'https://avatar.vercel.sh/managermike.png', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), title: 'Tenant-specific branding options', description: 'Allow tenant managers to customize logos and color schemes.', status: 'Completed', upvotes: 42 },
 ];
 
 export let sampleEvents: GalleryEvent[] = [ 
-  { id: 'event1', tenantId: 'Brainqy', title: 'Annual Alumni Meet 2023', date: '2023-10-15T10:00:00Z', imageUrls: ['https://picsum.photos/seed/event1/600/400', 'https://picsum.photos/seed/event1-extra1/600/400'], description: 'A wonderful evening connecting with fellow alumni.' , dataAiHint: 'conference networking', approved: true, createdByUserId: 'alumni1', attendeeUserIds: ['managerUser1', 'alumni2', 'alumni4']},
-  { id: 'event2', tenantId: 'Brainqy', title: 'Tech Talk Series: AI Today', date: '2024-03-22T10:00:00Z', imageUrls: ['https://picsum.photos/seed/event2/600/400'], description: 'Insightful talks on the future of Artificial Intelligence.' , dataAiHint: 'presentation seminar', approved: true, createdByUserId: 'managerUser1', attendeeUserIds: ['alumni1', 'alumni2']},
-  { id: 'event3', tenantId: 'Brainqy', title: 'Campus Job Fair Spring 2024', date: '2024-04-10T10:00:00Z', imageUrls: ['https://picsum.photos/seed/event3/600/400', 'https://picsum.photos/seed/event3-extra2/600/400', 'https://picsum.photos/seed/event3-extra3/600/400'], description: 'Connecting students with top employers.', dataAiHint: 'job fair students', approved: false, createdByUserId: 'managerUser1', attendeeUserIds: ['managerUser1', 'alumni4'] },
-  { id: 'event4', tenantId: 'tenant-2', title: 'Tenant 2 Networking Mixer', date: '2024-05-10T10:00:00Z', imageUrls: ['https://picsum.photos/seed/event4/600/400'], description: 'Exclusive networking event for Corporate Partner Inc. members.', dataAiHint: 'corporate networking', approved: true, createdByUserId: 'managerUser1', attendeeUserIds: ['alumni3', 'managerUser1'] },
+  { id: 'event1', tenantId: 'Brainqy', title: 'Annual Alumni Meet 2023', date: '2023-10-15T10:00:00Z', imageUrls: ['https://placehold.co/600x400.png', 'https://placehold.co/600x400.png'], description: 'A wonderful evening connecting with fellow alumni.' , dataAiHint: 'conference networking', approved: true, createdByUserId: 'alumni1', attendeeUserIds: ['managerUser1', 'alumni2', 'alumni4']},
+  { id: 'event2', tenantId: 'Brainqy', title: 'Tech Talk Series: AI Today', date: '2024-03-22T10:00:00Z', imageUrls: ['https://placehold.co/600x400.png'], description: 'Insightful talks on the future of Artificial Intelligence.' , dataAiHint: 'presentation seminar', approved: true, createdByUserId: 'managerUser1', attendeeUserIds: ['alumni1', 'alumni2']},
+  { id: 'event3', tenantId: 'Brainqy', title: 'Campus Job Fair Spring 2024', date: '2024-04-10T10:00:00Z', imageUrls: ['https://placehold.co/600x400.png', 'https://placehold.co/600x400.png', 'https://placehold.co/600x400.png'], description: 'Connecting students with top employers.', dataAiHint: 'job fair students', approved: false, createdByUserId: 'managerUser1', attendeeUserIds: ['managerUser1', 'alumni4'] },
+  { id: 'event4', tenantId: 'tenant-2', title: 'Tenant 2 Networking Mixer', date: '2024-05-10T10:00:00Z', imageUrls: ['https://placehold.co/600x400.png'], description: 'Exclusive networking event for Corporate Partner Inc. members.', dataAiHint: 'corporate networking', approved: true, createdByUserId: 'managerUser1', attendeeUserIds: ['alumni3', 'managerUser1'] },
 ];
 
 export const sampleJobOpenings: JobOpening[] = [
@@ -215,9 +220,8 @@ export const sampleJobOpenings: JobOpening[] = [
   { id: 'job-board-aifuture-02', tenantId: 'Brainqy', title: 'Machine Learning Eng.', company: 'AI Future', postedByAlumniId: 'alumni3', alumniName: 'Charlie Brown', description: 'Work on cutting-edge ML projects. Strong Python and TensorFlow/PyTorch skills needed.', datePosted: '2024-07-14', location: 'Seattle, WA', type: 'Full-time' },
 ];
 
-// Logged-in user for testing. CHANGE THIS to test different roles.
 export let sampleUserProfile: UserProfile = {
-  id: 'managerUser1', // Manager Mike from tenant-2
+  id: 'managerUser1', 
   tenantId: 'tenant-2', 
   role: 'manager', 
   name: 'Manager Mike', 
@@ -252,30 +256,30 @@ export let sampleUserProfile: UserProfile = {
   profilePictureUrl: 'https://avatar.vercel.sh/managermike.png', 
   interests: ['Leadership Development', 'Corporate Strategy', 'Golf'], 
   offersHelpWith: [AreasOfSupport[0], AreasOfSupport[2], AreasOfSupport[8]], 
-  appointmentCoinCost: 0, // Managers might not have a cost to book
+  appointmentCoinCost: 0,
   resumeText: `Manager Mike
-  Email: manager.mike@tenant2.com | LinkedIn: linkedin.com/in/managermike | Mobile: +15552223333
+Email: manager.mike@tenant2.com | LinkedIn: linkedin.com/in/managermike | Mobile: +15552223333
 
-  Summary:
-  Results-oriented Engagement Lead with 15 years of experience in fostering alumni relations and driving community growth for Corporate Partner Inc. (Tenant-2). Expertise in strategic planning, team leadership, and project management. Passionate about creating impactful programs that connect alumni and enhance their professional development.
+Summary:
+Results-oriented Engagement Lead with 15 years of experience in fostering alumni relations and driving community growth for Corporate Partner Inc. (Tenant-2). Expertise in strategic planning, team leadership, and project management. Passionate about creating impactful programs that connect alumni and enhance their professional development.
 
-  Experience:
-  Engagement Lead, Corporate Partner Inc. (Tenant-2) (Present)
-  - Spearhead alumni engagement strategies and initiatives for Tenant-2.
-  - Manage a team to organize networking events, mentorship programs, and communication campaigns.
-  - Develop and implement programs to increase alumni participation and satisfaction.
-  - Collaborate with stakeholders to align alumni activities with organizational goals.
+Experience:
+Engagement Lead, Corporate Partner Inc. (Tenant-2) (Present)
+- Spearhead alumni engagement strategies and initiatives for Tenant-2.
+- Manage a team to organize networking events, mentorship programs, and communication campaigns.
+- Develop and implement programs to increase alumni participation and satisfaction.
+- Collaborate with stakeholders to align alumni activities with organizational goals.
 
-  Senior Project Manager, Global Solutions Ltd. (Previous)
-  - Led cross-functional teams to deliver complex projects on time and within budget.
-  - Managed stakeholder expectations and communication across all project phases.
+Senior Project Manager, Global Solutions Ltd. (Previous)
+- Led cross-functional teams to deliver complex projects on time and within budget.
+- Managed stakeholder expectations and communication across all project phases.
 
-  Education:
-  Bachelor of Business Administration (BBA), Business School of Excellence (2003 - 2007)
+Education:
+Bachelor of Business Administration (BBA), Business School of Excellence (2003 - 2007)
 
-  Skills:
-  Team Leadership, Project Management, Alumni Relations, Strategic Planning, Stakeholder Management, Event Management, Communication, Public Speaking, Data Analysis (for engagement tracking).
-  `, 
+Skills:
+Team Leadership, Project Management, Alumni Relations, Strategic Planning, Stakeholder Management, Event Management, Communication, Public Speaking, Data Analysis (for engagement tracking).
+`, 
   careerInterests: 'Executive Leadership, Organizational Development, Alumni Network Growth', 
   xpPoints: 3200, 
   dailyStreak: 15, 
@@ -293,40 +297,103 @@ export let sampleUserProfile: UserProfile = {
 
 
 export const samplePlatformUsers: UserProfile[] = [
-  {
+  { // Alice Wonderland (Admin)
     id: 'alumni1',
-    tenantId: 'Brainqy',
-    name: 'Alice Wonderland',
-    email: "alice.wonderland@example.com",
-    role: 'admin', // Alice is now a platform admin
+    tenantId: 'Brainqy', 
+    role: 'admin', 
+    name: 'Alice Wonderland', 
+    email: 'alice.wonderland@example.com', 
     status: 'active',
-    lastLogin: new Date(Date.now() - 86400000 * 1).toISOString(),
-    profilePictureUrl: 'https://picsum.photos/seed/alice/200/200',
-    currentJobTitle: 'Senior Software Engineer',
-    company: 'Google',
-    shortBio: 'Passionate about AI and cloud computing. Graduated in 2015.',
-    university: 'State University',
-    skills: ['Java', 'Python', 'Machine Learning', 'Cloud Computing', 'Algorithms'],
-    interests: ['Hiking', 'Photography', 'Open Source'],
-    offersHelpWith: [AreasOfSupport[0], AreasOfSupport[2], AreasOfSupport[4]],
-    appointmentCoinCost: 10,
-    xpPoints: 2500,
-    createdAt: new Date(Date.now() - 86400000 * 365).toISOString(),
+    lastLogin: new Date(Date.now() - 86400000 * 0.5).toISOString(), // Active more recently
+    dateOfBirth: '1993-03-15', 
+    gender: 'Female', 
+    mobileNumber: '+15551112222', 
+    currentAddress: '123 Main St, Anytown, CA, USA', 
+    graduationYear: '2015', 
+    degreeProgram: 'Master of Science (M.Sc)', 
+    department: 'Computer Science', 
+    currentJobTitle: 'Senior Software Engineer', 
+    company: 'Google', 
+    currentOrganization: 'Google', 
+    industry: 'IT/Software', 
+    workLocation: 'Mountain View, CA', 
+    linkedInProfile: 'https://linkedin.com/in/alicewonder', 
+    yearsOfExperience: '7', 
+    skills: ['Java', 'Python', 'Machine Learning', 'Cloud Computing', 'Algorithms', 'React', 'Next.js'], 
+    areasOfSupport: ['Mentoring Students', 'Sharing Job Referrals', 'Guest Lecturing'], 
+    timeCommitment: '1-2 hours', 
+    preferredEngagementMode: 'Online', 
+    otherComments: 'Happy to help with technical interview prep!', 
+    lookingForSupportType: undefined, 
+    helpNeededDescription: undefined, 
+    shareProfileConsent: true, 
+    featureInSpotlightConsent: true,
+    shortBio: 'Passionate about AI and cloud computing. Graduated in 2015. Currently a Senior Software Engineer at Google.', 
+    university: 'State University', 
+    profilePictureUrl: 'https://picsum.photos/seed/alice/200/200', 
+    interests: ['Hiking', 'Photography', 'Open Source Contributions', 'AI Ethics'], 
+    offersHelpWith: [AreasOfSupport[0], AreasOfSupport[2], AreasOfSupport[4]], 
+    appointmentCoinCost: 10, 
+    resumeText: `Alice Wonderland
+(123) 456-7890 | alice.wonderland@email.com | linkedin.com/in/alicewonder | github.com/alicew | alicew.dev
+
+Summary
+Highly skilled Senior Software Engineer with 7+ years of experience at Google, specializing in AI-driven cloud solutions and distributed systems. Proven track record of leading impactful projects, mentoring junior engineers, and contributing to open-source communities. Seeking to leverage expertise in a challenging role that pushes the boundaries of technology.
+
+Skills
+Languages: Java, Python, Go, C++, JavaScript, TypeScript
+Frameworks/Libraries: Spring Boot, Django, React, Next.js, TensorFlow, PyTorch, Kubernetes, Docker
+Databases: PostgreSQL, MongoDB, Cassandra
+Cloud: Google Cloud Platform (GCP), AWS
+Methodologies: Agile, Scrum, TDD, CI/CD
+Other: Distributed Systems, Machine Learning, Natural Language Processing, Microservices, System Design
+
+Experience
+Senior Software Engineer | Google | Mountain View, CA | June 2018 – Present
+- Led a team of 5 engineers in developing and launching a new machine learning platform on GCP, used by 10+ internal teams and reducing data processing time by 40%.
+- Designed and implemented scalable microservices for real-time data ingestion and analysis, handling over 1 million requests per second.
+- Contributed core components to Google's internal AI framework, improving model training efficiency by 25%.
+- Mentored and onboarded 8 junior engineers, receiving consistently positive feedback.
+- Presented research on distributed AI systems at 3 internal Google tech talks.
+
+Software Engineer | Tech Startup Inc. | San Francisco, CA | May 2015 – May 2018
+- Developed key features for a SaaS analytics platform using Java, Spring Boot, and React.
+- Optimized database queries, reducing average API response time by 200ms.
+- Implemented a CI/CD pipeline using Jenkins and Docker, automating build and deployment processes.
+
+Education
+Master of Science in Computer Science | State University | Berkeley, CA | May 2015
+- Thesis: "Scalable Architectures for Real-time Machine Learning"
+Bachelor of Science in Computer Science | State University | Berkeley, CA | May 2013
+- Graduated Summa Cum Laude
+
+Projects
+Open-Source AI Library (Contributor) | github.com/alicew/ai-lib
+- Contributed modules for natural language understanding and sentiment analysis.
+
+Publications
+- Wonderland, A. et al. (2020). "Efficient Data Pipelines for Large-Scale AI". Journal of Cloud Computing.
+`, 
+    careerInterests: 'AI Research, Large-Scale Systems, Technical Leadership', 
+    xpPoints: 3500, 
+    dailyStreak: 25, 
+    longestStreak: 50, 
+    totalActiveDays: 300, 
+    weeklyActivity: [true, true, true, false, true, true, true], 
+    referralCode: 'ALICEWONDER1',
+    earnedBadges: ['networker', 'contributor', 'profile-pro', 'analyzer-ace', 'admin-master'], 
+    affiliateCode: 'AFFALICE123',
+    pastInterviewSessions: ['session-hist-1'], 
+    interviewCredits: 8, 
+    createdAt: new Date(Date.now() - 86400000 * 365).toISOString(), 
     isDistinguished: true,
-    bio: "AI enthusiast and cloud computing expert.",
-    careerInterests: "AI research, distributed systems",
-    dailyStreak: 10,
-    earnedBadges: ['networker', 'analyzer-ace', 'admin-master'],
-    interviewCredits: 10,
-    referralCode: 'ALICEADMINREF', // Updated for admin Alice
-    currentOrganization: 'Google',
   },
   {
     id: 'alumni2',
     tenantId: 'Brainqy',
     name: 'Bob The Builder',
     email: "bob.builder@example.com",
-    role: 'user', // Regular user
+    role: 'user', 
     status: 'active',
     lastLogin: new Date(Date.now() - 86400000 * 2).toISOString(),
     profilePictureUrl: 'https://picsum.photos/seed/bob/200/200',
@@ -349,9 +416,9 @@ export const samplePlatformUsers: UserProfile[] = [
     referralCode: 'BOB123',
     currentOrganization: 'Microsoft',
   },
-  {
+  { // Charlie Brown, now correctly in tenant-2
     id: 'alumni3',
-    tenantId: 'tenant-2', // Belongs to Manager Mike's tenant
+    tenantId: 'tenant-2', 
     name: 'Charlie Brown',
     email: "charlie.brown@example.com",
     role: 'user',
@@ -405,7 +472,7 @@ export const samplePlatformUsers: UserProfile[] = [
     referralCode: 'DIANA456',
     currentOrganization: 'SecureNet Solutions',
   },
-  sampleUserProfile, // Add Manager Mike to the platform users list
+  sampleUserProfile, // Manager Mike from tenant-2
 ];
 
 
@@ -415,6 +482,7 @@ export const sampleAppointments: Appointment[] = [
     { id: 'appt3', tenantId: 'tenant-2', requesterUserId: 'alumni3', alumniUserId: 'managerUser1', title: 'Incoming Request: Career Advice', dateTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 0).toISOString(), withUser: 'Charlie Brown', status: 'Pending', costInCoins: 10, reminderDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 0).toISOString() }, 
     { id: 'appt4', tenantId: 'Brainqy', requesterUserId: 'alumni1', alumniUserId: 'alumni2', title: 'Discuss Marketing Strategy', dateTime: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(), withUser: 'Bob The Builder', status: 'Completed', costInCoins: 20 },
     { id: 'appt5', tenantId: 'tenant-2', requesterUserId: 'managerUser1', alumniUserId: 'alumni3', title: 'Tenant 2 Strategy Meeting', dateTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 1).toISOString(), withUser: 'Charlie Brown', status: 'Confirmed', costInCoins: 0, reminderDate: new Date().toISOString() },
+    { id: 'appt6', tenantId: 'Brainqy', requesterUserId: 'alumni1', alumniUserId: 'alumni4', title: 'Cybersecurity Career Chat', dateTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 4).toISOString(), withUser: 'Diana Prince', status: 'Confirmed', costInCoins: 12, reminderDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3).toISOString() },
 ];
 
 export const sampleWalletBalance: Wallet = {
@@ -430,10 +498,10 @@ export const sampleWalletBalance: Wallet = {
 };
 
 export let sampleResumeProfiles: ResumeProfile[] = [
-  { id: 'resume1', tenantId: 'Brainqy', userId: 'alumni1', name: "Software Engineer Focused (Alice)", resumeText: "Alice Wonderland's resume focused on software engineering roles...", lastAnalyzed: "2024-07-15" },
+  { id: 'resume1', tenantId: 'Brainqy', userId: 'alumni1', name: "Software Engineer Focused (Alice)", resumeText: samplePlatformUsers.find(u => u.id === 'alumni1')?.resumeText || "Alice Wonderland's resume focused on software engineering roles...", lastAnalyzed: "2024-07-15" },
   { id: 'resume2', tenantId: 'Brainqy', userId: 'alumni2', name: "Product Manager Application (Bob)", resumeText: "Bob The Builder's resume tailored for product management positions...", lastAnalyzed: "2024-07-10" },
   { id: 'resume3', tenantId: 'tenant-2', userId: 'alumni3', name: "Data Science General (Charlie)", resumeText: "Charlie Brown's general purpose resume for various data roles.", lastAnalyzed: "2024-06-20" },
-  { id: 'resumeManager1', tenantId: 'tenant-2', userId: 'managerUser1', name: "Engagement Strategy Lead Resume (Mike)", resumeText: sampleUserProfile.resumeText || "Resume for Manager Mike, focused on engagement and leadership.", lastAnalyzed: "2024-07-20" },
+  { id: 'resumeManager1', tenantId: 'tenant-2', userId: 'managerUser1', name: "Engagement Strategy Lead Resume (Mike)", resumeText: samplePlatformUsers.find(u => u.id === 'managerUser1')?.resumeText || "Resume for Manager Mike, focused on engagement and leadership.", lastAnalyzed: "2024-07-20" },
 ];
 
 const placeholderResumeText = `[Your Name]
@@ -517,7 +585,7 @@ export const sampleResumeScanHistory: ResumeScanHistoryItem[] = [
     resumeName: 'CorpStrategyResume.pdf',
     jobTitle: 'Strategy Consultant',
     companyName: 'McKinsey',
-    resumeTextSnapshot: sampleUserProfile.resumeText || "Strategic resume content for McKinsey...",
+    resumeTextSnapshot: samplePlatformUsers.find(u => u.id === 'managerUser1')?.resumeText || "Strategic resume content for McKinsey...",
     jobDescriptionText: placeholderJobDescription.replace("Sample Job", "Strategy Consultant").replace("Sample Corp", "McKinsey"),
     scanDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
     matchScore: 88,
@@ -536,8 +604,8 @@ export const sampleTenants: Tenant[] = [
     settings: {
       allowPublicSignup: true,
       customLogoUrl: 'https://placehold.co/200x50/008080/FFFFFF&text=Brainqy+U', 
-      primaryColor: 'hsl(180 100% 25%)', // Teal
-      accentColor: 'hsl(180 100% 30%)',  // Slightly Lighter Teal
+      primaryColor: 'hsl(180 100% 25%)', 
+      accentColor: 'hsl(180 100% 30%)', 
       features: {
         communityFeedEnabled: true,
         jobBoardEnabled: true,
@@ -556,9 +624,9 @@ export const sampleTenants: Tenant[] = [
     createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
     settings: {
       allowPublicSignup: false,
-      primaryColor: 'hsl(221 83% 53%)', // Blue
-      accentColor: 'hsl(221 83% 63%)',  // Lighter Blue
-      customLogoUrl: 'https://placehold.co/200x50/2C5282/FFFFFF&text=CorpPartner', // Blue background
+      primaryColor: 'hsl(221 83% 53%)', 
+      accentColor: 'hsl(221 83% 63%)',  
+      customLogoUrl: 'https://placehold.co/200x50/2C5282/FFFFFF&text=CorpPartner', 
       features: {
         communityFeedEnabled: false,
         jobBoardEnabled: true,
@@ -574,9 +642,9 @@ export const sampleTenants: Tenant[] = [
     createdAt: new Date(Date.now() - 86400000 * 10).toISOString(),
     settings: {
       allowPublicSignup: true,
-      primaryColor: 'hsl(39 100% 50%)', // Yellow/Orange
-      accentColor: 'hsl(39 100% 55%)',  // Lighter Yellow/Orange
-      customLogoUrl: 'https://placehold.co/200x50/FFBF00/000000&text=CCC', // Yellow background, black text
+      primaryColor: 'hsl(39 100% 50%)', 
+      accentColor: 'hsl(39 100% 55%)',  
+      customLogoUrl: 'https://placehold.co/200x50/FFBF00/000000&text=CCC', 
       features: {
         communityFeedEnabled: true,
         jobBoardEnabled: true,
@@ -609,7 +677,7 @@ export let sampleBlogPosts: BlogPost[] = [
     slug: 'mastering-ai-resume-analysis',
     author: 'ResumeMatch AI Team',
     date: '2024-07-20T10:00:00Z',
-    imageUrl: 'https://placehold.co/800x400.png', // Updated placeholder
+    imageUrl: 'https://placehold.co/800x400.png', 
     content: 'Learn how to leverage our AI analysis tool to its full potential. Understand match scores, keyword analysis, and how to use suggestions effectively...\n\nOur AI engine scans your resume against the provided job description, identifying key skills, experiences, and keywords. It then calculates a match score based on alignment.\n\n**Understanding the Score:**\n- **80%+:** Excellent match, likely a strong candidate.\n- **60-79%:** Good match, minor adjustments might be needed.\n- **Below 60%:** Significant gaps, consider tailoring your resume.\n\n**Using Suggestions:**\nThe AI provides suggestions for improvement. Focus on incorporating missing keywords naturally and highlighting relevant experiences mentioned in the job description. Remember, authenticity is key!\n\n*This is sample content. More details would follow in a real post.*',
     excerpt: 'Learn how to leverage our AI analysis tool to its full potential. Understand match scores, keyword analysis...',
     tags: ['resume', 'ai', 'jobsearch'],
@@ -625,7 +693,7 @@ export let sampleBlogPosts: BlogPost[] = [
     slug: 'brainqy-uni-networking-success', 
     author: 'Alumni Relations (Brainqy University)', 
     date: '2024-07-15T14:30:00Z',
-    imageUrl: 'https://placehold.co/800x400.png', // Updated placeholder
+    imageUrl: 'https://placehold.co/800x400.png', 
     content: 'Hear inspiring stories from fellow alumni who found opportunities through the ResumeMatch AI network. Discover tips for effective networking...\n\nAlice Wonderland (Class of \'15) shares how a connection made through the platform led to her current role at Google. "The recommendation feature pointed me towards someone I hadn\'t considered, and it turned out to be the perfect connection," she says.\n\nBob The Builder (Class of \'18) used the Alumni Directory filters to find mentors in Product Management. "Being able to filter by skills and industry was invaluable," Bob notes.\n\n**Networking Tips:**\n1. Personalize your connection requests.\n2. Be clear about what you\'re seeking (advice, referral, chat).\n3. Follow up respectfully.\n\n*This is sample content. More details would follow in a real post.*',
     excerpt: 'Hear inspiring stories from fellow alumni who found opportunities through the ResumeMatch AI network...',
     tags: ['networking', 'career', 'success stories', 'brainqy university'], 
@@ -641,7 +709,7 @@ export let sampleBlogPosts: BlogPost[] = [
     slug: 'power-of-mentorship',
     author: 'ResumeMatch AI Team',
     date: '2024-07-10T09:00:00Z',
-    imageUrl: 'https://placehold.co/800x400.png', // Updated placeholder
+    imageUrl: 'https://placehold.co/800x400.png', 
     content: 'Explore the benefits of both being a mentor and finding a mentor within our community. How our platform facilitates these connections...\n\nMentorship provides invaluable guidance for career growth. Our platform makes it easy to identify alumni willing to offer support in specific areas.\n\n**Benefits for Mentees:**\n- Gain industry insights.\n- Receive personalized career advice.\n- Expand your professional network.\n\n**Benefits for Mentors:**\n- Develop leadership skills.\n- Give back to the community.\n- Stay connected with emerging talent.\n\nUse the Alumni Directory filters to find potential mentors or mentees based on your interests and needs.\n\n*This is sample content. More details would follow in a real post.*',
     excerpt: 'Explore the benefits of both being a mentor and finding a mentor within our community...',
     tags: ['mentorship', 'community', 'connections'],
@@ -654,6 +722,7 @@ export const sampleReferralHistory: ReferralHistoryItem[] = [
   { id: 'ref2', referrerUserId: 'alumni1', referredEmailOrName: 'colleague@example.com', referralDate: new Date(Date.now() - 86400000 * 5).toISOString(), status: 'Reward Earned', rewardAmount: 25 },
   { id: 'ref3', referrerUserId: 'alumni2', referredEmailOrName: 'contact@example.com', referralDate: new Date(Date.now() - 86400000 * 3).toISOString(), status: 'Pending' },
   { id: 'ref4', referrerUserId: 'alumni2', referredEmailOrName: 'another@example.com', referralDate: new Date(Date.now() - 86400000 * 10).toISOString(), status: 'Expired' },
+  { id: 'ref5', referrerUserId: 'managerUser1', referredEmailOrName: 'newcorpcontact@example.com', referralDate: new Date(Date.now() - 86400000 * 1).toISOString(), status: 'Signed Up' },
 ];
 
 export const sampleXpRules: GamificationRule[] = [
@@ -706,6 +775,37 @@ export const sampleSurveyResponses: SurveyResponse[] = [
             frustration_details: 'The job board sometimes loads slowly.',
             referral_likelihood: 'neutral'
         }
+    },
+    {
+        id: 'resp_pc_alice',
+        userId: 'alumni1',
+        userName: 'Alice Wonderland',
+        surveyId: 'profileCompletionSurvey',
+        surveyName: 'Profile Completion Survey',
+        responseDate: new Date(Date.now() - 86400000 * 4).toISOString(),
+        data: {
+            fullName: 'Alice Wonderland',
+            dateOfBirth: '1993-03-15',
+            gender: 'Female',
+            email: 'alice.wonderland@example.com',
+            mobileNumber: '+15551112222',
+            currentAddress: '123 Main St, Anytown, CA, USA',
+            graduationYear: '2015',
+            degreeProgram: 'Master of Science (M.Sc)',
+            department: 'Computer Science',
+            currentJobTitle: 'Senior Software Engineer',
+            currentOrganization: 'Google',
+            industry: 'IT/Software',
+            workLocation: 'Mountain View, CA',
+            linkedInProfile: 'https://linkedin.com/in/alicewonder',
+            yearsOfExperience: '7',
+            skills: 'Java, Python, Machine Learning, Cloud Computing, Algorithms, React, Next.js',
+            areasOfSupport: 'Mentoring Students, Sharing Job Referrals, Guest Lecturing',
+            timeCommitment: '1-2 hours',
+            preferredEngagementMode: 'Online',
+            shareProfileConsent: 'true',
+            featureInSpotlightConsent: 'true'
+        }
     }
 ];
 
@@ -744,13 +844,13 @@ export const sampleAffiliates: Affiliate[] = [
     createdAt: new Date(Date.now() - 86400000 * 10).toISOString(),
   },
   {
-    id: 'affiliateuser4', // Manager Mike can also be an affiliate
+    id: 'affiliateuser4', 
     userId: 'managerUser1', 
     name: 'Manager Mike', 
     email: 'manager.mike@tenant2.com', 
     status: 'approved' as AffiliateStatus,
     affiliateCode: 'MIKEAFF4', 
-    commissionRate: 0.20, // Higher rate maybe
+    commissionRate: 0.20, 
     totalEarned: 125.50,
     createdAt: new Date(Date.now() - 86400000 * 30).toISOString(),
   },
@@ -1336,7 +1436,7 @@ export let sampleBlogGenerationSettings: BlogGenerationSettings = {
 export const sampleMockInterviewSessions: MockInterviewSession[] = [
   {
     id: 'session-hist-1',
-    userId: sampleUserProfile.id, // 'managerUser1'
+    userId: sampleUserProfile.id, 
     topic: 'Frontend Developer Interview',
     jobDescription: 'Looking for a skilled frontend dev for a challenging role requiring React, TypeScript, and state management expertise.',
     questions: sampleInterviewQuestions.slice(0, 2).map(q => ({ id: q.id, questionText: q.question, category: q.category, difficulty: q.difficulty })),
@@ -1360,7 +1460,7 @@ export const sampleMockInterviewSessions: MockInterviewSession[] = [
   },
   {
     id: 'session-hist-2',
-    userId: sampleUserProfile.id, // 'managerUser1'
+    userId: sampleUserProfile.id, 
     topic: 'Data Analyst Role',
     questions: sampleInterviewQuestions.slice(2, 3).map(q => ({ id: q.id, questionText: q.question, category: q.category, difficulty: q.difficulty })), 
     answers: [
@@ -1459,13 +1559,13 @@ export let sampleAnnouncements: Announcement[] = [
     tenantId: 'platform',
     title: 'New Feature: AI Mock Interview!',
     content: 'We are excited to launch our new AI Mock Interview feature. Practice common interview questions and get instant feedback. Find it under "Interview Prep" in the sidebar.',
-    startDate: new Date(Date.now() - 86400000 * 2).toISOString(), // 2 days ago
-    endDate: new Date(Date.now() + 86400000 * 10).toISOString(), // 10 days from now
+    startDate: new Date(Date.now() - 86400000 * 2).toISOString(), 
+    endDate: new Date(Date.now() + 86400000 * 10).toISOString(), 
     audience: 'All Users',
     status: 'Published',
     createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
     updatedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-    createdBy: 'alumni1', // Alice (Admin)
+    createdBy: 'alumni1', 
   },
   {
     id: 'announce-2',
@@ -1473,12 +1573,12 @@ export let sampleAnnouncements: Announcement[] = [
     title: 'Platform Maintenance Scheduled',
     content: 'We will be performing scheduled maintenance on Sunday from 2 AM to 4 AM PST. The platform may be temporarily unavailable during this time.',
     startDate: new Date(Date.now() + 86400000 * 3).toISOString(),
-    endDate: new Date(Date.now() + 86400000 * 3 + (2 * 60 * 60 * 1000)).toISOString(), // 2 hours duration
+    endDate: new Date(Date.now() + 86400000 * 3 + (2 * 60 * 60 * 1000)).toISOString(), 
     audience: 'All Users',
     status: 'Published',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-    createdBy: 'alumni1', // Alice (Admin)
+    createdBy: 'alumni1', 
   },
   {
     id: 'announce-3',
@@ -1489,33 +1589,61 @@ export let sampleAnnouncements: Announcement[] = [
     endDate: new Date(Date.now() + 86400000 * 14).toISOString(),
     audience: 'Specific Tenant',
     audienceTarget: 'tenant-2',
-    status: 'Published', // Manager Mike should be able to publish for his tenant
+    status: 'Published', 
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-    createdBy: 'managerUser1', // Manager Mike
+    createdBy: 'managerUser1', 
   },
 ];
 
 
-// Commented out as per previous instruction to remove Live Interview features
-/*
+export let samplePracticeSessions: PracticeSession[] = [
+  {
+    id: "ps1",
+    userId: "managerUser1", // Manager Mike is the user who scheduled this practice
+    date: new Date(Date.now() + 86400000 * 3).toISOString(), 
+    category: "Practice with Experts", // This determines who the other participant might be conceptually
+    type: "Angular Frontend", // Topic of the practice
+    language: "English",
+    status: "SCHEDULED" as PracticeSessionStatus,
+    notes: "Focus on advanced component architecture and state management.",
+  },
+  {
+    id: "ps2",
+    userId: "alumni1", // Alice Wonderland scheduled this
+    date: new Date(Date.now() + 86400000 * 7).toISOString(), 
+    category: "Practice with AI",
+    type: "Java Backend Developer",
+    language: "English",
+    status: "SCHEDULED" as PracticeSessionStatus,
+    notes: "Emphasis on data structures, algorithms, and common Java interview patterns.",
+    aiQuestionCategories: ['Technical', 'Coding'],
+    aiDifficulty: 'Hard',
+    aiNumQuestions: 10,
+    aiTimerPerQuestion: 180,
+  },
+];
+
 export const sampleLiveInterviewSessions: LiveInterviewSession[] = [
   {
-    id: 'ps1',
-    tenantId: 'Brainqy',
-    title: 'Angular Frontend Practice (Live Mock)',
+    id: 'ps1', // Corresponds to PracticeSession ps1
+    tenantId: 'tenant-2', // Manager Mike's tenant
+    title: 'Angular Frontend Practice (Expert Mock)',
     participants: [
+      // Manager Mike is now the interviewer for this session
       { userId: 'managerUser1', name: 'Manager Mike', role: 'interviewer', profilePictureUrl: samplePlatformUsers.find(u => u.id === 'managerUser1')?.profilePictureUrl },
-      { userId: 'expert-angular', name: 'Expert Angular Interviewer', role: 'candidate', profilePictureUrl: 'https://picsum.photos/seed/candidateAngular/50/50' }
+      // A conceptual expert (not a full UserProfile for simplicity here)
+      { userId: 'expert-angular-1', name: 'Expert Angular Interviewer', role: 'candidate', profilePictureUrl: 'https://picsum.photos/seed/expert1/50/50' }
     ],
     scheduledTime: new Date(Date.now() + 86400000 * 3).toISOString(),
-    status: 'Scheduled',
+    status: 'Scheduled' as LiveInterviewSessionStatus,
     meetingLink: 'https://meet.example.com/angular-live-ps1',
     interviewTopics: ['Angular Core Concepts', 'TypeScript', 'RxJS Problem Solving'],
     preSelectedQuestions: [ 
-        sampleInterviewQuestions.find(q=>q.id === 'iq3') as MockInterviewQuestion,
-        sampleInterviewQuestions.find(q=>q.id === 'coding1') as MockInterviewQuestion,
-        sampleInterviewQuestions.find(q => q.questionText.toLowerCase().includes("angular")) || {id: 'angular-generic', questionText: "Explain Angular change detection.", category: "Technical", difficulty: "Medium"},
+        sampleInterviewQuestions.find(q=>q.id === 'iq3') as MockInterviewQuestion, // Explain abstract vs interface
+        sampleInterviewQuestions.find(q=>q.id === 'coding1') as MockInterviewQuestion, // Reverse string
+        // Add a generic Angular question if specific ones aren't in sampleInterviewQuestions
+        sampleInterviewQuestions.find(q => q.questionText.toLowerCase().includes("angular")) || {id: 'angular-generic-1', questionText: "Describe the role of NgModules in Angular.", category: "Technical", difficulty: "Medium"},
     ].filter(Boolean) as MockInterviewQuestion[],
     recordingReferences: [],
   },
@@ -1528,7 +1656,7 @@ export const sampleLiveInterviewSessions: LiveInterviewSession[] = [
       { userId: 'alumni2', name: 'Bob The Builder', role: 'candidate', profilePictureUrl: samplePlatformUsers.find(u=>u.id === 'alumni2')?.profilePictureUrl } 
     ],
     scheduledTime: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(), 
-    status: 'Scheduled',
+    status: 'Scheduled' as LiveInterviewSessionStatus,
     meetingLink: 'https://meet.example.com/live123',
     interviewTopics: ['React', 'JavaScript', 'CSS', 'Behavioral'],
     preSelectedQuestions: [
@@ -1549,7 +1677,7 @@ export const sampleLiveInterviewSessions: LiveInterviewSession[] = [
     scheduledTime: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), 
     actualStartTime: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000 + 5 * 60 * 1000).toISOString(), 
     actualEndTime: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000 + 65 * 60 * 1000).toISOString(), 
-    status: 'Completed',
+    status: 'Completed' as LiveInterviewSessionStatus,
     recordingReferences: [
       { id: 'rec1', sessionId: 'live-session-2', startTime: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000 + 5 * 60 * 1000).toISOString(), durationSeconds: 3600, localStorageKey: 'recording_live-session-2_rec1', type: 'video', fileName: 'rec1.webm', blobUrl: ''}
     ],
@@ -1565,44 +1693,9 @@ export const sampleLiveInterviewSessions: LiveInterviewSession[] = [
       { userId: 'alumni3', name: 'Charlie Brown', role: 'candidate', profilePictureUrl: samplePlatformUsers.find(u=>u.id === 'alumni3')?.profilePictureUrl }
     ],
     scheduledTime: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(), 
-    status: 'Scheduled',
+    status: 'Scheduled' as LiveInterviewSessionStatus,
     interviewTopics: ['Machine Learning Algorithms', 'Python', 'Statistics'],
     preSelectedQuestions: sampleInterviewQuestions.filter(q => q.category === "Technical" && q.tags?.includes("python")).slice(0,2).map(q=> ({id: q.id, questionText: q.question, category: q.category, difficulty: q.difficulty})),
   }
 ];
-*/
-export const sampleLiveInterviewSessions: LiveInterviewSession[] = [];
-
-
-// Commented out as per previous instruction to remove Live Interview features
-/*
-export const samplePracticeSessions: PracticeSession[] = [
-  {
-    id: "ps1",
-    userId: "managerUser1", 
-    date: new Date(Date.now() + 86400000 * 3).toISOString(), 
-    category: "Practice with Experts",
-    type: "Angular Frontend",
-    language: "English",
-    status: "SCHEDULED" as PracticeSessionStatus,
-    notes: "Focus on advanced component architecture and state management.",
-  },
-  {
-    id: "ps2",
-    userId: "managerUser1", 
-    date: new Date(Date.now() + 86400000 * 7).toISOString(), 
-    category: "Practice with AI",
-    type: "Java Backend Developer",
-    language: "English",
-    status: "SCHEDULED" as PracticeSessionStatus,
-    notes: "Emphasis on data structures, algorithms, and common Java interview patterns.",
-    aiQuestionCategories: ['Technical', 'Coding'],
-    aiDifficulty: 'Hard',
-    aiNumQuestions: 10,
-    aiTimerPerQuestion: 180,
-  },
-];
-*/
-export const samplePracticeSessions: PracticeSession[] = [];
-
     

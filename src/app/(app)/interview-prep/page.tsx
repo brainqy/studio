@@ -9,12 +9,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle as DialogUITitle, DialogDescription as DialogUIDescription, DialogFooter as DialogUIFooter, DialogClose } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Brain, Calendar, Users, ShieldAlert, Type, Languages, MessageSquare, CheckCircle, XCircle, Mic, ListChecks, Search, ChevronLeft, ChevronRight, Tag, Settings2, Puzzle, Lightbulb, Code, Eye, Edit3, Play, PlusCircle, Star as StarIcon, Send, Mail, ChevronDown, ListFilter, Bookmark as BookmarkIcon, Video } from "lucide-react"; 
+import { Brain, Calendar, Users, ShieldAlert, Type, Languages, MessageSquare, CheckCircle, XCircle, Mic, ListChecks, Search, ChevronLeft, ChevronRight, Tag, Settings2, Puzzle, Lightbulb, Code, Eye, Edit3, Play, PlusCircle, Star as StarIcon, Send, Mail, ChevronDown, ListFilter, Bookmark as BookmarkIcon, Video } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { sampleUserProfile, samplePracticeSessions, sampleInterviewQuestions, sampleCreatedQuizzes } from "@/lib/sample-data";
-import type { PracticeSession, InterviewQuestion, InterviewQuestionCategory, MockInterviewSession, DialogStep, PracticeSessionConfig, InterviewQuestionUserComment, InterviewQuestionDifficulty, PracticeFocusArea, BankQuestionSortOrder, BankQuestionFilterView, GenerateMockInterviewQuestionsInput } from '@/types';
-import { ALL_CATEGORIES, PREDEFINED_INTERVIEW_TOPICS, PRACTICE_FOCUS_AREAS } from '@/types';
-import { format, parseISO, isFuture as dateIsFuture, isPast, addMinutes, compareAsc } from "date-fns"; 
+import { sampleUserProfile, samplePracticeSessions, sampleInterviewQuestions, sampleCreatedQuizzes, sampleLiveInterviewSessions } from "@/lib/sample-data";
+import type { PracticeSession, InterviewQuestion, InterviewQuestionCategory, MockInterviewSession, DialogStep, PracticeSessionConfig, InterviewQuestionUserComment, InterviewQuestionDifficulty, PracticeFocusArea, BankQuestionSortOrder, BankQuestionFilterView, GenerateMockInterviewQuestionsInput, PracticeSessionStatus } from '@/types';
+import { ALL_CATEGORIES, PREDEFINED_INTERVIEW_TOPICS, PRACTICE_FOCUS_AREAS, MOCK_INTERVIEW_STEPS, RESUME_BUILDER_STEPS } from '@/types';
+import { format, parseISO, isFuture as dateIsFuture, isPast, addMinutes, compareAsc, differenceInMinutes } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -41,7 +41,7 @@ const questionFormSchema = z.object({
   mcqOptions: z.array(z.string()).optional(),
   correctAnswer: z.string().optional(),
   answerOrTip: z.string().min(10, "Answer/Tip is too short.").max(1000, "Answer/Tip is too long."),
-  tags: z.string().optional(), 
+  tags: z.string().optional(),
   difficulty: z.enum(['Easy', 'Medium', 'Hard']).optional(),
 });
 type QuestionFormData = z.infer<typeof questionFormSchema>;
@@ -55,10 +55,10 @@ const friendEmailSchema = z.string().email("Please enter a valid email address."
 const optionLetters = ['A', 'B', 'C', 'D', 'E', 'F'];
 
 
-export default function InterviewPracticeHubPage() { 
+export default function InterviewPracticeHubPage() {
   const [isSetupDialogOpen, setIsSetupDialogOpen] = useState(false);
   const [dialogStep, setDialogStep] = useState<DialogStep>('selectType');
-  
+
   const [practiceSessionConfig, setPracticeSessionConfig] = useState<PracticeSessionConfig>({
     type: null,
     topics: [],
@@ -96,7 +96,7 @@ export default function InterviewPracticeHubPage() {
     resolver: zodResolver(commentFormSchema),
     defaultValues: { commentText: '' }
   });
-  
+
   const [ratingQuestionId, setRatingQuestionId] = useState<string | null>(null);
   const [currentRating, setCurrentRating] = useState(0);
 
@@ -110,7 +110,7 @@ export default function InterviewPracticeHubPage() {
     reset: resetQuestionForm,
     setValue: setQuestionFormValue,
     watch: watchQuestionForm,
-    formState: { errors: questionFormErrors } 
+    formState: { errors: questionFormErrors }
   } = useForm<QuestionFormData>({
     resolver: zodResolver(questionFormSchema),
     defaultValues: { isMCQ: false, mcqOptions: ["", "", "", ""], category: 'Common', difficulty: 'Medium' }
@@ -118,12 +118,12 @@ export default function InterviewPracticeHubPage() {
   const isMCQSelected = watchQuestionForm("isMCQ");
 
 
-  const upcomingSessions = practiceSessions.filter(s => s.status === 'SCHEDULED' && dateIsFuture(parseISO(s.date)));
-  const allUserSessions = practiceSessions; 
-  const cancelledSessions = practiceSessions.filter(s => s.status === 'CANCELLED');
+  const upcomingSessions = practiceSessions.filter(s => s.userId === currentUser.id && s.status === 'SCHEDULED' && dateIsFuture(parseISO(s.date)));
+  const allUserSessions = practiceSessions.filter(s => s.userId === currentUser.id);
+  const cancelledSessions = practiceSessions.filter(s => s.userId === currentUser.id && s.status === 'CANCELLED');
 
   const handleStartPracticeSetup = () => {
-    setPracticeSessionConfig({ 
+    setPracticeSessionConfig({
       type: null, topics: [], dateTime: null, friendEmail: '',
       aiTopicOrRole: '', aiJobDescription: '', aiNumQuestions: 5, aiDifficulty: 'medium', aiTimerPerQuestion: 0, aiQuestionCategories: []
     });
@@ -154,19 +154,19 @@ export default function InterviewPracticeHubPage() {
         }
         setFriendEmailError(null);
         toast({ title: "Invitation Sent (Mock)", description: `Invitation sent to ${practiceSessionConfig.friendEmail}.` });
-        setIsSetupDialogOpen(false); 
+        setIsSetupDialogOpen(false);
         return;
       }
-      setDialogStep('selectTopics'); 
-    } else if (dialogStep === 'selectTopics') { 
+      setDialogStep('selectTopics');
+    } else if (dialogStep === 'selectTopics') {
       if (practiceSessionConfig.topics.length === 0) {
         toast({ title: "Error", description: "Please select at least one topic.", variant: "destructive" });
         return;
       }
-      if (practiceSessionConfig.type === 'ai') { 
-        setPracticeSessionConfig(prev => ({...prev, aiTopicOrRole: prev.topics.join(', ')})); 
+      if (practiceSessionConfig.type === 'ai') {
+        setPracticeSessionConfig(prev => ({...prev, aiTopicOrRole: prev.topics.join(', ')}));
         setDialogStep('aiSetupBasic');
-      } else { 
+      } else {
         setDialogStep('selectTimeSlot');
       }
     } else if (dialogStep === 'aiSetupBasic') {
@@ -194,8 +194,8 @@ export default function InterviewPracticeHubPage() {
       }
     }
   };
-  
-  const handleFinalBookSession = () => { 
+
+  const handleFinalBookSession = () => {
     if (!practiceSessionConfig.type) {
         toast({ title: "Booking Error", description: "Interview type not selected.", variant: "destructive"});
         return;
@@ -212,8 +212,8 @@ export default function InterviewPracticeHubPage() {
             date: practiceSessionConfig.dateTime.toISOString(),
             category: "Practice with Experts",
             type: practiceSessionConfig.topics.join(', ') || "General",
-            language: "English", 
-            status: "SCHEDULED",
+            language: "English",
+            status: "SCHEDULED" as PracticeSessionStatus,
             notes: `Scheduled expert session for topics: ${practiceSessionConfig.topics.join(', ')}.`,
         };
         setPracticeSessions(prev => [newSession, ...prev]);
@@ -232,7 +232,7 @@ export default function InterviewPracticeHubPage() {
             timerPerQuestion: practiceSessionConfig.aiTimerPerQuestion === 0 ? undefined : practiceSessionConfig.aiTimerPerQuestion,
             questionCategories: practiceSessionConfig.aiQuestionCategories,
         };
-        
+
         const queryParams = new URLSearchParams();
         queryParams.append('topic', aiConfigPayload.topic);
         if(aiConfigPayload.jobDescription) queryParams.append('jobDescription', aiConfigPayload.jobDescription);
@@ -240,7 +240,7 @@ export default function InterviewPracticeHubPage() {
         if(aiConfigPayload.difficulty) queryParams.append('difficulty', aiConfigPayload.difficulty);
         if(aiConfigPayload.timerPerQuestion) queryParams.append('timerPerQuestion', String(aiConfigPayload.timerPerQuestion));
         if(aiConfigPayload.questionCategories && aiConfigPayload.questionCategories.length > 0) queryParams.append('categories', aiConfigPayload.questionCategories.join(','));
-        queryParams.append('autoFullScreen', 'true'); 
+        queryParams.append('autoFullScreen', 'true');
 
         router.push(`/ai-mock-interview?${queryParams.toString()}`);
     }
@@ -252,22 +252,25 @@ export default function InterviewPracticeHubPage() {
     const updater = (session: PracticeSession) => session.id === sessionId ? { ...session, status: 'CANCELLED' as PracticeSession['status'] } : session;
     setPracticeSessions(prev => prev.map(updater));
     const globalIndex = samplePracticeSessions.findIndex(s => s.id === sessionId);
-    if (globalIndex !== -1) samplePracticeSessions[globalIndex].status = 'CANCELLED';
+    if (globalIndex !== -1) {
+        // This mutation is for demo persistence. In a real app, this would be an API call.
+        (samplePracticeSessions[globalIndex] as any).status = 'CANCELLED';
+    }
     toast({ title: "Session Cancelled", description: "The practice session has been cancelled.", variant: "destructive" });
   };
-  
+
   const handleRescheduleSession = (sessionId: string) => {
      toast({ title: "Reschedule Mocked", description: "Rescheduling functionality for this session is not yet implemented." });
   };
 
   const filteredBankQuestions = useMemo(() => {
     let questionsToFilter = [...allBankQuestions];
-    
+
     if (bankFilterView === 'myBookmarks') {
       questionsToFilter = questionsToFilter.filter(q => q.bookmarkedBy?.includes(currentUser.id));
     } else if (bankFilterView === 'needsApproval' && currentUser.role === 'admin') {
       questionsToFilter = questionsToFilter.filter(q => q.approved === false);
-    } else { 
+    } else {
       questionsToFilter = questionsToFilter.filter(q => q.approved !== false || currentUser.role === 'admin');
     }
 
@@ -284,7 +287,7 @@ export default function InterviewPracticeHubPage() {
         (q.tags && q.tags.some(tag => tag.toLowerCase().includes(searchTermLower)))
       );
     }
-    
+
     if (bankSortOrder === 'highestRated') {
       questionsToFilter.sort((a, b) => (b.rating || 0) - (a.rating || 0));
     } else if (bankSortOrder === 'mostRecent') {
@@ -294,7 +297,7 @@ export default function InterviewPracticeHubPage() {
         return dateB - dateA;
       });
     }
-    
+
     return questionsToFilter;
   }, [allBankQuestions, selectedBankCategories, bankSearchTerm, currentUser.role, bankSortOrder, bankFilterView, currentUser.id]);
 
@@ -302,7 +305,7 @@ export default function InterviewPracticeHubPage() {
     const startIndex = (currentPage - 1) * questionsPerPage;
     return filteredBankQuestions.slice(startIndex, startIndex + questionsPerPage);
   }, [filteredBankQuestions, currentPage, questionsPerPage]);
-  
+
   const totalPages = Math.ceil(filteredBankQuestions.length / questionsPerPage);
 
   const onQuestionFormSubmit = (data: QuestionFormData) => {
@@ -311,7 +314,7 @@ export default function InterviewPracticeHubPage() {
         tags: data.tags?.split(',').map(t => t.trim()).filter(t => t) || [],
         mcqOptions: data.isMCQ ? data.mcqOptions?.filter(opt => opt.trim() !== "") : undefined,
         correctAnswer: data.isMCQ ? data.correctAnswer : undefined,
-        approved: currentUser.role === 'admin', 
+        approved: currentUser.role === 'admin',
         createdBy: currentUser.id,
         createdAt: new Date().toISOString(),
         bookmarkedBy: [],
@@ -325,7 +328,7 @@ export default function InterviewPracticeHubPage() {
     } else {
       const newQuestion: InterviewQuestion = {
         ...questionPayload,
-        id: `iq-${Date.now()}`, 
+        id: `iq-${Date.now()}`,
         difficulty: data.difficulty || 'Medium',
         rating: 0,
         ratingsCount: 0,
@@ -358,7 +361,7 @@ export default function InterviewPracticeHubPage() {
     setQuestionFormValue('difficulty', question.difficulty || 'Medium');
     setIsQuestionFormOpen(true);
   };
-  
+
   const handleDeleteQuestion = (questionId: string) => {
     setAllBankQuestions(prev => prev.filter(q => q.id !== questionId));
     const globalQIndex = sampleInterviewQuestions.findIndex(q => q.id === questionId);
@@ -383,7 +386,7 @@ export default function InterviewPracticeHubPage() {
     const questionIds = Array.from(selectedQuestionsForQuiz).join(',');
     router.push(`/interview-prep/quiz/edit/new?questions=${questionIds}`);
   };
-  
+
   const getCategoryIcon = (category: InterviewQuestionCategory) => {
     switch(category) {
       case 'Behavioral': return <Users className="h-4 w-4 text-purple-500 flex-shrink-0"/>;
@@ -396,16 +399,16 @@ export default function InterviewPracticeHubPage() {
       default: return <Puzzle className="h-4 w-4 text-gray-400 flex-shrink-0"/>;
     }
   };
-  
+
   const onCommentSubmit = (data: CommentFormData, questionId: string) => {
-    const newComment: InterviewQuestionUserComment = { 
+    const newComment: InterviewQuestionUserComment = {
         id: `uc-${questionId}-${Date.now()}`,
         userId: currentUser.id,
         userName: currentUser.name,
         comment: data.commentText,
         timestamp: new Date().toISOString(),
     };
-    setAllBankQuestions(prevQs => prevQs.map(q => 
+    setAllBankQuestions(prevQs => prevQs.map(q =>
         q.id === questionId ? { ...q, userComments: [...(q.userComments || []), newComment] } : q
     ));
     const globalQIndex = sampleInterviewQuestions.findIndex(q => q.id === questionId);
@@ -434,7 +437,7 @@ export default function InterviewPracticeHubPage() {
         }
         return q;
     }));
-    
+
     const globalQIndex = sampleInterviewQuestions.findIndex(q => q.id === questionId);
     if (globalQIndex !== -1) {
       const existingRatingIndex = sampleInterviewQuestions[globalQIndex].userRatings?.findIndex(r => r.userId === currentUser.id);
@@ -483,7 +486,9 @@ export default function InterviewPracticeHubPage() {
 
   const renderSessionCard = (session: PracticeSession) => {
     const sessionDate = parseISO(session.date);
-    const canJoin = session.status === 'SCHEDULED' && (dateIsFuture(sessionDate) || isPast(addMinutes(sessionDate, -60))); 
+    const now = new Date();
+    const sessionStartedInLastHour = isPast(sessionDate) && differenceInMinutes(now, sessionDate) <= 60;
+    const canJoin = session.status === 'SCHEDULED' && (dateIsFuture(sessionDate) || sessionStartedInLastHour);
 
     return (
     <Card key={session.id} className="shadow-md hover:shadow-lg transition-shadow">
@@ -492,7 +497,7 @@ export default function InterviewPracticeHubPage() {
           <CardTitle className="text-lg">{format(sessionDate, "MMM dd, yyyy - p")}</CardTitle>
           <span className={cn(
             "px-2 py-1 text-xs font-semibold rounded-full",
-            session.status === 'SCHEDULED' ? "bg-green-100 text-green-700" : 
+            session.status === 'SCHEDULED' ? "bg-green-100 text-green-700" :
             session.status === 'COMPLETED' ? "bg-blue-100 text-blue-700" :
             "bg-red-100 text-red-700"
           )}>
@@ -507,6 +512,16 @@ export default function InterviewPracticeHubPage() {
         {session.notes && <p className="text-xs text-muted-foreground pt-1 italic">Notes: {session.notes}</p>}
       </CardContent>
       <CardFooter className="flex gap-2">
+        {canJoin && (
+          <Button variant="default" size="sm" asChild className="bg-green-600 hover:bg-green-700 text-white">
+            <Link href={`/live-interview/${session.id}`}>
+              <Video className="mr-1 h-4 w-4"/>Join Interview
+            </Link>
+          </Button>
+        )}
+        {session.status === 'SCHEDULED' && !canJoin && !dateIsFuture(sessionDate) && (
+            <Badge variant="outline">Session time passed</Badge>
+        )}
         {session.status === 'SCHEDULED' && (
           <>
             <Button variant="destructive" size="sm" onClick={() => handleCancelPracticeSession(session.id)}>
@@ -664,7 +679,7 @@ export default function InterviewPracticeHubPage() {
                         type="single"
                         variant="outline"
                         value={bankFilterView}
-                        onValueChange={(value: BankQuestionFilterView) => { if(value) setBankFilterView(value);}} 
+                        onValueChange={(value: BankQuestionFilterView) => { if(value) setBankFilterView(value);}}
                         className="flex flex-wrap gap-1 justify-start"
                     >
                         <ToggleGroupItem value="all" aria-label="All Questions" className="text-xs px-2 py-1 h-auto data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">All Questions</ToggleGroupItem>
@@ -687,7 +702,7 @@ export default function InterviewPracticeHubPage() {
                 </div>
             </div>
 
-            <ScrollArea className="h-[500px] pr-2 -mr-2"> 
+            <ScrollArea className="h-[500px] pr-2 -mr-2">
                 {paginatedBankQuestions.length > 0 ? (
                     paginatedBankQuestions.map(q => (
                     <Accordion key={q.id} type="single" collapsible className="border rounded-md mb-2 bg-card shadow-sm hover:shadow-md transition-shadow">
@@ -700,7 +715,7 @@ export default function InterviewPracticeHubPage() {
                                         checked={selectedQuestionsForQuiz.has(q.id)}
                                         onCheckedChange={() => handleToggleQuestionForQuiz(q.id)}
                                         aria-label={`Select question: ${q.question}`}
-                                        onClick={(e) => e.stopPropagation()} 
+                                        onClick={(e) => e.stopPropagation()}
                                     />
                                 </div>
                               <div className="flex-1 text-left">
@@ -751,9 +766,9 @@ export default function InterviewPracticeHubPage() {
                             )}
                              <div className="flex items-center justify-between pt-2 border-t mt-2">
                                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                    <StarIcon className={cn("h-4 w-4", (q.rating || 0) > 0 ? "text-yellow-400 fill-yellow-400" : "text-gray-300")} /> 
+                                    <StarIcon className={cn("h-4 w-4", (q.rating || 0) > 0 ? "text-yellow-400 fill-yellow-400" : "text-gray-300")} />
                                     <span>{q.rating?.toFixed(1) || 'N/A'} ({q.ratingsCount || 0} ratings)</span>
-                                    <Button variant="link" size="sm" className="text-xs p-0 h-auto ml-1" onClick={() => { setRatingQuestionId(q.id); setCurrentRating(q.userRatings?.find(r => r.userId === currentUser.id)?.rating || 0) }}>Rate</Button>
+                                    <Button variant="link" size="sm" className="text-xs p-0 h-auto ml-1" onClick={() => { setRatingQuestionId(q.id); setCurrentRating(q.userRatings?.find(r => r.userId === currentUser.id)?.rating || 0); }}>Rate</Button>
                                 </div>
                                 <Button variant="link" size="sm" className="text-xs p-0 h-auto" onClick={() => setCommentingQuestionId(q.id === commentingQuestionId ? null : q.id)}>
                                    Comments ({q.userComments?.length || 0})
@@ -857,7 +872,7 @@ export default function InterviewPracticeHubPage() {
                 <Controller name="difficulty" control={questionFormControl} render={({ field }) => (
                     <Select onValueChange={field.onChange} value={field.value || 'Medium'}>
                         <SelectTrigger id="question-difficulty"><SelectValue placeholder="Select difficulty"/></SelectTrigger>
-                        <SelectContent>{['Easy', 'Medium', 'Hard'].map(diff => <SelectItem key={diff} value={diff}>{diff}</SelectItem>)}</SelectContent>
+                        <SelectContent>{(['Easy', 'Medium', 'Hard'] as InterviewQuestionDifficulty[]).map(diff => <SelectItem key={diff} value={diff}>{diff}</SelectItem>)}</SelectContent>
                     </Select>
                 )} />
               </div>
@@ -921,14 +936,14 @@ export default function InterviewPracticeHubPage() {
               {dialogStep === 'aiSetupCategories' && "Optionally, select specific question categories for your AI interview."}
             </DialogUIDescription>
           </DialogHeader>
-          
+
           <div className="py-4 space-y-4 min-h-[200px]">
             {dialogStep === 'selectType' && (
               <>
                 <ToggleGroup
                   type="single"
                   value={practiceSessionConfig.type || ""}
-                  onValueChange={(value: PracticeSessionConfig['type']) => setPracticeSessionConfig(p => ({...p, type: value, friendEmail: '', topics: []}))} 
+                  onValueChange={(value: PracticeSessionConfig['type']) => setPracticeSessionConfig(p => ({...p, type: value, friendEmail: '', topics: []}))}
                   className="grid grid-cols-3 gap-2"
                 >
                   {(['friends', 'experts', 'ai'] as InterviewType[]).map(type => (
@@ -960,10 +975,10 @@ export default function InterviewPracticeHubPage() {
                 )}
               </>
             )}
-            
+
             {dialogStep === 'selectTopics' && (practiceSessionConfig.type === 'experts' || practiceSessionConfig.type === 'ai') && (
               <PracticeTopicSelection
-                availableTopics={PREDEFINED_INTERVIEW_TOPICS} 
+                availableTopics={PREDEFINED_INTERVIEW_TOPICS}
                 initialSelectedTopics={practiceSessionConfig.topics}
                 onSelectionChange={(selected) => setPracticeSessionConfig(p => ({...p, topics: selected}))}
               />
@@ -1011,15 +1026,15 @@ export default function InterviewPracticeHubPage() {
                  </div>
             )}
              {dialogStep === 'aiSetupCategories' && practiceSessionConfig.type === 'ai' && (
-                <PracticeTopicSelection 
-                    availableTopics={ALL_CATEGORIES as any} 
+                <PracticeTopicSelection
+                    availableTopics={ALL_CATEGORIES as any}
                     initialSelectedTopics={practiceSessionConfig.aiQuestionCategories || []}
                     onSelectionChange={(selected) => setPracticeSessionConfig(p => ({...p, aiQuestionCategories: selected as InterviewQuestionCategory[]}))}
                 />
             )}
 
 
-            {dialogStep === 'selectTimeSlot' && practiceSessionConfig.type === 'experts' && ( 
+            {dialogStep === 'selectTimeSlot' && practiceSessionConfig.type === 'experts' && (
                <PracticeDateTimeSelector
                 initialSelectedDate={practiceSessionConfig.dateTime || undefined}
                 initialSelectedTime={practiceSessionConfig.dateTime ? format(practiceSessionConfig.dateTime, 'HH:mm') : undefined}
@@ -1043,7 +1058,7 @@ export default function InterviewPracticeHubPage() {
             {dialogStep !== 'selectType' && (
               <Button variant="outline" onClick={handleDialogPreviousStep}>Back</Button>
             )}
-            
+
             {dialogStep === 'selectType' && (
               <Button onClick={handleDialogNextStep} disabled={!practiceSessionConfig.type || (practiceSessionConfig.type === 'friends' && (!practiceSessionConfig.friendEmail || !!friendEmailError))}>
                 {practiceSessionConfig.type === 'friends' ? "Send Invitation" : "Next"}
@@ -1056,10 +1071,10 @@ export default function InterviewPracticeHubPage() {
                  <Button onClick={handleDialogNextStep} disabled={!practiceSessionConfig.aiTopicOrRole?.trim()}>Next</Button>
             )}
              {dialogStep === 'aiSetupAdvanced' && practiceSessionConfig.type === 'ai' && (
-                 <Button onClick={handleDialogNextStep}>Next</Button> 
+                 <Button onClick={handleDialogNextStep}>Next</Button>
             )}
 
-            {dialogStep === 'selectTimeSlot' && practiceSessionConfig.type === 'experts' && ( 
+            {dialogStep === 'selectTimeSlot' && practiceSessionConfig.type === 'experts' && (
               <Button onClick={handleFinalBookSession} disabled={!practiceSessionConfig.dateTime} className="bg-green-600 hover:bg-green-700 text-white">Book Expert Session</Button>
             )}
              {dialogStep === 'aiSetupCategories' && practiceSessionConfig.type === 'ai' && (
