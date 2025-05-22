@@ -35,7 +35,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 type InterviewType = "friends" | "experts" | "ai";
 
 const questionFormSchema = z.object({
-  question: z.string().min(10, "Question text is too short.").max(500, "Question text is too long."),
+  questionText: z.string().min(10, "Question text is too short.").max(500, "Question text is too long."),
   category: z.enum(ALL_CATEGORIES),
   isMCQ: z.boolean().default(false),
   mcqOptions: z.array(z.string()).optional(),
@@ -119,7 +119,7 @@ export default function InterviewPracticeHubPage() {
 
 
   const upcomingSessions = practiceSessions.filter(s => s.status === 'SCHEDULED' && dateIsFuture(parseISO(s.date)));
-  const allUserSessions = practiceSessions;
+  const allUserSessions = practiceSessions; // In real app, filter by user
   const cancelledSessions = practiceSessions.filter(s => s.status === 'CANCELLED');
 
   const handleStartPracticeSetup = () => {
@@ -217,23 +217,44 @@ export default function InterviewPracticeHubPage() {
             status: "SCHEDULED" as PracticeSessionStatus,
             notes: `Scheduled expert session for topics: ${practiceSessionConfig.topics.join(', ')}.`,
         };
-        setPracticeSessions(prev => [newSession, ...prev]);
-        samplePracticeSessions.unshift(newSession); // Add to global sample data
+        
+        const updatedPracticeSessions = [newSession, ...practiceSessions];
+        setPracticeSessions(updatedPracticeSessions);
+        // Update global sample data if this is how your app manages it globally
+        const globalPracticeIndex = samplePracticeSessions.findIndex(s => s.id === newSession.id);
+        if (globalPracticeIndex === -1) {
+            samplePracticeSessions.unshift(newSession);
+        } else {
+            samplePracticeSessions[globalPracticeIndex] = newSession;
+        }
+
 
         // Also create a corresponding LiveInterviewSession
         const newLiveSession: LiveInterviewSession = {
-            id: newSessionId,
+            id: newSessionId, // Use the same ID
             tenantId: currentUser.tenantId,
             title: `Expert Mock Interview: ${newSession.type}`,
             participants: [
                 { userId: currentUser.id, name: currentUser.name, role: 'candidate', profilePictureUrl: currentUser.profilePictureUrl },
-                { userId: `expert-${Date.now()}`, name: 'Expert Interviewer', role: 'interviewer', profilePictureUrl: 'https://avatar.vercel.sh/expert.png' }
+                { userId: `expert-${Date.now()}`, name: 'Expert Interviewer', role: 'interviewer', profilePictureUrl: 'https://avatar.vercel.sh/expert.png' } // Placeholder expert
             ],
             scheduledTime: newSession.date,
             status: 'Scheduled',
-            preSelectedQuestions: sampleInterviewQuestions.filter(q => practiceSessionConfig.topics.some(topic => q.category === topic || q.tags?.includes(topic.toLowerCase()))).slice(0,5).map(q => ({id: q.id, questionText: q.question, category: q.category, difficulty: q.difficulty })), // Example: select 5 related questions
+            // Pre-select some questions based on topics
+            preSelectedQuestions: sampleInterviewQuestions
+                .filter(q => practiceSessionConfig.topics.some(topic => q.category === topic || q.tags?.includes(topic.toLowerCase())))
+                .slice(0,5) // Select first 5 matching
+                .map(q => ({id: q.id, questionText: q.questionText, category: q.category, difficulty: q.difficulty })),
         };
-        sampleLiveInterviewSessions.unshift(newLiveSession); // Add to global sample data
+        
+        // Add to global sampleLiveInterviewSessions
+        const globalLiveIndex = sampleLiveInterviewSessions.findIndex(s => s.id === newLiveSession.id);
+        if (globalLiveIndex === -1) {
+            sampleLiveInterviewSessions.unshift(newLiveSession);
+        } else {
+            sampleLiveInterviewSessions[globalLiveIndex] = newLiveSession;
+        }
+
 
         toast({ title: "Expert Session Booked (Mock)", description: `Session for ${newSession.type} on ${format(practiceSessionConfig.dateTime, 'PPp')} scheduled.` });
 
@@ -288,10 +309,12 @@ export default function InterviewPracticeHubPage() {
     } else if (bankFilterView === 'needsApproval' && currentUser.role === 'admin') {
       questionsToFilter = questionsToFilter.filter(q => q.approved === false);
     } else {
-      questionsToFilter = questionsToFilter.filter(q => q.approved !== false || currentUser.role === 'admin');
+      // Non-admins should not see unapproved questions unless it's their own pending question
+      questionsToFilter = questionsToFilter.filter(q => q.approved !== false || q.createdBy === currentUser.id || currentUser.role === 'admin');
     }
 
     questionsToFilter = questionsToFilter.filter(q => q.isMCQ && q.mcqOptions && q.correctAnswer);
+
 
     if (selectedBankCategories.length > 0) {
       questionsToFilter = questionsToFilter.filter(q => selectedBankCategories.includes(q.category));
@@ -309,11 +332,13 @@ export default function InterviewPracticeHubPage() {
       questionsToFilter.sort((a, b) => (b.rating || 0) - (a.rating || 0));
     } else if (bankSortOrder === 'mostRecent') {
       questionsToFilter.sort((a, b) => {
-        const dateA = a.createdAt ? parseISO(a.createdAt).getTime() : (parseInt(a.id.replace('iq-', '').replace('mcq-', '')) || 0);
-        const dateB = b.createdAt ? parseISO(b.createdAt).getTime() : (parseInt(b.id.replace('iq-', '').replace('mcq-', '')) || 0);
+        // Fallback to ID-based sorting if createdAt is missing (for older sample data)
+        const dateA = a.createdAt ? parseISO(a.createdAt).getTime() : (parseInt(a.id.replace(/\D/g,'')) || 0);
+        const dateB = b.createdAt ? parseISO(b.createdAt).getTime() : (parseInt(b.id.replace(/\D/g,'')) || 0);
         return dateB - dateA;
       });
     }
+
 
     return questionsToFilter;
   }, [allBankQuestions, selectedBankCategories, bankSearchTerm, currentUser.role, bankSortOrder, bankFilterView, currentUser.id]);
@@ -329,50 +354,58 @@ export default function InterviewPracticeHubPage() {
     const questionPayload = {
         ...data,
         tags: data.tags?.split(',').map(t => t.trim()).filter(t => t) || [],
-        mcqOptions: data.isMCQ ? data.mcqOptions?.filter(opt => opt.trim() !== "") : undefined,
+        mcqOptions: data.isMCQ ? data.mcqOptions?.filter(opt => opt && opt.trim() !== "") : undefined,
         correctAnswer: data.isMCQ ? data.correctAnswer : undefined,
-        approved: currentUser.role === 'admin',
+        approved: currentUser.role === 'admin', // Auto-approve if admin creates
         createdBy: currentUser.id,
         createdAt: new Date().toISOString(),
         bookmarkedBy: [],
+        userComments: [],
+        rating: 0,
+        ratingsCount: 0,
     };
 
     if (editingQuestion) {
-      setAllBankQuestions(prev => prev.map(q => q.id === editingQuestion.id ? { ...editingQuestion, ...questionPayload, difficulty: data.difficulty || 'Medium', questionText: data.question } : q));
+      setAllBankQuestions(prev => prev.map(q => q.id === editingQuestion.id ? { ...editingQuestion, ...questionPayload, difficulty: data.difficulty || 'Medium' } : q));
+      // Update global sample data
       const globalQIndex = sampleInterviewQuestions.findIndex(q => q.id === editingQuestion.id);
-      if (globalQIndex !== -1) Object.assign(sampleInterviewQuestions[globalQIndex], { ...editingQuestion, ...questionPayload, difficulty: data.difficulty || 'Medium', questionText: data.question });
+      if (globalQIndex !== -1) Object.assign(sampleInterviewQuestions[globalQIndex], { ...editingQuestion, ...questionPayload, difficulty: data.difficulty || 'Medium' });
       toast({ title: "Question Updated", description: "The interview question has been updated." });
     } else {
       const newQuestion: InterviewQuestion = {
         ...questionPayload,
-        id: `iq-${Date.now()}`,
-        questionText: data.question,
+        id: `iq-${Date.now()}`, // Simple unique ID for sample data
         difficulty: data.difficulty || 'Medium',
-        rating: 0,
-        ratingsCount: 0,
-        userComments: [],
       };
       setAllBankQuestions(prev => [newQuestion, ...prev]);
-      sampleInterviewQuestions.unshift(newQuestion);
-      toast({ title: "Question Added", description: "New question added to the bank." });
+      sampleInterviewQuestions.unshift(newQuestion); // Add to global for persistence in demo
+      toast({ title: "Question Added", description: `New question added${currentUser.role !== 'admin' ? ' and awaiting approval' : ''}.` });
     }
     setIsQuestionFormOpen(false);
-    resetQuestionForm({ question: '', category: 'Common', isMCQ: false, mcqOptions: ["", "", "", ""], correctAnswer: '', answerOrTip: '', tags: '', difficulty: 'Medium' });
+    resetQuestionForm({ questionText: '', category: 'Common', isMCQ: false, mcqOptions: ["", "", "", ""], correctAnswer: '', answerOrTip: '', tags: '', difficulty: 'Medium' });
     setEditingQuestion(null);
   };
 
   const openNewQuestionDialog = () => {
     setEditingQuestion(null);
-    resetQuestionForm({ question: '', category: 'Common', isMCQ: false, mcqOptions: ["", "", "", ""], correctAnswer: '', answerOrTip: '', tags: '', difficulty: 'Medium' });
+    resetQuestionForm({ questionText: '', category: 'Common', isMCQ: false, mcqOptions: ["", "", "", ""], correctAnswer: '', answerOrTip: '', tags: '', difficulty: 'Medium' });
     setIsQuestionFormOpen(true);
   };
 
   const openEditQuestionDialog = (question: InterviewQuestion) => {
+    // Allow editing only if user is admin or the creator of the question
+    if (currentUser.role !== 'admin' && question.createdBy !== currentUser.id) {
+        toast({title: "Permission Denied", description: "You can only edit questions you created.", variant: "destructive"});
+        return;
+    }
     setEditingQuestion(question);
-    setQuestionFormValue('question', question.questionText);
+    setQuestionFormValue('questionText', question.questionText);
     setQuestionFormValue('category', question.category);
     setQuestionFormValue('isMCQ', question.isMCQ || false);
-    setQuestionFormValue('mcqOptions', question.mcqOptions || ["", "", "", ""]);
+    // Ensure mcqOptions has at least 4 empty strings if it's undefined or shorter
+    const options = question.mcqOptions || [];
+    const paddedOptions = [...options, ...Array(Math.max(0, 4 - options.length)).fill("")];
+    setQuestionFormValue('mcqOptions', paddedOptions.slice(0,4));
     setQuestionFormValue('correctAnswer', question.correctAnswer || "");
     setQuestionFormValue('answerOrTip', question.answerOrTip);
     setQuestionFormValue('tags', question.tags?.join(', ') || "");
@@ -381,6 +414,11 @@ export default function InterviewPracticeHubPage() {
   };
 
   const handleDeleteQuestion = (questionId: string) => {
+     const questionToDelete = allBankQuestions.find(q => q.id === questionId);
+     if (currentUser.role !== 'admin' && questionToDelete?.createdBy !== currentUser.id) {
+        toast({title: "Permission Denied", description: "You can only delete questions you created.", variant: "destructive"});
+        return;
+    }
     setAllBankQuestions(prev => prev.filter(q => q.id !== questionId));
     const globalQIndex = sampleInterviewQuestions.findIndex(q => q.id === questionId);
     if (globalQIndex !== -1) sampleInterviewQuestions.splice(globalQIndex, 1);
@@ -456,6 +494,7 @@ export default function InterviewPracticeHubPage() {
         return q;
     }));
 
+    // Update global sample data
     const globalQIndex = sampleInterviewQuestions.findIndex(q => q.id === questionId);
     if (globalQIndex !== -1) {
       const existingRatingIndex = sampleInterviewQuestions[globalQIndex].userRatings?.findIndex(r => r.userId === currentUser.id);
@@ -488,6 +527,7 @@ export default function InterviewPracticeHubPage() {
         }
         return q;
     }));
+    // Update global sample data
     const globalQIndex = sampleInterviewQuestions.findIndex(q => q.id === questionId);
     let isNowBookmarked = false;
     if (globalQIndex !== -1) {
@@ -726,7 +766,10 @@ export default function InterviewPracticeHubPage() {
                     paginatedBankQuestions.map(q => (
                     <Accordion key={q.id} type="single" collapsible className="border rounded-md mb-2 bg-card shadow-sm hover:shadow-md transition-shadow">
                         <AccordionItem value={`item-${q.id}`} className="border-b-0">
-                          <AccordionTrigger className="px-4 py-3 text-left text-sm font-medium group hover:bg-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 data-[state=open]:bg-secondary/50 data-[state=open]:rounded-b-none rounded-t-md">
+                          <AccordionTrigger
+                            asChild={true}
+                            className="px-4 py-3 text-left text-sm font-medium group hover:bg-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 data-[state=open]:bg-secondary/50 data-[state=open]:rounded-b-none rounded-t-md"
+                          >
                             <div className="flex items-start flex-1 gap-3 w-full">
                                 <div className="flex items-center pt-0.5">
                                     <Checkbox
@@ -773,10 +816,10 @@ export default function InterviewPracticeHubPage() {
                                 <p className="text-xs font-semibold text-primary mb-1">Suggested Answer/Tip:</p>
                                 <p className="text-xs text-foreground whitespace-pre-line">{q.answerOrTip}</p>
                             </div>
-                            {q.isMCQ && q.mcqOptions && (
+                            {q.isMCQ && q.mcqOptions && q.mcqOptions.length > 0 && (
                                 <div className="space-y-1">
                                 <p className="text-xs font-semibold text-muted-foreground">MCQ Options:</p>
-                                {q.mcqOptions.map((opt, i) => (
+                                {q.mcqOptions.filter(opt => opt && opt.trim() !== "").map((opt, i) => (
                                     <p key={i} className={cn("text-xs pl-2", q.correctAnswer === opt && "font-bold text-green-600 flex items-center gap-1")}>
                                     {q.correctAnswer === opt && <CheckCircle className="h-3 w-3"/>} {optionLetters[i]}. {opt}
                                     </p>
@@ -793,9 +836,20 @@ export default function InterviewPracticeHubPage() {
                                    Comments ({q.userComments?.length || 0})
                                 </Button>
                             </div>
-                            {currentUser.role === 'admin' && !q.approved && (
-                                <Badge variant="destructive" className="mt-1">Needs Approval</Badge>
+                            {currentUser.role === 'admin' && !q.approved && q.createdBy !== currentUser.id && ( // Show approve button if admin and not creator and not approved
+                                 <Button variant="outline" size="xs" className="mt-2 text-green-600 border-green-500 hover:bg-green-50" onClick={() => {
+                                     setAllBankQuestions(prev => prev.map(qn => qn.id === q.id ? {...qn, approved: true} : qn));
+                                     const gIdx = sampleInterviewQuestions.findIndex(sq => sq.id === q.id);
+                                     if (gIdx !== -1) sampleInterviewQuestions[gIdx].approved = true;
+                                     toast({title: "Question Approved"});
+                                 }}>
+                                     <CheckCircle className="mr-1 h-3.5 w-3.5"/> Approve
+                                 </Button>
                             )}
+                             {q.approved === false && q.createdBy === currentUser.id && (
+                                <Badge variant="warning" className="mt-1">Awaiting Approval</Badge>
+                            )}
+
 
                             {commentingQuestionId === q.id && (
                                 <div className="mt-2 space-y-2">
@@ -872,8 +926,8 @@ export default function InterviewPracticeHubPage() {
           <form onSubmit={handleQuestionFormSubmit(onQuestionFormSubmit)} className="space-y-4 py-4 max-h-[80vh] overflow-y-auto pr-2">
             <div>
               <Label htmlFor="question-text">Question Text *</Label>
-              <Controller name="question" control={questionFormControl} render={({ field }) => <Textarea id="question-text" {...field} rows={3} />} />
-              {questionFormErrors.question && <p className="text-sm text-destructive mt-1">{questionFormErrors.question.message}</p>}
+              <Controller name="questionText" control={questionFormControl} render={({ field }) => <Textarea id="question-text" {...field} rows={3} />} />
+              {questionFormErrors.questionText && <p className="text-sm text-destructive mt-1">{questionFormErrors.questionText.message}</p>}
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -909,9 +963,9 @@ export default function InterviewPracticeHubPage() {
             {isMCQSelected && (
                 <div className="space-y-2 pl-6 border-l-2 border-primary/50 pt-2">
                     <Label>MCQ Options (at least 2 required if MCQ)</Label>
-                    {[0,1,2,3].map(index => (
+                    {(watchQuestionForm("mcqOptions") || ["","","",""]).map((_,index) => ( // Ensure at least 4 fields render initially
                         <Controller key={index} name={`mcqOptions.${index}` as any} control={questionFormControl} render={({ field }) => (
-                            <Input {...field} placeholder={`Option ${index + 1}`} className="text-sm"/>
+                            <Input {...field} placeholder={`Option ${optionLetters[index] || index + 1}`} className="text-sm"/>
                         )} />
                     ))}
                      <div>
@@ -920,6 +974,8 @@ export default function InterviewPracticeHubPage() {
                             <Input id="correctAnswer" {...field} placeholder="Paste the correct option text here"/>
                         )} />
                     </div>
+                     {questionFormErrors.mcqOptions && <p className="text-sm text-destructive mt-1">Please provide at least two valid options for MCQ.</p>}
+                     {questionFormErrors.correctAnswer && <p className="text-sm text-destructive mt-1">{questionFormErrors.correctAnswer.message}</p>}
                 </div>
             )}
             <div>
@@ -1107,4 +1163,6 @@ export default function InterviewPracticeHubPage() {
     </div>
   );
 }
+    
+
     
