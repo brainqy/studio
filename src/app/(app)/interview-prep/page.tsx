@@ -782,7 +782,7 @@ export default function InterviewPracticeHubPage() {
                                         {q.userComments.map(comment => (
                                         <div key={comment.id} className="p-1.5 bg-secondary rounded">
                                             <p className="font-semibold">{comment.userName} <span className="text-muted-foreground/70 text-[10px]">{format(parseISO(comment.timestamp), 'PPp')}</span></p>
-                                            <p>{comment.comment}</p>
+                                            <p>{comment.text}</p>
                                         </div>
                                         ))}
                                     </ScrollArea>
@@ -1071,4 +1071,7 @@ export default function InterviewPracticeHubPage() {
         </DialogContent>
       </Dialog>
     </div>
-  
+  );
+}
+
+    
