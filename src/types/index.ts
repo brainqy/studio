@@ -552,12 +552,12 @@ export interface InterviewQuestionUserRating {
 export interface InterviewQuestion {
   id: string;
   category: InterviewQuestionCategory;
-  question: string;
-  answerOrTip: string;
-  tags?: string[];
+  questionText: string; // Renamed from 'question' for clarity
   isMCQ?: boolean;
   mcqOptions?: string[];
   correctAnswer?: string;
+  answerOrTip: string;
+  tags?: string[];
   difficulty?: InterviewQuestionDifficulty;
   rating?: number;
   ratingsCount?: number;
@@ -568,6 +568,7 @@ export interface InterviewQuestion {
   createdAt?: string;
   bookmarkedBy?: string[];
 }
+
 
 export type BankQuestionSortOrder = 'default' | 'highestRated' | 'mostRecent';
 export type BankQuestionFilterView = 'all' | 'myBookmarks' | 'needsApproval';
@@ -722,7 +723,7 @@ export interface PracticeSession {
   userId: string;
   date: string;
   category: "Practice with Friends" | "Practice with Experts" | "Practice with AI";
-  type: string;
+  type: string; // This likely refers to the specific topics for the practice
   language: string;
   status: PracticeSessionStatus;
   notes?: string;
@@ -732,7 +733,12 @@ export interface PracticeSession {
   aiQuestionCategories?: InterviewQuestionCategory[];
 }
 
-export const PREDEFINED_INTERVIEW_TOPICS: string[] = ["Java", "Python", "DSA", "Angular", "Javascript", "Microservices", "System Design", "Behavioral", "Product Management", "Data Science", ...ALL_CATEGORIES];
+export const PREDEFINED_INTERVIEW_TOPICS: string[] = Array.from(new Set([
+    "Java", "Python", "DSA", "Angular", "Javascript", "Microservices",
+    "System Design", /* Removed "Behavioral" here as it's in ALL_CATEGORIES */ "Product Management", "Data Science",
+    ...ALL_CATEGORIES
+]));
+
 
 export const PRACTICE_FOCUS_AREAS = ["Java", "Python", "DSA", "Angular", "Javascript", "Microservices", "System Design", "Behavioral", "Product Management", "Data Science"] as const;
 export type PracticeFocusArea = typeof PRACTICE_FOCUS_AREAS[number];
@@ -775,28 +781,28 @@ export interface PlatformSettings {
   maxEventRegistrationsPerUser?: number;
   globalAnnouncement?: string;
   pointsForAffiliateSignup?: number;
-  walletEnabled?: boolean; // Added this field
+  walletEnabled?: boolean;
 }
 
 export const AnnouncementStatuses = ['Draft', 'Published', 'Archived'] as const;
 export type AnnouncementStatus = typeof AnnouncementStatuses[number];
 
-export const AnnouncementAudiences = ['All Users', 'Specific Tenant', 'Specific Role'] as const; // Add more as needed
+export const AnnouncementAudiences = ['All Users', 'Specific Tenant', 'Specific Role'] as const;
 export type AnnouncementAudience = typeof AnnouncementAudiences[number];
 
 export interface Announcement {
   id: string;
   title: string;
-  content: string; // Rich text or Markdown
-  startDate: string; // ISO Date string
-  endDate?: string; // ISO Date string
+  content: string;
+  startDate: string;
+  endDate?: string;
   audience: AnnouncementAudience;
-  audienceTarget?: string; // e.g., tenantId or roleName if audience is specific
+  audienceTarget?: string;
   status: AnnouncementStatus;
   createdAt: string;
   updatedAt: string;
-  createdBy: string; // User ID of admin who created it
-  tenantId?: string; // Added to scope announcements for managers
+  createdBy: string;
+  tenantId?: string;
 }
 
 export interface AtsFormattingIssue {
@@ -829,7 +835,6 @@ export interface RecruiterTipItem {
 
 export interface AtsParsingConfidenceDetails {
     overall?: number;
-    // sections?: Record<string, number>; // Removed due to API schema error
     warnings?: string[];
 }
 
@@ -996,78 +1001,44 @@ export type CountyData = {
   name: string;
   population?: number;
   medianIncome?: number;
-  // Add other relevant data points as needed
 };
 
-export type Locale = 'en' | 'hi' | 'mr';
-export const locales: Locale[] = ['en', 'hi', 'mr'];
-export const localeDisplayNames: Record<Locale, string> = {
-  en: 'English',
-  hi: 'हिन्दी',
-  mr: 'मराठी',
+export type LiveInterviewParticipant = {
+  userId: string;
+  name: string;
+  role: 'interviewer' | 'candidate';
+  profilePictureUrl?: string;
 };
-export const localePrefix = 'as-needed'; // Or 'always', 'never'
-// Removed Live Interview Session types as per previous instruction
-// export type LiveInterviewSessionStatus = 'Scheduled' | 'InProgress' | 'Completed' | 'Cancelled';
 
-// export interface LiveInterviewParticipant {
-//   userId: string;
-//   name: string;
-//   role: 'interviewer' | 'candidate';
-//   profilePictureUrl?: string;
-// }
+export type LiveInterviewSessionStatus = 'Scheduled' | 'InProgress' | 'Completed' | 'Cancelled';
+export const LiveInterviewSessionStatuses = ['Scheduled', 'InProgress', 'Completed', 'Cancelled'] as const;
 
-// export interface RecordingReference {
-//   id: string;
-//   sessionId: string;
-//   startTime: string; // ISO date string
-//   durationSeconds: number;
-//   localStorageKey?: string; // Key for local storage if saved there initially
-//   cloudStorageUrl?: string; // URL if uploaded to cloud
-//   type: 'audio' | 'video'; // Type of recording
-//   fileName?: string;
-//   blobUrl?: string; // For temporary local playback
-// }
 
-// export interface LiveInterviewSession {
-//   id: string;
-//   tenantId: string;
-//   title: string;
-//   participants: LiveInterviewParticipant[];
-//   scheduledTime: string; // ISO date string
-//   actualStartTime?: string; // ISO date string
-//   actualEndTime?: string; // ISO date string
-//   status: LiveInterviewSessionStatus;
-//   meetingLink?: string;
-//   interviewTopics?: string[];
-//   notes?: string; // General notes about the session
-//   preSelectedQuestions?: MockInterviewQuestion[]; // Questions chosen beforehand
-//   aiSuggestedQuestionsLog?: Array<{ timestamp: string; contextSent: GenerateLiveInterviewQuestionsInput, suggestionsReceived: GenerateLiveInterviewQuestionsOutput['suggestedQuestions'] }>;
-//   recordingReferences?: RecordingReference[];
-// }
+export interface RecordingReference {
+  id: string;
+  sessionId: string;
+  startTime: string; // ISO date string
+  durationSeconds: number;
+  localStorageKey?: string; // Key for local storage if saved there initially
+  cloudStorageUrl?: string; // URL if uploaded to cloud
+  type: 'audio' | 'video'; // Type of recording
+  fileName?: string;
+  blobUrl?: string; // For temporary local playback
+}
 
-// export const LiveInterviewSessionStatuses = ['Scheduled', 'InProgress', 'Completed', 'Cancelled'] as const;
-// export type LiveInterviewSessionStatus = typeof LiveInterviewSessionStatuses[number];
-// End of removed Live Interview Session types
-
-// Type for AI Flow: generate-live-interview-questions (Removed)
-// export interface GenerateLiveInterviewQuestionsInput {
-//   jobTitle?: string;
-//   interviewTopics?: string[];
-//   companyCulture?: string;
-//   previousQuestions?: string[];
-//   candidateSkills?: string[];
-//   difficulty?: InterviewQuestionDifficulty;
-//   count?: number; // 1-5
-// }
-
-// export interface SuggestedQuestion {
-//   questionText: string;
-//   category?: InterviewQuestionCategory;
-//   followUpSuggestions?: string[];
-// }
-
-// export interface GenerateLiveInterviewQuestionsOutput {
-//   suggestedQuestions: SuggestedQuestion[];
-// }
-// End of removed generate-live-interview-questions types
+export interface LiveInterviewSession {
+  id: string;
+  tenantId: string;
+  title: string;
+  participants: LiveInterviewParticipant[];
+  scheduledTime: string; // ISO date string
+  actualStartTime?: string; // ISO date string
+  actualEndTime?: string; // ISO date string
+  status: LiveInterviewSessionStatus;
+  meetingLink?: string;
+  interviewTopics?: string[];
+  notes?: string;
+  preSelectedQuestions?: MockInterviewQuestion[];
+  // aiSuggestedQuestionsLog?: Array<{ timestamp: string; contextSent: GenerateLiveInterviewQuestionsInput, suggestionsReceived: GenerateLiveInterviewQuestionsOutput['suggestedQuestions'] }>; // Commented out as flow is removed
+  recordingReferences?: RecordingReference[];
+}
