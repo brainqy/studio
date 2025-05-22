@@ -1,16 +1,16 @@
 
-import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem, Appointment, Wallet, ResumeProfile, Tenant, Badge, BlogPost, ReferralHistoryItem, GamificationRule, UserStatus, SurveyResponse, Affiliate, AffiliateClick, AffiliateSignup, AffiliateStatus, SurveyStep, ResumeTemplate, TourStep, CommunityComment, InterviewQuestion, InterviewQuestionCategory, BlogGenerationSettings, MockInterviewSession, InterviewQuestionDifficulty, InterviewQuestionUserComment, PracticeSession, PracticeSessionStatus, JobApplicationStatus, KanbanColumnId, PlatformSettings, Announcement, AnnouncementStatus, AnnouncementAudience, LiveInterviewSession, LiveInterviewParticipant, RecordingReference, LiveInterviewSessionStatus, MockInterviewQuestion } from '@/types';
-import { AreasOfSupport, AppointmentStatuses, Genders, DegreePrograms, Industries, TimeCommitments, EngagementModes, SupportTypesSought, JOB_APPLICATION_STATUSES, KANBAN_COLUMNS_CONFIG, PREDEFINED_INTERVIEW_TOPICS, PRACTICE_FOCUS_AREAS, ALL_CATEGORIES, ALL_DIFFICULTIES, MOCK_INTERVIEW_STEPS, RESUME_BUILDER_STEPS, PreferredTimeSlots, AnnouncementStatuses, AnnouncementAudiences, LiveInterviewSessionStatuses } from '@/types'; 
+import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem, Appointment, Wallet, ResumeProfile, Tenant, Badge, BlogPost, ReferralHistoryItem, GamificationRule, UserStatus, SurveyResponse, Affiliate, AffiliateClick, AffiliateSignup, AffiliateStatus, SurveyStep, ResumeTemplate, TourStep, CommunityComment, InterviewQuestion, InterviewQuestionCategory, BlogGenerationSettings, MockInterviewSession, InterviewQuestionDifficulty, InterviewQuestionUserComment, PracticeSession, PracticeSessionStatus, JobApplicationStatus, KanbanColumnId, PlatformSettings, Announcement, AnnouncementStatus, AnnouncementAudience, MockInterviewQuestion } from '@/types';
+import { AreasOfSupport, AppointmentStatuses, Genders, DegreePrograms, Industries, TimeCommitments, EngagementModes, SupportTypesSought, JOB_APPLICATION_STATUSES, KANBAN_COLUMNS_CONFIG, PREDEFINED_INTERVIEW_TOPICS, PRACTICE_FOCUS_AREAS, ALL_CATEGORIES, ALL_DIFFICULTIES, MOCK_INTERVIEW_STEPS, RESUME_BUILDER_STEPS, PreferredTimeSlots, AnnouncementStatuses, AnnouncementAudiences } from '@/types'; 
 
 export let SAMPLE_TENANT_ID = 'Brainqy'; 
 
 export let sampleJobApplications: JobApplication[] = [
-  { id: '1', tenantId: SAMPLE_TENANT_ID, userId: 'alumni1', companyName: 'Tech Solutions Inc.', jobTitle: 'Software Engineer', status: 'Applied', dateApplied: '2024-07-01', notes: 'Applied via company portal.', location: 'Remote', resumeUsed: 'resume1', reminderDate: new Date(Date.now() + 86400000 * 7).toISOString(), applicationUrl: 'https://example.com/apply/job1' }, 
-  { id: '2', tenantId: SAMPLE_TENANT_ID, userId: 'alumni1', companyName: 'Innovate LLC', jobTitle: 'Frontend Developer', status: 'Interviewing', dateApplied: '2024-06-25', notes: 'First interview scheduled for 2024-07-10.', location: 'New York, NY', resumeUsed: 'resume1', applicationUrl: 'https://example.com/apply/job2' },
-  { id: '3', tenantId: SAMPLE_TENANT_ID, userId: 'alumni1', companyName: 'Data Corp', jobTitle: 'Data Analyst', status: 'Offer', dateApplied: '2024-06-15', notes: 'Received offer, considering.', location: 'San Francisco, CA', resumeUsed: 'resume3', reminderDate: new Date(Date.now() + 86400000 * 3).toISOString(), applicationUrl: 'https://example.com/apply/job3' }, 
-  { id: '4', tenantId: SAMPLE_TENANT_ID, userId: 'alumni1', companyName: 'Web Wizards', jobTitle: 'UX Designer', status: 'Rejected', dateApplied: '2024-06-20', notes: 'Did not proceed after initial screening.', location: 'Austin, TX', resumeUsed: 'resume2' },
-  { id: '5', tenantId: SAMPLE_TENANT_ID, userId: 'alumni1', companyName: 'CloudNetics', jobTitle: 'Cloud Engineer', status: 'Saved', dateApplied: '2024-07-05', notes: 'Interested, need to tailor resume.', location: 'Boston, MA', resumeUsed: 'resume3', sourceJobOpeningId: 'job-board-cloudnetics-01' },
-  { id: '6', tenantId: SAMPLE_TENANT_ID, userId: 'alumni1', companyName: 'AI Future', jobTitle: 'Machine Learning Eng.', status: 'Saved', dateApplied: '2024-07-15', notes: 'From scan report, good match.', location: 'Seattle, WA', resumeUsed: 'resume1', sourceJobOpeningId: 'job-board-aifuture-02' },
+  { id: '1', tenantId: 'Brainqy', userId: 'alumni1', companyName: 'Tech Solutions Inc.', jobTitle: 'Software Engineer', status: 'Applied', dateApplied: '2024-07-01', notes: 'Applied via company portal.', location: 'Remote', resumeUsed: 'resume1', reminderDate: new Date(Date.now() + 86400000 * 7).toISOString(), applicationUrl: 'https://example.com/apply/job1' }, 
+  { id: '2', tenantId: 'Brainqy', userId: 'alumni1', companyName: 'Innovate LLC', jobTitle: 'Frontend Developer', status: 'Interviewing', dateApplied: '2024-06-25', notes: 'First interview scheduled for 2024-07-10.', location: 'New York, NY', resumeUsed: 'resume1', applicationUrl: 'https://example.com/apply/job2' },
+  { id: '3', tenantId: 'Brainqy', userId: 'alumni1', companyName: 'Data Corp', jobTitle: 'Data Analyst', status: 'Offer', dateApplied: '2024-06-15', notes: 'Received offer, considering.', location: 'San Francisco, CA', resumeUsed: 'resume3', reminderDate: new Date(Date.now() + 86400000 * 3).toISOString(), applicationUrl: 'https://example.com/apply/job3' }, 
+  { id: '4', tenantId: 'Brainqy', userId: 'alumni1', companyName: 'Web Wizards', jobTitle: 'UX Designer', status: 'Rejected', dateApplied: '2024-06-20', notes: 'Did not proceed after initial screening.', location: 'Austin, TX', resumeUsed: 'resume2' },
+  { id: '5', tenantId: 'Brainqy', userId: 'alumni1', companyName: 'CloudNetics', jobTitle: 'Cloud Engineer', status: 'Saved', dateApplied: '2024-07-05', notes: 'Interested, need to tailor resume.', location: 'Boston, MA', resumeUsed: 'resume3', sourceJobOpeningId: 'job-board-cloudnetics-01' },
+  { id: '6', tenantId: 'Brainqy', userId: 'alumni1', companyName: 'AI Future', jobTitle: 'Machine Learning Eng.', status: 'Saved', dateApplied: '2024-07-15', notes: 'From scan report, good match.', location: 'Seattle, WA', resumeUsed: 'resume1', sourceJobOpeningId: 'job-board-aifuture-02' },
 ];
 
 export let sampleAlumni: AlumniProfile[] = [
@@ -25,14 +25,14 @@ export let sampleAlumni: AlumniProfile[] = [
     university: 'State University',
     skills: ['Java', 'Python', 'Machine Learning', 'Cloud Computing', 'Algorithms'],
     email: "alice.wonderland@example.com",
-    role: 'user', // Alice is a user role, but can be an interviewer in a session
+    role: 'user', 
     status: 'active',
     lastLogin: new Date(Date.now() - 86400000 * 1).toISOString(), 
     interests: ['Hiking', 'Photography', 'Open Source'],
     offersHelpWith: [AreasOfSupport[0], AreasOfSupport[2], AreasOfSupport[4]], 
     appointmentCoinCost: 10,
     xpPoints: 2500,
-    createdAt: new Date(Date.now() - 86400000 * 365).toISOString(), // 1 year ago
+    createdAt: new Date(Date.now() - 86400000 * 365).toISOString(), 
     isDistinguished: true,
   },
   {
@@ -53,16 +53,16 @@ export let sampleAlumni: AlumniProfile[] = [
     offersHelpWith: [AreasOfSupport[1], AreasOfSupport[3], AreasOfSupport[8]], 
     appointmentCoinCost: 15,
     xpPoints: 1800,
-    createdAt: new Date(Date.now() - 86400000 * 180).toISOString(), // 6 months ago
+    createdAt: new Date(Date.now() - 86400000 * 180).toISOString(), 
     isDistinguished: true,
   },
   {
     id: 'alumni3',
-    tenantId: 'tenant-2', 
+    tenantId: 'tenant-2', // Moved to tenant-2 for manager testing
     name: 'Charlie Brown',
     profilePictureUrl: 'https://picsum.photos/seed/charlie/200/200',
     currentJobTitle: 'Data Scientist',
-    company: 'Facebook',
+    company: 'Meta', 
     shortBio: 'Exploring large-scale data and its implications. Alumnus of 2017.',
     university: 'State University',
     skills: ['R', 'Statistics', 'Big Data', 'Python', 'Data Visualization'],
@@ -201,8 +201,8 @@ export const sampleFeatureRequests: FeatureRequest[] = [
 ];
 
 export let sampleEvents: GalleryEvent[] = [ 
-  { id: 'event1', tenantId: 'Brainqy', title: 'Annual Alumni Meet 2023', date: '2023-10-15T10:00:00Z', imageUrls: ['https://picsum.photos/seed/event1/600/400', 'https://picsum.photos/seed/event1-extra1/600/400'], description: 'A wonderful evening connecting with fellow alumni.' , dataAiHint: 'conference networking', approved: true, createdByUserId: 'alumni4', attendeeUserIds: ['alumni1', 'alumni2', 'alumni1', 'user123']},
-  { id: 'event2', tenantId: 'Brainqy', title: 'Tech Talk Series: AI Today', date: '2024-03-22T10:00:00Z', imageUrls: ['https://picsum.photos/seed/event2/600/400'], description: 'Insightful talks on the future of Artificial Intelligence.' , dataAiHint: 'presentation seminar', approved: true, createdByUserId: 'alumni1', attendeeUserIds: ['alumni2', 'alumni4', 'alumni1']},
+  { id: 'event1', tenantId: 'Brainqy', title: 'Annual Alumni Meet 2023', date: '2023-10-15T10:00:00Z', imageUrls: ['https://picsum.photos/seed/event1/600/400', 'https://picsum.photos/seed/event1-extra1/600/400'], description: 'A wonderful evening connecting with fellow alumni.' , dataAiHint: 'conference networking', approved: true, createdByUserId: 'alumni4', attendeeUserIds: ['alumni1', 'alumni2', 'user123']},
+  { id: 'event2', tenantId: 'Brainqy', title: 'Tech Talk Series: AI Today', date: '2024-03-22T10:00:00Z', imageUrls: ['https://picsum.photos/seed/event2/600/400'], description: 'Insightful talks on the future of Artificial Intelligence.' , dataAiHint: 'presentation seminar', approved: true, createdByUserId: 'alumni1', attendeeUserIds: ['alumni2', 'alumni4']},
   { id: 'event3', tenantId: 'Brainqy', title: 'Campus Job Fair Spring 2024', date: '2024-04-10T10:00:00Z', imageUrls: ['https://picsum.photos/seed/event3/600/400', 'https://picsum.photos/seed/event3-extra2/600/400', 'https://picsum.photos/seed/event3-extra3/600/400'], description: 'Connecting students with top employers.', dataAiHint: 'job fair students', approved: false, createdByUserId: 'managerUser1', attendeeUserIds: ['alumni1', 'user456'] },
   { id: 'event4', tenantId: 'tenant-2', title: 'Tenant 2 Networking Mixer', date: '2024-05-10T10:00:00Z', imageUrls: ['https://picsum.photos/seed/event4/600/400'], description: 'Exclusive networking event for Corporate Partner Inc. members.', dataAiHint: 'corporate networking', approved: true, createdByUserId: 'managerUser1', attendeeUserIds: ['alumni3', 'user789'] },
 ];
@@ -216,13 +216,13 @@ export const sampleJobOpenings: JobOpening[] = [
 ];
 
 export let sampleUserProfile: UserProfile = {
-  id: 'alumni1', // Changed to Alice Wonderland
+  id: 'alumni1', 
   tenantId: 'Brainqy', 
-  role: 'user', // Alice is a user, but can be an interviewer in a session
+  role: 'user', 
   name: 'Alice Wonderland', 
   email: 'alice.wonderland@example.com', 
   status: 'active',
-  lastLogin: new Date(Date.now() - 86400000 * 1).toISOString(), // Logged in yesterday
+  lastLogin: new Date(Date.now() - 86400000 * 1).toISOString(), 
   dateOfBirth: '1993-03-15', 
   gender: 'Female', 
   mobileNumber: '+15551112222', 
@@ -256,17 +256,25 @@ export let sampleUserProfile: UserProfile = {
   Email: alice.wonderland@example.com | LinkedIn: linkedin.com/in/alicewonderland | Mobile: +15551112222
 
   Summary:
-  Innovative Senior Software Engineer with 7+ years of experience at Google, specializing in scalable cloud solutions and AI-driven product features. Proven track record of leading high-impact projects and mentoring junior engineers. Passionate about leveraging technology to solve complex problems.
+  Innovative Senior Software Engineer with 7+ years of experience specializing in architecting and implementing responsive, accessible, and performant web applications using React, TypeScript, and Next.js. Proven ability to lead development efforts, mentor junior engineers, and collaborate effectively with cross-functional teams to deliver exceptional user experiences. Passionate about clean code, user-centric design, and staying current with cutting-edge frontend technologies. Seeking to leverage expertise to contribute to Innovatech Solutions' mission of revolutionizing data analytics.
   
   Experience:
-  Senior Software Engineer, Google, Mountain View, CA (2017 - Present)
-  - Led a team of 5 engineers in developing a new machine learning platform, improving model training efficiency by 30%.
-  - Designed and implemented critical backend services for a flagship product using Java, Python, and Google Cloud Platform.
-  - Contributed to frontend development using React and TypeScript for internal tooling.
-  
-  Software Engineer, Tech Startup Inc., San Francisco, CA (2015 - 2017)
-  - Developed core features for a SaaS product.
-  - Worked in an Agile environment, contributing to all phases of the software development lifecycle.
+  Senior Frontend Developer, WebSolutions Co., San Francisco, CA (Remote) | June 2019 – Present
+  - Led the development of a new SaaS analytics platform frontend using React, TypeScript, and Next.js, resulting in a 30% improvement in user engagement and a 25% reduction in page load times.
+  - Architected and implemented a reusable UI component library, adopted by 5 development teams, increasing development velocity by 40%.
+  - Collaborated closely with UX/UI designers to translate complex wireframes into intuitive and visually appealing interfaces, consistently meeting project deadlines.
+  - Championed and enforced WCAG 2.1 AA accessibility standards, achieving 95% compliance across all new features.
+  - Authored comprehensive unit and integration tests using Jest and React Testing Library, achieving 90% code coverage for critical components.
+  - Mentored 3 junior frontend developers, improving their code quality and productivity by an average of 20% within 6 months.
+  - Managed frontend project timelines and deliverables for 4 major product releases, ensuring 100% on-time completion.
+  - Proactively identified and resolved over 50 critical UI bugs, enhancing application stability and user satisfaction.
+  - Contributed significantly to frontend architectural decisions and established team-wide coding best practices.
+
+  Frontend Developer, AppBuilders Inc., Oakland, CA | May 2017 – June 2019
+  - Developed and maintained responsive user interfaces for multiple client projects using React and JavaScript.
+  - Increased application performance by 15% through targeted code optimizations and lazy loading techniques.
+  - Successfully integrated third-party APIs for payment processing and social media functionalities.
+  - Participated actively in an Agile/Scrum development process, contributing to sprint planning and daily stand-ups.
   
   Education:
   Master of Science (M.Sc) in Computer Science, State University (2013 - 2015)
@@ -292,8 +300,8 @@ export let sampleUserProfile: UserProfile = {
 
 
 export const samplePlatformUsers: UserProfile[] = [
-  sampleUserProfile, // Alice Wonderland
-  { // Bob The Builder
+  sampleUserProfile, 
+  { 
     id: 'alumni2',
     tenantId: 'Brainqy', 
     name: 'Bob The Builder (Manager)',
@@ -313,20 +321,19 @@ export const samplePlatformUsers: UserProfile[] = [
     xpPoints: 1800,
     createdAt: new Date(Date.now() - 86400000 * 180).toISOString(), 
     isDistinguished: true,
-    // ... other fields from UserProfile for Bob
     bio: "Product Manager at Microsoft, skilled in Agile and UX research.",
     careerInterests: "Leading product teams",
     dailyStreak: 5,
     earnedBadges: ['contributor'],
     interviewCredits: 3,
   },
-  { // Charlie Brown
+  { 
     id: 'alumni3',
     tenantId: 'tenant-2', 
     name: 'Charlie Brown',
     profilePictureUrl: 'https://picsum.photos/seed/charlie/200/200',
     currentJobTitle: 'Data Scientist',
-    company: 'Meta', // Changed from Facebook
+    company: 'Meta', 
     shortBio: 'Exploring large-scale data and its implications. Alumnus of 2017.',
     university: 'State University',
     skills: ['R', 'Statistics', 'Big Data', 'Python', 'Data Visualization'],
@@ -346,7 +353,7 @@ export const samplePlatformUsers: UserProfile[] = [
     earnedBadges: [],
     interviewCredits: 2,
   },
-  { // Diana Prince
+  { 
     id: 'alumni4',
     tenantId: 'Brainqy', 
     name: 'Diana Prince (Admin)', 
@@ -372,7 +379,7 @@ export const samplePlatformUsers: UserProfile[] = [
     earnedBadges: ['admin-master', 'networker', 'early-adopter'],
     interviewCredits: 10,
   },
-  { // Manager Mike
+  { 
     id: 'managerUser1', 
     tenantId: 'tenant-2', 
     role: 'manager', 
@@ -1071,7 +1078,7 @@ export let sampleInterviewQuestions: InterviewQuestion[] = [
     createdBy: "system",
     approved: true,
     createdAt: new Date(Date.now() - 86400000 * 10).toISOString(),
-    bookmarkedBy: ['alumni1'] // Changed from currentUser to Alice's ID
+    bookmarkedBy: ['alumni1'] 
   },
   {
     id: 'iq2',
@@ -1558,53 +1565,69 @@ export let sampleAnnouncements: Announcement[] = [
   },
 ];
 
+
+// Ensure sampleUserProfile ID matches an alumni ID if they are supposed to be an existing alumnus
+// For Phase 2 - Live Interview testing as Interviewer (Alice)
+const targetUserProfileId = 'alumni1'; // Alice Wonderland for interviewer role
+const profileToUse = samplePlatformUsers.find(u => u.id === targetUserProfileId);
+
+if (profileToUse) {
+    Object.assign(sampleUserProfile, profileToUse);
+    console.log(`Switched sampleUserProfile to: ${sampleUserProfile.name} (Role: ${sampleUserProfile.role})`);
+} else {
+    console.warn(`Could not find user with ID ${targetUserProfileId} to set as sampleUserProfile for live interview testing.`);
+    // Keep current sampleUserProfile (Manager Mike) if Alice isn't found, or set to a default user.
+    // If keeping Manager Mike, ensure a session exists where he is the interviewer.
+}
+
+// Sample Live Interview Sessions
 export const sampleLiveInterviewSessions: LiveInterviewSession[] = [
   {
-    id: 'ps1', // Match a PracticeSession ID for linking
+    id: 'ps1', 
     tenantId: 'Brainqy',
     title: 'Angular Frontend Practice',
     participants: [
-      // Manager Mike is now the interviewer for this session
       { userId: 'managerUser1', name: 'Manager Mike', role: 'interviewer', profilePictureUrl: samplePlatformUsers.find(u => u.id === 'managerUser1')?.profilePictureUrl },
-      { userId: 'expert1', name: 'Expert Angular Interviewer', role: 'candidate', profilePictureUrl: 'https://picsum.photos/seed/expert1/50/50' }
+      { userId: 'user-candidate-1', name: 'Candidate Carla', role: 'candidate', profilePictureUrl: 'https://picsum.photos/seed/candidate1/50/50' }
     ],
     scheduledTime: new Date(Date.now() + 86400000 * 3).toISOString(),
     status: 'Scheduled',
     meetingLink: 'https://meet.example.com/angular-practice-ps1',
     interviewTopics: ['Angular', 'TypeScript', 'RxJS'],
-    preSelectedQuestions: [ // Example pre-selected questions
-        { id: 'iq3', questionText: sampleInterviewQuestions.find(q=>q.id === 'iq3')!.questionText, category: 'Technical', difficulty: 'Medium' },
-        { id: 'coding1', questionText: sampleInterviewQuestions.find(q=>q.id === 'coding1')!.questionText, category: 'Coding', difficulty: 'Easy' }
-    ]
+    preSelectedQuestions: [ 
+        sampleInterviewQuestions.find(q=>q.id === 'iq3') as MockInterviewQuestion,
+        sampleInterviewQuestions.find(q=>q.id === 'coding1') as MockInterviewQuestion,
+        sampleInterviewQuestions.find(q=>q.id === 'behavioral1') || {id: 'behavioral1', questionText: "Tell me about yourself.", category: "Common", difficulty: "Easy"} // Fallback
+    ].filter(Boolean) as MockInterviewQuestion[], // Filter out undefined if find returns nothing
   },
   {
     id: 'live-session-1', 
     tenantId: 'Brainqy',
     title: 'Frontend Developer Screening',
     participants: [
-      { userId: 'alumni1', name: 'Alice Wonderland', role: 'interviewer', profilePictureUrl: 'https://picsum.photos/seed/alice/50/50' },
-      { userId: 'alumni2', name: 'Bob The Builder (Manager)', role: 'candidate', profilePictureUrl: 'https://picsum.photos/seed/bob/50/50' } // Changed current User to Bob for this session
+      { userId: 'alumni1', name: 'Alice Wonderland', role: 'interviewer', profilePictureUrl: samplePlatformUsers.find(u=>u.id === 'alumni1')?.profilePictureUrl },
+      { userId: 'alumni2', name: 'Bob The Builder', role: 'candidate', profilePictureUrl: samplePlatformUsers.find(u=>u.id === 'alumni2')?.profilePictureUrl } 
     ],
-    scheduledTime: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(), // In 2 days
+    scheduledTime: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(), 
     status: 'Scheduled',
     meetingLink: 'https://meet.example.com/live123',
     interviewTopics: ['React', 'JavaScript', 'CSS'],
     jobRoleId: 'job1',
     preSelectedQuestions: [
-      { id: 'iq1', questionText: sampleInterviewQuestions.find(q=>q.id === 'iq1')!.questionText, category: 'Behavioral', difficulty: 'Medium' },
-      { id: 'iq5', questionText: sampleInterviewQuestions.find(q=>q.id === 'iq5')!.questionText, category: 'Common', difficulty: 'Easy' },
-      { id: 'mcq1', questionText: sampleInterviewQuestions.find(q=>q.id === 'mcq1')!.questionText, category: 'Technical', difficulty: 'Easy' },
-    ]
+      sampleInterviewQuestions.find(q=>q.id === 'iq1') as MockInterviewQuestion,
+      sampleInterviewQuestions.find(q=>q.id === 'iq5') as MockInterviewQuestion,
+      sampleInterviewQuestions.find(q=>q.id === 'mcq1') as MockInterviewQuestion,
+    ].filter(Boolean) as MockInterviewQuestion[],
   },
   {
     id: 'live-session-2',
     tenantId: 'Brainqy',
     title: 'Product Manager - Behavioral Round',
     participants: [
-      { userId: 'alumni2', name: 'Bob The Builder (Manager)', role: 'interviewer', profilePictureUrl: 'https://picsum.photos/seed/bob/50/50' },
-      { userId: 'user456', name: 'Jane Smith', role: 'candidate', profilePictureUrl: 'https://picsum.photos/seed/janesmith/50/50' }
+      { userId: 'alumni2', name: 'Bob The Builder', role: 'interviewer', profilePictureUrl: samplePlatformUsers.find(u=>u.id === 'alumni2')?.profilePictureUrl },
+      { userId: 'user456', name: 'Jane Smith (Candidate)', role: 'candidate', profilePictureUrl: 'https://picsum.photos/seed/janesmith/50/50' }
     ],
-    scheduledTime: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // Yesterday
+    scheduledTime: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), 
     actualStartTime: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000 + 5 * 60 * 1000).toISOString(), 
     actualEndTime: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000 + 65 * 60 * 1000).toISOString(), 
     status: 'Completed',
@@ -1619,32 +1642,9 @@ export const sampleLiveInterviewSessions: LiveInterviewSession[] = [
     title: 'Data Science - Technical Deep Dive',
     participants: [
       { userId: 'managerUser1', name: 'Manager Mike', role: 'interviewer', profilePictureUrl: samplePlatformUsers.find(u=>u.id === 'managerUser1')?.profilePictureUrl },
-      { userId: 'alumni3', name: 'Charlie Brown', role: 'candidate', profilePictureUrl: 'https://picsum.photos/seed/charlie/50/50' }
+      { userId: 'alumni3', name: 'Charlie Brown', role: 'candidate', profilePictureUrl: samplePlatformUsers.find(u=>u.id === 'alumni3')?.profilePictureUrl }
     ],
-    scheduledTime: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(), // In 5 days
+    scheduledTime: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(), 
     status: 'Scheduled',
     interviewTopics: ['Machine Learning Algorithms', 'Python', 'Statistics'],
   }
-];
-
-// Ensure sampleUserProfile ID matches an alumni ID if they are supposed to be an existing alumnus
-const aliceProfile = sampleAlumni.find(a => a.id === 'alumni1');
-if (aliceProfile) {
-  sampleUserProfile.id = aliceProfile.id;
-  sampleUserProfile.name = aliceProfile.name;
-  sampleUserProfile.email = aliceProfile.email;
-  sampleUserProfile.role = aliceProfile.role || 'user';
-  sampleUserProfile.profilePictureUrl = aliceProfile.profilePictureUrl;
-  sampleUserProfile.tenantId = aliceProfile.tenantId;
-  sampleUserProfile.currentJobTitle = aliceProfile.currentJobTitle;
-  sampleUserProfile.company = aliceProfile.company;
-  sampleUserProfile.shortBio = aliceProfile.shortBio;
-  sampleUserProfile.university = aliceProfile.university;
-  sampleUserProfile.skills = aliceProfile.skills;
-  sampleUserProfile.interests = aliceProfile.interests;
-  sampleUserProfile.offersHelpWith = aliceProfile.offersHelpWith;
-  sampleUserProfile.appointmentCoinCost = aliceProfile.appointmentCoinCost;
-  sampleUserProfile.xpPoints = aliceProfile.xpPoints;
-  sampleUserProfile.isDistinguished = aliceProfile.isDistinguished;
-  // Copy other relevant fields if needed for consistency when Alice is the logged-in user
-}

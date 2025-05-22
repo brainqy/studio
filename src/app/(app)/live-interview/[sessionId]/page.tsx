@@ -12,16 +12,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Mic, Video as VideoIcon, ScreenShare, PhoneOff, Send, Bot, ListChecks, Loader2, AlertTriangle, ThumbsUp, ChevronDown, Square, Play, Download as DownloadIcon, VideoOff, MessageSquare as ChatIcon, Users as ParticipantsIcon, HelpCircle, Maximize, Minimize, Radio } from 'lucide-react';
-import { generateLiveInterviewQuestions, type GenerateLiveInterviewQuestionsInput, type GenerateLiveInterviewQuestionsOutput } from '@/ai/flows/generate-live-interview-questions';
-import { sampleUserProfile, sampleLiveInterviewSessions } from '@/lib/sample-data';
-import type { LiveInterviewSession, LiveInterviewParticipant, RecordingReference } from '@/types';
+import { Mic, Video as VideoIcon, ScreenShare, PhoneOff, Send, Bot, ListChecks, Loader2, AlertTriangle, ThumbsUp, ChevronDown, Square, Play, Download as DownloadIcon, VideoOff, MessageSquare as ChatIcon, Users as ParticipantsIcon, HelpCircle, Maximize, Minimize, Radio, CheckSquare as CheckSquareIcon, RotateCcw } from 'lucide-react';
+import { sampleUserProfile, sampleLiveInterviewSessions, sampleInterviewQuestions } from '@/lib/sample-data';
+import type { LiveInterviewSession, LiveInterviewParticipant, RecordingReference, MockInterviewQuestion } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { format } from 'date-fns';
 
-// Simple logger for debugging stream assignments
 const logger = {
   debug: (message: string, ...args: any[]) => console.debug(`[LiveInterviewPage] ${message}`, ...args),
   info: (message: string, ...args: any[]) => console.info(`[LiveInterviewPage] ${message}`, ...args),
@@ -40,38 +38,31 @@ export default function LiveInterviewPage() {
   const [isLoadingSession, setIsLoadingSession] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
 
-  // Media states
   const [isMicMuted, setIsMicMuted] = useState(false);
-  const [isVideoActive, setIsVideoActive] = useState(false); // User's intention to show their camera
+  const [isVideoActive, setIsVideoActive] = useState(false);
   const [activeStreamType, setActiveStreamType] = useState<'camera' | 'screen' | 'none'>('none');
   
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
   
-  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null); // null: not asked, true: granted, false: denied
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const [hasScreenPermission, setHasScreenPermission] = useState<boolean | null>(null);
 
   const mainVideoRef = useRef<HTMLVideoElement>(null);
   const selfVideoRef = useRef<HTMLVideoElement>(null);
 
-  // Chat states
   const [chatMessages, setChatMessages] = useState<{ user: string, text: string, id: string }[]>([]);
   const [chatInput, setChatInput] = useState('');
 
-  // AI Question Suggester states
-  const [aiContextJobTitle, setAiContextJobTitle] = useState('');
-  const [aiContextTopics, setAiContextTopics] = useState('');
-  const [suggestedQuestions, setSuggestedQuestions] = useState<GenerateLiveInterviewQuestionsOutput['suggestedQuestions']>([]);
-  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
-  const [askedQuestions, setAskedQuestions] = useState<string[]>([]);
+  const [askedQuestions, setAskedQuestions] = useState<Set<string>>(new Set()); // Store IDs of asked questions
 
-  // Recording states
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunksRef = useRef<Blob[]>([]);
-  const [audioURL, setAudioURL] = useState<string | null>(null); // Can be video or audio URL
+  const [audioURL, setAudioURL] = useState<string | null>(null); 
   const [browserSupportsRecording, setBrowserSupportsRecording] = useState(true);
   const [localRecordingReferences, setLocalRecordingReferences] = useState<RecordingReference[]>([]);
+  const [openAccordionItems, setOpenAccordionItems] = useState<string[]>([]);
 
 
   const currentUser = sampleUserProfile;
@@ -81,6 +72,15 @@ export default function LiveInterviewPage() {
     const participant = sessionDetails.participants.find(p => p.userId === currentUser.id);
     return participant?.role === 'interviewer';
   }, [sessionDetails, currentUser.id]);
+  
+  useEffect(() => {
+    if (isInterviewer) {
+      setOpenAccordionItems(['interview-questions', 'chat', 'participants']);
+    } else {
+      setOpenAccordionItems(['chat', 'participants']);
+    }
+  }, [isInterviewer, sessionDetails]);
+
 
   const selfParticipant = useMemo(() =>
     sessionDetails?.participants.find(p => p.userId === currentUser.id) ||
@@ -90,7 +90,7 @@ export default function LiveInterviewPage() {
 
   const otherParticipant = useMemo(() =>
     sessionDetails?.participants.find(p => p.userId !== currentUser.id) ||
-    { name: "Participant B", role: isInterviewer ? "candidate" : "interviewer", profilePictureUrl: `https://avatar.vercel.sh/participantB.png`, userId: 'participant-placeholder-B' },
+    { name: "Participant Placeholder", role: isInterviewer ? "candidate" : "interviewer", profilePictureUrl: `https://avatar.vercel.sh/participantB.png`, userId: 'participant-placeholder-B' },
     [sessionDetails, currentUser, isInterviewer]
   );
 
@@ -101,12 +101,10 @@ export default function LiveInterviewPage() {
       const foundSession = sampleLiveInterviewSessions.find(s => s.id === sessionId);
       if (foundSession) {
         setSessionDetails(foundSession);
-        setAiContextJobTitle(foundSession.jobRoleId || foundSession.title || '');
-        setAiContextTopics((foundSession.interviewTopics || []).join(', '));
         setLocalRecordingReferences(foundSession.recordingReferences || []);
         logger.info("Session details loaded:", foundSession.title);
       } else {
-        setSessionDetails(null); // Explicitly null if not found
+        setSessionDetails(null); 
         toast({
           title: "Session Not Found",
           description: `Could not find an interview session with ID: ${sessionId}`,
@@ -115,7 +113,7 @@ export default function LiveInterviewPage() {
         router.push('/interview-prep');
       }
     } else {
-      setSessionDetails(null); // No session ID provided
+      setSessionDetails(null); 
        toast({ title: "Invalid Session", description: "No session ID provided.", variant: "destructive"});
        router.push('/interview-prep');
     }
@@ -123,7 +121,7 @@ export default function LiveInterviewPage() {
   }, [sessionId, toast, router]);
 
   useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 60000); // Update every minute for display
+    const timer = setInterval(() => setCurrentTime(new Date()), 60000); 
     return () => clearInterval(timer);
   }, []);
 
@@ -138,7 +136,6 @@ export default function LiveInterviewPage() {
     if (stream) {
       stream.getTracks().forEach(track => {
         track.stop();
-        // stream.removeTrack(track); // Not always necessary and can cause issues if stream is reused
       });
       logger.debug("Tracks stopped for stream:", stream.id);
     }
@@ -152,7 +149,6 @@ export default function LiveInterviewPage() {
       return null;
     }
     try {
-      // Stop existing camera stream if any, to avoid conflicts
       if (cameraStream) {
         stopStreamTracks(cameraStream);
         setCameraStream(null);
@@ -160,7 +156,7 @@ export default function LiveInterviewPage() {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: !isMicMuted });
       setCameraStream(stream);
       setHasCameraPermission(true);
-      setIsVideoActive(true); // User's camera is now active
+      setIsVideoActive(true);
       logger.info("Camera stream started and set to state:", stream.id);
       return stream;
     } catch (err) {
@@ -178,10 +174,9 @@ export default function LiveInterviewPage() {
       stopStreamTracks(cameraStream);
       setCameraStream(null);
     }
-    setIsVideoActive(false);
+    setIsVideoActive(false); // Ensure this reflects the camera state accurately
     logger.debug("Camera stream stopped and isVideoActive set to false.");
   }, [cameraStream, stopStreamTracks]);
-
 
   const startScreenShareStream = useCallback(async () => {
     logger.debug("Attempting to start screen share stream...");
@@ -191,19 +186,19 @@ export default function LiveInterviewPage() {
       return null;
     }
     try {
-      // Stop existing screen stream if any
       if (screenStream) {
         stopStreamTracks(screenStream);
         setScreenStream(null);
       }
       const stream = await navigator.mediaDevices.getDisplayMedia({
-        video: { cursor: "always" } as any, // Cast to any for cursor property if TS complains
-        audio: false // Usually screen audio is not mixed with mic audio this way
+        video: { cursor: "always" } as any, 
+        audio: false 
       });
       
       stream.getVideoTracks()[0].onended = () => {
         logger.info("Screen share ended by browser control or track ending.");
-        stopScreenShareStream(true); // Pass flag indicating browser initiated stop
+        setActiveStreamType(isVideoActive && cameraStream ? 'camera' : 'none'); // Revert to camera if it was on
+        setScreenStream(null);
       };
       setScreenStream(stream);
       setHasScreenPermission(true);
@@ -215,27 +210,21 @@ export default function LiveInterviewPage() {
       toast({ title: "Screen Share Failed", description: "Could not start screen sharing. Ensure permission is granted.", variant: "destructive" });
       return null;
     }
-  }, [toast, screenStream, stopStreamTracks]);
+  }, [toast, screenStream, stopStreamTracks, isVideoActive, cameraStream]);
 
-  const stopScreenShareStream = useCallback((browserInitiated = false) => {
-    logger.debug(`Attempting to stop screen share. Browser initiated: ${browserInitiated}`);
+  const stopScreenShareStream = useCallback(() => {
+    logger.debug(`Attempting to stop screen share.`);
     if (screenStream) {
       stopStreamTracks(screenStream);
       setScreenStream(null);
     }
-    // If not browser initiated, and activeStreamType was screen, then set to none or camera
-    if (!browserInitiated && activeStreamType === 'screen') {
-       setActiveStreamType(isVideoActive && cameraStream ? 'camera' : 'none');
-       toast({ title: "Screen Sharing Stopped", duration: 2000 });
-    } else if (browserInitiated && activeStreamType === 'screen') {
-      // If browser stopped it, we need to update our activeStreamType too
-      setActiveStreamType(isVideoActive && cameraStream ? 'camera' : 'none');
-    }
+    // If screen share was active, revert to camera if it was on, otherwise none.
+    setActiveStreamType(isVideoActive && cameraStream ? 'camera' : 'none');
+    toast({ title: "Screen Sharing Stopped", duration: 2000 });
     logger.debug("Screen share stream stopped.");
-  }, [screenStream, stopStreamTracks, toast, activeStreamType, isVideoActive, cameraStream]);
+  }, [screenStream, stopStreamTracks, toast, isVideoActive, cameraStream]);
 
-
-  // Effect to manage self view based on cameraStream and isVideoActive
+  // Effect to manage self view (always camera if active)
   useEffect(() => {
     if (selfVideoRef.current) {
       if (isVideoActive && cameraStream) {
@@ -243,7 +232,7 @@ export default function LiveInterviewPage() {
         logger.debug("Self view assigned camera stream:", cameraStream.id);
       } else {
         selfVideoRef.current.srcObject = null;
-        logger.debug("Self view cleared.");
+        logger.debug("Self view cleared (camera off or no stream).");
       }
     }
   }, [isVideoActive, cameraStream]);
@@ -255,14 +244,13 @@ export default function LiveInterviewPage() {
         mainVideoRef.current.srcObject = screenStream;
         logger.debug("Main view assigned screen stream:", screenStream.id);
       } else if (activeStreamType === 'camera' && cameraStream) {
-        // Mock: In a real app, this would be the OTHER participant's camera stream.
-        // For this demo, if self-camera is active and chosen as main feed, show it.
-        // This assumes you don't have a separate stream for the other participant.
+        // Mock: If this user's camera is active, show it in main for demo.
+        // In a real app, this would be the OTHER participant's stream.
         mainVideoRef.current.srcObject = cameraStream; 
-        logger.debug("Main view assigned (mocked other participant's) camera stream:", cameraStream.id);
+        logger.debug("Main view assigned (mocked other's) camera stream:", cameraStream.id);
       } else {
         mainVideoRef.current.srcObject = null;
-        logger.debug("Main view cleared.");
+        logger.debug("Main view cleared (no active stream or stream unavailable).");
       }
     }
   }, [activeStreamType, cameraStream, screenStream]);
@@ -271,30 +259,28 @@ export default function LiveInterviewPage() {
   const handleToggleVideo = async () => {
     if (isVideoActive) { // If video is currently on, turn it off
       stopCameraStream();
+      // If camera was the main feed, set main feed to none. Screen share takes precedence.
       if (activeStreamType === 'camera') {
-          setActiveStreamType('none'); // If camera was main feed, set main feed to none
+          setActiveStreamType('none'); 
       }
-    } else { // If video is off, turn it on
+    } else { // If video is off, try to turn it on
       const stream = await startCameraStream();
       if (stream) {
-        // If no other stream is primary, make camera primary.
-        if (activeStreamType === 'none') {
+        // If no other stream is primary, or if screen isn't shared, make camera primary.
+        if (activeStreamType === 'none' || activeStreamType === 'camera') {
            setActiveStreamType('camera');
         }
-        // If screen is active, self-view will update but main view remains screen
       }
     }
   };
   
   const handleToggleScreenShare = async () => {
     if (activeStreamType === 'screen') {
-      stopScreenShareStream(); // This will also try to revert activeStreamType
+      stopScreenShareStream(); // This will attempt to revert to camera if it was on
     } else {
-      // If camera is active, it will remain in self-view.
-      // Main view will switch to screen share.
       const stream = await startScreenShareStream();
       if (stream) {
-        setActiveStreamType('screen');
+        setActiveStreamType('screen'); // Screen share becomes the main active stream
       }
     }
   };
@@ -314,7 +300,7 @@ export default function LiveInterviewPage() {
   const handleEndCall = () => {
     if (isRecording) stopRecording();
     stopCameraStream();
-    stopScreenShareStream(true); 
+    stopScreenShareStream(); 
     setActiveStreamType('none');
     toast({ title: "Interview Ended", description: "You have left the interview session." });
     router.push('/interview-prep');
@@ -324,42 +310,23 @@ export default function LiveInterviewPage() {
     if (chatInput.trim() && sessionDetails) {
       const newMsg = { user: selfParticipant.name, text: chatInput.trim(), id: Date.now().toString() };
       setChatMessages(prev => [...prev, newMsg]);
-      // In a real app, send message to other participants via signaling server
       logger.debug("Chat message sent (local):", newMsg);
       setChatInput('');
     }
   };
-
-  const handleGetNewSuggestions = async () => {
-    if (!isInterviewer || !sessionDetails) return;
-    setIsLoadingSuggestions(true);
-    logger.debug("Requesting new AI suggestions with context:", { jobTitle: aiContextJobTitle, topics: aiContextTopics, asked: askedQuestions.length });
-    try {
-      const input: GenerateLiveInterviewQuestionsInput = {
-        jobTitle: aiContextJobTitle || sessionDetails?.title,
-        interviewTopics: aiContextTopics.split(',').map(t => t.trim()).filter(t => t),
-        previousQuestions: askedQuestions,
-        candidateSkills: sessionDetails?.candidateSkills, // Assuming this might be on sessionDetails
-        companyCulture: sessionDetails?.companyCultureNotes, // Assuming this might be on sessionDetails
-        count: 3, // Get 3 new suggestions
-      };
-      const result = await generateLiveInterviewQuestions(input);
-      setSuggestedQuestions(prev => [...result.suggestedQuestions, ...prev.slice(0, Math.max(0, 5 - result.suggestedQuestions.length))].slice(0,5));
-      logger.info("AI suggestions received:", result.suggestedQuestions.length);
-    } catch (error) {
-      logger.error("Failed to get AI suggestions:", error);
-      toast({ title: "Failed to Get Suggestions", description: (error as Error).message, variant: "destructive" });
-    } finally {
-      setIsLoadingSuggestions(false);
-    }
+  
+  const markQuestionAsAsked = (questionId: string) => {
+    setAskedQuestions(prev => new Set(prev).add(questionId));
+    toast({title: "Question Marked as Asked", duration: 2000})
+    logger.debug("Question marked as asked:", questionId);
+  };
+  
+  const resetAskedQuestions = () => {
+    setAskedQuestions(new Set());
+    toast({title: "Asked Questions Reset", duration: 2000});
+    logger.debug("Asked questions list reset.");
   };
 
-  const markQuestionAsAsked = (questionText: string) => {
-    setAskedQuestions(prev => [...prev, questionText]);
-    setSuggestedQuestions(prev => prev.filter(q => q.questionText !== questionText));
-    toast({title: "Question Marked as Asked", description: "Added to asked list.", duration: 2000})
-    logger.debug("Question marked as asked:", questionText);
-  };
 
   const startRecording = async () => {
     if (!browserSupportsRecording || isRecording) return;
@@ -367,7 +334,6 @@ export default function LiveInterviewPage() {
     let streamToRecord: MediaStream | null = null;
     let recordingType: 'video' | 'audio' = 'audio';
 
-    // Determine what to record:
     if (activeStreamType === 'screen' && screenStream?.getVideoTracks().length > 0) {
         const videoTracks = screenStream.getVideoTracks();
         const audioTracks = (cameraStream && !isMicMuted) ? cameraStream.getAudioTracks() : [];
@@ -421,15 +387,14 @@ export default function LiveInterviewPage() {
             const newRecordingRef: RecordingReference = {
                 id: `rec-${Date.now()}`,
                 sessionId: sessionDetails.id,
-                startTime: new Date().toISOString(), // This should be the actual start time of recording
-                durationSeconds: Math.round(recordedChunksRef.current.reduce((acc, chunk) => acc + (chunk.duration || (chunk.size / 1000) ), 0)), // Approximation if duration isn't on chunk
-                localStorageKey: `recording_${sessionDetails.id}_${Date.now()}`, // For demo
+                startTime: new Date().toISOString(), 
+                durationSeconds: Math.round(recordedChunksRef.current.reduce((acc, chunk) => acc + ((chunk as any).duration || (chunk.size / 1000) ), 0)), 
+                localStorageKey: `recording_${sessionDetails.id}_${Date.now()}`, 
                 type: recordingType,
-                blobUrl: url, // Store blob URL for immediate playback
+                blobUrl: url, 
                 fileName: `recording_${sessionDetails.id}_${new Date().toISOString().replace(/:/g,'-')}.${finalMimeType.split('/')[1].split(';')[0]}`
             };
             setLocalRecordingReferences(prev => [...prev, newRecordingRef]);
-            // Persist to sampleLiveInterviewSessions for demo
             const sessionIndex = sampleLiveInterviewSessions.findIndex(s => s.id === sessionDetails.id);
             if (sessionIndex !== -1) {
                 const updatedSession = {...sampleLiveInterviewSessions[sessionIndex]};
@@ -440,7 +405,7 @@ export default function LiveInterviewPage() {
         logger.info("Recording stopped. Blob URL created:", url);
         toast({ title: "Recording Stopped", description: "Recording available for playback/download.", duration: 5000 });
       };
-      mediaRecorderRef.current.start(1000); // Timeslice: ondataavailable every 1 second
+      mediaRecorderRef.current.start(1000); 
       setIsRecording(true);
       setAudioURL(null);
       toast({ title: "Recording Started" });
@@ -454,7 +419,7 @@ export default function LiveInterviewPage() {
   const stopRecording = () => {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
-      setIsRecording(false); // State update will trigger onstop handler
+      setIsRecording(false); 
       logger.info("Recording stop requested.");
     }
   };
@@ -463,11 +428,12 @@ export default function LiveInterviewPage() {
   if (isLoadingSession || sessionDetails === undefined) {
     return <div className="flex items-center justify-center min-h-screen"><Loader2 className="h-12 w-12 animate-spin text-primary" /><p className="ml-4 text-muted-foreground">Loading session...</p></div>;
   }
-  if (sessionDetails === null) { // Explicitly null if not found after loading attempt
+  if (sessionDetails === null) { 
     return <div className="flex flex-col items-center justify-center min-h-screen text-center p-4"><AlertTriangle className="h-16 w-16 text-destructive mb-4" /><h1 className="text-2xl font-bold">Session Not Found</h1><p className="text-muted-foreground mb-6">ID: {sessionId}</p><Button asChild><Link href="/interview-prep">Back to Prep</Link></Button></div>;
   }
 
   const mainFeedName = activeStreamType === 'screen' && screenStream ? "Your Screen Share" : (activeStreamType === 'camera' && cameraStream ? otherParticipant.name : `${otherParticipant.name}'s Video Off`);
+  const mainFeedIsActive = (activeStreamType === 'camera' && isVideoActive && cameraStream) || (activeStreamType === 'screen' && screenStream);
 
 
   return (
@@ -475,19 +441,17 @@ export default function LiveInterviewPage() {
       <div className="mb-2 md:mb-4 text-center md:text-left">
         <h1 className="text-xl md:text-2xl font-semibold truncate">{sessionDetails.title}</h1>
         <p className="text-xs md:text-sm text-muted-foreground">
-          Candidate: {otherParticipant.role === 'candidate' ? otherParticipant.name : selfParticipant.name}
+          Candidate: {isInterviewer ? otherParticipant.name : selfParticipant.name}
           <span className="mx-2 hidden md:inline">|</span>
           <span className="block md:inline">Current Time: {format(currentTime, 'p')}</span>
         </p>
       </div>
 
       <div className="flex-grow grid grid-cols-1 lg:grid-cols-3 gap-2 md:gap-4 overflow-hidden">
-        {/* Main Content Area (Video Feeds & Controls) */}
         <div className="lg:col-span-2 bg-black rounded-lg flex flex-col p-1 md:p-2 relative shadow-2xl justify-between overflow-hidden">
-          {/* Main Video Feed */}
           <div className="w-full aspect-video bg-slate-800 rounded-md flex items-center justify-center text-slate-400 relative overflow-hidden mb-1 md:mb-2 flex-grow">
-            <video ref={mainVideoRef} className={cn("w-full h-full object-contain", (activeStreamType === 'none' || (activeStreamType === 'camera' && !cameraStream) || (activeStreamType === 'screen' && !screenStream)) && "hidden" )} autoPlay playsInline muted={activeStreamType !== 'camera'} />
-            {(activeStreamType === 'none' || (activeStreamType === 'camera' && !cameraStream) || (activeStreamType === 'screen' && !screenStream)) && (
+            <video ref={mainVideoRef} className={cn("w-full h-full object-contain", !mainFeedIsActive && "hidden" )} autoPlay playsInline muted={activeStreamType !== 'camera' && activeStreamType !== 'screen'} />
+            {!mainFeedIsActive && (
                 <div className="text-center p-4">
                     <VideoOff className="h-12 w-12 md:h-16 md:w-16 text-slate-500 mx-auto mb-2"/>
                     <p className="text-sm md:text-base">{mainFeedName}</p>
@@ -500,7 +464,6 @@ export default function LiveInterviewPage() {
                 {mainFeedName}
             </p>
 
-            {/* Self Video Panel */}
             <div className="absolute top-1 right-1 md:top-2 md:right-2 w-24 h-auto md:w-32 lg:w-40 aspect-video bg-slate-700 rounded shadow-md overflow-hidden border border-slate-600">
               <video ref={selfVideoRef} className={cn("w-full h-full object-cover", !isVideoActive && "hidden")} autoPlay playsInline muted />
               { !isVideoActive && (
@@ -512,7 +475,6 @@ export default function LiveInterviewPage() {
             </div>
           </div>
 
-          {/* Controls */}
           <div className="flex justify-center items-center gap-1 md:gap-2 p-1 md:p-2 bg-slate-800/50 backdrop-blur-sm rounded-md">
             <Button variant={isMicMuted ? "destructive" : "outline"} size="icon" onClick={handleToggleMic} title={isMicMuted ? "Unmute" : "Mute"} className="bg-white/10 text-white hover:bg-white/20 border-white/20 h-9 w-9 md:h-10 md:w-10"> <Mic className={cn("h-4 w-4 md:h-5 md:w-5", isMicMuted && "text-red-400")} /></Button>
             <Button variant={!isVideoActive ? "destructive" : "outline"} size="icon" onClick={handleToggleVideo} title={isVideoActive ? "Stop Video" : "Start Video"} className="bg-white/10 text-white hover:bg-white/20 border-white/20 h-9 w-9 md:h-10 md:w-10"><VideoIcon className="h-4 w-4 md:h-5 md:w-5" /></Button>
@@ -526,39 +488,46 @@ export default function LiveInterviewPage() {
           </div>
         </div>
 
-        {/* Sidebar Area (AI Suggestions, Chat, Participants) */}
         <Card className="flex flex-col shadow-lg bg-card text-card-foreground rounded-lg overflow-hidden max-h-full">
-          <Accordion type="multiple" defaultValue={isInterviewer ? ['suggested-questions', 'chat'] : ['chat']} className="w-full flex-grow flex flex-col overflow-hidden">
-            {isInterviewer && (
-              <AccordionItem value="suggested-questions" className="border-b">
+          <Accordion 
+            type="multiple" 
+            value={openAccordionItems}
+            onValueChange={setOpenAccordionItems}
+            className="w-full flex-grow flex flex-col overflow-hidden"
+          >
+            {isInterviewer && sessionDetails?.preSelectedQuestions && sessionDetails.preSelectedQuestions.length > 0 && (
+              <AccordionItem value="interview-questions" className="border-b">
                 <AccordionTrigger className="px-3 py-2 md:px-4 md:py-3 text-xs md:text-sm font-medium hover:bg-secondary/50">
-                    <div className="flex items-center gap-1 md:gap-2"><HelpCircle className="h-3.5 w-3.5 md:h-4 md:w-4 text-primary"/>AI Suggestions</div>
+                    <div className="flex items-center gap-1 md:gap-2"><ListChecks className="h-3.5 w-3.5 md:h-4 md:w-4 text-primary"/>Interview Questions</div>
                 </AccordionTrigger>
                 <AccordionContent className="px-3 py-2 md:px-4 md:pb-3 space-y-1 md:space-y-2 text-xs md:text-sm">
-                  <div className="space-y-0.5 md:space-y-1">
-                    <Label htmlFor="ai-job-title-sidebar" className="text-[10px] md:text-xs">Job Title Context</Label>
-                    <Input id="ai-job-title-sidebar" placeholder="e.g., Snr Software Eng" value={aiContextJobTitle} onChange={e => setAiContextJobTitle(e.target.value)} className="h-7 md:h-8 text-[10px] md:text-xs" />
-                  </div>
-                  <div className="space-y-0.5 md:space-y-1">
-                    <Label htmlFor="ai-topics-sidebar" className="text-[10px] md:text-xs">Focus Topics</Label>
-                    <Input id="ai-topics-sidebar" placeholder="e.g., React, Design" value={aiContextTopics} onChange={e => setAiContextTopics(e.target.value)} className="h-7 md:h-8 text-[10px] md:text-xs" />
-                  </div>
-                  <Button size="sm" onClick={handleGetNewSuggestions} disabled={isLoadingSuggestions} className="w-full text-[10px] md:text-xs bg-primary/80 hover:bg-primary/90 h-7 md:h-8">
-                    {isLoadingSuggestions ? <Loader2 className="mr-1 h-3 w-3 animate-spin"/> : <ThumbsUp className="mr-1 h-3 w-3"/>} Get Suggestions
-                  </Button>
-                  {isLoadingSuggestions && <p className="text-[10px] md:text-xs text-muted-foreground text-center">Loading...</p>}
-                  {suggestedQuestions.length > 0 ? (
-                    <ScrollArea className="h-20 md:h-24 mt-1 p-0.5 border rounded-md bg-secondary/20">
+                   <Button size="xs" variant="outline" onClick={resetAskedQuestions} className="mb-2 text-[10px] h-6"><RotateCcw className="mr-1 h-3 w-3"/> Reset Asked</Button>
+                  {sessionDetails.preSelectedQuestions.filter(q => !askedQuestions.has(q.id)).length > 0 ? (
+                    <ScrollArea className="h-28 md:h-32 mt-1 p-0.5 border rounded-md bg-secondary/20">
                       <ul className="space-y-0.5">
-                        {suggestedQuestions.map((q, idx) => (
-                          <li key={idx} className="text-[10px] md:text-xs p-1 md:p-1.5 rounded hover:bg-primary/10 flex justify-between items-center group">
+                        {sessionDetails.preSelectedQuestions.filter(q => !askedQuestions.has(q.id)).map((q) => (
+                          <li key={q.id} className="text-[10px] md:text-xs p-1 md:p-1.5 rounded hover:bg-primary/10 flex justify-between items-center group">
                             <span className="flex-1 mr-1 truncate" title={q.questionText}>{q.questionText} {q.category && <span className="text-[9px] md:text-[10px] text-muted-foreground">({q.category})</span>}</span>
-                            <Button variant="ghost" size="xs" className="h-auto p-px md:p-0.5 text-primary shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => markQuestionAsAsked(q.questionText)}>Ask</Button>
+                            <Button variant="ghost" size="xs" className="h-auto p-px md:p-0.5 text-primary shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => markQuestionAsAsked(q.id)}>Ask</Button>
                           </li>
                         ))}
                       </ul>
                     </ScrollArea>
-                  ) : !isLoadingSuggestions && <p className="text-[10px] md:text-xs text-muted-foreground text-center py-1 md:py-2">No suggestions yet.</p>}
+                  ) : <p className="text-[10px] md:text-xs text-muted-foreground text-center py-1 md:py-2">All pre-selected questions asked or none available.</p>}
+
+                  {askedQuestions.size > 0 && (
+                    <div className="mt-2">
+                        <h4 className="text-[10px] md:text-xs font-semibold text-muted-foreground mb-0.5">Asked Questions:</h4>
+                        <ScrollArea className="h-16 md:h-20 p-0.5 border rounded-md bg-background">
+                             <ul className="space-y-0.5">
+                                {Array.from(askedQuestions).map(qid => {
+                                    const q = sessionDetails.preSelectedQuestions?.find(pq => pq.id === qid);
+                                    return q ? <li key={qid} className="text-[10px] md:text-xs p-1 rounded text-muted-foreground line-through truncate" title={q.questionText}>{q.questionText}</li> : null;
+                                })}
+                            </ul>
+                        </ScrollArea>
+                    </div>
+                  )}
                 </AccordionContent>
               </AccordionItem>
             )}
@@ -617,5 +586,3 @@ export default function LiveInterviewPage() {
     </div>
   );
 }
-
-    

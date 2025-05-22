@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { RecentPageItem } from '@/types';
@@ -22,7 +23,8 @@ export function addRecentPage(path: string, label: string): void {
   if (typeof window === 'undefined') {
     return;
   }
-  // No longer need to remove locale prefix as paths will be direct
+  
+  // Path is already locale-stripped by AppLayout
   const pathWithoutLocale = path;
 
   if (pathWithoutLocale.startsWith('/auth') || (pathWithoutLocale === '/' && label !== 'Dashboard')) {
@@ -51,8 +53,8 @@ const PATH_LABEL_MAP: Record<string, string> = {
   '/resume-templates': 'Resume Templates',
   '/job-tracker': 'Job Tracker',
   '/interview-prep': 'Interview Prep Hub',
-  '/live-interview/new': 'Start Live Interview',
-  '/interview-queue': 'Interview Queue',
+  // '/live-interview/new': 'Start Live Interview', // Removed
+  // '/interview-queue': 'Interview Queue', // Removed
   '/alumni-connect': 'Alumni Directory',
   '/job-board': 'Job Board',
   '/community-feed': 'Community Feed',
@@ -78,10 +80,11 @@ const PATH_LABEL_MAP: Record<string, string> = {
   '/admin/gallery-management': 'Gallery Management',
   '/admin/blog-settings': 'AI Blog Settings',
   '/admin/platform-settings': 'Platform Settings',
+  '/db-test': 'DB Test Page',
 };
 
 export function getLabelForPath(path: string): string {
-  // No longer need to remove locale prefix
+  // Path is assumed to be locale-stripped already
   const pathWithoutLocale = path;
 
   if (pathWithoutLocale.startsWith('/blog/')) {
@@ -97,9 +100,7 @@ export function getLabelForPath(path: string): string {
     const quizId = new URLSearchParams(pathWithoutLocale.split('?')[1]).get('quizId');
     return quizId ? `Quiz: ${quizId.substring(0,8)}...` : 'Take Quiz';
   }
-  if (pathWithoutLocale.startsWith('/live-interview/') && pathWithoutLocale !== '/live-interview/new') {
-    const interviewId = pathWithoutLocale.substring('/live-interview/'.length);
-    return `Live Interview: ${interviewId.substring(0,8)}...`;
-  }
-  return PATH_LABEL_MAP[pathWithoutLocale] || pathWithoutLocale;
-}
+  // if (pathWithoutLocale.startsWith('/live-interview/') && pathWithoutLocale !== '/live-interview/new') { // Removed
+  //   const interviewId = pathWithoutLocale.substring('/live-interview/'.length);
+  //   return `Live Interview: ${interviewId.substring(0,8)}...`;
+  // }

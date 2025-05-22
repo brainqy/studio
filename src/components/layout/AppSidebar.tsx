@@ -5,7 +5,8 @@ import { Aperture, Award, BarChart2, BookOpen, Briefcase, Building2, CalendarDay
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { sampleUserProfile } from "@/lib/sample-data";
-// Removed useLocale and Locale type
+import { useLocale } from 'next-intl';
+import type { Locale } from '@/i18n-config';
 
 const navItems = [
   { href: "/community-feed", label: "Community Feed", icon: MessageSquare },
@@ -14,14 +15,14 @@ const navItems = [
   { href: "/job-board", label: "Job Board", icon: Aperture },
   { href: "/job-tracker", label: "Job Tracker", icon: Briefcase },
   { href: "/interview-prep", label: "Practice Hub", icon: Brain },
-  {
-    label: "Live Interviews",
-    icon: Video,
-    subItems: [
-      { href: "/live-interview/new", label: "Start New Interview", icon: PlusCircle },
-      { href: "/interview-queue", label: "Interview Queue", icon: ListChecks },
-    ]
-  },
+  // { // Live Interviews section removed
+  //   label: "Live Interviews",
+  //   icon: Video,
+  //   subItems: [
+  //     { href: "/live-interview/new", label: "Start New Interview", icon: PlusCircle },
+  //     { href: "/interview-queue", label: "Interview Queue", icon: ListChecks },
+  //   ]
+  // },
   {
     label: "AI Tools",
     icon: Zap,
@@ -77,25 +78,26 @@ const adminItems = [
    { href: "/admin/gallery-management", label: "Gallery Mgt.", icon: GalleryVerticalEnd },
    { href: "/admin/blog-settings", label: "Blog Settings", icon: Settings2Icon },
    { href: "/admin/platform-settings", label: "Platform Settings", icon: Server },
-   { href: "/interview-queue", label: "Interview Queue (Admin)", icon: ListChecks },
+   // { href: "/interview-queue", label: "Interview Queue (Admin)", icon: ListChecks }, // Removed
 ];
 
 export function AppSidebar() {
-  const pathname = usePathname(); // No longer needs locale prefix removal
+  const pathnameWithoutLocale = usePathname();
+  const locale = useLocale() as Locale;
   const currentUser = sampleUserProfile;
   
-  // No longer needs getLocalePrefixedPath, direct paths are used
+  const getLocalePrefixedPath = (path: string) => `/${locale}${path}`;
 
   const renderMenuItem = (item: any, isSubItem = false) => {
-    const href = item.href; // Direct href
+    const href = item.href ? getLocalePrefixedPath(item.href) : undefined;
     let isActive;
-    if (href === "/dashboard" && item.label !== "Admin Dashboard") { // Special handling for user dashboard
-        isActive = pathname === href && currentUser.role !== 'admin';
+    if (item.href === "/dashboard" && item.label !== "Admin Dashboard") { 
+        isActive = pathnameWithoutLocale === href && currentUser.role !== 'admin';
     } else if (item.href === "/dashboard" && item.label === "Admin Dashboard") {
-        isActive = pathname === href && currentUser.role === 'admin';
+        isActive = pathnameWithoutLocale === href && currentUser.role === 'admin';
     }
      else {
-        isActive = href ? pathname.startsWith(href) : false;
+        isActive = href ? pathnameWithoutLocale.startsWith(href) : false;
     }
     
     if (item.adminOnly && currentUser.role !== 'admin') {
@@ -127,7 +129,7 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon" variant="sidebar" side="left">
       <SidebarHeader className="p-4 border-b border-sidebar-border">
-        <Link href={"/dashboard"} className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
+        <Link href={getLocalePrefixedPath("/dashboard")} className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
           <FileText className="h-7 w-7 text-primary" />
           <span className="font-semibold text-lg text-sidebar-foreground group-data-[collapsible=icon]:hidden">ResumeMatch</span>
         </Link>
@@ -182,7 +184,7 @@ export function AppSidebar() {
                             "/admin/content-moderation",
                             "/admin/gallery-management",
                             "/admin/announcements",
-                            "/interview-queue", 
+                            // "/interview-queue", // Removed
                         ];
                         return managerAccessible.includes(item.href);
                     }

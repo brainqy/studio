@@ -1,20 +1,65 @@
 
 "use client";
 
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Video, Settings, Users, Send } from "lucide-react";
+import { Video, Settings, Users, Send, ListChecks } from "lucide-react";
 import Link from "next/link";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
+import { sampleLiveInterviewSessions } from "@/lib/sample-data"; // For adding new session
+import { sampleUserProfile } from "@/lib/sample-data"; // For creator ID
 
 export default function NewLiveInterviewPage() {
-  // Placeholder for form state and submission logic
-  // e.g., const [title, setTitle] = useState('');
-  // const [participants, setParticipants] = useState([]); // etc.
+  const [title, setTitle] = useState('');
+  const [participantEmails, setParticipantEmails] = useState(''); // Comma-separated
+  const [questionIds, setQuestionIds] = useState(''); // Comma-separated IDs from question bank
+  const { toast } = useToast();
+  const router = useRouter();
 
   const handleSubmit = () => {
-    // Logic to create a new live interview session
-    console.log("Submitting new live interview setup...");
-    // router.push('/live-interview/session-id'); // Redirect to the actual interview room
+    if (!title.trim()) {
+      toast({ title: "Title Required", description: "Please enter an interview title.", variant: "destructive" });
+      return;
+    }
+    // Basic email validation (simple check)
+    const emails = participantEmails.split(',').map(e => e.trim()).filter(e => e);
+    if (emails.length === 0) {
+      toast({ title: "Participants Required", description: "Please add at least one participant email.", variant: "destructive" });
+      return;
+    }
+
+    // Mock session creation
+    const newSessionId = `live-session-${Date.now()}`;
+    const newSession = {
+      id: newSessionId,
+      tenantId: sampleUserProfile.tenantId || 'default-tenant',
+      title: title,
+      participants: [
+        // Add current user as interviewer (or derive based on role)
+        { userId: sampleUserProfile.id, name: sampleUserProfile.name, role: 'interviewer', profilePictureUrl: sampleUserProfile.profilePictureUrl },
+        ...emails.map((email, index) => ({ 
+            userId: `participant-${index}-${Date.now()}`, // Mock ID
+            name: email.split('@')[0], // Mock name
+            role: 'candidate', // Default to candidate
+            profilePictureUrl: `https://avatar.vercel.sh/${email}.png`
+        }))
+      ],
+      scheduledTime: new Date().toISOString(), // Schedule for now
+      status: 'Scheduled',
+      // Mocking preSelectedQuestions - in a real app, you'd fetch question details by ID
+      preSelectedQuestions: questionIds.split(',').map(id => ({ id: id.trim(), questionText: `Question ID: ${id.trim()}` })),
+    };
+    
+    // Add to sample data for demo purposes (in a real app, this would be an API call)
+    sampleLiveInterviewSessions.push(newSession as any); 
+
+    toast({ title: "Interview Session Created (Mock)", description: `Session "${title}" scheduled. Redirecting...` });
+    router.push(`/live-interview/${newSessionId}`);
   };
 
   return (
@@ -32,40 +77,48 @@ export default function NewLiveInterviewPage() {
         <CardHeader>
           <CardTitle>Setup Your Interview Session</CardTitle>
           <CardDescription>
-            Configure the details for your upcoming live interview. 
-            This feature is under development.
+            Configure details for your live interview. You can select questions from the Question Bank on the Interview Prep Hub page.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Placeholder for form fields */}
-          <div className="p-8 border-2 border-dashed border-muted rounded-lg text-center">
-            <Settings className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">
-              Interview setup form will be here.
-            </p>
-            <p className="text-xs text-muted-foreground mt-2">
-              You'll be able to set a title, invite participants (interviewers/candidates),
-              schedule a time, and potentially link a job description for AI-suggested questions.
-            </p>
-          </div>
-          
-          <div className="space-y-2">
-            <label htmlFor="interview-title" className="font-medium">Interview Title (Example)</label>
-            <input id="interview-title" placeholder="e.g., Frontend Developer - Round 1" className="w-full p-2 border rounded-md bg-background" />
+          <div>
+            <Label htmlFor="interview-title">Interview Title / Purpose</Label>
+            <Input 
+              id="interview-title" 
+              placeholder="e.g., Frontend Developer - Round 1 with Candidate X" 
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
           </div>
 
-          <div className="space-y-2">
-             <label htmlFor="participants" className="font-medium flex items-center gap-1"><Users className="h-4 w-4"/>Participants (Example)</label>
-            <textarea id="participants" placeholder="Enter email addresses of participants, separated by commas..." rows={3} className="w-full p-2 border rounded-md bg-background" />
+          <div>
+             <Label htmlFor="participants">Participant Emails (comma-separated)</Label>
+            <Textarea 
+              id="participants" 
+              placeholder="e.g., candidate@example.com, colleague@example.com" 
+              rows={2} 
+              value={participantEmails}
+              onChange={(e) => setParticipantEmails(e.target.value)}
+            />
           </div>
-
+           <div>
+             <Label htmlFor="question-ids" className="flex items-center gap-1">
+                <ListChecks className="h-4 w-4"/> Question IDs (from Question Bank, comma-separated)
+             </Label>
+            <Textarea 
+              id="question-ids" 
+              placeholder="e.g., iq1, mcq2, coding1 (Copy IDs from the Question Bank page)" 
+              rows={3} 
+              value={questionIds}
+              onChange={(e) => setQuestionIds(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Tip: Open the <Link href="/interview-prep#question-bank" target="_blank" className="underline text-primary">Question Bank</Link> in a new tab to find and copy question IDs.
+            </p>
+          </div>
         </CardContent>
         <CardFooter>
-          <Button onClick={handleSubmit} className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled>
-            <Send className="mr-2 h-4 w-4" /> Create & Start Session (Coming Soon)
+          <Button onClick={handleSubmit} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+            <Send className="mr-2 h-4 w-4" /> Create & Start Session (Mock)
           </Button>
-        </CardFooter>
-      </Card>
-    </div>
-  );
-}
+        </

@@ -3,7 +3,7 @@
 
 import type React from 'react';
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { sampleUserProfile, samplePracticeSessions, sampleInterviewQuestions, sampleCreatedQuizzes } from "@/lib/sample-data";
 import type { PracticeSession, InterviewQuestion, InterviewQuestionCategory, MockInterviewSession, DialogStep, PracticeSessionConfig, InterviewQuestionUserComment, InterviewQuestionDifficulty, PracticeFocusArea, BankQuestionSortOrder, BankQuestionFilterView, GenerateMockInterviewQuestionsInput } from '@/types';
 import { ALL_CATEGORIES, PREDEFINED_INTERVIEW_TOPICS, PRACTICE_FOCUS_AREAS } from '@/types';
-import { format, parseISO, isFuture as dateIsFuture, isPast, addMinutes } from "date-fns"; 
+import { format, parseISO, isFuture as dateIsFuture, isPast, addMinutes, compareAsc } from "date-fns"; 
 import { cn } from "@/lib/utils";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -110,7 +110,7 @@ export default function InterviewPracticeHubPage() {
     reset: resetQuestionForm,
     setValue: setQuestionFormValue,
     watch: watchQuestionForm,
-    formState: { errors: questionFormErrors } // Corrected: Destructure 'errors' and alias it
+    formState: { errors: questionFormErrors } 
   } = useForm<QuestionFormData>({
     resolver: zodResolver(questionFormSchema),
     defaultValues: { isMCQ: false, mcqOptions: ["", "", "", ""], category: 'Common', difficulty: 'Medium' }
@@ -118,7 +118,7 @@ export default function InterviewPracticeHubPage() {
   const isMCQSelected = watchQuestionForm("isMCQ");
 
 
-  const upcomingSessions = practiceSessions.filter(s => s.status === 'SCHEDULED' && (dateIsFuture(parseISO(s.date)) || isPast(addMinutes(parseISO(s.date), 60)) ) ); 
+  const upcomingSessions = practiceSessions.filter(s => s.status === 'SCHEDULED' && dateIsFuture(parseISO(s.date)));
   const allUserSessions = practiceSessions; 
   const cancelledSessions = practiceSessions.filter(s => s.status === 'CANCELLED');
 
@@ -507,16 +507,6 @@ export default function InterviewPracticeHubPage() {
         {session.notes && <p className="text-xs text-muted-foreground pt-1 italic">Notes: {session.notes}</p>}
       </CardContent>
       <CardFooter className="flex gap-2">
-        {canJoin && (
-          <Button asChild size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground">
-            <Link href={`/live-interview/${session.id}`}>
-              <Video className="mr-1 h-4 w-4"/>Join Interview
-            </Link>
-          </Button>
-        )}
-        {session.status === 'SCHEDULED' && !canJoin && (
-          <Button variant="outline" size="sm" disabled>Join (Too Early/Late)</Button>
-        )}
         {session.status === 'SCHEDULED' && (
           <>
             <Button variant="destructive" size="sm" onClick={() => handleCancelPracticeSession(session.id)}>
@@ -1032,6 +1022,7 @@ export default function InterviewPracticeHubPage() {
             {dialogStep === 'selectTimeSlot' && practiceSessionConfig.type === 'experts' && ( 
                <PracticeDateTimeSelector
                 initialSelectedDate={practiceSessionConfig.dateTime || undefined}
+                initialSelectedTime={practiceSessionConfig.dateTime ? format(practiceSessionConfig.dateTime, 'HH:mm') : undefined}
                 onDateTimeChange={(date, time) => {
                     if (date && time) {
                         const [hoursStr, minutesStr] = time.split(':');
@@ -1080,6 +1071,4 @@ export default function InterviewPracticeHubPage() {
         </DialogContent>
       </Dialog>
     </div>
-  );
-}
-
+  
