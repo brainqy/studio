@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Mic, Video as VideoIcon, ScreenShare, PhoneOff, Send, Bot, ListChecks, Loader2, AlertTriangle, ThumbsUp, ChevronDown, Square, Play, Download as DownloadIcon, VideoOff, MessageSquare as ChatIcon, Users as ParticipantsIcon, HelpCircle, Maximize, Minimize, RadioButton } from 'lucide-react';
+import { Mic, Video as VideoIcon, ScreenShare, PhoneOff, Send, Bot, ListChecks, Loader2, AlertTriangle, ThumbsUp, ChevronDown, Square, Play, Download as DownloadIcon, VideoOff, MessageSquare as ChatIcon, Users as ParticipantsIcon, HelpCircle, Maximize, Minimize, Radio } from 'lucide-react';
 import { generateLiveInterviewQuestions, type GenerateLiveInterviewQuestionsInput, type GenerateLiveInterviewQuestionsOutput } from '@/ai/flows/generate-live-interview-questions';
 import { sampleUserProfile, sampleLiveInterviewSessions } from '@/lib/sample-data';
 import type { LiveInterviewSession, LiveInterviewParticipant, RecordingReference } from '@/types';
@@ -33,7 +33,7 @@ export default function LiveInterviewPage() {
 
   // Media states
   const [isMicMuted, setIsMicMuted] = useState(false);
-  const [activeStreamType, setActiveStreamType] = useState<'camera' | 'screen' | 'none'>('none');
+  const [activeStreamType, setActiveStreamType] = useState<'camera' | 'screen' | 'none'>('camera');
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
@@ -57,7 +57,7 @@ export default function LiveInterviewPage() {
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunksRef = useRef<Blob[]>([]);
-  const [audioURL, setAudioURL] = useState<string | null>(null); // For playback/download
+  const [audioURL, setAudioURL] = useState<string | null>(null); 
   const [browserSupportsRecording, setBrowserSupportsRecording] = useState(true);
   const [localRecordingReferences, setLocalRecordingReferences] = useState<RecordingReference[]>([]);
 
@@ -98,132 +98,130 @@ export default function LiveInterviewPage() {
           description: `Could not find an interview session with ID: ${sessionId}`,
           variant: "destructive",
         });
-        router.push('/interview-prep'); // Redirect if session not found
+        router.push('/interview-prep'); 
       }
     }
     setIsLoadingSession(false);
   }, [sessionId, toast, router]);
 
   useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 60000); // Update time every minute
+    const timer = setInterval(() => setCurrentTime(new Date()), 60000); 
     return () => clearInterval(timer);
   }, []);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && !navigator.mediaDevices?.getUserMedia) {
       setBrowserSupportsRecording(false);
+      if (!navigator.mediaDevices?.getDisplayMedia){
+        toast({title:"Media Not Supported", description: "Your browser does not support camera or screen sharing.", variant: "destructive"})
+      }
     }
-  }, []);
+  }, [toast]);
 
-  const stopStream = useCallback((stream: MediaStream | null) => {
+  const stopStreamTracks = useCallback((stream: MediaStream | null) => {
     stream?.getTracks().forEach(track => track.stop());
   }, []);
 
   const startCameraStream = useCallback(async () => {
     if (!navigator.mediaDevices?.getUserMedia) {
       setHasCameraPermission(false);
-      toast({ title: "Camera Error", description: "Camera access not supported.", variant: "destructive" });
+      toast({ title: "Camera Error", description: "Camera access not supported or permission denied.", variant: "destructive" });
       return null;
     }
     try {
-      stopStream(screenStream); setScreenStream(null); // Stop screen share if active
+      stopStreamTracks(screenStream); setScreenStream(null); 
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: !isMicMuted });
       setCameraStream(stream);
       setHasCameraPermission(true);
       if (selfVideoRef.current) selfVideoRef.current.srcObject = stream;
-      // If self is also the main view (e.g., only one participant or screen sharing self)
-      if (activeStreamType === 'camera' && mainVideoRef.current && selfParticipant.userId === currentUser.id) {
+      if (mainVideoRef.current && activeStreamType === 'camera') {
         mainVideoRef.current.srcObject = stream;
       }
       return stream;
     } catch (err) {
       console.error("Error accessing camera:", err);
       setHasCameraPermission(false);
-      toast({ title: "Camera Access Denied", description: "Please enable camera permissions.", variant: "destructive" });
+      toast({ title: "Camera Access Denied", description: "Please enable camera permissions in your browser settings.", variant: "destructive" });
       return null;
     }
-  }, [isMicMuted, stopStream, screenStream, activeStreamType, selfParticipant, currentUser.id, toast]);
+  }, [isMicMuted, stopStreamTracks, screenStream, toast, activeStreamType]);
 
   const stopCameraStream = useCallback(() => {
-    stopStream(cameraStream);
+    stopStreamTracks(cameraStream);
     setCameraStream(null);
     if (selfVideoRef.current) selfVideoRef.current.srcObject = null;
-     if (mainVideoRef.current && activeStreamType === 'camera' && selfParticipant.userId === currentUser.id) {
+     if (mainVideoRef.current && activeStreamType === 'camera') { 
         mainVideoRef.current.srcObject = null;
     }
-  }, [cameraStream, stopStream, activeStreamType, selfParticipant, currentUser.id]);
+  }, [cameraStream, stopStreamTracks, activeStreamType]);
 
   const startScreenShareStream = useCallback(async () => {
     if (!navigator.mediaDevices?.getDisplayMedia) {
       setHasScreenPermission(false);
-      toast({ title: "Screen Share Error", description: "Screen sharing not supported.", variant: "destructive" });
+      toast({ title: "Screen Share Error", description: "Screen sharing not supported by your browser.", variant: "destructive" });
       return null;
     }
     try {
-      stopCameraStream(); // Stop camera if active
-      const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+      stopCameraStream(); 
+      const stream = await navigator.mediaDevices.getDisplayMedia({ video: { cursor: "always" } as any, audio: { echoCancellation: true, noiseSuppression: true, sampleRate: 44100 } });
       setScreenStream(stream);
       setHasScreenPermission(true);
       if (mainVideoRef.current) mainVideoRef.current.srcObject = stream;
       
-      // Listen for when the user stops sharing via browser UI
       stream.getVideoTracks()[0].onended = () => {
-        stopScreenShareStream(true); // Pass true to indicate it was stopped by browser
+        stopScreenShareStream(true); 
       };
       return stream;
     } catch (err) {
       console.error("Error starting screen share:", err);
       setHasScreenPermission(false);
-      toast({ title: "Screen Share Failed", description: "Could not start screen sharing.", variant: "destructive" });
+      toast({ title: "Screen Share Failed", description: "Could not start screen sharing. Ensure permission is granted.", variant: "destructive" });
       return null;
     }
   }, [stopCameraStream, toast]);
 
   const stopScreenShareStream = useCallback((browserInitiated = false) => {
-    stopStream(screenStream);
+    stopStreamTracks(screenStream);
     setScreenStream(null);
     if (mainVideoRef.current) mainVideoRef.current.srcObject = null;
-    setActiveStreamType('camera'); // Attempt to revert to camera
-    if (!browserInitiated) {
+    if (!browserInitiated) { 
         toast({ title: "Screen Sharing Stopped", duration: 2000 });
     }
-  }, [screenStream, stopStream]);
+    setActiveStreamType('none');
+  }, [screenStream, stopStreamTracks, toast]);
 
 
   useEffect(() => {
-    // Effect to manage active stream based on activeStreamType
     (async () => {
       if (activeStreamType === 'camera') {
+        if (screenStream) stopScreenShareStream();
         await startCameraStream();
       } else if (activeStreamType === 'screen') {
+        if (cameraStream) stopCameraStream();
         await startScreenShareStream();
-      } else { // 'none'
-        stopCameraStream();
-        stopScreenShareStream();
+      } else { 
+        if (cameraStream) stopCameraStream();
+        if (screenStream) stopScreenShareStream();
       }
     })();
-    // Cleanup streams on unmount or when activeStreamType changes to 'none'
-    return () => {
-      if (activeStreamType !== 'camera') stopCameraStream();
-      if (activeStreamType !== 'screen') stopScreenShareStream();
-    };
-  }, [activeStreamType, startCameraStream, stopCameraStream, startScreenShareStream, stopScreenShareStream]);
+  }, [activeStreamType, startCameraStream, stopCameraStream, startScreenShareStream, stopScreenShareStream, cameraStream, screenStream]);
 
 
   const handleToggleVideo = () => setActiveStreamType(prev => prev === 'camera' ? 'none' : 'camera');
   const handleToggleMic = () => {
-    setIsMicMuted(!isMicMuted);
+    const newMutedState = !isMicMuted;
+    setIsMicMuted(newMutedState);
     [cameraStream, screenStream].forEach(stream => {
-        stream?.getAudioTracks().forEach(track => track.enabled = isMicMuted); // isMicMuted is previous state
+        stream?.getAudioTracks().forEach(track => track.enabled = !newMutedState);
     });
-    toast({ title: !isMicMuted ? "Mic Muted" : "Mic Unmuted", duration: 1500 });
+    toast({ title: newMutedState ? "Mic Muted" : "Mic Unmuted", duration: 1500 });
   };
-  const handleToggleScreenShare = () => setActiveStreamType(prev => prev === 'screen' ? (cameraStream ? 'camera' : 'none') : 'screen');
+  const handleToggleScreenShare = () => setActiveStreamType(prev => prev === 'screen' ? 'none' : 'screen');
 
   const handleEndCall = () => {
     if (isRecording) stopRecording();
-    stopStream(cameraStream); setCameraStream(null);
-    stopStream(screenStream); setScreenStream(null);
+    stopStreamTracks(cameraStream); setCameraStream(null);
+    stopStreamTracks(screenStream); setScreenStream(null);
     setActiveStreamType('none');
     toast({ title: "Interview Ended", description: "You have left the interview session." });
     router.push('/interview-prep');
@@ -258,34 +256,71 @@ export default function LiveInterviewPage() {
   const markQuestionAsAsked = (questionText: string) => {
     setAskedQuestions(prev => [...prev, questionText]);
     setSuggestedQuestions(prev => prev.filter(q => q.questionText !== questionText));
+    toast({title: "Question Marked as Asked", description: "Added to asked list.", duration: 2000})
   };
 
   const startRecording = async () => {
     if (!browserSupportsRecording || isRecording) return;
-    const streamToRecord = screenStream || cameraStream; // Prefer screen stream if active
+    
+    let streamToRecord = null;
+    if (activeStreamType === 'screen' && screenStream) {
+        streamToRecord = screenStream;
+        // If screen stream has no audio, try to add mic audio from camera stream if available
+        if (screenStream.getAudioTracks().length === 0 && cameraStream && cameraStream.getAudioTracks().length > 0) {
+            const audioTrack = cameraStream.getAudioTracks()[0];
+            streamToRecord = new MediaStream([...screenStream.getVideoTracks(), audioTrack]);
+        }
+    } else if (activeStreamType === 'camera' && cameraStream) {
+        streamToRecord = cameraStream;
+    } else if (cameraStream) { // Fallback if no specific active stream, but camera is available
+        streamToRecord = cameraStream;
+    }
+
+
     if (!streamToRecord || streamToRecord.getAudioTracks().length === 0) {
-        toast({ title: "Recording Error", description: "No active audio stream to record. Ensure mic is enabled for camera or screen share.", variant: "destructive"});
+        toast({ title: "Recording Error", description: "No active audio stream to record. Ensure mic is enabled.", variant: "destructive"});
         return;
     }
 
     try {
-      mediaRecorderRef.current = new MediaRecorder(streamToRecord);
+      const options = { mimeType: 'video/webm; codecs=vp9,opus' };
+      // @ts-ignore MediaRecorder may not have mimeType on its type definition for all browsers
+      if (MediaRecorder.isTypeSupported && !MediaRecorder.isTypeSupported(options.mimeType)) {
+          delete (options as any).mimeType; 
+          logger.warn("webm/opus not supported, falling back to default mimeType for MediaRecorder");
+      }
+      mediaRecorderRef.current = new MediaRecorder(streamToRecord, options);
       recordedChunksRef.current = [];
-      mediaRecorderRef.current.ondataavailable = (event) => recordedChunksRef.current.push(event.data);
+
+      mediaRecorderRef.current.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          recordedChunksRef.current.push(event.data);
+        }
+      };
       mediaRecorderRef.current.onstop = () => {
-        const mimeType = mediaRecorderRef.current?.mimeType || 'audio/webm'; // Default if not available
+        // @ts-ignore
+        const mimeType = mediaRecorderRef.current?.mimeType || 'video/webm';
         const audioBlob = new Blob(recordedChunksRef.current, { type: mimeType });
         const url = URL.createObjectURL(audioBlob);
         setAudioURL(url);
-        // ... (rest of recording save logic) ...
-        toast({ title: "Recording Stopped", description: "Recording available for playback/download." });
+        
+        const newRecordingRef: RecordingReference = {
+            id: `rec-${Date.now()}`,
+            sessionId: sessionId,
+            startTime: new Date().toISOString(), 
+            durationSeconds: Math.round(recordedChunksRef.current.reduce((acc, chunk) => acc + chunk.size, 0) / 1000), 
+            localStorageKey: `recording_${sessionId}_${Date.now()}` 
+        };
+        setLocalRecordingReferences(prev => [...prev, newRecordingRef]);
+        toast({ title: "Recording Stopped", description: "Recording available for playback/download.", duration: 5000 });
       };
       mediaRecorderRef.current.start();
       setIsRecording(true);
       setAudioURL(null);
       toast({ title: "Recording Started" });
     } catch (err) {
-      toast({ title: "Recording Error", variant: "destructive" });
+      console.error("MediaRecorder error:", err);
+      toast({ title: "Recording Error", description: (err as Error).message || "Could not start recording.", variant: "destructive" });
     }
   };
 
@@ -308,7 +343,6 @@ export default function LiveInterviewPage() {
 
   return (
     <div className="flex flex-col h-screen bg-slate-100 dark:bg-slate-900 text-foreground p-2 md:p-4">
-      {/* Header bar - Kept minimal as AppHeader provides global session title */}
       <div className="mb-2 md:mb-4 text-center md:text-left">
         <h1 className="text-xl md:text-2xl font-semibold">{sessionDetails.title}</h1>
         <p className="text-xs md:text-sm text-muted-foreground">
@@ -319,19 +353,30 @@ export default function LiveInterviewPage() {
       </div>
 
       <div className="flex-grow grid grid-cols-1 lg:grid-cols-3 gap-2 md:gap-4 overflow-hidden">
-        {/* Main Video and Controls Area */}
         <div className="lg:col-span-2 bg-black rounded-lg flex flex-col p-2 md:p-4 relative shadow-2xl justify-between">
-          {/* Main Video Display */}
           <div className="w-full aspect-video bg-slate-800 rounded-md flex items-center justify-center text-slate-400 relative overflow-hidden mb-2 md:mb-4 flex-grow">
-            <video ref={mainVideoRef} className={cn("w-full h-full object-contain", (activeStreamType === 'none' && otherParticipant.userId === 'participant-placeholder') && "hidden")} autoPlay playsInline />
-            {(activeStreamType === 'none' && otherParticipant.userId === 'participant-placeholder') && <p>{otherParticipant.name}'s video is off</p>}
-            {activeStreamType === 'screen' && <p className="absolute bottom-2 left-2 text-xs bg-black/50 px-1.5 py-0.5 rounded text-white">Sharing Screen</p>}
-            {activeStreamType !== 'screen' && <p className="absolute bottom-2 left-2 text-xs bg-black/50 px-1.5 py-0.5 rounded text-white">{mainFeedName}</p>}
+            {activeStreamType === 'screen' && screenStream && (
+                 <video ref={mainVideoRef} className="w-full h-full object-contain" autoPlay playsInline />
+            )}
+            {activeStreamType === 'camera' && cameraStream && (
+                 <video ref={mainVideoRef} className="w-full h-full object-contain" autoPlay playsInline />
+            )}
+            {(activeStreamType === 'none' || (activeStreamType === 'camera' && !cameraStream) || (activeStreamType === 'screen' && !screenStream)) && (
+                <div className="text-center">
+                    <VideoOff className="h-16 w-16 text-slate-500 mx-auto mb-2"/>
+                    <p>{activeStreamType === 'screen' ? "Screen share not active" : `${otherParticipant.name}'s video is off`}</p>
+                </div>
+            )}
+            {activeStreamType === 'camera' && !cameraStream && hasCameraPermission === false && <Alert variant="destructive" className="m-4 max-w-sm"><AlertTriangle className="h-4 w-4" /> <AlertTitle>Camera Permission Denied</AlertTitle><AlertDescription>Please enable camera access in browser settings.</AlertDescription></Alert>}
+            {activeStreamType === 'screen' && !screenStream && hasScreenPermission === false && <Alert variant="destructive" className="m-4 max-w-sm"><AlertTriangle className="h-4 w-4" /> <AlertTitle>Screen Share Denied</AlertTitle><AlertDescription>Please grant screen sharing permission.</AlertDescription></Alert>}
+            
+            <p className="absolute bottom-2 left-2 text-xs bg-black/50 px-1.5 py-0.5 rounded text-white">
+                {activeStreamType === 'screen' ? "Sharing Your Screen" : (cameraStream ? otherParticipant.name : "Participant Video Off")}
+            </p>
 
-            {/* Self Video (Picture-in-Picture) */}
             <div className="absolute top-2 right-2 w-24 h-auto md:w-32 lg:w-40 aspect-video bg-slate-700 rounded shadow-md overflow-hidden border-2 border-slate-600">
-              <video ref={selfVideoRef} className={cn("w-full h-full object-cover", activeStreamType !== 'camera' && "hidden")} autoPlay playsInline muted />
-              {activeStreamType !== 'camera' && (
+              <video ref={selfVideoRef} className={cn("w-full h-full object-cover", activeStreamType !== 'camera' && !cameraStream && "hidden")} autoPlay playsInline muted />
+              { (activeStreamType !== 'camera' || !cameraStream) && (
                 <div className="w-full h-full flex items-center justify-center">
                     <VideoOff className="h-6 w-6 text-slate-400"/>
                 </div>
@@ -340,21 +385,19 @@ export default function LiveInterviewPage() {
             </div>
           </div>
           
-          {/* Controls Bar */}
           <div className="flex justify-center items-center gap-2 md:gap-3 p-2 bg-slate-800/50 backdrop-blur-sm rounded-md">
             <Button variant={isMicMuted ? "destructive" : "outline"} size="icon" onClick={handleToggleMic} title={isMicMuted ? "Unmute" : "Mute"} className="bg-white/10 text-white hover:bg-white/20 border-white/20"> <Mic className={cn("h-5 w-5", isMicMuted && "text-red-400")} /></Button>
-            <Button variant={activeStreamType !== 'camera' ? "destructive" : "outline"} size="icon" onClick={handleToggleVideo} title={activeStreamType !== 'camera' ? "Start Video" : "Stop Video"} className="bg-white/10 text-white hover:bg-white/20 border-white/20"><VideoIcon className="h-5 w-5" /></Button>
+            <Button variant={activeStreamType !== 'camera' ? "destructive" : "outline"} size="icon" onClick={handleToggleVideo} title={activeStreamType === 'camera' ? "Stop Video" : "Start Video"} className="bg-white/10 text-white hover:bg-white/20 border-white/20"><VideoIcon className="h-5 w-5" /></Button>
             <Button variant={activeStreamType === 'screen' ? "default" : "outline"} size="icon" onClick={handleToggleScreenShare} className={cn("bg-white/10 text-white hover:bg-white/20 border-white/20", activeStreamType === 'screen' && "bg-green-500 hover:bg-green-600 border-green-600")} title={activeStreamType === 'screen' ? "Stop Sharing" : "Share Screen"}><ScreenShare className="h-5 w-5" /></Button>
             {browserSupportsRecording && (
               <Button variant={isRecording ? "destructive" : "outline"} size="icon" onClick={isRecording ? stopRecording : startRecording} title={isRecording ? "Stop Recording" : "Start Recording"} className="bg-white/10 text-white hover:bg-white/20 border-white/20">
-                {isRecording ? <RadioButton className="h-5 w-5 animate-pulse text-red-500 fill-current" /> : <RadioButton className="h-5 w-5 text-red-400" />}
+                {isRecording ? <Radio className="h-5 w-5 animate-pulse text-red-500 fill-current" /> : <Radio className="h-5 w-5 text-red-400" />}
               </Button>
             )}
             <Button variant="destructive" size="default" onClick={handleEndCall} className="px-3 md:px-4 py-2 text-sm"><PhoneOff className="mr-0 md:mr-2 h-5 w-5" /> <span className="hidden md:inline">End Call</span></Button>
           </div>
         </div>
 
-        {/* Right Sidebar for Tools */}
         <Card className="flex flex-col shadow-lg bg-card text-card-foreground rounded-lg">
           <Accordion type="multiple" defaultValue={['suggested-questions', 'chat']} className="w-full flex-grow flex flex-col overflow-hidden">
             {isInterviewer && (
@@ -443,3 +486,4 @@ export default function LiveInterviewPage() {
   );
 }
 
+    
