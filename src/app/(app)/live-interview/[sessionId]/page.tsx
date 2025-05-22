@@ -10,7 +10,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Mic, Video, ScreenShare, PhoneOff, Send, Bot, ListChecks, Loader2, AlertTriangle, ThumbsUp, ChevronDown, Square, Play, Download as DownloadIcon } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Mic, Video as VideoIcon, ScreenShare, PhoneOff, Send, Bot, ListChecks, Loader2, AlertTriangle, ThumbsUp, ChevronDown, Square, Play, Download as DownloadIcon, VideoOff } from 'lucide-react';
 import { generateLiveInterviewQuestions, type GenerateLiveInterviewQuestionsInput, type GenerateLiveInterviewQuestionsOutput } from '@/ai/flows/generate-live-interview-questions';
 import { sampleUserProfile, sampleLiveInterviewSessions } from '@/lib/sample-data';
 import type { LiveInterviewSession, LiveInterviewParticipant, RecordingReference } from '@/types';
@@ -28,7 +29,7 @@ export default function LiveInterviewPage() {
   const [isLoadingSession, setIsLoadingSession] = useState(true);
 
   const [isMicMuted, setIsMicMuted] = useState(false);
-  const [isVideoOff, setIsVideoOff] = useState(false);
+  const [isVideoActive, setIsVideoActive] = useState(false); // Renamed from isVideoOff for clarity
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [chatMessages, setChatMessages] = useState<{ user: string, text: string, id: string }[]>([]);
   const [chatInput, setChatInput] = useState('');
@@ -39,13 +40,17 @@ export default function LiveInterviewPage() {
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [askedQuestions, setAskedQuestions] = useState<string[]>([]);
 
-  // Recording state
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunksRef = useRef<Blob[]>([]);
   const [audioURL, setAudioURL] = useState<string | null>(null);
   const [browserSupportsRecording, setBrowserSupportsRecording] = useState(true);
   const [localRecordingReferences, setLocalRecordingReferences] = useState<RecordingReference[]>([]);
+
+  // Video stream state
+  const selfVideoRef = useRef<HTMLVideoElement>(null);
+  const [selfStream, setSelfStream] = useState<MediaStream | null>(null);
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
 
 
   const currentUser = sampleUserProfile;
@@ -81,24 +86,81 @@ export default function LiveInterviewPage() {
     if (typeof window !== 'undefined' && !navigator.mediaDevices?.getUserMedia) {
       setBrowserSupportsRecording(false);
       toast({
-        title: "Recording Not Supported",
-        description: "Your browser does not support audio/video recording.",
+        title: "Media Not Supported",
+        description: "Your browser does not support audio/video recording or camera access.",
         variant: "destructive",
         duration: 7000,
       });
     }
   }, [toast]);
 
-  const handleToggleMic = () => setIsMicMuted(!isMicMuted);
-  const handleToggleVideo = () => setIsVideoOff(!isVideoOff);
-  const handleToggleScreenShare = () => {
-    setIsScreenSharing(!isScreenSharing);
-    toast({ title: isScreenSharing ? "Screen Sharing Stopped (Mock)" : "Screen Sharing Started (Mock)", duration: 2000 });
+  const stopCurrentStream = useCallback(() => {
+    if (selfStream) {
+      selfStream.getTracks().forEach(track => track.stop());
+      setSelfStream(null);
+    }
+    if (selfVideoRef.current) {
+        selfVideoRef.current.srcObject = null;
+    }
+  }, [selfStream]);
+
+  const startVideoStream = async () => {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setHasCameraPermission(false);
+      toast({ title: "Camera Error", description: "Camera access not supported by your browser.", variant: "destructive" });
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: !isMicMuted }); // Request audio if not muted
+      setSelfStream(stream);
+      if (selfVideoRef.current) {
+        selfVideoRef.current.srcObject = stream;
+      }
+      setHasCameraPermission(true);
+      setIsVideoActive(true);
+    } catch (err) {
+      console.error("Error accessing camera:", err);
+      setHasCameraPermission(false);
+      setIsVideoActive(false);
+      toast({ title: "Camera Access Denied", description: "Please enable camera permissions in your browser settings.", variant: "destructive" });
+    }
   };
+
+
+  const handleToggleVideo = async () => {
+    if (isVideoActive) {
+      stopCurrentStream();
+      setIsVideoActive(false);
+    } else {
+      await startVideoStream();
+    }
+  };
+  
+  const handleToggleMic = () => {
+    setIsMicMuted(!isMicMuted);
+    if (selfStream) {
+        selfStream.getAudioTracks().forEach(track => track.enabled = isMicMuted); // isMicMuted is previous state
+    }
+    toast({ title: !isMicMuted ? "Mic Muted" : "Mic Unmuted", duration: 1500 });
+  };
+
+  const handleToggleScreenShare = () => {
+    if (isScreenSharing) {
+      setIsScreenSharing(false);
+      toast({ title: "Screen Sharing Stopped (Mock)", duration: 2000 });
+      // In a real app, stop the screen share stream and revert to camera if it was active
+    } else {
+      // In a real app, navigator.mediaDevices.getDisplayMedia() would be called
+      setIsScreenSharing(true);
+      toast({ title: "Screen Sharing Started (Mock)", description: "Actual screen sharing requires browser APIs.", duration: 3000 });
+    }
+  };
+
   const handleEndCall = () => {
     if (isRecording) {
       stopRecording();
     }
+    stopCurrentStream(); // Stop camera stream
     toast({ title: "Interview Ended", description: "You have left the interview session." });
     router.push('/interview-prep');
   };
@@ -142,8 +204,13 @@ export default function LiveInterviewPage() {
     if (isRecording || !navigator.mediaDevices?.getUserMedia) return;
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false }); // Audio only for now
-      mediaRecorderRef.current = new MediaRecorder(stream);
+      const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // If video is also active and we want to record it (more complex setup for mixed streams)
+      // For simplicity, this example primarily focuses on audio from mic.
+      // To record video+audio from selfStream if active:
+      // const streamToRecord = selfStream || audioStream;
+
+      mediaRecorderRef.current = new MediaRecorder(audioStream); // Record audio stream
       recordedChunksRef.current = [];
 
       mediaRecorderRef.current.ondataavailable = (event) => {
@@ -153,26 +220,23 @@ export default function LiveInterviewPage() {
       };
 
       mediaRecorderRef.current.onstop = () => {
-        const audioBlob = new Blob(recordedChunksRef.current, { type: 'audio/webm' }); // or audio/ogg, audio/wav
+        const audioBlob = new Blob(recordedChunksRef.current, { type: 'audio/webm' });
         const url = URL.createObjectURL(audioBlob);
-        setAudioURL(url); // For potential playback
+        setAudioURL(url);
 
         const newRecordingRef: RecordingReference = {
           id: `rec-${Date.now()}`,
           sessionId: sessionId,
-          startTime: new Date().toISOString(), // This should be the actual start time
-          durationSeconds: Math.round(audioBlob.size / 16000), // Rough estimate, actual duration needs better tracking
-          localStorageKey: `recording_${sessionId}_${Date.now()}` // Mock key
+          startTime: new Date().toISOString(),
+          durationSeconds: Math.round(audioBlob.size / 16000),
+          localStorageKey: `recording_${sessionId}_${Date.now()}`
         };
         setLocalRecordingReferences(prev => [...prev, newRecordingRef]);
         
-        // In a real app, you'd upload audioBlob to a server here.
-        // For now, just log it.
         console.log("Recording stopped. Blob available at:", url, "Size:", audioBlob.size);
-        toast({ title: "Recording Stopped", description: "Audio recording saved (mocked to local blob)." });
+        toast({ title: "Recording Stopped", description: "Audio recording saved (mocked)." });
         
-        // Clean up stream tracks
-        stream.getTracks().forEach(track => track.stop());
+        audioStream.getTracks().forEach(track => track.stop()); // Stop only the audio stream used for recording
       };
 
       mediaRecorderRef.current.start();
@@ -189,12 +253,21 @@ export default function LiveInterviewPage() {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
-      // onstop handler will do the rest
     }
   };
 
+  // Cleanup stream on component unmount
+  useEffect(() => {
+    return () => {
+      stopCurrentStream();
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+        mediaRecorderRef.current.stop();
+      }
+    };
+  }, [stopCurrentStream]);
 
-  if (isLoadingSession) {
+
+  if (isLoadingSession || sessionDetails === undefined) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -213,7 +286,6 @@ export default function LiveInterviewPage() {
       </div>
     );
   }
-  if (!sessionDetails) return <p>Error loading session.</p>;
 
   const otherParticipant = sessionDetails.participants.find(p => p.userId !== currentUser.id) || { name: "Participant", role: "candidate", profilePictureUrl: `https://avatar.vercel.sh/participant.png` };
   const selfParticipant = sessionDetails.participants.find(p => p.userId === currentUser.id) || { name: currentUser.name, role: isInterviewer ? "interviewer" : "candidate", profilePictureUrl: currentUser.profilePictureUrl };
@@ -245,13 +317,27 @@ export default function LiveInterviewPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full h-full">
-              <div className="bg-slate-800 text-white rounded-md flex items-center justify-center p-2 aspect-video sm:aspect-auto relative overflow-hidden">
-                <img src={isVideoOff && selfParticipant.role === 'candidate' ? `https://placehold.co/300x200/222/eee?text=${selfParticipant.name.charAt(0)}` : selfParticipant.profilePictureUrl || `https://placehold.co/300x200/222/eee?text=You`} alt="Self view" className="w-full h-full object-cover" data-ai-hint="person video call"/>
+              {/* Self Video Panel */}
+              <div className="bg-slate-800 text-white rounded-md flex flex-col items-center justify-center p-1 aspect-video sm:aspect-auto relative overflow-hidden">
+                <video ref={selfVideoRef} className={cn("w-full h-full object-cover rounded-md", !isVideoActive && "hidden")} autoPlay playsInline muted />
+                {!isVideoActive && (
+                  <div className="w-full h-full flex flex-col items-center justify-center bg-slate-700">
+                    <VideoOff className="h-16 w-16 text-slate-500" />
+                    <p className="text-xs text-slate-400 mt-2">Your video is off</p>
+                  </div>
+                )}
+                {hasCameraPermission === false && !isVideoActive && (
+                     <Alert variant="destructive" className="absolute bottom-2 left-2 right-2 text-xs p-2">
+                        <AlertTriangle className="h-3 w-3" />
+                        <AlertTitle className="text-xs font-semibold">Camera Denied</AlertTitle>
+                        <AlertDescription className="text-[10px]">Enable camera access in browser settings.</AlertDescription>
+                    </Alert>
+                )}
                 <p className="absolute bottom-1 left-1 text-xs bg-black/50 px-1.5 py-0.5 rounded">{selfParticipant.name} (You)</p>
-                {isVideoOff && <p className="text-xs absolute top-1 right-1 bg-destructive/80 p-1 rounded">Video Off</p>}
               </div>
+              {/* Participant Video Panel (Placeholder) */}
               <div className="bg-slate-700 text-white rounded-md flex items-center justify-center p-2 aspect-video sm:aspect-auto relative overflow-hidden">
-                 <img src={otherParticipant.profilePictureUrl || `https://placehold.co/300x200/111/ddd?text=${otherParticipant.name.charAt(0)}`} alt="Participant view" className="w-full h-full object-cover" data-ai-hint="person video call"/>
+                 <img src={otherParticipant.profilePictureUrl || `https://placehold.co/300x200/111/ddd?text=${otherParticipant.name.charAt(0)}`} alt="Participant view" className="w-full h-full object-cover" data-ai-hint="person placeholder"/>
                 <p className="absolute bottom-1 left-1 text-xs bg-black/50 px-1.5 py-0.5 rounded">{otherParticipant.name}</p>
               </div>
             </div>
@@ -283,8 +369,8 @@ export default function LiveInterviewPage() {
                   <ul className="space-y-1">
                     {suggestedQuestions.map((q, idx) => (
                       <li key={idx} className="text-xs p-1.5 rounded hover:bg-primary/10 flex justify-between items-center">
-                        <span>{q.questionText} {q.category && <span className="text-[10px] text-muted-foreground">({q.category})</span>}</span>
-                        <Button variant="ghost" size="xs" className="h-auto p-0.5 text-primary" onClick={() => markQuestionAsAsked(q.questionText)}>Ask</Button>
+                        <span className="flex-1 mr-1" title={q.questionText}>{q.questionText} {q.category && <span className="text-[10px] text-muted-foreground">({q.category})</span>}</span>
+                        <Button variant="ghost" size="xs" className="h-auto p-0.5 text-primary shrink-0" onClick={() => markQuestionAsAsked(q.questionText)}>Ask</Button>
                       </li>
                     ))}
                   </ul>
@@ -317,7 +403,7 @@ export default function LiveInterviewPage() {
 
       <div className="flex flex-wrap justify-center items-center gap-2 sm:gap-3 p-2 sm:p-3 mt-2 sm:mt-4 bg-card rounded-lg shadow-top border">
         <Button variant={isMicMuted ? "destructive" : "outline"} size="icon" onClick={handleToggleMic} title={isMicMuted ? "Unmute Mic" : "Mute Mic"}> <Mic className="h-5 w-5" /></Button>
-        <Button variant={isVideoOff ? "destructive" : "outline"} size="icon" onClick={handleToggleVideo} title={isVideoOff ? "Start Video" : "Stop Video"}><Video className="h-5 w-5" /></Button>
+        <Button variant={!isVideoActive ? "destructive" : "outline"} size="icon" onClick={handleToggleVideo} title={!isVideoActive ? "Start Video" : "Stop Video"}><VideoIcon className="h-5 w-5" /></Button>
         <Button variant={isScreenSharing ? "default" : "outline"} size="icon" onClick={handleToggleScreenShare} className={cn(isScreenSharing && "bg-green-600 hover:bg-green-700")} title={isScreenSharing ? "Stop Sharing" : "Share Screen"}><ScreenShare className="h-5 w-5" /></Button>
         {browserSupportsRecording && (
           <Button variant={isRecording ? "destructive" : "outline"} size="icon" onClick={isRecording ? stopRecording : startRecording} title={isRecording ? "Stop Recording" : "Start Recording"}>
@@ -346,4 +432,3 @@ export default function LiveInterviewPage() {
     </div>
   );
 }
-
