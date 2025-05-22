@@ -1,6 +1,6 @@
 
 import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem, Appointment, Wallet, ResumeProfile, Tenant, Badge, BlogPost, ReferralHistoryItem, GamificationRule, UserStatus, SurveyResponse, Affiliate, AffiliateClick, AffiliateSignup, AffiliateStatus, SurveyStep, ResumeTemplate, TourStep, CommunityComment, InterviewQuestion, InterviewQuestionCategory, BlogGenerationSettings, MockInterviewSession, InterviewQuestionDifficulty, InterviewQuestionUserComment, PracticeSession, PracticeSessionStatus, JobApplicationStatus, KanbanColumnId, PlatformSettings, Announcement, AnnouncementStatus, AnnouncementAudience, LiveInterviewSession, LiveInterviewParticipant, RecordingReference, LiveInterviewSessionStatus } from '@/types';
-import { AreasOfSupport, AppointmentStatuses, Genders, DegreePrograms, Industries, TimeCommitments, EngagementModes, SupportTypesSought, JOB_APPLICATION_STATUSES, KANBAN_COLUMNS_CONFIG, PREDEFINED_INTERVIEW_TOPICS, PRACTICE_FOCUS_AREAS, ALL_CATEGORIES, ALL_DIFFICULTIES, MOCK_INTERVIEW_STEPS, RESUME_BUILDER_STEPS, PreferredTimeSlots, AnnouncementStatuses, AnnouncementAudiences } from '@/types'; 
+import { AreasOfSupport, AppointmentStatuses, Genders, DegreePrograms, Industries, TimeCommitments, EngagementModes, SupportTypesSought, JOB_APPLICATION_STATUSES, KANBAN_COLUMNS_CONFIG, PREDEFINED_INTERVIEW_TOPICS, PRACTICE_FOCUS_AREAS, ALL_CATEGORIES, ALL_DIFFICULTIES, MOCK_INTERVIEW_STEPS, RESUME_BUILDER_STEPS, PreferredTimeSlots, AnnouncementStatuses, AnnouncementAudiences, LiveInterviewSessionStatuses } from '@/types'; 
 
 export let SAMPLE_TENANT_ID = 'Brainqy'; 
 
@@ -58,7 +58,7 @@ export let sampleAlumni: AlumniProfile[] = [
   },
   {
     id: 'alumni3',
-    tenantId: 'tenant-2', 
+    tenantId: 'tenant-2', // Moved Charlie to tenant-2 for testing manager distinguish feature
     name: 'Charlie Brown',
     profilePictureUrl: 'https://picsum.photos/seed/charlie/200/200',
     currentJobTitle: 'Data Scientist',
@@ -248,7 +248,7 @@ export let sampleUserProfile: UserProfile = {
   featureInSpotlightConsent: false,
   shortBio: 'Dedicated Engagement Lead at Corporate Partner Inc., focused on maximizing alumni potential and fostering a strong professional network within Tenant-2. My expertise includes team leadership, project management, and strategic planning for alumni relations. Committed to creating valuable connections and opportunities for our members.', 
   university: 'Business School of Excellence', 
-  profilePictureUrl: 'https://picsum.photos/seed/managermike/200/200', 
+  profilePictureUrl: 'https://avatar.vercel.sh/managermike.png', 
   interests: ['Leadership Development', 'Corporate Strategy', 'Golf'], 
   offersHelpWith: [AreasOfSupport[0], AreasOfSupport[2], AreasOfSupport[8]], 
   appointmentCoinCost: 0, 
@@ -419,7 +419,7 @@ export const sampleTenants: Tenant[] = [
   {
     id: 'Brainqy', 
     name: 'Brainqy University', 
-    createdAt: new Date(Date.now() - 86400000 * 30).toISOString(), // Ensure it's older
+    createdAt: new Date(Date.now() - 86400000 * 30).toISOString(), 
     settings: {
       allowPublicSignup: true,
       customLogoUrl: 'https://placehold.co/200x50/008080/E0F7FA&text=Brainqy', 
@@ -1430,7 +1430,20 @@ export let sampleAnnouncements: Announcement[] = [
 
 export const sampleLiveInterviewSessions: LiveInterviewSession[] = [
   {
-    id: 'live-session-1',
+    id: 'ps1', // Match a PracticeSession ID for linking
+    tenantId: 'Brainqy',
+    title: 'Angular Frontend Practice',
+    participants: [
+      { userId: 'expert1', name: 'Expert Angular Interviewer', role: 'interviewer', profilePictureUrl: 'https://picsum.photos/seed/expert1/50/50' },
+      { userId: 'currentUser', name: sampleUserProfile.name, role: 'candidate', profilePictureUrl: sampleUserProfile.profilePictureUrl }
+    ],
+    scheduledTime: new Date(Date.now() + 86400000 * 3).toISOString(),
+    status: 'Scheduled',
+    meetingLink: 'https://meet.example.com/angular-practice-ps1',
+    interviewTopics: ['Angular', 'TypeScript', 'RxJS'],
+  },
+  {
+    id: 'live-session-1', // Original live session ID
     tenantId: 'Brainqy',
     title: 'Frontend Developer Screening',
     participants: [
@@ -1473,3 +1486,4 @@ export const sampleLiveInterviewSessions: LiveInterviewSession[] = [
     interviewTopics: ['Machine Learning Algorithms', 'Python', 'Statistics'],
   }
 ];
+
