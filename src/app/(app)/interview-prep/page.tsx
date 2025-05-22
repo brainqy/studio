@@ -1,5 +1,5 @@
 
-"use client";
+      "use client";
 
 import type React from 'react';
 import { useState, useEffect, useMemo, useRef } from 'react';
@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Brain, Calendar, Users, ShieldAlert, Type, Languages, MessageSquare, CheckCircle, XCircle, Mic, ListChecks, Search, ChevronLeft, ChevronRight, Tag, Settings2, Puzzle, Lightbulb, Code, Eye, Edit3, Play, PlusCircle, Star as StarIcon, Send, Mail, ChevronDown, ListFilter, Bookmark as BookmarkIcon, Video } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { sampleUserProfile, samplePracticeSessions, sampleInterviewQuestions, sampleCreatedQuizzes, sampleLiveInterviewSessions } from "@/lib/sample-data";
-import type { PracticeSession, InterviewQuestion, InterviewQuestionCategory, MockInterviewSession, DialogStep, PracticeSessionConfig, InterviewQuestionUserComment, InterviewQuestionDifficulty, PracticeFocusArea, BankQuestionSortOrder, BankQuestionFilterView, GenerateMockInterviewQuestionsInput, PracticeSessionStatus } from '@/types';
+import type { PracticeSession, InterviewQuestion, InterviewQuestionCategory, MockInterviewSession, DialogStep, PracticeSessionConfig, InterviewQuestionUserComment, InterviewQuestionDifficulty, PracticeFocusArea, BankQuestionSortOrder, BankQuestionFilterView, GenerateMockInterviewQuestionsInput, PracticeSessionStatus, LiveInterviewSession, LiveInterviewParticipant } from '@/types';
 import { ALL_CATEGORIES, PREDEFINED_INTERVIEW_TOPICS, PRACTICE_FOCUS_AREAS, MOCK_INTERVIEW_STEPS, RESUME_BUILDER_STEPS } from '@/types';
 import { format, parseISO, isFuture as dateIsFuture, isPast, addMinutes, compareAsc, differenceInMinutes } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -74,7 +74,7 @@ export default function InterviewPracticeHubPage() {
   const [friendEmailError, setFriendEmailError] = useState<string | null>(null);
 
 
-  const [practiceSessions, setPracticeSessions] = useState<PracticeSession[]>(samplePracticeSessions);
+  const [practiceSessions, setPracticeSessions] = useState<PracticeSession[]>(samplePracticeSessions.filter(s => s.userId === sampleUserProfile.id));
   const router = useRouter();
   const { toast } = useToast();
   const currentUser = sampleUserProfile;
@@ -118,9 +118,9 @@ export default function InterviewPracticeHubPage() {
   const isMCQSelected = watchQuestionForm("isMCQ");
 
 
-  const upcomingSessions = practiceSessions.filter(s => s.userId === currentUser.id && s.status === 'SCHEDULED' && dateIsFuture(parseISO(s.date)));
-  const allUserSessions = practiceSessions.filter(s => s.userId === currentUser.id);
-  const cancelledSessions = practiceSessions.filter(s => s.userId === currentUser.id && s.status === 'CANCELLED');
+  const upcomingSessions = practiceSessions.filter(s => s.status === 'SCHEDULED' && dateIsFuture(parseISO(s.date)));
+  const allUserSessions = practiceSessions;
+  const cancelledSessions = practiceSessions.filter(s => s.status === 'CANCELLED');
 
   const handleStartPracticeSetup = () => {
     setPracticeSessionConfig({
@@ -206,19 +206,37 @@ export default function InterviewPracticeHubPage() {
             toast({ title: "Booking Error", description: "Missing expert session details (topics or date/time).", variant: "destructive"});
             return;
         }
+        const newSessionId = `ps-expert-${Date.now()}`;
         const newSession: PracticeSession = {
-            id: `ps-expert-${Date.now()}`,
+            id: newSessionId,
             userId: currentUser.id,
             date: practiceSessionConfig.dateTime.toISOString(),
             category: "Practice with Experts",
             type: practiceSessionConfig.topics.join(', ') || "General",
-            language: "English",
+            language: "English", // Assuming English for now
             status: "SCHEDULED" as PracticeSessionStatus,
             notes: `Scheduled expert session for topics: ${practiceSessionConfig.topics.join(', ')}.`,
         };
         setPracticeSessions(prev => [newSession, ...prev]);
-        samplePracticeSessions.unshift(newSession);
-        toast({ title: "Expert Session Booked (Mock)", description: `Session for ${practiceSessionConfig.topics.join(', ')} on ${format(practiceSessionConfig.dateTime, 'PPp')} scheduled.` });
+        samplePracticeSessions.unshift(newSession); // Add to global sample data
+
+        // Also create a corresponding LiveInterviewSession
+        const newLiveSession: LiveInterviewSession = {
+            id: newSessionId,
+            tenantId: currentUser.tenantId,
+            title: `Expert Mock Interview: ${newSession.type}`,
+            participants: [
+                { userId: currentUser.id, name: currentUser.name, role: 'candidate', profilePictureUrl: currentUser.profilePictureUrl },
+                { userId: `expert-${Date.now()}`, name: 'Expert Interviewer', role: 'interviewer', profilePictureUrl: 'https://avatar.vercel.sh/expert.png' }
+            ],
+            scheduledTime: newSession.date,
+            status: 'Scheduled',
+            preSelectedQuestions: sampleInterviewQuestions.filter(q => practiceSessionConfig.topics.some(topic => q.category === topic || q.tags?.includes(topic.toLowerCase()))).slice(0,5).map(q => ({id: q.id, questionText: q.question, category: q.category, difficulty: q.difficulty })), // Example: select 5 related questions
+        };
+        sampleLiveInterviewSessions.unshift(newLiveSession); // Add to global sample data
+
+        toast({ title: "Expert Session Booked (Mock)", description: `Session for ${newSession.type} on ${format(practiceSessionConfig.dateTime, 'PPp')} scheduled.` });
+
     } else if (practiceSessionConfig.type === 'ai') {
         if (!practiceSessionConfig.aiTopicOrRole?.trim()) {
             toast({ title: "Booking Error", description: "Missing AI interview topic/role.", variant: "destructive"});
@@ -253,7 +271,6 @@ export default function InterviewPracticeHubPage() {
     setPracticeSessions(prev => prev.map(updater));
     const globalIndex = samplePracticeSessions.findIndex(s => s.id === sessionId);
     if (globalIndex !== -1) {
-        // This mutation is for demo persistence. In a real app, this would be an API call.
         (samplePracticeSessions[globalIndex] as any).status = 'CANCELLED';
     }
     toast({ title: "Session Cancelled", description: "The practice session has been cancelled.", variant: "destructive" });
@@ -283,7 +300,7 @@ export default function InterviewPracticeHubPage() {
     if (bankSearchTerm.trim() !== '') {
       const searchTermLower = bankSearchTerm.toLowerCase();
       questionsToFilter = questionsToFilter.filter(q =>
-        q.question.toLowerCase().includes(searchTermLower) ||
+        q.questionText.toLowerCase().includes(searchTermLower) ||
         (q.tags && q.tags.some(tag => tag.toLowerCase().includes(searchTermLower)))
       );
     }
@@ -321,14 +338,15 @@ export default function InterviewPracticeHubPage() {
     };
 
     if (editingQuestion) {
-      setAllBankQuestions(prev => prev.map(q => q.id === editingQuestion.id ? { ...editingQuestion, ...questionPayload, difficulty: data.difficulty || 'Medium' } : q));
+      setAllBankQuestions(prev => prev.map(q => q.id === editingQuestion.id ? { ...editingQuestion, ...questionPayload, difficulty: data.difficulty || 'Medium', questionText: data.question } : q));
       const globalQIndex = sampleInterviewQuestions.findIndex(q => q.id === editingQuestion.id);
-      if (globalQIndex !== -1) Object.assign(sampleInterviewQuestions[globalQIndex], { ...editingQuestion, ...questionPayload, difficulty: data.difficulty || 'Medium' });
+      if (globalQIndex !== -1) Object.assign(sampleInterviewQuestions[globalQIndex], { ...editingQuestion, ...questionPayload, difficulty: data.difficulty || 'Medium', questionText: data.question });
       toast({ title: "Question Updated", description: "The interview question has been updated." });
     } else {
       const newQuestion: InterviewQuestion = {
         ...questionPayload,
         id: `iq-${Date.now()}`,
+        questionText: data.question,
         difficulty: data.difficulty || 'Medium',
         rating: 0,
         ratingsCount: 0,
@@ -339,7 +357,7 @@ export default function InterviewPracticeHubPage() {
       toast({ title: "Question Added", description: "New question added to the bank." });
     }
     setIsQuestionFormOpen(false);
-    resetQuestionForm({ isMCQ: false, mcqOptions: ["", "", "", ""], category: 'Common', difficulty: 'Medium' });
+    resetQuestionForm({ question: '', category: 'Common', isMCQ: false, mcqOptions: ["", "", "", ""], correctAnswer: '', answerOrTip: '', tags: '', difficulty: 'Medium' });
     setEditingQuestion(null);
   };
 
@@ -351,7 +369,7 @@ export default function InterviewPracticeHubPage() {
 
   const openEditQuestionDialog = (question: InterviewQuestion) => {
     setEditingQuestion(question);
-    setQuestionFormValue('question', question.question);
+    setQuestionFormValue('question', question.questionText);
     setQuestionFormValue('category', question.category);
     setQuestionFormValue('isMCQ', question.isMCQ || false);
     setQuestionFormValue('mcqOptions', question.mcqOptions || ["", "", "", ""]);
@@ -487,9 +505,10 @@ export default function InterviewPracticeHubPage() {
   const renderSessionCard = (session: PracticeSession) => {
     const sessionDate = parseISO(session.date);
     const now = new Date();
-    const sessionStartedInLastHour = isPast(sessionDate) && differenceInMinutes(now, sessionDate) <= 60;
-    const canJoin = session.status === 'SCHEDULED' && (dateIsFuture(sessionDate) || sessionStartedInLastHour);
-
+    // Allow joining if session is in the future, OR if it started in the last 60 minutes
+    const canJoin = session.status === 'SCHEDULED' && 
+                    (dateIsFuture(sessionDate) || (isPast(sessionDate) && differenceInMinutes(now, sessionDate) <= 60));
+    
     return (
     <Card key={session.id} className="shadow-md hover:shadow-lg transition-shadow">
       <CardHeader>
@@ -714,14 +733,14 @@ export default function InterviewPracticeHubPage() {
                                         id={`select-q-${q.id}`}
                                         checked={selectedQuestionsForQuiz.has(q.id)}
                                         onCheckedChange={() => handleToggleQuestionForQuiz(q.id)}
-                                        aria-label={`Select question: ${q.question}`}
+                                        aria-label={`Select question: ${q.questionText}`}
                                         onClick={(e) => e.stopPropagation()}
                                     />
                                 </div>
                               <div className="flex-1 text-left">
                                 <div className="flex items-center gap-2 mb-0.5">
                                   {getCategoryIcon(q.category)}
-                                  <span className="font-medium text-foreground">{q.question}</span>
+                                  <span className="font-medium text-foreground">{q.questionText}</span>
                                 </div>
                                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-wrap">
                                   <span>ID: {q.id.substring(0,8)}...</span>
@@ -1088,5 +1107,4 @@ export default function InterviewPracticeHubPage() {
     </div>
   );
 }
-
     
