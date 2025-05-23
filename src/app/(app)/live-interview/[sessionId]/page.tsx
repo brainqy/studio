@@ -13,6 +13,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Mic, Video as VideoIcon, ScreenShare, PhoneOff, Send, Bot, ListChecks, Loader2, AlertTriangle, ThumbsUp, ChevronDown, Square, Play, Download as DownloadIcon, VideoOff, MessageSquare as ChatIcon, Users as ParticipantsIcon, HelpCircle, Maximize, Minimize, Radio, CheckSquare as CheckSquareIcon, RotateCcw } from 'lucide-react';
+// import { generateLiveInterviewQuestions, type GenerateLiveInterviewQuestionsInput, type GenerateLiveInterviewQuestionsOutput } from '@/ai/flows/generate-live-interview-questions'; // Removed for pre-selected questions
 import { sampleUserProfile, sampleLiveInterviewSessions, sampleInterviewQuestions } from '@/lib/sample-data';
 import type { LiveInterviewSession, LiveInterviewParticipant, RecordingReference, MockInterviewQuestion } from '@/types';
 import { useToast } from '@/hooks/use-toast';
@@ -41,28 +42,30 @@ export default function LiveInterviewPage() {
   const [isMicMuted, setIsMicMuted] = useState(false);
   const [isVideoActive, setIsVideoActive] = useState(false);
   const [activeStreamType, setActiveStreamType] = useState<'camera' | 'screen' | 'none'>('none');
-  
+
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
-  
+
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const [hasScreenPermission, setHasScreenPermission] = useState<boolean | null>(null);
 
   const mainVideoRef = useRef<HTMLVideoElement>(null);
   const selfVideoRef = useRef<HTMLVideoElement>(null);
+  const liveInterviewContainerRef = useRef<HTMLDivElement>(null);
 
   const [chatMessages, setChatMessages] = useState<{ user: string, text: string, id: string }[]>([]);
   const [chatInput, setChatInput] = useState('');
 
-  const [askedQuestions, setAskedQuestions] = useState<Set<string>>(new Set()); // Store IDs of asked questions
+  const [askedQuestions, setAskedQuestions] = useState<Set<string>>(new Set());
 
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunksRef = useRef<Blob[]>([]);
-  const [audioURL, setAudioURL] = useState<string | null>(null); 
+  const [audioURL, setAudioURL] = useState<string | null>(null);
   const [browserSupportsRecording, setBrowserSupportsRecording] = useState(true);
   const [localRecordingReferences, setLocalRecordingReferences] = useState<RecordingReference[]>([]);
   const [openAccordionItems, setOpenAccordionItems] = useState<string[]>([]);
+  const [isFullScreen, setIsFullScreen] = useState(false);
 
 
   const currentUser = sampleUserProfile;
@@ -72,39 +75,20 @@ export default function LiveInterviewPage() {
     const participant = sessionDetails.participants.find(p => p.userId === currentUser.id);
     return participant?.role === 'interviewer';
   }, [sessionDetails, currentUser.id]);
-  
-  useEffect(() => {
-    if (isInterviewer) {
-      setOpenAccordionItems(['interview-questions', 'chat', 'participants']);
-    } else {
-      setOpenAccordionItems(['chat', 'participants']);
-    }
-  }, [isInterviewer, sessionDetails]);
-
-
-  const selfParticipant = useMemo(() =>
-    sessionDetails?.participants.find(p => p.userId === currentUser.id) ||
-    { name: currentUser.name, role: isInterviewer ? "interviewer" : "candidate", profilePictureUrl: currentUser.profilePictureUrl, userId: currentUser.id },
-    [sessionDetails, currentUser, isInterviewer]
-  );
-
-  const otherParticipant = useMemo(() =>
-    sessionDetails?.participants.find(p => p.userId !== currentUser.id) ||
-    { name: "Participant Placeholder", role: isInterviewer ? "candidate" : "interviewer", profilePictureUrl: `https://avatar.vercel.sh/participantB.png`, userId: 'participant-placeholder-B' },
-    [sessionDetails, currentUser, isInterviewer]
-  );
 
 
   useEffect(() => {
     setIsLoadingSession(true);
+    logger.info("[LiveInterviewPage] useEffect for session loading, sessionId:", sessionId);
     if (sessionId) {
       const foundSession = sampleLiveInterviewSessions.find(s => s.id === sessionId);
       if (foundSession) {
         setSessionDetails(foundSession);
         setLocalRecordingReferences(foundSession.recordingReferences || []);
-        logger.info("Session details loaded:", foundSession.title);
+        logger.info("[LiveInterviewPage] Session details loaded:", foundSession.title);
       } else {
-        setSessionDetails(null); 
+        setSessionDetails(null);
+        logger.warn("[LiveInterviewPage] Session not found with ID:", sessionId);
         toast({
           title: "Session Not Found",
           description: `Could not find an interview session with ID: ${sessionId}`,
@@ -113,15 +97,52 @@ export default function LiveInterviewPage() {
         router.push('/interview-prep');
       }
     } else {
-      setSessionDetails(null); 
-       toast({ title: "Invalid Session", description: "No session ID provided.", variant: "destructive"});
-       router.push('/interview-prep');
+      setSessionDetails(null);
+      logger.warn("[LiveInterviewPage] No session ID provided.");
+      toast({ title: "Invalid Session", description: "No session ID provided.", variant: "destructive"});
+      router.push('/interview-prep');
     }
     setIsLoadingSession(false);
   }, [sessionId, toast, router]);
 
   useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 60000); 
+    const requestFs = async () => {
+        if (liveInterviewContainerRef.current && !document.fullscreenElement) {
+            try {
+                await liveInterviewContainerRef.current.requestFullscreen();
+            } catch (err) {
+                console.warn("Auto-fullscreen for live interview failed:", err);
+                toast({ title: "Fullscreen Note", description: "Automatic fullscreen failed. You can enable it manually.", variant: "default", duration: 4000 });
+            }
+        }
+    };
+    if (!isLoadingSession && sessionDetails) { // Ensure session is ready
+        requestFs();
+    }
+  }, [isLoadingSession, sessionDetails, toast]); // Dependencies updated
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullScreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+
+  useEffect(() => {
+    if (isInterviewer && sessionDetails?.preSelectedQuestions && sessionDetails.preSelectedQuestions.length > 0) {
+      setOpenAccordionItems(['interview-questions', 'chat', 'participants']);
+    } else if (isInterviewer) {
+      setOpenAccordionItems(['chat', 'participants']); // Open chat/participants if no questions
+    } else { // Candidate
+      setOpenAccordionItems(['chat', 'participants']);
+    }
+  }, [isInterviewer, sessionDetails]);
+
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
     return () => clearInterval(timer);
   }, []);
 
@@ -136,8 +157,8 @@ export default function LiveInterviewPage() {
     if (stream) {
       stream.getTracks().forEach(track => {
         track.stop();
+        logger.debug("Track stopped:", track.kind, track.label);
       });
-      logger.debug("Tracks stopped for stream:", stream.id);
     }
   }, []);
 
@@ -145,13 +166,13 @@ export default function LiveInterviewPage() {
     logger.debug("Attempting to start camera stream...");
     if (!navigator.mediaDevices?.getUserMedia) {
       setHasCameraPermission(false);
-      toast({ title: "Camera Error", description: "Camera access not supported or permission denied.", variant: "destructive" });
+      setIsVideoActive(false);
+      toast({ title: "Camera Error", description: "Camera access not supported by your browser.", variant: "destructive" });
       return null;
     }
     try {
-      if (cameraStream) {
+      if (cameraStream) { // Stop existing camera stream first
         stopStreamTracks(cameraStream);
-        setCameraStream(null);
       }
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: !isMicMuted });
       setCameraStream(stream);
@@ -174,9 +195,20 @@ export default function LiveInterviewPage() {
       stopStreamTracks(cameraStream);
       setCameraStream(null);
     }
-    setIsVideoActive(false); // Ensure this reflects the camera state accurately
+    setIsVideoActive(false);
     logger.debug("Camera stream stopped and isVideoActive set to false.");
   }, [cameraStream, stopStreamTracks]);
+
+  const stopScreenShareStream = useCallback(() => {
+    logger.debug(`Attempting to stop screen share.`);
+    if (screenStream) {
+      stopStreamTracks(screenStream);
+      setScreenStream(null);
+    }
+    setActiveStreamType(isVideoActive && cameraStream ? 'camera' : 'none');
+    logger.info("Screen share stopped. Active stream type set.");
+  }, [screenStream, stopStreamTracks, isVideoActive, cameraStream]);
+
 
   const startScreenShareStream = useCallback(async () => {
     logger.debug("Attempting to start screen share stream...");
@@ -188,17 +220,15 @@ export default function LiveInterviewPage() {
     try {
       if (screenStream) {
         stopStreamTracks(screenStream);
-        setScreenStream(null);
       }
       const stream = await navigator.mediaDevices.getDisplayMedia({
-        video: { cursor: "always" } as any, 
-        audio: false 
+        video: { cursor: "always" } as any,
+        audio: false
       });
-      
+
       stream.getVideoTracks()[0].onended = () => {
         logger.info("Screen share ended by browser control or track ending.");
-        setActiveStreamType(isVideoActive && cameraStream ? 'camera' : 'none'); // Revert to camera if it was on
-        setScreenStream(null);
+        stopScreenShareStream();
       };
       setScreenStream(stream);
       setHasScreenPermission(true);
@@ -207,80 +237,89 @@ export default function LiveInterviewPage() {
     } catch (err) {
       console.error("Error starting screen share:", err);
       setHasScreenPermission(false);
-      toast({ title: "Screen Share Failed", description: "Could not start screen sharing. Ensure permission is granted.", variant: "destructive" });
+      const error = err as Error;
+      if (error.name === 'NotAllowedError' || error.message.includes('permission') || error.message.includes('disallowed')) {
+        toast({ title: "Screen Share Denied", description: `Screen sharing permission was denied or is disallowed by browser/system policy. If in an iframe (e.g., IDE preview), it might need 'allow="display-capture"'. Check browser settings or site/Permissions Policy.`, variant: "destructive", duration: 10000 });
+      } else {
+        toast({ title: "Screen Share Failed", description: "Could not start screen sharing. Ensure permission is granted.", variant: "destructive" });
+      }
       return null;
     }
-  }, [toast, screenStream, stopStreamTracks, isVideoActive, cameraStream]);
+  }, [toast, screenStream, stopStreamTracks, stopScreenShareStream]);
 
-  const stopScreenShareStream = useCallback(() => {
-    logger.debug(`Attempting to stop screen share.`);
-    if (screenStream) {
-      stopStreamTracks(screenStream);
-      setScreenStream(null);
-    }
-    // If screen share was active, revert to camera if it was on, otherwise none.
-    setActiveStreamType(isVideoActive && cameraStream ? 'camera' : 'none');
-    toast({ title: "Screen Sharing Stopped", duration: 2000 });
-    logger.debug("Screen share stream stopped.");
-  }, [screenStream, stopStreamTracks, toast, isVideoActive, cameraStream]);
 
-  // Effect to manage self view (always camera if active)
   useEffect(() => {
-    if (selfVideoRef.current) {
-      if (isVideoActive && cameraStream) {
-        selfVideoRef.current.srcObject = cameraStream;
+    const videoEl = selfVideoRef.current;
+    if (!videoEl) return;
+
+    if (isVideoActive && cameraStream) {
+      if (videoEl.srcObject !== cameraStream) {
+        videoEl.srcObject = cameraStream;
         logger.debug("Self view assigned camera stream:", cameraStream.id);
-      } else {
-        selfVideoRef.current.srcObject = null;
+      }
+    } else {
+      if (videoEl.srcObject !== null) {
+        videoEl.srcObject = null;
         logger.debug("Self view cleared (camera off or no stream).");
       }
     }
   }, [isVideoActive, cameraStream]);
 
-  // Effect to manage main view based on activeStreamType
   useEffect(() => {
-    if (mainVideoRef.current) {
-      if (activeStreamType === 'screen' && screenStream) {
-        mainVideoRef.current.srcObject = screenStream;
-        logger.debug("Main view assigned screen stream:", screenStream.id);
-      } else if (activeStreamType === 'camera' && cameraStream) {
-        // Mock: If this user's camera is active, show it in main for demo.
-        // In a real app, this would be the OTHER participant's stream.
-        mainVideoRef.current.srcObject = cameraStream; 
-        logger.debug("Main view assigned (mocked other's) camera stream:", cameraStream.id);
-      } else {
-        mainVideoRef.current.srcObject = null;
-        logger.debug("Main view cleared (no active stream or stream unavailable).");
-      }
+    const videoEl = mainVideoRef.current;
+    if (!videoEl) return;
+
+    let newStream: MediaStream | null = null;
+    let newMutedState = true;
+
+    if (activeStreamType === 'screen' && screenStream) {
+      newStream = screenStream;
+      newMutedState = true;
+      logger.debug("Main view: Attempting to show screen stream:", screenStream.id);
+    } else if (activeStreamType === 'camera' && cameraStream && isVideoActive) {
+      // In a real app, this would be the OTHER participant's stream.
+      // For this mock, if user's camera is on and set as primary, show it.
+      newStream = cameraStream; // Mock: Show self in main if camera is the active type
+      newMutedState = false; // Unmuted if it's a participant's camera
+      logger.debug("Main view: Attempting to show camera stream (mock other participant):", cameraStream.id);
+    } else {
+      logger.debug("Main view: No active stream to show, or local camera is off.");
     }
-  }, [activeStreamType, cameraStream, screenStream]);
+
+    if (videoEl.srcObject !== newStream) {
+      videoEl.srcObject = newStream;
+      logger.info("Main view srcObject updated. New stream ID (if any):", newStream?.id);
+    }
+    if (videoEl.muted !== newMutedState) {
+      videoEl.muted = newMutedState;
+      logger.info("Main view muted state updated to:", newMutedState);
+    }
+  }, [activeStreamType, cameraStream, screenStream, isVideoActive]);
 
 
   const handleToggleVideo = async () => {
-    if (isVideoActive) { // If video is currently on, turn it off
-      stopCameraStream();
-      // If camera was the main feed, set main feed to none. Screen share takes precedence.
+    if (isVideoActive) {
+      stopCameraStream(); // This sets isVideoActive to false
       if (activeStreamType === 'camera') {
-          setActiveStreamType('none'); 
+        setActiveStreamType('none');
       }
-    } else { // If video is off, try to turn it on
-      const stream = await startCameraStream();
+    } else {
+      const stream = await startCameraStream(); // This sets isVideoActive to true on success
       if (stream) {
-        // If no other stream is primary, or if screen isn't shared, make camera primary.
-        if (activeStreamType === 'none' || activeStreamType === 'camera') {
-           setActiveStreamType('camera');
+        if (activeStreamType !== 'screen') { // Don't switch from screen share just by turning on camera
+          setActiveStreamType('camera');
         }
       }
     }
   };
-  
+
   const handleToggleScreenShare = async () => {
     if (activeStreamType === 'screen') {
-      stopScreenShareStream(); // This will attempt to revert to camera if it was on
+      stopScreenShareStream(); // This will also update activeStreamType
     } else {
       const stream = await startScreenShareStream();
       if (stream) {
-        setActiveStreamType('screen'); // Screen share becomes the main active stream
+        setActiveStreamType('screen');
       }
     }
   };
@@ -300,9 +339,12 @@ export default function LiveInterviewPage() {
   const handleEndCall = () => {
     if (isRecording) stopRecording();
     stopCameraStream();
-    stopScreenShareStream(); 
+    stopScreenShareStream();
     setActiveStreamType('none');
     toast({ title: "Interview Ended", description: "You have left the interview session." });
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    }
     router.push('/interview-prep');
   };
 
@@ -314,13 +356,13 @@ export default function LiveInterviewPage() {
       setChatInput('');
     }
   };
-  
+
   const markQuestionAsAsked = (questionId: string) => {
     setAskedQuestions(prev => new Set(prev).add(questionId));
     toast({title: "Question Marked as Asked", duration: 2000})
     logger.debug("Question marked as asked:", questionId);
   };
-  
+
   const resetAskedQuestions = () => {
     setAskedQuestions(new Set());
     toast({title: "Asked Questions Reset", duration: 2000});
@@ -330,7 +372,7 @@ export default function LiveInterviewPage() {
 
   const startRecording = async () => {
     if (!browserSupportsRecording || isRecording) return;
-    
+
     let streamToRecord: MediaStream | null = null;
     let recordingType: 'video' | 'audio' = 'audio';
 
@@ -352,20 +394,23 @@ export default function LiveInterviewPage() {
         logger.info("Recording: Mic audio only");
     }
 
+
     if (!streamToRecord || streamToRecord.getTracks().length === 0) {
         toast({ title: "Recording Error", description: "No active audio or video stream to record. Ensure mic or camera/screen is enabled.", variant: "destructive"});
         logger.warn("Recording error: No active stream with tracks.");
         return;
     }
-    
+
     logger.info("Attempting to record stream with tracks:", streamToRecord.getTracks().map(t => `${t.kind}:${t.label}`));
 
     try {
-      const mimeType = recordingType === 'video' ? 'video/webm; codecs=vp9,opus' : 'audio/webm; codecs=opus';
-      const options = MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(mimeType) ? { mimeType } : {};
-      if (!options.mimeType) {
-          logger.warn(`MIME type ${mimeType} not supported, falling back to browser default for ${recordingType}.`);
+      const mimeType = recordingType === 'video' ? (MediaRecorder.isTypeSupported('video/webm; codecs=vp9,opus') ? 'video/webm; codecs=vp9,opus' : 'video/webm') : (MediaRecorder.isTypeSupported('audio/webm; codecs=opus') ? 'audio/webm; codecs=opus' : 'audio/webm');
+      const options = { mimeType };
+      if(!MediaRecorder.isTypeSupported(mimeType)) {
+        logger.warn(`MIME type ${mimeType} not supported, falling back to browser default for ${recordingType}.`);
+        delete (options as any).mimeType;
       }
+
 
       mediaRecorderRef.current = new MediaRecorder(streamToRecord, options);
       recordedChunksRef.current = [];
@@ -381,17 +426,17 @@ export default function LiveInterviewPage() {
         const finalMimeType = mediaRecorderRef.current?.mimeType || (recordingType === 'video' ? 'video/webm' : 'audio/webm');
         const recordedBlob = new Blob(recordedChunksRef.current, { type: finalMimeType });
         const url = URL.createObjectURL(recordedBlob);
-        setAudioURL(url); 
-        
+        setAudioURL(url);
+
         if (sessionDetails) {
             const newRecordingRef: RecordingReference = {
                 id: `rec-${Date.now()}`,
                 sessionId: sessionDetails.id,
-                startTime: new Date().toISOString(), 
-                durationSeconds: Math.round(recordedChunksRef.current.reduce((acc, chunk) => acc + ((chunk as any).duration || (chunk.size / 1000) ), 0)), 
-                localStorageKey: `recording_${sessionDetails.id}_${Date.now()}`, 
+                startTime: new Date().toISOString(),
+                durationSeconds: 0,
+                localStorageKey: `recording_${sessionDetails.id}_${Date.now()}`,
                 type: recordingType,
-                blobUrl: url, 
+                blobUrl: url,
                 fileName: `recording_${sessionDetails.id}_${new Date().toISOString().replace(/:/g,'-')}.${finalMimeType.split('/')[1].split(';')[0]}`
             };
             setLocalRecordingReferences(prev => [...prev, newRecordingRef]);
@@ -405,7 +450,7 @@ export default function LiveInterviewPage() {
         logger.info("Recording stopped. Blob URL created:", url);
         toast({ title: "Recording Stopped", description: "Recording available for playback/download.", duration: 5000 });
       };
-      mediaRecorderRef.current.start(1000); 
+      mediaRecorderRef.current.start(1000);
       setIsRecording(true);
       setAudioURL(null);
       toast({ title: "Recording Started" });
@@ -419,27 +464,60 @@ export default function LiveInterviewPage() {
   const stopRecording = () => {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
-      setIsRecording(false); 
+      setIsRecording(false);
       logger.info("Recording stop requested.");
     }
   };
+
+   const toggleFullScreen = async () => {
+    if (!liveInterviewContainerRef.current) return;
+    if (!document.fullscreenElement) {
+      try {
+        await liveInterviewContainerRef.current.requestFullscreen();
+      } catch (err) {
+        toast({ title: "Fullscreen Error", description: `Could not enter fullscreen: ${(err as Error).message}`, variant: "destructive" });
+      }
+    } else {
+      if (document.exitFullscreen) {
+        await document.exitFullscreen();
+      }
+    }
+  };
+
+
+  const selfParticipant = useMemo(() =>
+    sessionDetails?.participants.find(p => p.userId === currentUser.id) ||
+    { name: currentUser.name, role: isInterviewer ? "interviewer" : "candidate", profilePictureUrl: currentUser.profilePictureUrl, userId: currentUser.id },
+    [sessionDetails, currentUser, isInterviewer]
+  );
+
+  const otherParticipant = useMemo(() =>
+    sessionDetails?.participants.find(p => p.userId !== currentUser.id) ||
+    { name: "Participant Placeholder", role: isInterviewer ? "candidate" : "interviewer", profilePictureUrl: `https://avatar.vercel.sh/participantB.png`, userId: 'participant-placeholder-B' },
+    [sessionDetails, currentUser, isInterviewer]
+  );
 
 
   if (isLoadingSession || sessionDetails === undefined) {
     return <div className="flex items-center justify-center min-h-screen"><Loader2 className="h-12 w-12 animate-spin text-primary" /><p className="ml-4 text-muted-foreground">Loading session...</p></div>;
   }
-  if (sessionDetails === null) { 
-    return <div className="flex flex-col items-center justify-center min-h-screen text-center p-4"><AlertTriangle className="h-16 w-16 text-destructive mb-4" /><h1 className="text-2xl font-bold">Session Not Found</h1><p className="text-muted-foreground mb-6">ID: {sessionId}</p><Button asChild><Link href="/interview-prep">Back to Prep</Link></Button></div>;
+  if (sessionDetails === null) {
+    return <div className="flex flex-col items-center justify-center min-h-screen text-center p-4"><AlertTriangle className="h-16 w-16 text-destructive mb-4" /><h1 className="text-2xl font-bold">Interview Session Not Found</h1><p className="text-muted-foreground mb-6">ID: {sessionId}</p><Button asChild><Link href="/interview-prep">Back to Prep Hub</Link></Button></div>;
   }
 
-  const mainFeedName = activeStreamType === 'screen' && screenStream ? "Your Screen Share" : (activeStreamType === 'camera' && cameraStream ? otherParticipant.name : `${otherParticipant.name}'s Video Off`);
+  const mainFeedName = activeStreamType === 'screen' && screenStream ? `${selfParticipant.name}'s Screen Share` : (activeStreamType === 'camera' && isVideoActive ? otherParticipant.name : `${otherParticipant.name}'s Video Off`);
   const mainFeedIsActive = (activeStreamType === 'camera' && isVideoActive && cameraStream) || (activeStreamType === 'screen' && screenStream);
 
 
   return (
-    <div className="flex flex-col h-screen bg-slate-100 dark:bg-slate-900 text-foreground p-2 md:p-4 overflow-hidden">
+    <div ref={liveInterviewContainerRef} className={cn("flex flex-col h-screen bg-slate-100 dark:bg-slate-900 text-foreground p-2 md:p-4 overflow-hidden", isFullScreen && "bg-background")}>
       <div className="mb-2 md:mb-4 text-center md:text-left">
-        <h1 className="text-xl md:text-2xl font-semibold truncate">{sessionDetails.title}</h1>
+        <div className="flex justify-between items-center">
+            <h1 className="text-xl md:text-2xl font-semibold truncate">{sessionDetails.title}</h1>
+            <Button variant="ghost" size="icon" onClick={toggleFullScreen} title={isFullScreen ? "Exit Fullscreen" : "Enter Fullscreen"} className="ml-auto">
+              {isFullScreen ? <Minimize className="h-5 w-5"/> : <Maximize className="h-5 w-5"/>}
+            </Button>
+        </div>
         <p className="text-xs md:text-sm text-muted-foreground">
           Candidate: {isInterviewer ? otherParticipant.name : selfParticipant.name}
           <span className="mx-2 hidden md:inline">|</span>
@@ -450,7 +528,7 @@ export default function LiveInterviewPage() {
       <div className="flex-grow grid grid-cols-1 lg:grid-cols-3 gap-2 md:gap-4 overflow-hidden">
         <div className="lg:col-span-2 bg-black rounded-lg flex flex-col p-1 md:p-2 relative shadow-2xl justify-between overflow-hidden">
           <div className="w-full aspect-video bg-slate-800 rounded-md flex items-center justify-center text-slate-400 relative overflow-hidden mb-1 md:mb-2 flex-grow">
-            <video ref={mainVideoRef} className={cn("w-full h-full object-contain", !mainFeedIsActive && "hidden" )} autoPlay playsInline muted={activeStreamType !== 'camera' && activeStreamType !== 'screen'} />
+            <video ref={mainVideoRef} className={cn("w-full h-full object-contain", !mainFeedIsActive && "hidden" )} autoPlay playsInline muted={activeStreamType !== 'camera'} />
             {!mainFeedIsActive && (
                 <div className="text-center p-4">
                     <VideoOff className="h-12 w-12 md:h-16 md:w-16 text-slate-500 mx-auto mb-2"/>
@@ -458,7 +536,7 @@ export default function LiveInterviewPage() {
                 </div>
             )}
             {activeStreamType === 'camera' && !cameraStream && hasCameraPermission === false && <Alert variant="destructive" className="m-2 md:m-4 max-w-xs md:max-w-sm text-xs md:text-sm"><AlertTriangle className="h-4 w-4" /> <AlertTitle>Camera Permission Denied</AlertTitle><AlertDescription>Please enable camera access.</AlertDescription></Alert>}
-            {activeStreamType === 'screen' && !screenStream && hasScreenPermission === false && <Alert variant="destructive" className="m-2 md:m-4 max-w-xs md:max-w-sm text-xs md:text-sm"><AlertTriangle className="h-4 w-4" /> <AlertTitle>Screen Share Denied</AlertTitle><AlertDescription>Please grant permission.</AlertDescription></Alert>}
+            {activeStreamType === 'screen' && !screenStream && hasScreenPermission === false && <Alert variant="destructive" className="m-2 md:m-4 max-w-xs md:max-w-sm text-xs md:text-sm"><AlertTriangle className="h-4 w-4" /> <AlertTitle>Screen Share Denied</AlertTitle><AlertDescription>Please grant permission or check browser policy.</AlertDescription></Alert>}
 
             <p className="absolute bottom-1 md:bottom-2 left-1 md:left-2 text-[10px] md:text-xs bg-black/50 px-1 py-0.5 md:px-1.5 md:py-0.5 rounded text-white">
                 {mainFeedName}
@@ -471,7 +549,7 @@ export default function LiveInterviewPage() {
                     <VideoOff className="h-5 w-5 md:h-6 md:w-6 text-slate-400"/>
                 </div>
               )}
-              <p className="absolute bottom-0.5 left-0.5 md:bottom-1 md:left-1 text-[8px] md:text-[10px] bg-black/50 px-0.5 py-px md:px-1 md:py-0.5 rounded text-white">You</p>
+              <p className="absolute bottom-0.5 left-0.5 md:bottom-1 md:left-1 text-[8px] md:text-[10px] bg-black/50 px-0.5 py-px md:px-1 md:py-0.5 rounded text-white">{selfParticipant.name} (You)</p>
             </div>
           </div>
 
@@ -489,16 +567,16 @@ export default function LiveInterviewPage() {
         </div>
 
         <Card className="flex flex-col shadow-lg bg-card text-card-foreground rounded-lg overflow-hidden max-h-full">
-          <Accordion 
-            type="multiple" 
+          <Accordion
+            type="multiple"
             value={openAccordionItems}
             onValueChange={setOpenAccordionItems}
             className="w-full flex-grow flex flex-col overflow-hidden"
           >
-            {isInterviewer && sessionDetails?.preSelectedQuestions && sessionDetails.preSelectedQuestions.length > 0 && (
+             {isInterviewer && sessionDetails.preSelectedQuestions && sessionDetails.preSelectedQuestions.length > 0 && (
               <AccordionItem value="interview-questions" className="border-b">
                 <AccordionTrigger className="px-3 py-2 md:px-4 md:py-3 text-xs md:text-sm font-medium hover:bg-secondary/50">
-                    <div className="flex items-center gap-1 md:gap-2"><ListChecks className="h-3.5 w-3.5 md:h-4 md:w-4 text-primary"/>Interview Questions</div>
+                    <div className="flex items-center gap-1 md:gap-2"><ListChecks className="h-3.5 w-3.5 md:h-4 md:w-4 text-primary"/>Interview Questions ({sessionDetails.preSelectedQuestions.filter(q => !askedQuestions.has(q.id)).length} remaining)</div>
                 </AccordionTrigger>
                 <AccordionContent className="px-3 py-2 md:px-4 md:pb-3 space-y-1 md:space-y-2 text-xs md:text-sm">
                    <Button size="xs" variant="outline" onClick={resetAskedQuestions} className="mb-2 text-[10px] h-6"><RotateCcw className="mr-1 h-3 w-3"/> Reset Asked</Button>
@@ -513,7 +591,7 @@ export default function LiveInterviewPage() {
                         ))}
                       </ul>
                     </ScrollArea>
-                  ) : <p className="text-[10px] md:text-xs text-muted-foreground text-center py-1 md:py-2">All pre-selected questions asked or none available.</p>}
+                  ) : <p className="text-[10px] md:text-xs text-muted-foreground text-center py-1 md:py-2">All pre-selected questions asked.</p>}
 
                   {askedQuestions.size > 0 && (
                     <div className="mt-2">
@@ -576,7 +654,7 @@ export default function LiveInterviewPage() {
       {audioURL && (
         <div className="fixed bottom-16 right-2 md:bottom-4 md:right-4 z-50 bg-card p-1.5 md:p-2 rounded shadow-lg border flex items-center gap-1 md:gap-2">
             <audio src={audioURL} controls className="h-7 md:h-8 w-40 md:w-auto"/>
-            {localRecordingReferences.length > 0 && 
+            {localRecordingReferences.length > 0 &&
               <a href={localRecordingReferences[localRecordingReferences.length -1].blobUrl} download={localRecordingReferences[localRecordingReferences.length -1].fileName}>
                 <Button variant="outline" size="icon" title="Download Recording" className="h-7 w-7 md:h-8 md:w-8"><DownloadIcon className="h-3.5 w-3.5 md:h-4 md:w-4"/></Button>
               </a>

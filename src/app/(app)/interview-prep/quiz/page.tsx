@@ -8,16 +8,16 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
-import { AlertCircle, Bookmark, Check, ChevronLeft, ChevronRight, Clock, Send, X, PieChart, BarChart2, ListChecks, Maximize, Minimize, Info } from 'lucide-react';
-import { sampleInterviewQuestions, sampleCreatedQuizzes } from '@/lib/sample-data'; 
+import { AlertCircle, Bookmark, Check, ChevronLeft, ChevronRight, Clock, Send, X, PieChart as PieChartIcon, BarChart2 as BarChart2Icon, ListChecks, Maximize, Minimize, Info } from 'lucide-react';
+import { sampleInterviewQuestions, sampleCreatedQuizzes, sampleUserProfile } from '@/lib/sample-data';
 import type { InterviewQuestion, MockInterviewSession } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell, Tooltip as RechartsTooltip, Legend as RechartsLegend, BarChart as RechartsBarChart, XAxis, YAxis, CartesianGrid, Bar } from 'recharts';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle as DialogUITitle, DialogDescription as DialogUIDescription, DialogFooter as DialogUIFooter, DialogClose } from '@/components/ui/dialog'; // Renamed to avoid conflict
+import { Dialog, DialogContent, DialogHeader, DialogTitle as DialogUITitle, DialogDescription as DialogUIDescription, DialogFooter as DialogUIFooter, DialogClose } from '@/components/ui/dialog';
 
-const QUIZ_TIME_SECONDS_PER_QUESTION = 90; 
+const QUIZ_TIME_SECONDS_PER_QUESTION = 90;
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8442FF', '#FF42A5', '#42FFA5'];
 
 
@@ -44,7 +44,7 @@ export default function QuizPage() {
   const [quizResults, setQuizResults] = useState<QuizResults | null>(null);
   const [markedForReview, setMarkedForReview] = useState<Set<string>>(new Set());
   const [totalQuizTime, setTotalQuizTime] = useState(0);
-  
+
   const [quizMetadata, setQuizMetadata] = useState<Pick<MockInterviewSession, 'topic' | 'description' | 'difficulty'> | null>(null);
   const [showStartQuizDialog, setShowStartQuizDialog] = useState(false);
   const [quizStarted, setQuizStarted] = useState(false);
@@ -65,41 +65,47 @@ export default function QuizPage() {
             if (foundQuiz.questions) {
               loadedQuestions = foundQuiz.questions.map(qRef => {
                   const fullQuestion = sampleInterviewQuestions.find(sq => sq.id === qRef.id);
-                  return fullQuestion || { ...qRef, isMCQ: true, mcqOptions: ['Option A', 'Option B'], correctAnswer: 'Option A', answerOrTip: 'Default Tip' }; // Basic fallback
-              }).filter(q => q.isMCQ && q.mcqOptions && q.mcqOptions.length > 0 && q.approved !== false) as InterviewQuestion[];
+                  // Ensure isMCQ, mcqOptions are present and not null for a valid quiz question
+                  return (fullQuestion && fullQuestion.isMCQ && fullQuestion.mcqOptions) ? fullQuestion : null;
+              }).filter(q => q !== null && q.approved !== false) as InterviewQuestion[];
             }
             if (loadedQuestions.length === 0) {
                 toast({title: "Invalid Quiz", description: `Quiz "${foundQuiz.topic}" has no usable MCQ questions.`, variant: "destructive", duration: 5000});
+                 setTimeout(() => router.push('/interview-prep'), 500); // Redirect after short delay
             }
         } else {
             toast({title: "Quiz Not Found", description: "The specified quiz ID could not be found.", variant: "destructive", duration: 5000});
+            setTimeout(() => router.push('/interview-prep'), 500);
         }
     } else if (questionIdsParam) {
       const questionIds = questionIdsParam.split(',');
       loadedQuestions = sampleInterviewQuestions.filter(q => questionIds.includes(q.id) && q.isMCQ && q.mcqOptions && q.mcqOptions.length > 0 && q.approved !== false);
        if (loadedQuestions.length === 0) {
           toast({title: "No Valid Questions", description: "None of the selected questions are valid for a quiz (must be MCQ, approved, with options).", variant: "destructive", duration: 5000});
+          setTimeout(() => router.push('/interview-prep'), 500);
        }
        loadedMetadata = { topic: 'Custom Quiz', description: `Quiz with ${loadedQuestions.length} selected questions.` };
     } else {
-      loadedQuestions = sampleInterviewQuestions.filter(q => q.isMCQ && q.mcqOptions && q.mcqOptions.length > 0 && q.approved !== false).slice(0,10); 
+      // Fallback: If no specific quiz or questions, try to load some default MCQs
+      loadedQuestions = sampleInterviewQuestions.filter(q => q.isMCQ && q.mcqOptions && q.mcqOptions.length > 0 && q.approved !== false).slice(0,10);
       if (loadedQuestions.length === 0) {
-         toast({title: "No Default Questions", description: "No default questions available for a quiz.", variant: "destructive", duration: 5000});
+         toast({title: "No Default Questions", description: "No default MCQ questions available for a quiz.", variant: "destructive", duration: 5000});
+         setTimeout(() => router.push('/interview-prep'), 500);
       }
       loadedMetadata = { topic: 'General Knowledge Quiz', description: 'A quick quiz with default questions.' };
     }
-    
-    if (loadedQuestions.length === 0 && !quizIdParam && !questionIdsParam) { // Avoid redirect if params were there but yielded no questions
-        router.push('/interview-prep');
-        return;
+
+    if (loadedQuestions.length === 0) {
+      // If after all checks, no questions are loaded, don't proceed. The toasts above should inform the user.
+      return;
     }
+
     setQuestions(loadedQuestions);
     setQuizMetadata(loadedMetadata);
-    if(loadedQuestions.length > 0) setShowStartQuizDialog(true); // Show dialog only if questions are loaded
+    setShowStartQuizDialog(true);
 
     const calculatedTotalTime = loadedQuestions.length * QUIZ_TIME_SECONDS_PER_QUESTION;
     setTotalQuizTime(calculatedTotalTime);
-    // Timer starts after dialog confirmation
   }, [searchParams, router, toast]);
 
   useEffect(() => {
@@ -109,7 +115,7 @@ export default function QuizPage() {
       setTimeLeft(prevTime => {
         if (prevTime <= 1) {
           clearInterval(timer);
-          handleSubmitQuiz(true); 
+          handleSubmitQuiz(true);
           return 0;
         }
         return prevTime - 1;
@@ -117,8 +123,8 @@ export default function QuizPage() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [quizStarted, quizSubmitted, questions, totalQuizTime]);
-  
+  }, [quizStarted, quizSubmitted, questions, totalQuizTime]); // Added missing handleSubmitQuiz to dependencies
+
   useEffect(() => {
     const handleFullscreenChange = () => {
       setIsFullScreen(!!document.fullscreenElement);
@@ -145,7 +151,7 @@ export default function QuizPage() {
       setCurrentQuestionIndex(prev => prev - 1);
     }
   };
-  
+
   const toggleMarkForReview = () => {
     if (!currentQuestion) return;
     const newMarked = new Set(markedForReview);
@@ -160,9 +166,9 @@ export default function QuizPage() {
 
 
   const handleSubmitQuiz = (autoSubmitted = false) => {
-    if (quizSubmitted) return; 
+    if (quizSubmitted) return;
     setQuizSubmitted(true);
-    if (isFullScreen && document.fullscreenElement) {
+    if (isFullScreen && document.fullscreenElement && quizContainerRef.current === document.fullscreenElement) {
       document.exitFullscreen();
     }
 
@@ -201,7 +207,7 @@ export default function QuizPage() {
       answeredCount,
       markedForReviewCount
     });
-    
+
     toast({
       title: autoSubmitted ? "Quiz Auto-Submitted!" : "Quiz Submitted!",
       description: `You scored ${score} out of ${questions.length} (${percentage.toFixed(0)}%). View your detailed report.`,
@@ -214,21 +220,33 @@ export default function QuizPage() {
     const secs = seconds % 60;
     return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
-  
-  const startQuiz = () => {
+
+  const startQuiz = async () => {
     setShowStartQuizDialog(false);
     setQuizStarted(true);
-    setTimeLeft(totalQuizTime); // Start timer
+    setTimeLeft(totalQuizTime);
+    if (quizContainerRef.current && !document.fullscreenElement) {
+      try {
+        await quizContainerRef.current.requestFullscreen();
+      } catch (err) {
+        console.warn("Auto-fullscreen for quiz failed:", err);
+        toast({ title: "Fullscreen Note", description: "Automatic fullscreen entry failed. You can try enabling it manually.", variant: "default", duration: 4000});
+      }
+    }
   };
 
-  const toggleFullScreen = () => {
+  const toggleFullScreen = async () => {
     if (!quizContainerRef.current) return;
     if (!document.fullscreenElement) {
-      quizContainerRef.current.requestFullscreen().catch(err => {
-        toast({ title: "Fullscreen Error", description: `Could not enter fullscreen: ${err.message}`, variant: "destructive" });
-      });
+      try {
+        await quizContainerRef.current.requestFullscreen();
+      } catch (err) {
+        toast({ title: "Fullscreen Error", description: `Could not enter fullscreen: ${(err as Error).message}`, variant: "destructive" });
+      }
     } else {
-      document.exitFullscreen();
+      if (document.exitFullscreen) {
+        await document.exitFullscreen();
+      }
     }
   };
 
@@ -247,10 +265,10 @@ export default function QuizPage() {
       </div>
     );
   }
-  
+
   if (!quizStarted && quizMetadata) {
     return (
-      <Dialog open={showStartQuizDialog} onOpenChange={(open) => { if(!open) router.push('/interview-prep')}}>
+      <Dialog open={showStartQuizDialog} onOpenChange={(open) => { if(!open && !quizStarted) router.push('/interview-prep')}}>
         <DialogContent>
           <DialogHeader>
             <DialogUITitle className="text-2xl">{quizMetadata.topic}</DialogUITitle>
@@ -271,7 +289,7 @@ export default function QuizPage() {
       </Dialog>
     );
   }
-  
+
   if (quizSubmitted && quizResults) {
     const categoryChartData = Object.entries(quizResults.categoryStats).map(([name, data]) => ({
         name,
@@ -292,21 +310,21 @@ export default function QuizPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4 text-sm">
-                <div className="p-3 bg-secondary/50 rounded-md">
+                <div className="p-3 bg-background rounded-md border">
                     <p className="font-medium text-muted-foreground">Time Taken</p>
                     <p className="text-xl font-semibold text-foreground">{formatTime(quizResults.timeTaken)} / {formatTime(quizResults.totalQuizTime)}</p>
                 </div>
-                 <div className="p-3 bg-secondary/50 rounded-md">
+                 <div className="p-3 bg-background rounded-md border">
                     <p className="font-medium text-muted-foreground">Answered / Marked</p>
                     <p className="text-xl font-semibold text-foreground">{quizResults.answeredCount}/{questions.length} Answered, {quizResults.markedForReviewCount} Marked</p>
                 </div>
             </div>
           </CardContent>
         </Card>
-        
+
         <Card className="w-full max-w-2xl p-6 shadow-xl">
             <CardHeader className="p-0 pb-4">
-                <CardTitle className="text-xl font-semibold flex items-center gap-2"><BarChart2 className="h-5 w-5 text-primary"/>Sectional Performance</CardTitle>
+                <CardTitle className="text-xl font-semibold flex items-center gap-2"><BarChart2Icon className="h-5 w-5 text-primary"/>Sectional Performance</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
                 {categoryChartData.length > 0 ? (
@@ -317,7 +335,7 @@ export default function QuizPage() {
                                     <CartesianGrid strokeDasharray="3 3" />
                                     <XAxis type="number" allowDecimals={false} />
                                     <YAxis type="category" dataKey="name" width={100} tick={{fontSize: 12}}/>
-                                    <RechartsTooltip contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }} formatter={(value, name) => [`${value}${name === 'Accuracy' ? '%' : ''}`, name]}/>
+                                    <RechartsTooltip contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }} formatter={(value, name) => [`${value}${name === 'Accuracy' ? '%' : ''}`, name as string]}/>
                                     <RechartsLegend wrapperStyle={{fontSize: "12px"}}/>
                                     <Bar dataKey="Correct" stackId="a" fill={COLORS[0]} radius={[0, 4, 4, 0]}/>
                                     <Bar dataKey="Incorrect" stackId="a" fill={COLORS[3]} radius={[0, 4, 4, 0]}/>
@@ -363,20 +381,26 @@ export default function QuizPage() {
 
   if (!currentQuestion) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p>Error: Question not found.</p>
-         <Button onClick={() => router.push('/interview-prep')} className="mt-6">Back to Prep</Button>
+      <div className="flex items-center justify-center min-h-screen p-4">
+        <Card className="w-full max-w-lg text-center p-8 shadow-lg">
+         <AlertCircle className="mx-auto h-12 w-12 text-destructive mb-4" />
+         <CardTitle className="text-2xl font-bold">Error: Question Not Found</CardTitle>
+         <CardDescription className="mt-2">Could not load the current question. Please try returning to the prep hub.</CardDescription>
+         <Button onClick={() => router.push('/interview-prep')} className="mt-6">Back to Prep Hub</Button>
+        </Card>
       </div>
     );
   }
-  
+
   const optionLetters = ['A', 'B', 'C', 'D', 'E', 'F'];
 
   return (
     <div ref={quizContainerRef} className={cn("flex flex-col min-h-screen", isFullScreen ? "bg-background" : "bg-slate-50 dark:bg-slate-900")}>
       <header className="bg-card shadow-sm p-3 sticky top-0 z-10 border-b">
         <div className="container mx-auto flex flex-wrap justify-between items-center gap-2">
-          <h1 className="text-lg font-semibold text-foreground truncate max-w-[calc(100%-180px)]" title={quizMetadata?.topic || 'Quiz'}>{quizMetadata?.topic || 'Quiz'}: {currentQuestion.category}</h1>
+          <h1 className="text-lg font-semibold text-foreground truncate max-w-[calc(100%-180px)]" title={quizMetadata?.topic || 'Quiz'}>
+            {quizMetadata?.topic || 'Quiz'}: {currentQuestion.category}
+          </h1>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" onClick={toggleFullScreen} title={isFullScreen ? "Exit Fullscreen" : "Enter Fullscreen"}>
               {isFullScreen ? <Minimize className="h-4 w-4"/> : <Maximize className="h-4 w-4"/>}
@@ -396,7 +420,7 @@ export default function QuizPage() {
                 <CardTitle className="text-base font-medium text-muted-foreground">Question {currentQuestionIndex + 1} of {questions.length}</CardTitle>
             </div>
             <Progress value={(currentQuestionIndex + 1) / questions.length * 100} className="w-full h-1.5 [&>div]:bg-primary" />
-            <CardDescription className="text-lg font-semibold text-foreground pt-3">{currentQuestion.question}</CardDescription>
+            <CardDescription className="text-lg font-semibold text-foreground pt-3">{currentQuestion.questionText}</CardDescription>
           </CardHeader>
           <CardContent>
             <RadioGroup
@@ -423,9 +447,9 @@ export default function QuizPage() {
             <ChevronLeft className="mr-1 h-4 w-4"/> Previous
           </Button>
           <div className="flex gap-2">
-            <Button 
+            <Button
                 variant={markedForReview.has(currentQuestion.id) ? "default" : "outline"}
-                onClick={toggleMarkForReview} 
+                onClick={toggleMarkForReview}
                 className={cn(markedForReview.has(currentQuestion.id) && "bg-yellow-400 hover:bg-yellow-500 border-yellow-500 text-black")}
             >
                 <Bookmark className="mr-1 h-4 w-4"/> Mark for Review
