@@ -1,5 +1,5 @@
 
-      "use client";
+"use client";
 
 import type React from 'react';
 import { useState, useEffect, useMemo, useRef } from 'react';
@@ -9,10 +9,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle as DialogUITitle, DialogDescription as DialogUIDescription, DialogFooter as DialogUIFooter, DialogClose } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Brain, Calendar, Users, ShieldAlert, Type, Languages, MessageSquare, CheckCircle, XCircle, Mic, ListChecks, Search, ChevronLeft, ChevronRight, Tag, Settings2, Puzzle, Lightbulb, Code, Eye, Edit3, Play, PlusCircle, Star as StarIcon, Send, Mail, ChevronDown, ListFilter, Bookmark as BookmarkIcon, Video } from "lucide-react";
+import { Brain, Calendar, Users, ShieldAlert, Type, Languages, MessageSquare, CheckCircle, XCircle, Mic, ListChecks, Search, ChevronLeft, ChevronRight, Tag, Settings2, Puzzle, Lightbulb, Code, Eye, Edit3, Play, PlusCircle, Star as StarIcon, Send, Mail, ChevronDown, ListFilter, Bookmark as BookmarkIcon, Video, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { sampleUserProfile, samplePracticeSessions, sampleInterviewQuestions, sampleCreatedQuizzes, sampleLiveInterviewSessions } from "@/lib/sample-data";
-import type { PracticeSession, InterviewQuestion, InterviewQuestionCategory, MockInterviewSession, DialogStep, PracticeSessionConfig, InterviewQuestionUserComment, InterviewQuestionDifficulty, PracticeFocusArea, BankQuestionSortOrder, BankQuestionFilterView, GenerateMockInterviewQuestionsInput, PracticeSessionStatus, LiveInterviewSession, LiveInterviewParticipant } from '@/types';
+import type { PracticeSession, InterviewQuestion, InterviewQuestionCategory, MockInterviewSession, DialogStep, PracticeSessionConfig, InterviewQuestionUserComment, InterviewQuestionDifficulty, PracticeFocusArea, BankQuestionSortOrder, BankQuestionFilterView, GenerateMockInterviewQuestionsInput, PracticeSessionStatus, LiveInterviewSession, LiveInterviewParticipant, MockInterviewQuestion as AIMockQuestionType } from '@/types';
 import { ALL_CATEGORIES, PREDEFINED_INTERVIEW_TOPICS, PRACTICE_FOCUS_AREAS, MOCK_INTERVIEW_STEPS, RESUME_BUILDER_STEPS } from '@/types';
 import { format, parseISO, isFuture as dateIsFuture, isPast, addMinutes, compareAsc, differenceInMinutes } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -33,13 +33,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 
 type InterviewType = "friends" | "experts" | "ai";
+const optionLetters = ['A', 'B', 'C', 'D', 'E', 'F'];
 
 const questionFormSchema = z.object({
   questionText: z.string().min(10, "Question text is too short.").max(500, "Question text is too long."),
   category: z.enum(ALL_CATEGORIES),
   isMCQ: z.boolean().default(false),
-  mcqOptions: z.array(z.string()).optional(),
-  correctAnswer: z.string().optional(),
+  mcqOptions: z.array(z.string().min(1, "Option text cannot be empty." ).max(255, "Option too long")).optional().refine(options => !watchQuestionForm("isMCQ") || (options && options.filter(opt => opt && opt.trim() !== "").length >= 2), {
+    message: "MCQ must have at least 2 valid options.",
+    path: ["mcqOptions"], 
+  }),
+  correctAnswer: z.string().optional().refine(value => !watchQuestionForm("isMCQ") || (value && value.trim() !== ""), {
+    message: "Correct answer is required for MCQ.",
+    path: ["correctAnswer"],
+  }),
   answerOrTip: z.string().min(10, "Answer/Tip is too short.").max(1000, "Answer/Tip is too long."),
   tags: z.string().optional(),
   difficulty: z.enum(['Easy', 'Medium', 'Hard']).optional(),
@@ -52,7 +59,6 @@ const commentFormSchema = z.object({
 type CommentFormData = z.infer<typeof commentFormSchema>;
 
 const friendEmailSchema = z.string().email("Please enter a valid email address.");
-const optionLetters = ['A', 'B', 'C', 'D', 'E', 'F'];
 
 
 export default function InterviewPracticeHubPage() {
@@ -103,7 +109,6 @@ export default function InterviewPracticeHubPage() {
   const [bankSortOrder, setBankSortOrder] = useState<BankQuestionSortOrder>('default');
   const [bankFilterView, setBankFilterView] = useState<BankQuestionFilterView>('all');
 
-
   const {
     control: questionFormControl,
     handleSubmit: handleQuestionFormSubmit,
@@ -116,6 +121,12 @@ export default function InterviewPracticeHubPage() {
     defaultValues: { questionText: '', isMCQ: false, mcqOptions: ["", "", "", ""], category: 'Common', difficulty: 'Medium', answerOrTip: '', tags: '' }
   });
   const isMCQSelected = watchQuestionForm("isMCQ");
+
+  // State for "Edit Questions" Dialog
+  const [isEditQuestionsDialogOpen, setIsEditQuestionsDialogOpen] = useState(false);
+  const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
+  const [currentEditingQuestions, setCurrentEditingQuestions] = useState<AIMockQuestionType[]>([]);
+  const [newQuestionIdsInput, setNewQuestionIdsInput] = useState('');
 
 
   const upcomingSessions = practiceSessions.filter(s => s.status === 'SCHEDULED' && dateIsFuture(parseISO(s.date)));
@@ -221,6 +232,7 @@ export default function InterviewPracticeHubPage() {
         const updatedPracticeSessions = [newSession, ...practiceSessions];
         setPracticeSessions(updatedPracticeSessions);
         
+        // Update global samplePracticeSessions for demo persistence
         const globalPracticeIndex = samplePracticeSessions.findIndex(s => s.id === newSession.id);
         if (globalPracticeIndex === -1) {
             samplePracticeSessions.unshift(newSession);
@@ -228,6 +240,7 @@ export default function InterviewPracticeHubPage() {
             samplePracticeSessions[globalPracticeIndex] = newSession;
         }
 
+        // Create corresponding LiveInterviewSession
         const newLiveSession: LiveInterviewSession = {
             id: newSessionId, 
             tenantId: currentUser.tenantId,
@@ -244,10 +257,11 @@ export default function InterviewPracticeHubPage() {
                     (q.tags && q.tags.some(tag => tag.toLowerCase() === topic.toLowerCase())) ||
                     (q.questionText && q.questionText.toLowerCase().includes(topic.toLowerCase()))
                 ))
-                .slice(0,5) 
+                .slice(0,5) // Take first 5 matching questions as an example
                 .map(q => ({id: q.id, questionText: q.questionText, category: q.category, difficulty: q.difficulty, baseScore: q.baseScore || 10 })),
         };
         
+        // Update global sampleLiveInterviewSessions for demo persistence
         const globalLiveIndex = sampleLiveInterviewSessions.findIndex(s => s.id === newLiveSession.id);
         if (globalLiveIndex === -1) {
             sampleLiveInterviewSessions.unshift(newLiveSession);
@@ -308,10 +322,12 @@ export default function InterviewPracticeHubPage() {
     } else if (bankFilterView === 'needsApproval' && currentUser.role === 'admin') {
       questionsToFilter = questionsToFilter.filter(q => q.approved === false);
     } else {
+      // Show approved questions, or questions created by the current user (even if not yet approved), or all if admin
       questionsToFilter = questionsToFilter.filter(q => q.approved !== false || q.createdBy === currentUser.id || currentUser.role === 'admin');
     }
 
-    questionsToFilter = questionsToFilter.filter(q => q.isMCQ && q.mcqOptions && q.correctAnswer);
+    // Ensure only MCQs are shown for quiz creation
+    questionsToFilter = questionsToFilter.filter(q => q.isMCQ && q.mcqOptions && q.mcqOptions.length >=2 && q.correctAnswer);
 
 
     if (selectedBankCategories.length > 0) {
@@ -330,6 +346,7 @@ export default function InterviewPracticeHubPage() {
       questionsToFilter.sort((a, b) => (b.rating || 0) - (a.rating || 0));
     } else if (bankSortOrder === 'mostRecent') {
       questionsToFilter.sort((a, b) => {
+        // Fallback to ID for sorting if createdAt is missing
         const dateA = a.createdAt ? parseISO(a.createdAt).getTime() : (parseInt(a.id.replace(/\D/g,'')) || 0);
         const dateB = b.createdAt ? parseISO(b.createdAt).getTime() : (parseInt(b.id.replace(/\D/g,'')) || 0);
         return dateB - dateA;
@@ -353,7 +370,7 @@ export default function InterviewPracticeHubPage() {
         tags: data.tags?.split(',').map(t => t.trim()).filter(t => t) || [],
         mcqOptions: data.isMCQ ? data.mcqOptions?.filter(opt => opt && opt.trim() !== "") : undefined,
         correctAnswer: data.isMCQ ? data.correctAnswer : undefined,
-        approved: currentUser.role === 'admin', 
+        approved: currentUser.role === 'admin', // Auto-approve if admin creates
         createdBy: currentUser.id,
         createdAt: new Date().toISOString(),
         bookmarkedBy: [],
@@ -364,17 +381,18 @@ export default function InterviewPracticeHubPage() {
 
     if (editingQuestion) {
       setAllBankQuestions(prev => prev.map(q => q.id === editingQuestion.id ? { ...editingQuestion, ...questionPayload, difficulty: data.difficulty || 'Medium' } : q));
+      // Also update in global sample for demo persistence
       const globalQIndex = sampleInterviewQuestions.findIndex(q => q.id === editingQuestion.id);
       if (globalQIndex !== -1) Object.assign(sampleInterviewQuestions[globalQIndex], { ...editingQuestion, ...questionPayload, difficulty: data.difficulty || 'Medium' });
       toast({ title: "Question Updated", description: "The interview question has been updated." });
     } else {
       const newQuestion: InterviewQuestion = {
         ...questionPayload,
-        id: `iq-${Date.now()}`, 
+        id: `iq-${Date.now()}`, // Simple unique ID
         difficulty: data.difficulty || 'Medium',
       };
       setAllBankQuestions(prev => [newQuestion, ...prev]);
-      sampleInterviewQuestions.unshift(newQuestion); 
+      sampleInterviewQuestions.unshift(newQuestion); // Add to global sample for demo persistence
       toast({ title: "Question Added", description: `New question added${currentUser.role !== 'admin' ? ' and awaiting approval' : ''}.` });
     }
     setIsQuestionFormOpen(false);
@@ -389,7 +407,8 @@ export default function InterviewPracticeHubPage() {
   };
 
   const openEditQuestionDialog = (question: InterviewQuestion) => {
-    if (currentUser.role !== 'admin' && question.createdBy !== currentUser.id) {
+    // Allow admin to edit any, or creator to edit their own (potentially if not yet approved / used)
+     if (currentUser.role !== 'admin' && question.createdBy !== currentUser.id) {
         toast({title: "Permission Denied", description: "You can only edit questions you created.", variant: "destructive"});
         return;
     }
@@ -397,9 +416,10 @@ export default function InterviewPracticeHubPage() {
     setQuestionFormValue('questionText', question.questionText);
     setQuestionFormValue('category', question.category);
     setQuestionFormValue('isMCQ', question.isMCQ || false);
+    // Ensure mcqOptions array has at least 4 elements for the form, padding with empty strings if necessary
     const options = question.mcqOptions || [];
     const paddedOptions = [...options, ...Array(Math.max(0, 4 - options.length)).fill("")];
-    setQuestionFormValue('mcqOptions', paddedOptions.slice(0,4));
+    setQuestionFormValue('mcqOptions', paddedOptions.slice(0,4)); // Take first 4
     setQuestionFormValue('correctAnswer', question.correctAnswer || "");
     setQuestionFormValue('answerOrTip', question.answerOrTip);
     setQuestionFormValue('tags', question.tags?.join(', ') || "");
@@ -433,6 +453,8 @@ export default function InterviewPracticeHubPage() {
       toast({ title: "No Questions Selected", description: "Please select questions to include in the quiz.", variant: "destructive" });
       return;
     }
+    // Navigate to a new page or open a dialog to name the quiz and save it
+    // For simplicity, we'll navigate to a conceptual edit page with question IDs
     const questionIds = Array.from(selectedQuestionsForQuiz).join(',');
     router.push(`/interview-prep/quiz/edit/new?questions=${questionIds}`);
   };
@@ -446,7 +468,7 @@ export default function InterviewPracticeHubPage() {
       case 'Analytical': return <Puzzle className="h-4 w-4 text-teal-500 flex-shrink-0"/>;
       case 'HR': return <Lightbulb className="h-4 w-4 text-pink-500 flex-shrink-0"/>;
       case 'Common': return <MessageSquare className="h-4 w-4 text-gray-500 flex-shrink-0"/>;
-      default: return <Puzzle className="h-4 w-4 text-gray-400 flex-shrink-0"/>;
+      default: return <Puzzle className="h-4 w-4 text-gray-400 flex-shrink-0"/>; // Default icon
     }
   };
 
@@ -461,19 +483,21 @@ export default function InterviewPracticeHubPage() {
     setAllBankQuestions(prevQs => prevQs.map(q =>
         q.id === questionId ? { ...q, userComments: [...(q.userComments || []), newComment] } : q
     ));
+    // Update global sample data
     const globalQIndex = sampleInterviewQuestions.findIndex(q => q.id === questionId);
     if (globalQIndex !== -1) {
       const currentComments = sampleInterviewQuestions[globalQIndex].userComments || [];
       sampleInterviewQuestions[globalQIndex].userComments = [...currentComments, newComment];
     }
     resetCommentForm();
-    setCommentingQuestionId(null);
+    setCommentingQuestionId(null); // Close comment input
     toast({ title: "Comment Added", description: "Your comment has been posted." });
   };
 
   const handleRateQuestion = (questionId: string, rating: number) => {
     setAllBankQuestions(prevQs => prevQs.map(q => {
         if (q.id === questionId) {
+            // Check if user already rated, if so, update; otherwise, add new rating
             const existingRatingIndex = q.userRatings?.findIndex(r => r.userId === currentUser.id);
             let newUserRatings = [...(q.userRatings || [])];
             if (existingRatingIndex !== undefined && existingRatingIndex !== -1) {
@@ -488,8 +512,9 @@ export default function InterviewPracticeHubPage() {
         return q;
     }));
 
+    // Update global sample data
     const globalQIndex = sampleInterviewQuestions.findIndex(q => q.id === questionId);
-    let isNowBookmarked = false;
+    let isNowBookmarked = false; // This variable seems out of place here, related to bookmarking
     if (globalQIndex !== -1) {
       const existingRatingIndex = sampleInterviewQuestions[globalQIndex].userRatings?.findIndex(r => r.userId === currentUser.id);
       let newUserRatings = [...(sampleInterviewQuestions[globalQIndex].userRatings || [])];
@@ -504,7 +529,7 @@ export default function InterviewPracticeHubPage() {
       sampleInterviewQuestions[globalQIndex].ratingsCount = newUserRatings.length;
     }
 
-    setRatingQuestionId(null);
+    setRatingQuestionId(null); // Close rating input
     setCurrentRating(0);
     toast({ title: "Rating Submitted", description: `You rated this question ${rating} stars.` });
   };
@@ -521,26 +546,75 @@ export default function InterviewPracticeHubPage() {
         }
         return q;
     }));
+    // Update global sample data
     const globalQIndex = sampleInterviewQuestions.findIndex(q => q.id === questionId);
     let isNowBookmarked = false;
     if (globalQIndex !== -1) {
       const currentBookmarks = sampleInterviewQuestions[globalQIndex].bookmarkedBy || [];
       const userHasBookmarked = currentBookmarks.includes(currentUser.id);
-      isNowBookmarked = !userHasBookmarked;
+      isNowBookmarked = !userHasBookmarked; // Determine if it's now bookmarked
       sampleInterviewQuestions[globalQIndex].bookmarkedBy = isNowBookmarked
           ? [...currentBookmarks, currentUser.id]
           : currentBookmarks.filter(id => id !== currentUser.id);
     }
     toast({ title: isNowBookmarked ? "Question Bookmarked" : "Bookmark Removed" });
   };
+  
+  // "Edit Questions" Dialog Logic
+  const openEditQuestionsDialog = (sessionId: string) => {
+    const liveSession = sampleLiveInterviewSessions.find(ls => ls.id === sessionId);
+    if (liveSession && liveSession.preSelectedQuestions) {
+        setEditingSessionId(sessionId);
+        setCurrentEditingQuestions([...liveSession.preSelectedQuestions]); // Create a new array copy
+        setNewQuestionIdsInput('');
+        setIsEditQuestionsDialogOpen(true);
+    } else {
+        toast({ title: "Error", description: "Could not find session or questions to edit.", variant: "destructive" });
+    }
+  };
+
+  const handleRemoveQuestionFromDialog = (questionIdToRemove: string) => {
+    setCurrentEditingQuestions(prev => prev.filter(q => q.id !== questionIdToRemove));
+  };
+
+  const handleSaveQuestionChanges = () => {
+    if (!editingSessionId) return;
+
+    const liveSessionIndex = sampleLiveInterviewSessions.findIndex(ls => ls.id === editingSessionId);
+    if (liveSessionIndex === -1) {
+        toast({ title: "Error", description: "Session not found for update.", variant: "destructive" });
+        return;
+    }
+
+    const newIds = newQuestionIdsInput.split(',').map(id => id.trim()).filter(id => id);
+    const newQuestionsFromBank = newIds
+        .map(id => allBankQuestions.find(q => q.id === id))
+        .filter(q => q !== undefined)
+        .map(q => ({ id: q!.id, questionText: q!.questionText, category: q!.category, difficulty: q!.difficulty, baseScore: q!.baseScore || 10 }));
+
+    const updatedQuestions = [...currentEditingQuestions, ...newQuestionsFromBank];
+    
+    // Update the global sampleLiveInterviewSessions
+    sampleLiveInterviewSessions[liveSessionIndex].preSelectedQuestions = updatedQuestions;
+
+    setIsEditQuestionsDialogOpen(false);
+    setEditingSessionId(null);
+    setCurrentEditingQuestions([]);
+    setNewQuestionIdsInput('');
+    toast({ title: "Questions Updated", description: `Pre-selected questions for session ${editingSessionId} have been updated.` });
+  };
 
 
   const renderSessionCard = (session: PracticeSession) => {
     const sessionDate = parseISO(session.date);
     const now = new Date();
+    // Allow joining if scheduled and future, or if started within the last hour
     const canJoin = session.status === 'SCHEDULED' && 
                     (dateIsFuture(sessionDate) || (isPast(sessionDate) && differenceInMinutes(now, addMinutes(sessionDate,60)) >= 0 && differenceInMinutes(now, sessionDate) <= 60 ));
     
+    const liveSession = sampleLiveInterviewSessions.find(ls => ls.id === session.id);
+    const isCurrentUserInterviewer = liveSession?.participants.find(p => p.userId === currentUser.id && p.role === 'interviewer');
+
     return (
     <Card key={session.id} className="shadow-md hover:shadow-lg transition-shadow">
       <CardHeader>
@@ -550,7 +624,7 @@ export default function InterviewPracticeHubPage() {
             "px-2 py-1 text-xs font-semibold rounded-full",
             session.status === 'SCHEDULED' ? "bg-green-100 text-green-700" :
             session.status === 'COMPLETED' ? "bg-blue-100 text-blue-700" :
-            "bg-red-100 text-red-700"
+            "bg-red-100 text-red-700" // CANCELLED
           )}>
             {session.status}
           </span>
@@ -562,7 +636,7 @@ export default function InterviewPracticeHubPage() {
         <p className="flex items-center gap-1"><Languages className="h-3.5 w-3.5"/>Language: {session.language}</p>
         {session.notes && <p className="text-xs text-muted-foreground pt-1 italic">Notes: {session.notes}</p>}
       </CardContent>
-      <CardFooter className="flex gap-2">
+      <CardFooter className="flex flex-wrap gap-2 justify-end">
         {canJoin && (
           <Button variant="default" size="sm" asChild className="bg-green-600 hover:bg-green-700 text-white">
             <Link href={`/live-interview/${session.id}`}>
@@ -575,6 +649,11 @@ export default function InterviewPracticeHubPage() {
         )}
         {session.status === 'SCHEDULED' && (
           <>
+            {(isCurrentUserInterviewer || currentUser.role === 'admin') && session.category === "Practice with Experts" && (
+                 <Button variant="outline" size="sm" onClick={() => openEditQuestionsDialog(session.id)}>
+                    <Edit3 className="mr-1 h-4 w-4" /> Edit Questions
+                 </Button>
+            )}
             <Button variant="destructive" size="sm" onClick={() => handleCancelPracticeSession(session.id)}>
               <XCircle className="mr-1 h-4 w-4"/>Cancel
             </Button>
@@ -702,7 +781,7 @@ export default function InterviewPracticeHubPage() {
                 <CardTitle className="text-xl font-semibold flex items-center gap-2"><ListFilter className="h-5 w-5 text-primary"/>Question Bank ({filteredBankQuestions.length})</CardTitle>
                 <CardDescription>Browse, filter, and select questions for your practice quizzes.</CardDescription>
             </div>
-            {(currentUser.role === 'admin' || currentUser.role === 'manager') && (
+            {(currentUser.role === 'admin' || currentUser.role === 'manager') && ( // Allow managers to add questions too
                  <Button onClick={openNewQuestionDialog}><PlusCircle className="mr-2 h-4 w-4" /> Add New Question</Button>
             )}
         </CardHeader>
@@ -758,7 +837,10 @@ export default function InterviewPracticeHubPage() {
                     paginatedBankQuestions.map(q => (
                     <Accordion key={q.id} type="single" collapsible className="border rounded-md mb-2 bg-card shadow-sm hover:shadow-md transition-shadow">
                         <AccordionItem value={`item-${q.id}`} className="border-b-0">
-                           <AccordionTrigger asChild={true} className="px-4 py-3 text-left text-sm font-medium group hover:bg-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 data-[state=open]:bg-secondary/50 data-[state=open]:rounded-b-none rounded-t-md">
+                           <AccordionTrigger
+                            asChild={true}
+                            className="px-4 py-3 text-left text-sm font-medium group hover:bg-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 data-[state=open]:bg-secondary/50 data-[state=open]:rounded-b-none rounded-t-md"
+                          >
                             <div className="flex items-start flex-1 gap-3 w-full">
                                 <div className="flex items-center pt-0.5">
                                     <Checkbox
@@ -801,7 +883,7 @@ export default function InterviewPracticeHubPage() {
                             </div>
                           </AccordionTrigger>
                         <AccordionContent className="px-4 pb-3 pt-1 space-y-3">
-                            <p className="text-xs font-semibold text-muted-foreground">Question ID: <span className="font-mono text-primary">{q.id}</span></p> {/* Display Question ID */}
+                            <p className="text-xs font-semibold text-muted-foreground">Question ID: <span className="font-mono text-primary">{q.id}</span></p>
                             <div className="bg-primary/5 p-3 rounded-md">
                                 <p className="text-xs font-semibold text-primary mb-1">Suggested Answer/Tip:</p>
                                 <p className="text-xs text-foreground whitespace-pre-line">{q.answerOrTip}</p>
@@ -837,7 +919,7 @@ export default function InterviewPracticeHubPage() {
                                  </Button>
                             )}
                              {q.approved === false && q.createdBy === currentUser.id && (
-                                <Badge variant="warning" className="mt-1">Awaiting Approval</Badge>
+                                <Badge variant="outline" className="mt-1 bg-yellow-100 text-yellow-700 border-yellow-300">Awaiting Approval</Badge>
                             )}
 
 
@@ -964,7 +1046,7 @@ export default function InterviewPracticeHubPage() {
                             <Input id="correctAnswer" {...field} placeholder="Paste the correct option text here"/>
                         )} />
                     </div>
-                     {questionFormErrors.mcqOptions && <p className="text-sm text-destructive mt-1">Please provide at least two valid options for MCQ.</p>}
+                     {questionFormErrors.mcqOptions && <p className="text-sm text-destructive mt-1">{questionFormErrors.mcqOptions.message}</p>}
                      {questionFormErrors.correctAnswer && <p className="text-sm text-destructive mt-1">{questionFormErrors.correctAnswer.message}</p>}
                 </div>
             )}
@@ -981,179 +1063,59 @@ export default function InterviewPracticeHubPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={isSetupDialogOpen} onOpenChange={setIsSetupDialogOpen}>
+      {/* Edit Questions Dialog */}
+      <Dialog open={isEditQuestionsDialogOpen} onOpenChange={(isOpen) => {
+        if (!isOpen) {
+            setEditingSessionId(null);
+            setCurrentEditingQuestions([]);
+            setNewQuestionIdsInput('');
+        }
+        setIsEditQuestionsDialogOpen(isOpen);
+      }}>
         <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogUITitle className="text-xl text-center font-semibold">
-              {dialogStep === 'selectType' && "Select Interview Type"}
-              {dialogStep === 'selectTopics' && `Select Practice Topics for ${practiceSessionConfig.type === 'ai' ? 'AI Interview' : 'Expert Session'}`}
-              {dialogStep === 'selectTimeSlot' && "Choose Date & Time"}
-              {dialogStep === 'aiSetupBasic' && "AI Interview: Basic Setup"}
-              {dialogStep === 'aiSetupAdvanced' && "AI Interview: Advanced Options"}
-              {dialogStep === 'aiSetupCategories' && "AI Interview: Question Categories"}
-            </DialogUITitle>
-            <DialogUIDescription className="text-center text-muted-foreground">
-              {dialogStep === 'selectType' && "How would you like to practice?"}
-              {dialogStep === 'selectTopics' && `For your ${practiceSessionConfig.type} interview.`}
-              {dialogStep === 'selectTimeSlot' && `For your ${practiceSessionConfig.type} interview on ${practiceSessionConfig.topics.join(', ')}.`}
-              {dialogStep === 'aiSetupBasic' && "Tell us about the role or topic for your AI mock interview."}
-              {dialogStep === 'aiSetupAdvanced' && "Configure the number of questions, difficulty, and timer."}
-              {dialogStep === 'aiSetupCategories' && "Optionally, select specific question categories for your AI interview."}
-            </DialogUIDescription>
-          </DialogHeader>
-
-          <div className="py-4 space-y-4 min-h-[200px]">
-            {dialogStep === 'selectType' && (
-              <>
-                <ToggleGroup
-                  type="single"
-                  value={practiceSessionConfig.type || ""}
-                  onValueChange={(value: PracticeSessionConfig['type']) => setPracticeSessionConfig(p => ({...p, type: value, friendEmail: '', topics: []}))}
-                  className="grid grid-cols-3 gap-2"
-                >
-                  {(['friends', 'experts', 'ai'] as InterviewType[]).map(type => (
-                    <ToggleGroupItem
-                      key={type} value={type} aria-label={`Practice with ${type}`}
-                      className="h-20 text-sm flex flex-col items-center justify-center data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:shadow-md"
-                    >
-                      {type === 'friends' && <Users className="mb-1 h-5 w-5"/>}
-                      {type === 'experts' && <Brain className="mb-1 h-5 w-5"/>}
-                      {type === 'ai' && <Mic className="mb-1 h-5 w-5"/>}
-                      Practice with {type.charAt(0).toUpperCase() + type.slice(1)}
-                    </ToggleGroupItem>
-                  ))}
-                </ToggleGroup>
-                {practiceSessionConfig.type === 'friends' && (
-                  <div className="pt-4 space-y-1">
-                    <Label htmlFor="friendEmailDialog" className="font-medium text-sm">Friend's Email</Label>
-                     <Input
-                        id="friendEmailDialog" type="email" placeholder="Enter friend's email"
-                        value={practiceSessionConfig.friendEmail || ''}
-                        onChange={(e) => {
-                           setPracticeSessionConfig(p => ({...p, friendEmail: e.target.value}));
-                           if (friendEmailError) setFriendEmailError(null);
-                        }}
-                        className={cn(friendEmailError && "border-destructive focus-visible:ring-destructive")}
-                     />
-                    {friendEmailError && <p className="text-xs text-destructive mt-1">{friendEmailError}</p>}
-                  </div>
-                )}
-              </>
-            )}
-
-            {dialogStep === 'selectTopics' && (practiceSessionConfig.type === 'experts' || practiceSessionConfig.type === 'ai') && (
-              <PracticeTopicSelection
-                availableTopics={PREDEFINED_INTERVIEW_TOPICS}
-                initialSelectedTopics={practiceSessionConfig.topics}
-                onSelectionChange={(selected) => setPracticeSessionConfig(p => ({...p, topics: selected}))}
-              />
-            )}
-
-            {dialogStep === 'aiSetupBasic' && practiceSessionConfig.type === 'ai' && (
-                <div className="space-y-4">
-                    <div>
-                        <Label htmlFor="aiTopicOrRole">Interview Topic / Role *</Label>
-                        <Input id="aiTopicOrRole" placeholder="e.g., Frontend Developer" value={practiceSessionConfig.aiTopicOrRole} onChange={e => setPracticeSessionConfig(p => ({...p, aiTopicOrRole: e.target.value}))} />
-                    </div>
-                    <div>
-                        <Label htmlFor="aiJobDescription">Job Description (Optional)</Label>
-                        <Textarea id="aiJobDescription" placeholder="Paste job description for tailored questions..." value={practiceSessionConfig.aiJobDescription} onChange={e => setPracticeSessionConfig(p => ({...p, aiJobDescription: e.target.value}))} rows={4}/>
+            <DialogHeader>
+                <DialogUITitle className="text-xl">Edit Pre-selected Questions</DialogUITitle>
+                <DialogUIDescription>
+                    Session: {sampleLiveInterviewSessions.find(ls => ls.id === editingSessionId)?.title || editingSessionId}
+                </DialogUIDescription>
+            </DialogHeader>
+            <ScrollArea className="max-h-[60vh] p-1">
+                <div className="py-4 space-y-4 pr-2">
+                    <Label className="font-medium">Current Questions ({currentEditingQuestions.length}):</Label>
+                    {currentEditingQuestions.length > 0 ? (
+                        <ul className="space-y-2">
+                            {currentEditingQuestions.map(q => (
+                                <li key={q.id} className="flex justify-between items-center p-2 border rounded-md text-sm bg-secondary/50">
+                                    <span className="truncate flex-1 mr-2" title={q.questionText}>{q.questionText}</span>
+                                    <Button variant="ghost" size="icon" onClick={() => handleRemoveQuestionFromDialog(q.id)} className="h-7 w-7 text-destructive hover:bg-destructive/10">
+                                        <Trash2 className="h-4 w-4"/>
+                                    </Button>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : <p className="text-xs text-muted-foreground text-center">No questions currently selected.</p>}
+                    
+                    <div className="pt-4 border-t">
+                        <Label htmlFor="newQuestionIdsInput" className="font-medium">Add New Question IDs (comma-separated):</Label>
+                        <Textarea
+                            id="newQuestionIdsInput"
+                            value={newQuestionIdsInput}
+                            onChange={(e) => setNewQuestionIdsInput(e.target.value)}
+                            placeholder="e.g., iq1, mcq5, coding3 (Copy IDs from Question Bank)"
+                            rows={3}
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Find IDs in the <Link href="/interview-prep#question-bank" className="text-primary hover:underline" onClick={()=>setIsEditQuestionsDialogOpen(false)}>Question Bank</Link> below.
+                        </p>
                     </div>
                 </div>
-            )}
-            {dialogStep === 'aiSetupAdvanced' && practiceSessionConfig.type === 'ai' && (
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <Label htmlFor="aiNumQuestions">Number of Questions (1-50)</Label>
-                        <Input id="aiNumQuestions" type="number" min="1" max="50" value={practiceSessionConfig.aiNumQuestions} onChange={e => setPracticeSessionConfig(p => ({...p, aiNumQuestions: parseInt(e.target.value,10) || 5}))} />
-                    </div>
-                    <div>
-                        <Label htmlFor="aiDifficulty">Difficulty</Label>
-                        <Select value={practiceSessionConfig.aiDifficulty} onValueChange={(value: 'easy'|'medium'|'hard') => setPracticeSessionConfig(p => ({...p, aiDifficulty: value}))}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="easy">Easy</SelectItem>
-                                <SelectItem value="medium">Medium</SelectItem>
-                                <SelectItem value="hard">Hard</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                     <div className="md:col-span-2">
-                        <Label htmlFor="aiTimerPerQuestion">Time per Question (seconds)</Label>
-                         <Select value={String(practiceSessionConfig.aiTimerPerQuestion || 0)} onValueChange={(value) => setPracticeSessionConfig(p => ({...p, aiTimerPerQuestion: Number(value)}))}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="0">No Timer</SelectItem>
-                                {[30,60,90,120,180,300].map(t => <SelectItem key={t} value={String(t)}>{t/60} min{t/60 > 1 ? 's' : ''} ({t}s)</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                 </div>
-            )}
-             {dialogStep === 'aiSetupCategories' && practiceSessionConfig.type === 'ai' && (
-                <PracticeTopicSelection
-                    availableTopics={ALL_CATEGORIES as any}
-                    initialSelectedTopics={practiceSessionConfig.aiQuestionCategories || []}
-                    onSelectionChange={(selected) => setPracticeSessionConfig(p => ({...p, aiQuestionCategories: selected as InterviewQuestionCategory[]}))}
-                />
-            )}
-
-
-            {dialogStep === 'selectTimeSlot' && practiceSessionConfig.type === 'experts' && (
-               <PracticeDateTimeSelector
-                initialSelectedDate={practiceSessionConfig.dateTime || undefined}
-                initialSelectedTime={practiceSessionConfig.dateTime ? format(practiceSessionConfig.dateTime, 'HH:mm') : undefined}
-                onDateTimeChange={(date, time) => {
-                    if (date && time) {
-                        const [hoursStr, minutesStr] = time.split(':');
-                        const hours = parseInt(hoursStr, 10);
-                        const minutes = parseInt(minutesStr, 10);
-                        const finalDateTime = new Date(date);
-                        finalDateTime.setHours(hours, minutes, 0, 0);
-                        setPracticeSessionConfig(p => ({ ...p, dateTime: finalDateTime }));
-                    } else {
-                         setPracticeSessionConfig(p => ({ ...p, dateTime: null }));
-                    }
-                }}
-              />
-            )}
-          </div>
-
-          <DialogUIFooter className="mt-2">
-            {dialogStep !== 'selectType' && (
-              <Button variant="outline" onClick={handleDialogPreviousStep}>Back</Button>
-            )}
-
-            {dialogStep === 'selectType' && (
-              <Button onClick={handleDialogNextStep} disabled={!practiceSessionConfig.type || (practiceSessionConfig.type === 'friends' && (!practiceSessionConfig.friendEmail || !!friendEmailError))}>
-                {practiceSessionConfig.type === 'friends' ? "Send Invitation" : "Next"}
-              </Button>
-            )}
-            {dialogStep === 'selectTopics' && (practiceSessionConfig.type === 'experts' || practiceSessionConfig.type === 'ai') && (
-                 <Button onClick={handleDialogNextStep} disabled={practiceSessionConfig.topics.length === 0}>Next</Button>
-            )}
-            {dialogStep === 'aiSetupBasic' && practiceSessionConfig.type === 'ai' && (
-                 <Button onClick={handleDialogNextStep} disabled={!practiceSessionConfig.aiTopicOrRole?.trim()}>Next</Button>
-            )}
-             {dialogStep === 'aiSetupAdvanced' && practiceSessionConfig.type === 'ai' && (
-                 <Button onClick={handleDialogNextStep}>Next</Button>
-            )}
-
-            {dialogStep === 'selectTimeSlot' && practiceSessionConfig.type === 'experts' && (
-              <Button onClick={handleFinalBookSession} disabled={!practiceSessionConfig.dateTime} className="bg-green-600 hover:bg-green-700 text-white">Book Expert Session</Button>
-            )}
-             {dialogStep === 'aiSetupCategories' && practiceSessionConfig.type === 'ai' && (
-                 <Button onClick={handleFinalBookSession} className="bg-green-600 hover:bg-green-700 text-white">Start AI Interview</Button>
-            )}
-
-            <DialogClose asChild><Button variant="ghost">Cancel</Button></DialogClose>
-          </DialogUIFooter>
+            </ScrollArea>
+            <DialogUIFooter className="mt-2">
+                <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
+                <Button onClick={handleSaveQuestionChanges} className="bg-primary hover:bg-primary/90">Save Question Changes</Button>
+            </DialogUIFooter>
         </DialogContent>
       </Dialog>
     </div>
   );
 }
-    
-    
-    
-    
