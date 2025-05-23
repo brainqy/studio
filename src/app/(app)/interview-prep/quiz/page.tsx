@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
-import { AlertCircle, Bookmark, Check, ChevronLeft, ChevronRight, Clock, Send, X, PieChart as PieChartIcon, BarChart2 as BarChart2Icon, ListChecks, Maximize, Minimize, Info } from 'lucide-react';
+import { AlertCircle, Bookmark, Check, ChevronLeft, ChevronRight, Clock, Send, X, PieChart as PieChartIcon, BarChart2 as BarChart2Icon, ListChecks, Maximize, Minimize, Info, CheckSquare as CheckSquareIcon } from 'lucide-react';
 import { sampleInterviewQuestions, sampleCreatedQuizzes, sampleUserProfile } from '@/lib/sample-data';
 import type { InterviewQuestion, MockInterviewSession } from '@/types';
 import { useToast } from '@/hooks/use-toast';
@@ -16,6 +16,8 @@ import { cn } from '@/lib/utils';
 import { ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell, Tooltip as RechartsTooltip, Legend as RechartsLegend, BarChart as RechartsBarChart, XAxis, YAxis, CartesianGrid, Bar } from 'recharts';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle as DialogUITitle, DialogDescription as DialogUIDescription, DialogFooter as DialogUIFooter, DialogClose } from '@/components/ui/dialog';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from "@/components/ui/sheet"; // Added Sheet components
+import { ScrollArea } from '@/components/ui/scroll-area'; // Added ScrollArea
 
 const QUIZ_TIME_SECONDS_PER_QUESTION = 90;
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8442FF', '#FF42A5', '#42FFA5'];
@@ -50,6 +52,7 @@ export default function QuizPage() {
   const [quizStarted, setQuizStarted] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const quizContainerRef = useRef<HTMLDivElement>(null);
+  const [isNavDrawerOpen, setIsNavDrawerOpen] = useState(false);
 
 
   useEffect(() => {
@@ -65,13 +68,12 @@ export default function QuizPage() {
             if (foundQuiz.questions) {
               loadedQuestions = foundQuiz.questions.map(qRef => {
                   const fullQuestion = sampleInterviewQuestions.find(sq => sq.id === qRef.id);
-                  // Ensure isMCQ, mcqOptions are present and not null for a valid quiz question
                   return (fullQuestion && fullQuestion.isMCQ && fullQuestion.mcqOptions) ? fullQuestion : null;
               }).filter(q => q !== null && q.approved !== false) as InterviewQuestion[];
             }
             if (loadedQuestions.length === 0) {
                 toast({title: "Invalid Quiz", description: `Quiz "${foundQuiz.topic}" has no usable MCQ questions.`, variant: "destructive", duration: 5000});
-                 setTimeout(() => router.push('/interview-prep'), 500); // Redirect after short delay
+                 setTimeout(() => router.push('/interview-prep'), 500); 
             }
         } else {
             toast({title: "Quiz Not Found", description: "The specified quiz ID could not be found.", variant: "destructive", duration: 5000});
@@ -86,7 +88,6 @@ export default function QuizPage() {
        }
        loadedMetadata = { topic: 'Custom Quiz', description: `Quiz with ${loadedQuestions.length} selected questions.` };
     } else {
-      // Fallback: If no specific quiz or questions, try to load some default MCQs
       loadedQuestions = sampleInterviewQuestions.filter(q => q.isMCQ && q.mcqOptions && q.mcqOptions.length > 0 && q.approved !== false).slice(0,10);
       if (loadedQuestions.length === 0) {
          toast({title: "No Default Questions", description: "No default MCQ questions available for a quiz.", variant: "destructive", duration: 5000});
@@ -96,7 +97,6 @@ export default function QuizPage() {
     }
 
     if (loadedQuestions.length === 0) {
-      // If after all checks, no questions are loaded, don't proceed. The toasts above should inform the user.
       return;
     }
 
@@ -115,7 +115,7 @@ export default function QuizPage() {
       setTimeLeft(prevTime => {
         if (prevTime <= 1) {
           clearInterval(timer);
-          handleSubmitQuiz(true);
+          handleSubmitQuiz(true); // Pass true for autoSubmitted
           return 0;
         }
         return prevTime - 1;
@@ -123,7 +123,7 @@ export default function QuizPage() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [quizStarted, quizSubmitted, questions, totalQuizTime]); // Added missing handleSubmitQuiz to dependencies
+  }, [quizStarted, quizSubmitted, questions, totalQuizTime]); // Added handleSubmitQuiz to dependencies
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -163,7 +163,6 @@ export default function QuizPage() {
     setMarkedForReview(newMarked);
     toast({ title: `Question ${newMarked.has(currentQuestion.id) ? 'Marked for Review' : 'Unmarked'}`, duration: 2000 });
   };
-
 
   const handleSubmitQuiz = (autoSubmitted = false) => {
     if (quizSubmitted) return;
@@ -248,6 +247,11 @@ export default function QuizPage() {
         await document.exitFullscreen();
       }
     }
+  };
+
+  const jumpToQuestion = (index: number) => {
+    setCurrentQuestionIndex(index);
+    setIsNavDrawerOpen(false); // Close drawer after navigation
   };
 
 
@@ -398,10 +402,44 @@ export default function QuizPage() {
     <div ref={quizContainerRef} className={cn("flex flex-col min-h-screen", isFullScreen ? "bg-background" : "bg-slate-50 dark:bg-slate-900")}>
       <header className="bg-card shadow-sm p-3 sticky top-0 z-10 border-b">
         <div className="container mx-auto flex flex-wrap justify-between items-center gap-2">
-          <h1 className="text-lg font-semibold text-foreground truncate max-w-[calc(100%-180px)]" title={quizMetadata?.topic || 'Quiz'}>
+          <h1 className="text-lg font-semibold text-foreground truncate max-w-[calc(100%-220px)]" title={quizMetadata?.topic || 'Quiz'}>
             {quizMetadata?.topic || 'Quiz'}: {currentQuestion.category}
           </h1>
           <div className="flex items-center gap-2">
+            <Sheet open={isNavDrawerOpen} onOpenChange={setIsNavDrawerOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" title="Question List">
+                  <ListChecks className="h-4 w-4" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="p-0 w-72 sm:w-80">
+                <SheetHeader className="p-4 border-b">
+                  <SheetTitle>Question List</SheetTitle>
+                </SheetHeader>
+                <ScrollArea className="h-[calc(100vh-4rem)] p-4">
+                  <ul className="space-y-1.5">
+                    {questions.map((q, index) => (
+                      <li key={q.id}>
+                        <Button
+                          variant="ghost"
+                          className={cn(
+                            "w-full justify-start text-left h-auto py-1.5 px-2 text-xs",
+                            index === currentQuestionIndex && "bg-primary/10 text-primary font-semibold"
+                          )}
+                          onClick={() => jumpToQuestion(index)}
+                        >
+                          <span className="mr-1.5">{index + 1}.</span>
+                          <span className="truncate flex-1">{q.questionText}</span>
+                          {userAnswers[q.id] && <CheckSquareIcon className="ml-1.5 h-3.5 w-3.5 text-green-500 flex-shrink-0" />}
+                          {markedForReview.has(q.id) && <Bookmark className="ml-1.5 h-3.5 w-3.5 text-yellow-500 flex-shrink-0" />}
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                </ScrollArea>
+                 <SheetClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary" />
+              </SheetContent>
+            </Sheet>
             <Button variant="ghost" size="icon" onClick={toggleFullScreen} title={isFullScreen ? "Exit Fullscreen" : "Enter Fullscreen"}>
               {isFullScreen ? <Minimize className="h-4 w-4"/> : <Maximize className="h-4 w-4"/>}
             </Button>
@@ -469,3 +507,5 @@ export default function QuizPage() {
     </div>
   );
 }
+
+    
