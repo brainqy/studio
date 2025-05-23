@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Brain, Calendar, Users, ShieldAlert, Type, Languages, MessageSquare, CheckCircle, XCircle, Mic, ListChecks, Search, ChevronLeft, ChevronRight, Tag, Settings2, Puzzle, Lightbulb, Code, Eye, Edit3, Play, PlusCircle, Star as StarIcon, Send, Mail, ChevronDown, ListFilter, Bookmark as BookmarkIcon, Video, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { sampleUserProfile, samplePracticeSessions, sampleInterviewQuestions, sampleCreatedQuizzes, sampleLiveInterviewSessions } from "@/lib/sample-data";
-import type { PracticeSession, InterviewQuestion, InterviewQuestionCategory, MockInterviewSession, DialogStep, PracticeSessionConfig, InterviewQuestionUserComment, InterviewQuestionDifficulty, PracticeFocusArea, BankQuestionSortOrder, BankQuestionFilterView, GenerateMockInterviewQuestionsInput, PracticeSessionStatus, LiveInterviewSession, LiveInterviewParticipant, MockInterviewQuestion as AIMockQuestionType } from '@/types';
+import type { PracticeSession, InterviewQuestion, InterviewQuestionCategory, MockInterviewSession, DialogStep, PracticeSessionConfig, InterviewQuestionUserComment, InterviewQuestionDifficulty, PracticeFocusArea, BankQuestionSortOrder, BankQuestionFilterView, GenerateMockInterviewQuestionsInput, PracticeSessionStatus, LiveInterviewSession, LiveInterviewParticipant, AIMockQuestionType } from '@/types';
 import { ALL_CATEGORIES, PREDEFINED_INTERVIEW_TOPICS, PRACTICE_FOCUS_AREAS, MOCK_INTERVIEW_STEPS, RESUME_BUILDER_STEPS } from '@/types';
 import { format, parseISO, isFuture as dateIsFuture, isPast, addMinutes, compareAsc, differenceInMinutes } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -101,12 +101,12 @@ export default function InterviewPracticeHubPage() {
   const [bankFilterView, setBankFilterView] = useState<BankQuestionFilterView>('all');
 
   const {
-    control: questionFormControl,
+    control: questionFormControl, // This is the 'control' object for the question form
     handleSubmit: handleQuestionFormSubmit,
     reset: resetQuestionForm,
     setValue: setQuestionFormValue,
     watch: watchQuestionForm,
-    formState: { errors: questionFormErrors } 
+    formState: { errors: questionFormErrors } // Correctly destructure errors here
   } = useForm<QuestionFormData>({
     resolver: zodResolver(questionFormSchema.refine(data => {
       if (data.isMCQ) {
@@ -148,8 +148,16 @@ export default function InterviewPracticeHubPage() {
 
   const handleStartPracticeSetup = () => {
     setPracticeSessionConfig({
-      type: null, topics: [], dateTime: null, friendEmail: '',
-      aiTopicOrRole: '', aiJobDescription: '', aiNumQuestions: 5, aiDifficulty: 'medium', aiTimerPerQuestion: 0, aiQuestionCategories: []
+      type: null,
+      topics: [],
+      dateTime: null,
+      friendEmail: '',
+      aiTopicOrRole: '',
+      aiJobDescription: '',
+      aiNumQuestions: 5,
+      aiDifficulty: 'medium',
+      aiTimerPerQuestion: 0,
+      aiQuestionCategories: [],
     });
     setDialogStep('selectType');
     setFriendEmailError(null);
@@ -178,8 +186,7 @@ export default function InterviewPracticeHubPage() {
         }
         setFriendEmailError(null);
         toast({ title: "Invitation Sent (Mock)", description: `Invitation sent to ${practiceSessionConfig.friendEmail}.` });
-        setIsSetupDialogOpen(false); // Close dialog after sending friend invite
-        // No need to reset config here, useEffect will handle it.
+        setIsSetupDialogOpen(false); 
         return;
       }
       setDialogStep('selectTopics');
@@ -245,19 +252,16 @@ export default function InterviewPracticeHubPage() {
         };
         
         setPracticeSessions(prev => [newSession, ...prev]);
-        samplePracticeSessions.unshift(newSession); // Update global sample
+        samplePracticeSessions.unshift(newSession);
 
-        // Create corresponding LiveInterviewSession
-        const expertInterviewer = sampleUserProfile.id === 'managerUser1' ? sampleUserProfile : sampleUserProfile; // For demo, assign self or other admin/manager
-        const candidate = sampleUserProfile.id !== 'managerUser1' ? sampleUserProfile : sampleUserProfile; // Or a placeholder candidate if expert is current user
-
+        const expertInterviewer = samplePlatformUsers.find(u => u.role === 'admin' || u.role === 'manager') || currentUser; // Find an admin/manager or default to current user
         const newLiveSession: LiveInterviewSession = {
             id: newSessionId, 
             tenantId: currentUser.tenantId,
             title: `Expert Mock Interview: ${newSession.type}`,
             participants: [
                 { userId: expertInterviewer.id, name: expertInterviewer.name, role: 'interviewer', profilePictureUrl: expertInterviewer.profilePictureUrl },
-                { userId: candidate.id, name: candidate.name, role: 'candidate', profilePictureUrl: candidate.profilePictureUrl }
+                { userId: currentUser.id, name: currentUser.name, role: 'candidate', profilePictureUrl: currentUser.profilePictureUrl }
             ],
             scheduledTime: newSession.date,
             status: 'Scheduled',
@@ -270,7 +274,7 @@ export default function InterviewPracticeHubPage() {
                 .slice(0,5) 
                 .map(q => ({id: q.id, questionText: q.questionText, category: q.category, difficulty: q.difficulty, baseScore: q.baseScore || 10 })),
         };
-        sampleLiveInterviewSessions.unshift(newLiveSession); // Update global sample
+        sampleLiveInterviewSessions.unshift(newLiveSession);
 
         toast({ title: "Expert Session Booked (Mock)", description: `Session for ${newSession.type} on ${format(practiceSessionConfig.dateTime, 'PPp')} scheduled.` });
 
@@ -299,7 +303,9 @@ export default function InterviewPracticeHubPage() {
 
         router.push(`/ai-mock-interview?${queryParams.toString()}`);
     }
-    setIsSetupDialogOpen(false); // This will trigger the useEffect for cleanup
+    setIsSetupDialogOpen(false); 
+    setPracticeSessionConfig({ type: null, topics: [], dateTime: null, friendEmail: '', aiTopicOrRole: '', aiJobDescription: '', aiNumQuestions: 5, aiDifficulty: 'medium', aiTimerPerQuestion: 0, aiQuestionCategories: [] });
+    setDialogStep('selectType');
   };
 
 
@@ -324,16 +330,14 @@ export default function InterviewPracticeHubPage() {
     } else if (bankFilterView === 'needsApproval' && currentUser.role === 'admin') {
       questionsToFilter = questionsToFilter.filter(q => q.approved === false);
     } else {
-      // Regular users see approved or their own unapproved questions. Admins see all.
       questionsToFilter = questionsToFilter.filter(q => q.approved === true || q.createdBy === currentUser.id || currentUser.role === 'admin');
     }
 
-    // Filter for MCQs with options and correct answers, or non-MCQs
     questionsToFilter = questionsToFilter.filter(q => {
         if (q.isMCQ) {
             return q.mcqOptions && q.mcqOptions.length >= 2 && q.correctAnswer && q.mcqOptions.some(opt => opt.trim() !== '');
         }
-        return true; // Non-MCQs are always valid in terms of structure here
+        return true; 
     });
 
     if (selectedBankCategories.length > 0) {
@@ -357,8 +361,6 @@ export default function InterviewPracticeHubPage() {
         return dateB - dateA;
       });
     }
-
-
     return questionsToFilter;
   }, [allBankQuestions, selectedBankCategories, bankSearchTerm, currentUser.role, bankSortOrder, bankFilterView, currentUser.id]);
 
@@ -386,7 +388,7 @@ export default function InterviewPracticeHubPage() {
     };
 
     if (editingQuestion) {
-      setAllBankQuestions(prev => prev.map(q => q.id === editingQuestion.id ? { ...editingQuestion, ...questionPayload, difficulty: data.difficulty || 'Medium', id: String(editingQuestion.id) } : q)); // Ensure ID is string
+      setAllBankQuestions(prev => prev.map(q => q.id === editingQuestion.id ? { ...editingQuestion, ...questionPayload, difficulty: data.difficulty || 'Medium', id: String(editingQuestion.id) } : q)); 
       const globalQIndex = sampleInterviewQuestions.findIndex(q => q.id === editingQuestion.id);
       if (globalQIndex !== -1) Object.assign(sampleInterviewQuestions[globalQIndex], { ...editingQuestion, ...questionPayload, difficulty: data.difficulty || 'Medium', id: String(editingQuestion.id) });
       toast({ title: "Question Updated", description: "The interview question has been updated." });
@@ -512,7 +514,6 @@ export default function InterviewPracticeHubPage() {
     }));
 
     const globalQIndex = sampleInterviewQuestions.findIndex(q => q.id === questionId);
-    // let isNowBookmarked = false; // This variable seems unused here
     if (globalQIndex !== -1) {
       const existingRatingIndex = sampleInterviewQuestions[globalQIndex].userRatings?.findIndex(r => r.userId === currentUser.id);
       let newUserRatings = [...(sampleInterviewQuestions[globalQIndex].userRatings || [])];
@@ -545,7 +546,7 @@ export default function InterviewPracticeHubPage() {
         return q;
     }));
     const globalQIndex = sampleInterviewQuestions.findIndex(q => q.id === questionId);
-    let isNowBookmarked = false;
+    let isNowBookmarked = false; 
     if (globalQIndex !== -1) {
       const currentBookmarks = sampleInterviewQuestions[globalQIndex].bookmarkedBy || [];
       const userHasBookmarked = currentBookmarks.includes(currentUser.id);
@@ -593,14 +594,12 @@ export default function InterviewPracticeHubPage() {
     sampleLiveInterviewSessions[liveSessionIndex].preSelectedQuestions = updatedQuestions;
 
     setIsEditQuestionsDialogOpen(false);
-    // No need to reset here as useEffect on isEditQuestionsDialogOpen will handle it
   };
 
 
   const renderSessionCard = (session: PracticeSession) => {
     const sessionDate = parseISO(session.date);
     const now = new Date();
-    // Allow joining if scheduled and date is future, OR if date is past but within last 60 mins
     const canJoin = session.status === 'SCHEDULED' && 
                     (dateIsFuture(sessionDate) || (isPast(sessionDate) && differenceInMinutes(now, addMinutes(sessionDate,60)) >= 0 && differenceInMinutes(now, sessionDate) <= 60 ));
     
@@ -837,8 +836,8 @@ export default function InterviewPracticeHubPage() {
                                 <div className="flex items-center pt-0.5">
                                     <Checkbox
                                         id={`select-q-${q.id}`}
-                                        checked={selectedQuestionsForQuiz.has(String(q.id))}
-                                        onCheckedChange={() => handleToggleQuestionForQuiz(String(q.id))}
+                                        checked={selectedQuestionsForQuiz.has(q.id)}
+                                        onCheckedChange={() => handleToggleQuestionForQuiz(q.id)}
                                         aria-label={`Select question: ${q.questionText}`}
                                         onClick={(e) => e.stopPropagation()}
                                     />
@@ -857,7 +856,7 @@ export default function InterviewPracticeHubPage() {
                                 </div>
                               </div>
                               <div className="flex items-center gap-1 ml-2 flex-shrink-0">
-                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); handleToggleBookmarkQuestion(String(q.id)); }}>
+                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); handleToggleBookmarkQuestion(q.id); }}>
                                   <BookmarkIcon className={cn("h-4 w-4", q.bookmarkedBy?.includes(currentUser.id) && "fill-yellow-400 text-yellow-500")}/>
                                 </Button>
                                 {(q.createdBy === currentUser.id || currentUser.role === 'admin') && (
@@ -866,7 +865,7 @@ export default function InterviewPracticeHubPage() {
                                   </Button>
                                 )}
                                 {currentUser.role === 'admin' && (
-                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:bg-destructive/10" onClick={(e) => { e.stopPropagation(); handleDeleteQuestion(String(q.id));}}>
+                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:bg-destructive/10" onClick={(e) => { e.stopPropagation(); handleDeleteQuestion(q.id);}}>
                                      <XCircle className="h-4 w-4"/>
                                   </Button>
                                 )}
@@ -894,9 +893,9 @@ export default function InterviewPracticeHubPage() {
                                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                                     <StarIcon className={cn("h-4 w-4", (q.rating || 0) > 0 ? "text-yellow-400 fill-yellow-400" : "text-gray-300")} />
                                     <span>{q.rating?.toFixed(1) || 'N/A'} ({q.ratingsCount || 0} ratings)</span>
-                                    <Button variant="link" size="sm" className="text-xs p-0 h-auto ml-1" onClick={() => { setRatingQuestionId(String(q.id)); setCurrentRating(q.userRatings?.find(r => r.userId === currentUser.id)?.rating || 0); }}>Rate</Button>
+                                    <Button variant="link" size="sm" className="text-xs p-0 h-auto ml-1" onClick={() => { setRatingQuestionId(q.id); setCurrentRating(q.userRatings?.find(r => r.userId === currentUser.id)?.rating || 0); }}>Rate</Button>
                                 </div>
-                                <Button variant="link" size="sm" className="text-xs p-0 h-auto" onClick={() => setCommentingQuestionId(String(q.id) === commentingQuestionId ? null : String(q.id))}>
+                                <Button variant="link" size="sm" className="text-xs p-0 h-auto" onClick={() => setCommentingQuestionId(q.id === commentingQuestionId ? null : q.id)}>
                                    Comments ({q.userComments?.length || 0})
                                 </Button>
                             </div>
@@ -915,10 +914,10 @@ export default function InterviewPracticeHubPage() {
                             )}
 
 
-                            {commentingQuestionId === String(q.id) && (
+                            {commentingQuestionId === q.id && (
                                 <div className="mt-2 space-y-2">
                                     <Label htmlFor={`comment-${q.id}`} className="text-xs">Your Comment:</Label>
-                                    <form onSubmit={handleCommentFormSubmit((data) => onCommentSubmit(data, String(q.id)))} className="flex gap-1">
+                                    <form onSubmit={handleCommentFormSubmit((data) => onCommentSubmit(data, q.id))} className="flex gap-1">
                                          <Controller
                                             name="commentText"
                                             control={commentFormControl}
@@ -941,7 +940,7 @@ export default function InterviewPracticeHubPage() {
                                     )}
                                 </div>
                             )}
-                            {ratingQuestionId === String(q.id) && (
+                            {ratingQuestionId === q.id && (
                                 <div className="mt-2 flex items-center gap-1">
                                     <Label className="text-xs">Rate (1-5):</Label>
                                     {[1,2,3,4,5].map(star => (
@@ -949,7 +948,7 @@ export default function InterviewPracticeHubPage() {
                                             <StarIcon className="fill-current"/>
                                         </Button>
                                     ))}
-                                    <Button size="xs" onClick={() => handleRateQuestion(String(q.id), currentRating)} disabled={currentRating === 0}>Submit Rating</Button>
+                                    <Button size="xs" onClick={() => handleRateQuestion(q.id, currentRating)} disabled={currentRating === 0}>Submit Rating</Button>
                                 </div>
                             )}
 
@@ -989,8 +988,8 @@ export default function InterviewPracticeHubPage() {
           </DialogHeader>
           <form onSubmit={handleQuestionFormSubmit(onQuestionFormSubmit)} className="space-y-4 py-4 max-h-[80vh] overflow-y-auto pr-2">
             <div>
-              <Label htmlFor="question-text">Question Text *</Label>
-              <Controller name="questionText" control={questionFormControl} render={({ field }) => <Textarea id="question-text" {...field} rows={3} />} />
+              <Label htmlFor="question-text-form">Question Text *</Label> {/* Changed id to avoid conflict */}
+              <Controller name="questionText" control={questionFormControl} render={({ field }) => <Textarea id="question-text-form" {...field} rows={3} />} />
               {questionFormErrors.questionText && <p className="text-sm text-destructive mt-1">{questionFormErrors.questionText.message}</p>}
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1056,7 +1055,7 @@ export default function InterviewPracticeHubPage() {
       </Dialog>
 
       <Dialog open={isEditQuestionsDialogOpen} onOpenChange={(isOpen) => {
-        if (!isOpen) { // Reset when dialog closes
+        if (!isOpen) { 
             setEditingSessionId(null);
             setCurrentEditingQuestions([]);
             setNewQuestionIdsInput('');
@@ -1110,3 +1109,5 @@ export default function InterviewPracticeHubPage() {
     </div>
   );
 }
+
+    
