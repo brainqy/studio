@@ -129,6 +129,19 @@ export default function InterviewPracticeHubPage() {
   const [currentEditingQuestions, setCurrentEditingQuestions] = useState<AIMockQuestionType[]>([]);
   const [newQuestionIdsInput, setNewQuestionIdsInput] = useState('');
 
+  useEffect(() => {
+    // This effect handles resetting the dialog state when it's closed.
+    if (!isSetupDialogOpen) {
+      setDialogStep('selectType');
+      setPracticeSessionConfig({
+        type: null, topics: [], dateTime: null, friendEmail: '',
+        aiTopicOrRole: '', aiJobDescription: '', aiNumQuestions: 5, aiDifficulty: 'medium',
+        aiTimerPerQuestion: 0, aiQuestionCategories: []
+      });
+      setFriendEmailError(null);
+    }
+  }, [isSetupDialogOpen]);
+
   const upcomingSessions = practiceSessions.filter(s => s.status === 'SCHEDULED' && dateIsFuture(parseISO(s.date)));
   const allUserSessions = practiceSessions; 
   const cancelledSessions = practiceSessions.filter(s => s.status === 'CANCELLED');
@@ -165,9 +178,8 @@ export default function InterviewPracticeHubPage() {
         }
         setFriendEmailError(null);
         toast({ title: "Invitation Sent (Mock)", description: `Invitation sent to ${practiceSessionConfig.friendEmail}.` });
-        setIsSetupDialogOpen(false);
-        setPracticeSessionConfig({type: null, topics: [], dateTime: null, friendEmail: '', aiTopicOrRole: '', aiJobDescription: '', aiNumQuestions: 5, aiDifficulty: 'medium', aiTimerPerQuestion: 0, aiQuestionCategories: []});
-        setDialogStep('selectType');
+        setIsSetupDialogOpen(false); // Close dialog after sending friend invite
+        // No need to reset config here, useEffect will handle it.
         return;
       }
       setDialogStep('selectTopics');
@@ -233,15 +245,19 @@ export default function InterviewPracticeHubPage() {
         };
         
         setPracticeSessions(prev => [newSession, ...prev]);
-        samplePracticeSessions.unshift(newSession);
+        samplePracticeSessions.unshift(newSession); // Update global sample
+
+        // Create corresponding LiveInterviewSession
+        const expertInterviewer = sampleUserProfile.id === 'managerUser1' ? sampleUserProfile : sampleUserProfile; // For demo, assign self or other admin/manager
+        const candidate = sampleUserProfile.id !== 'managerUser1' ? sampleUserProfile : sampleUserProfile; // Or a placeholder candidate if expert is current user
 
         const newLiveSession: LiveInterviewSession = {
             id: newSessionId, 
             tenantId: currentUser.tenantId,
             title: `Expert Mock Interview: ${newSession.type}`,
             participants: [
-                { userId: currentUser.id, name: currentUser.name, role: 'candidate', profilePictureUrl: currentUser.profilePictureUrl },
-                { userId: `expert-${Date.now()}`, name: 'Expert Interviewer', role: 'interviewer', profilePictureUrl: `https://avatar.vercel.sh/expert-${Date.now()}.png` } 
+                { userId: expertInterviewer.id, name: expertInterviewer.name, role: 'interviewer', profilePictureUrl: expertInterviewer.profilePictureUrl },
+                { userId: candidate.id, name: candidate.name, role: 'candidate', profilePictureUrl: candidate.profilePictureUrl }
             ],
             scheduledTime: newSession.date,
             status: 'Scheduled',
@@ -254,8 +270,7 @@ export default function InterviewPracticeHubPage() {
                 .slice(0,5) 
                 .map(q => ({id: q.id, questionText: q.questionText, category: q.category, difficulty: q.difficulty, baseScore: q.baseScore || 10 })),
         };
-        
-        sampleLiveInterviewSessions.unshift(newLiveSession);
+        sampleLiveInterviewSessions.unshift(newLiveSession); // Update global sample
 
         toast({ title: "Expert Session Booked (Mock)", description: `Session for ${newSession.type} on ${format(practiceSessionConfig.dateTime, 'PPp')} scheduled.` });
 
@@ -284,9 +299,7 @@ export default function InterviewPracticeHubPage() {
 
         router.push(`/ai-mock-interview?${queryParams.toString()}`);
     }
-    setIsSetupDialogOpen(false);
-    setPracticeSessionConfig({type: null, topics: [], dateTime: null, friendEmail: '', aiTopicOrRole: '', aiJobDescription: '', aiNumQuestions: 5, aiDifficulty: 'medium', aiTimerPerQuestion: 0, aiQuestionCategories: []});
-    setDialogStep('selectType');
+    setIsSetupDialogOpen(false); // This will trigger the useEffect for cleanup
   };
 
 
@@ -311,11 +324,17 @@ export default function InterviewPracticeHubPage() {
     } else if (bankFilterView === 'needsApproval' && currentUser.role === 'admin') {
       questionsToFilter = questionsToFilter.filter(q => q.approved === false);
     } else {
-      questionsToFilter = questionsToFilter.filter(q => q.approved !== false || q.createdBy === currentUser.id || currentUser.role === 'admin');
+      // Regular users see approved or their own unapproved questions. Admins see all.
+      questionsToFilter = questionsToFilter.filter(q => q.approved === true || q.createdBy === currentUser.id || currentUser.role === 'admin');
     }
 
-    questionsToFilter = questionsToFilter.filter(q => q.isMCQ && q.mcqOptions && q.mcqOptions.length >=2 && q.correctAnswer);
-
+    // Filter for MCQs with options and correct answers, or non-MCQs
+    questionsToFilter = questionsToFilter.filter(q => {
+        if (q.isMCQ) {
+            return q.mcqOptions && q.mcqOptions.length >= 2 && q.correctAnswer && q.mcqOptions.some(opt => opt.trim() !== '');
+        }
+        return true; // Non-MCQs are always valid in terms of structure here
+    });
 
     if (selectedBankCategories.length > 0) {
       questionsToFilter = questionsToFilter.filter(q => selectedBankCategories.includes(q.category));
@@ -333,8 +352,8 @@ export default function InterviewPracticeHubPage() {
       questionsToFilter.sort((a, b) => (b.rating || 0) - (a.rating || 0));
     } else if (bankSortOrder === 'mostRecent') {
       questionsToFilter.sort((a, b) => {
-        const dateA = a.createdAt ? parseISO(a.createdAt).getTime() : (parseInt(a.id.replace(/\D/g,'')) || 0);
-        const dateB = b.createdAt ? parseISO(b.createdAt).getTime() : (parseInt(b.id.replace(/\D/g,'')) || 0);
+        const dateA = a.createdAt ? parseISO(a.createdAt).getTime() : (parseInt(String(a.id).replace(/\D/g,'')) || 0);
+        const dateB = b.createdAt ? parseISO(b.createdAt).getTime() : (parseInt(String(b.id).replace(/\D/g,'')) || 0);
         return dateB - dateA;
       });
     }
@@ -354,21 +373,22 @@ export default function InterviewPracticeHubPage() {
     const questionPayload = {
         ...data,
         tags: data.tags?.split(',').map(t => t.trim()).filter(t => t) || [],
-        mcqOptions: data.isMCQ ? data.mcqOptions?.filter(opt => opt && opt.trim() !== "") : undefined,
-        correctAnswer: data.isMCQ ? data.correctAnswer : undefined,
+        mcqOptions: data.isMCQ ? data.mcqOptions?.map(opt => opt.trim()).filter(opt => opt) : undefined,
+        correctAnswer: data.isMCQ ? data.correctAnswer?.trim() : undefined,
         approved: currentUser.role === 'admin', 
         createdBy: currentUser.id,
         createdAt: new Date().toISOString(),
         bookmarkedBy: [],
         userComments: [],
+        userRatings: [],
         rating: 0,
         ratingsCount: 0,
     };
 
     if (editingQuestion) {
-      setAllBankQuestions(prev => prev.map(q => q.id === editingQuestion.id ? { ...editingQuestion, ...questionPayload, difficulty: data.difficulty || 'Medium' } : q));
+      setAllBankQuestions(prev => prev.map(q => q.id === editingQuestion.id ? { ...editingQuestion, ...questionPayload, difficulty: data.difficulty || 'Medium', id: String(editingQuestion.id) } : q)); // Ensure ID is string
       const globalQIndex = sampleInterviewQuestions.findIndex(q => q.id === editingQuestion.id);
-      if (globalQIndex !== -1) Object.assign(sampleInterviewQuestions[globalQIndex], { ...editingQuestion, ...questionPayload, difficulty: data.difficulty || 'Medium' });
+      if (globalQIndex !== -1) Object.assign(sampleInterviewQuestions[globalQIndex], { ...editingQuestion, ...questionPayload, difficulty: data.difficulty || 'Medium', id: String(editingQuestion.id) });
       toast({ title: "Question Updated", description: "The interview question has been updated." });
     } else {
       const newQuestion: InterviewQuestion = {
@@ -492,7 +512,7 @@ export default function InterviewPracticeHubPage() {
     }));
 
     const globalQIndex = sampleInterviewQuestions.findIndex(q => q.id === questionId);
-    let isNowBookmarked = false; 
+    // let isNowBookmarked = false; // This variable seems unused here
     if (globalQIndex !== -1) {
       const existingRatingIndex = sampleInterviewQuestions[globalQIndex].userRatings?.findIndex(r => r.userId === currentUser.id);
       let newUserRatings = [...(sampleInterviewQuestions[globalQIndex].userRatings || [])];
@@ -573,16 +593,14 @@ export default function InterviewPracticeHubPage() {
     sampleLiveInterviewSessions[liveSessionIndex].preSelectedQuestions = updatedQuestions;
 
     setIsEditQuestionsDialogOpen(false);
-    setEditingSessionId(null);
-    setCurrentEditingQuestions([]);
-    setNewQuestionIdsInput('');
-    toast({ title: "Questions Updated", description: `Pre-selected questions for session ${editingSessionId} have been updated.` });
+    // No need to reset here as useEffect on isEditQuestionsDialogOpen will handle it
   };
 
 
   const renderSessionCard = (session: PracticeSession) => {
     const sessionDate = parseISO(session.date);
     const now = new Date();
+    // Allow joining if scheduled and date is future, OR if date is past but within last 60 mins
     const canJoin = session.status === 'SCHEDULED' && 
                     (dateIsFuture(sessionDate) || (isPast(sessionDate) && differenceInMinutes(now, addMinutes(sessionDate,60)) >= 0 && differenceInMinutes(now, sessionDate) <= 60 ));
     
@@ -750,13 +768,13 @@ export default function InterviewPracticeHubPage() {
 
 
       <Card className="shadow-lg" id="question-bank">
-        <CardHeader className="flex flex-row justify-between items-center">
+        <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
             <div>
                 <CardTitle className="text-xl font-semibold flex items-center gap-2"><ListFilter className="h-5 w-5 text-primary"/>Question Bank ({filteredBankQuestions.length})</CardTitle>
                 <CardDescription>Browse, filter, and select questions for your practice quizzes.</CardDescription>
             </div>
             {(currentUser.role === 'admin' || currentUser.role === 'manager') && ( 
-                 <Button onClick={openNewQuestionDialog}><PlusCircle className="mr-2 h-4 w-4" /> Add New Question</Button>
+                 <Button onClick={openNewQuestionDialog} className="w-full sm:w-auto mt-2 sm:mt-0"><PlusCircle className="mr-2 h-4 w-4" /> Add New Question</Button>
             )}
         </CardHeader>
         <CardContent className="space-y-4">
@@ -819,8 +837,8 @@ export default function InterviewPracticeHubPage() {
                                 <div className="flex items-center pt-0.5">
                                     <Checkbox
                                         id={`select-q-${q.id}`}
-                                        checked={selectedQuestionsForQuiz.has(q.id)}
-                                        onCheckedChange={() => handleToggleQuestionForQuiz(q.id)}
+                                        checked={selectedQuestionsForQuiz.has(String(q.id))}
+                                        onCheckedChange={() => handleToggleQuestionForQuiz(String(q.id))}
                                         aria-label={`Select question: ${q.questionText}`}
                                         onClick={(e) => e.stopPropagation()}
                                     />
@@ -839,7 +857,7 @@ export default function InterviewPracticeHubPage() {
                                 </div>
                               </div>
                               <div className="flex items-center gap-1 ml-2 flex-shrink-0">
-                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); handleToggleBookmarkQuestion(q.id); }}>
+                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); handleToggleBookmarkQuestion(String(q.id)); }}>
                                   <BookmarkIcon className={cn("h-4 w-4", q.bookmarkedBy?.includes(currentUser.id) && "fill-yellow-400 text-yellow-500")}/>
                                 </Button>
                                 {(q.createdBy === currentUser.id || currentUser.role === 'admin') && (
@@ -848,7 +866,7 @@ export default function InterviewPracticeHubPage() {
                                   </Button>
                                 )}
                                 {currentUser.role === 'admin' && (
-                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:bg-destructive/10" onClick={(e) => { e.stopPropagation(); handleDeleteQuestion(q.id);}}>
+                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:bg-destructive/10" onClick={(e) => { e.stopPropagation(); handleDeleteQuestion(String(q.id));}}>
                                      <XCircle className="h-4 w-4"/>
                                   </Button>
                                 )}
@@ -876,9 +894,9 @@ export default function InterviewPracticeHubPage() {
                                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                                     <StarIcon className={cn("h-4 w-4", (q.rating || 0) > 0 ? "text-yellow-400 fill-yellow-400" : "text-gray-300")} />
                                     <span>{q.rating?.toFixed(1) || 'N/A'} ({q.ratingsCount || 0} ratings)</span>
-                                    <Button variant="link" size="sm" className="text-xs p-0 h-auto ml-1" onClick={() => { setRatingQuestionId(q.id); setCurrentRating(q.userRatings?.find(r => r.userId === currentUser.id)?.rating || 0); }}>Rate</Button>
+                                    <Button variant="link" size="sm" className="text-xs p-0 h-auto ml-1" onClick={() => { setRatingQuestionId(String(q.id)); setCurrentRating(q.userRatings?.find(r => r.userId === currentUser.id)?.rating || 0); }}>Rate</Button>
                                 </div>
-                                <Button variant="link" size="sm" className="text-xs p-0 h-auto" onClick={() => setCommentingQuestionId(q.id === commentingQuestionId ? null : q.id)}>
+                                <Button variant="link" size="sm" className="text-xs p-0 h-auto" onClick={() => setCommentingQuestionId(String(q.id) === commentingQuestionId ? null : String(q.id))}>
                                    Comments ({q.userComments?.length || 0})
                                 </Button>
                             </div>
@@ -897,10 +915,10 @@ export default function InterviewPracticeHubPage() {
                             )}
 
 
-                            {commentingQuestionId === q.id && (
+                            {commentingQuestionId === String(q.id) && (
                                 <div className="mt-2 space-y-2">
                                     <Label htmlFor={`comment-${q.id}`} className="text-xs">Your Comment:</Label>
-                                    <form onSubmit={handleCommentFormSubmit((data) => onCommentSubmit(data, q.id))} className="flex gap-1">
+                                    <form onSubmit={handleCommentFormSubmit((data) => onCommentSubmit(data, String(q.id)))} className="flex gap-1">
                                          <Controller
                                             name="commentText"
                                             control={commentFormControl}
@@ -923,7 +941,7 @@ export default function InterviewPracticeHubPage() {
                                     )}
                                 </div>
                             )}
-                            {ratingQuestionId === q.id && (
+                            {ratingQuestionId === String(q.id) && (
                                 <div className="mt-2 flex items-center gap-1">
                                     <Label className="text-xs">Rate (1-5):</Label>
                                     {[1,2,3,4,5].map(star => (
@@ -931,7 +949,7 @@ export default function InterviewPracticeHubPage() {
                                             <StarIcon className="fill-current"/>
                                         </Button>
                                     ))}
-                                    <Button size="xs" onClick={() => handleRateQuestion(q.id, currentRating)} disabled={currentRating === 0}>Submit Rating</Button>
+                                    <Button size="xs" onClick={() => handleRateQuestion(String(q.id), currentRating)} disabled={currentRating === 0}>Submit Rating</Button>
                                 </div>
                             )}
 
@@ -1038,7 +1056,7 @@ export default function InterviewPracticeHubPage() {
       </Dialog>
 
       <Dialog open={isEditQuestionsDialogOpen} onOpenChange={(isOpen) => {
-        if (!isOpen) {
+        if (!isOpen) { // Reset when dialog closes
             setEditingSessionId(null);
             setCurrentEditingQuestions([]);
             setNewQuestionIdsInput('');
@@ -1092,5 +1110,3 @@ export default function InterviewPracticeHubPage() {
     </div>
   );
 }
-
-    
