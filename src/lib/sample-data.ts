@@ -472,7 +472,7 @@ Team Leadership, Project Management, Alumni Relations, Strategic Planning, Stake
   },
 ];
 
-export let sampleUserProfile: UserProfile = samplePlatformUsers.find(u => u.id === 'alumni1')!; 
+export let sampleUserProfile: UserProfile = samplePlatformUsers.find(u => u.id === 'managerUser1')!; 
 
 
 export const sampleAppointments: Appointment[] = [
@@ -503,7 +503,7 @@ export let sampleResumeProfiles: ResumeProfile[] = [
   { id: 'resumeManager1', tenantId: 'tenant-2', userId: 'managerUser1', name: "Engagement Strategy Lead Resume (Mike)", resumeText: samplePlatformUsers.find(u => u.id === 'managerUser1')?.resumeText || "Resume for Manager Mike, focused on engagement and leadership.", lastAnalyzed: "2024-07-20" },
 ];
 
-const SAMPLE_DATA_BASE_DATE = new Date('2025-06-01T12:00:00Z');
+export const SAMPLE_DATA_BASE_DATE = new Date('2025-06-01T12:00:00Z');
 
 const placeholderResumeText = `[Your Name]
 [Your Contact Info]
@@ -1139,7 +1139,7 @@ export let sampleInterviewQuestions: InterviewQuestion[] = [
     id: 'iq1',
     category: 'Behavioral',
     questionText: "Tell me about a time you failed.",
-    // baseScore is intentionally removed here to test default assignment
+    // baseScore intentionally removed to test default assignment in live interview mapping
     isMCQ: true,
     mcqOptions: [
       "I've never truly failed; I see everything as a learning opportunity.",
@@ -1613,21 +1613,20 @@ export let sampleAnnouncements: Announcement[] = [
   },
 ];
 
-// Commented out as part of removing live interview feature, then re-added
-export const samplePracticeSessions: PracticeSession[] = [
+export let samplePracticeSessions: PracticeSession[] = [
   {
     id: "ps1",
-    userId: 'managerUser1', // This session is for Manager Mike to conduct
+    userId: 'managerUser1',
     date: new Date(SAMPLE_DATA_BASE_DATE.getTime() + 86400000 * 3).toISOString(), 
-    category: "Practice with Experts", // The category from user's perspective when booking
-    type: "Angular Frontend", // The topic
+    category: "Practice with Experts",
+    type: "Angular Frontend",
     language: "English",
     status: "SCHEDULED" as PracticeSessionStatus,
     notes: "Focus on advanced component architecture and state management for the candidate.",
   },
    {
     id: "ps2",
-    userId: 'alumni1', // Alice is the candidate
+    userId: 'alumni1',
     date: new Date(SAMPLE_DATA_BASE_DATE.getTime() + 86400000 * 5).toISOString(),
     category: "Practice with Experts",
     type: "System Design Interview",
@@ -1639,29 +1638,50 @@ export const samplePracticeSessions: PracticeSession[] = [
 
 export let sampleLiveInterviewSessions: LiveInterviewSession[] = [
   {
-    id: 'ps1', // Match the ID from samplePracticeSessions for easy linking
-    tenantId: 'tenant-2', // Manager Mike's tenant
+    id: 'ps1', 
+    tenantId: 'tenant-2', 
     title: 'Angular Frontend Practice (Expert Mock for Mike)',
     participants: [
       { userId: 'managerUser1', name: 'Manager Mike', role: 'interviewer', profilePictureUrl: samplePlatformUsers.find(u => u.id === 'managerUser1')?.profilePictureUrl },
-      { userId: 'expert-candidate-1', name: 'Angular Candidate Alpha', role: 'candidate', profilePictureUrl: 'https://avatar.vercel.sh/expert-candidate-alpha.png' } 
+      { userId: 'expert-angular-candidate', name: 'Expert Angular Interviewer', role: 'candidate', profilePictureUrl: 'https://avatar.vercel.sh/expert-angular.png' } 
     ],
     scheduledTime: new Date(SAMPLE_DATA_BASE_DATE.getTime() + 86400000 * 3).toISOString(),
     status: LiveInterviewSessionStatuses[0], // 'Scheduled'
     meetingLink: 'https://meet.example.com/angular-live-ps1',
     interviewTopics: ['Angular Core Concepts', 'TypeScript', 'RxJS Problem Solving'],
     preSelectedQuestions: [
-      sampleInterviewQuestions.find(q => q.id === 'iq1'),
-      sampleInterviewQuestions.find(q => q.id === 'iq3'),
-      sampleInterviewQuestions.find(q => q.id === 'coding1'),
-      sampleInterviewQuestions.find(q => q.questionText && q.questionText.toLowerCase().includes("angular")) || {id: 'angular-generic-1', questionText: "Describe the role of NgModules in Angular.", category: "Technical", difficulty: "Medium", baseScore: 10},
+      sampleInterviewQuestions.find(q => q.id === 'iq1'), // Will get default baseScore of 10
+      sampleInterviewQuestions.find(q => q.id === 'iq3'), // Has baseScore: 10
+      sampleInterviewQuestions.find(q => q.id === 'coding1'), // Has baseScore: 5
+      sampleInterviewQuestions.find(q => q.questionText && typeof q.questionText === 'string' && q.questionText.toLowerCase().includes("angular")) || {id: 'angular-generic-1', questionText: "Describe the role of NgModules in Angular.", category: "Technical" as InterviewQuestionCategory, difficulty: "Medium" as InterviewQuestionDifficulty, baseScore: 15},
     ].filter(Boolean).map(q => ({
         id: q!.id, 
         questionText: q!.questionText, 
         category: q!.category, 
         difficulty: q!.difficulty, 
-        baseScore: q!.baseScore || 10 // Default baseScore if not present
+        baseScore: q!.baseScore || 10 
     })) as AIMockQuestionType[],
+    recordingReferences: [],
+    interviewerScores: [],
+    finalScore: undefined,
+  },
+  {
+    id: 'ps2', // Added entry for ps2
+    tenantId: 'Brainqy', 
+    title: 'System Design Practice (for Alice)',
+    participants: [
+      { userId: 'system-expert-sd', name: 'System Design Expert', role: 'interviewer', profilePictureUrl: 'https://avatar.vercel.sh/system-expert.png' },
+      { userId: 'alumni1', name: 'Alice Wonderland', role: 'candidate', profilePictureUrl: samplePlatformUsers.find(u=>u.id === 'alumni1')?.profilePictureUrl }
+    ],
+    scheduledTime: new Date(SAMPLE_DATA_BASE_DATE.getTime() + 86400000 * 5).toISOString(),
+    status: LiveInterviewSessionStatuses[0], // 'Scheduled'
+    meetingLink: 'https://meet.example.com/system-design-ps2',
+    interviewTopics: ['System Design', 'Scalability', 'Databases'],
+    preSelectedQuestions: [
+      sampleInterviewQuestions.find(q=>q.id === 'iq7'), // RESTful API
+      sampleInterviewQuestions.find(q=>q.id === 'coding2'), // Big O
+      {id: 'sd-generic-1', questionText: "How would you design a URL shortening service like TinyURL?", category: "System Design" as InterviewQuestionCategory, difficulty: "Hard" as InterviewQuestionDifficulty, baseScore: 20},
+    ].filter(Boolean).map(q => ({id: q!.id, questionText: q!.questionText, category: q!.category, difficulty: q!.difficulty, baseScore: q!.baseScore || 10})) as AIMockQuestionType[],
     recordingReferences: [],
     interviewerScores: [],
     finalScore: undefined,
@@ -1688,7 +1708,7 @@ export let sampleLiveInterviewSessions: LiveInterviewSession[] = [
     finalScore: undefined,
   },
   {
-    id: 'live-session-3', // New session where Manager Mike is interviewer
+    id: 'live-session-3', 
     tenantId: 'tenant-2',
     title: 'Data Structures Practice with Mike',
     participants: [
@@ -1703,5 +1723,68 @@ export let sampleLiveInterviewSessions: LiveInterviewSession[] = [
       sampleInterviewQuestions.find(q => q.id === 'coding2'),
       sampleInterviewQuestions.find(q => q.id === 'iq8'),
     ].filter(Boolean).map(q => ({id: q!.id, questionText: q!.questionText, category: q!.category, difficulty: q!.difficulty, baseScore: q!.baseScore || 15})) as AIMockQuestionType[],
+    recordingReferences: [],
+    interviewerScores: [],
+    finalScore: undefined,
   },
 ];
+
+// Utility function to ensure UserProfile has all fields, especially for sample data
+export function ensureFullUserProfile(partialProfile: Partial<UserProfile>): UserProfile {
+  const defaultUser: UserProfile = {
+    id: `user-${Date.now()}`,
+    tenantId: SAMPLE_TENANT_ID,
+    role: 'user',
+    name: 'New User',
+    email: `user${Date.now()}@example.com`,
+    status: 'active',
+    lastLogin: new Date().toISOString(),
+    currentJobTitle: '',
+    company: '', // Ensure 'company' (from AlumniProfile) is present
+    currentOrganization: '', // Ensure 'currentOrganization' (from UserProfile) is present
+    skills: [],
+    bio: '',
+    profilePictureUrl: `https://avatar.vercel.sh/user${Date.now()}.png`,
+    xpPoints: 0,
+    dailyStreak: 0,
+    longestStreak: 0,
+    totalActiveDays: 0,
+    weeklyActivity: [false,false,false,false,false,false,false],
+    earnedBadges: [],
+    interviewCredits: 0,
+    createdAt: new Date().toISOString(),
+    // Ensure all other UserProfile fields have defaults
+    dateOfBirth: undefined,
+    gender: undefined,
+    mobileNumber: '',
+    currentAddress: '',
+    graduationYear: '',
+    degreeProgram: undefined,
+    department: '',
+    industry: undefined,
+    workLocation: '',
+    linkedInProfile: '',
+    yearsOfExperience: '',
+    areasOfSupport: [],
+    timeCommitment: undefined,
+    preferredEngagementMode: undefined,
+    otherComments: '',
+    lookingForSupportType: undefined,
+    helpNeededDescription: '',
+    shareProfileConsent: true,
+    featureInSpotlightConsent: false,
+    isDistinguished: false,
+    resumeText: '',
+    careerInterests: '',
+    interests: [],
+    offersHelpWith: [],
+    appointmentCoinCost: 10,
+    referralCode: `REF${Date.now().toString().slice(-6)}`,
+    affiliateCode: undefined,
+    pastInterviewSessions: [],
+    shortBio: '', // From AlumniProfile
+    university: '', // From AlumniProfile
+    // ... any other fields from UserProfile or AlumniProfile that need defaults
+  };
+  return { ...defaultUser, ...partialProfile };
+}
