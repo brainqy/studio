@@ -98,7 +98,7 @@ export let sampleAlumni: AlumniProfile[] = [
     appointmentCoinCost: 12, 
     xpPoints: 1500, 
     createdAt: new Date(Date.now() - 86400000 * 250).toISOString(), 
-    isDistinguished: false, // Changed from true
+    isDistinguished: true,
   },
 ];
 
@@ -206,10 +206,10 @@ export const sampleFeatureRequests: FeatureRequest[] = [
 ];
 
 export let sampleEvents: GalleryEvent[] = [ 
-  { id: 'event1', tenantId: 'Brainqy', title: 'Annual Alumni Meet 2023', date: '2023-10-15T10:00:00Z', imageUrls: ['https://placehold.co/600x400.png', 'https://placehold.co/600x400.png'], description: 'A wonderful evening connecting with fellow alumni.' , dataAiHint: 'conference networking', approved: true, createdByUserId: 'alumni1', attendeeUserIds: ['managerUser1', 'alumni2', 'alumni4']},
-  { id: 'event2', tenantId: 'Brainqy', title: 'Tech Talk Series: AI Today', date: '2024-03-22T10:00:00Z', imageUrls: ['https://placehold.co/600x400.png'], description: 'Insightful talks on the future of Artificial Intelligence.' , dataAiHint: 'presentation seminar', approved: true, createdByUserId: 'managerUser1', attendeeUserIds: ['alumni1', 'alumni2']},
-  { id: 'event3', tenantId: 'Brainqy', title: 'Campus Job Fair Spring 2024', date: '2024-04-10T10:00:00Z', imageUrls: ['https://placehold.co/600x400.png', 'https://placehold.co/600x400.png', 'https://placehold.co/600x400.png'], description: 'Connecting students with top employers.', dataAiHint: 'job fair students', approved: false, createdByUserId: 'managerUser1', attendeeUserIds: ['managerUser1', 'alumni4'] },
-  { id: 'event4', tenantId: 'tenant-2', title: 'Tenant 2 Networking Mixer', date: '2024-05-10T10:00:00Z', imageUrls: ['https://placehold.co/600x400.png'], description: 'Exclusive networking event for Corporate Partner Inc. members.', dataAiHint: 'corporate networking', approved: true, createdByUserId: 'managerUser1', attendeeUserIds: ['alumni3', 'managerUser1'] },
+  { id: 'event1', tenantId: 'Brainqy', title: 'Annual Alumni Meet 2023', date: '2023-10-15T10:00:00Z', imageUrls: ['https://placehold.co/600x400.png', 'https://placehold.co/600x400.png?text=Networking+View', 'https://placehold.co/600x400.png?text=Awards+Ceremony'], description: 'A wonderful evening connecting with fellow alumni.' , dataAiHint: 'conference networking', approved: true, createdByUserId: 'alumni1', attendeeUserIds: ['managerUser1', 'alumni2', 'alumni4']},
+  { id: 'event2', tenantId: 'Brainqy', title: 'Tech Talk Series: AI Today', date: '2024-03-22T10:00:00Z', imageUrls: ['https://placehold.co/600x400.png?text=AI+Presentation'], description: 'Insightful talks on the future of Artificial Intelligence.' , dataAiHint: 'presentation seminar', approved: true, createdByUserId: 'managerUser1', attendeeUserIds: ['alumni1', 'alumni2']},
+  { id: 'event3', tenantId: 'Brainqy', title: 'Campus Job Fair Spring 2024', date: '2024-04-10T10:00:00Z', imageUrls: ['https://placehold.co/600x400.png?text=Job+Fair+Stalls', 'https://placehold.co/600x400.png?text=Students+Interacting', 'https://placehold.co/600x400.png?text=Company+Banners'], description: 'Connecting students with top employers.', dataAiHint: 'job fair students', approved: false, createdByUserId: 'managerUser1', attendeeUserIds: ['managerUser1', 'alumni4'] },
+  { id: 'event4', tenantId: 'tenant-2', title: 'Tenant 2 Networking Mixer', date: '2024-05-10T10:00:00Z', imageUrls: ['https://placehold.co/600x400.png?text=Corporate+Event'], description: 'Exclusive networking event for Corporate Partner Inc. members.', dataAiHint: 'corporate networking', approved: true, createdByUserId: 'managerUser1', attendeeUserIds: ['alumni3', 'managerUser1'] },
 ];
 
 export const sampleJobOpenings: JobOpening[] = [
@@ -220,101 +220,98 @@ export const sampleJobOpenings: JobOpening[] = [
   { id: 'job-board-aifuture-02', tenantId: 'Brainqy', title: 'Machine Learning Eng.', company: 'AI Future', postedByAlumniId: 'alumni3', alumniName: 'Charlie Brown', description: 'Work on cutting-edge ML projects. Strong Python and TensorFlow/PyTorch skills needed.', datePosted: '2024-07-14', location: 'Seattle, WA', type: 'Full-time' },
 ];
 
-export let sampleUserProfile: UserProfile = {
-  id: 'alumni1',
-  tenantId: 'Brainqy', 
-  role: 'admin', 
-  name: 'Alice Wonderland', 
-  email: 'alice.wonderland@example.com', 
-  status: 'active',
-  lastLogin: new Date(Date.now() - 86400000 * 0.5).toISOString(),
-  dateOfBirth: '1993-03-15', 
-  gender: 'Female', 
-  mobileNumber: '+15551112222', 
-  currentAddress: '123 Main St, Anytown, CA, USA', 
-  graduationYear: '2015', 
-  degreeProgram: 'Master of Science (M.Sc)', 
-  department: 'Computer Science', 
-  currentJobTitle: 'Senior Software Engineer', 
-  company: 'Google', 
-  currentOrganization: 'Google', 
-  industry: 'IT/Software', 
-  workLocation: 'Mountain View, CA', 
-  linkedInProfile: 'https://linkedin.com/in/alicewonder', 
-  yearsOfExperience: '7', 
-  skills: ['Java', 'Python', 'Machine Learning', 'Cloud Computing', 'Algorithms', 'React', 'Next.js'], 
-  areasOfSupport: ['Mentoring Students', 'Sharing Job Referrals', 'Guest Lecturing'], 
-  timeCommitment: '1-2 hours', 
-  preferredEngagementMode: 'Online', 
-  otherComments: 'Happy to help with technical interview prep!', 
-  lookingForSupportType: undefined, 
-  helpNeededDescription: undefined, 
-  shareProfileConsent: true, 
-  featureInSpotlightConsent: true,
-  shortBio: 'Passionate about AI and cloud computing. Graduated in 2015. Currently a Senior Software Engineer at Google.', 
-  university: 'State University', 
-  profilePictureUrl: 'https://picsum.photos/seed/alice/200/200', 
-  interests: ['Hiking', 'Photography', 'Open Source Contributions', 'AI Ethics'], 
-  offersHelpWith: [AreasOfSupport[0], AreasOfSupport[2], AreasOfSupport[4]], 
-  appointmentCoinCost: 10, 
-  resumeText: `Alice Wonderland
+export let samplePlatformUsers: UserProfile[] = [
+  {
+    id: 'alumni1',
+    tenantId: 'Brainqy', 
+    role: 'admin', 
+    name: 'Alice Wonderland', 
+    email: 'alice.wonderland@example.com', 
+    status: 'active',
+    lastLogin: new Date(Date.now() - 86400000 * 0.5).toISOString(),
+    dateOfBirth: '1993-03-15', 
+    gender: 'Female', 
+    mobileNumber: '+15551112222', 
+    currentAddress: '123 Main St, Anytown, CA, USA', 
+    graduationYear: '2015', 
+    degreeProgram: 'Master of Science (M.Sc)', 
+    department: 'Computer Science', 
+    currentJobTitle: 'Senior Software Engineer', 
+    company: 'Google', 
+    currentOrganization: 'Google', 
+    industry: 'IT/Software', 
+    workLocation: 'Mountain View, CA', 
+    linkedInProfile: 'https://linkedin.com/in/alicewonder', 
+    yearsOfExperience: '7', 
+    skills: ['Java', 'Python', 'Machine Learning', 'Cloud Computing', 'Algorithms', 'React', 'Next.js'], 
+    areasOfSupport: ['Mentoring Students', 'Sharing Job Referrals', 'Guest Lecturing'], 
+    timeCommitment: '1-2 hours', 
+    preferredEngagementMode: 'Online', 
+    otherComments: 'Happy to help with technical interview prep!', 
+    lookingForSupportType: undefined, 
+    helpNeededDescription: undefined, 
+    shareProfileConsent: true, 
+    featureInSpotlightConsent: true,
+    shortBio: 'Passionate about AI and cloud computing. Graduated in 2015. Currently a Senior Software Engineer at Google.', 
+    university: 'State University', 
+    profilePictureUrl: 'https://picsum.photos/seed/alice/200/200', 
+    interests: ['Hiking', 'Photography', 'Open Source Contributions', 'AI Ethics'], 
+    offersHelpWith: [AreasOfSupport[0], AreasOfSupport[2], AreasOfSupport[4]], 
+    appointmentCoinCost: 10, 
+    resumeText: `Alice Wonderland
 (123) 456-7890 | alice.wonderland@email.com | linkedin.com/in/alicewonder | github.com/alicew | alicew.dev
 
 Summary
-Highly skilled Senior Software Engineer with 7+ years of experience at Google, specializing in AI-driven cloud solutions and distributed systems. Proven track record of leading impactful projects, mentoring junior engineers, and contributing to open-source communities. Seeking to leverage expertise in a challenging role that pushes the boundaries of technology.
+Highly skilled Senior Software Engineer with 7+ years of experience specializing in architecting and implementing responsive, accessible, and performant web applications using React, TypeScript, and Next.js. Proven ability to lead development efforts, mentor junior engineers, and collaborate effectively with cross-functional teams to deliver exceptional user experiences. Passionate about clean code, user-centric design, and staying current with cutting-edge frontend technologies. Seeking to leverage expertise to contribute to Innovatech Solutions' mission of revolutionizing data analytics.
 
 Skills
-Languages: Java, Python, Go, C++, JavaScript, TypeScript
-Frameworks/Libraries: Spring Boot, Django, React, Next.js, TensorFlow, PyTorch, Kubernetes, Docker
-Databases: PostgreSQL, MongoDB, Cassandra
-Cloud: Google Cloud Platform (GCP), AWS
-Methodologies: Agile, Scrum, TDD, CI/CD
-Other: Distributed Systems, Machine Learning, Natural Language Processing, Microservices, System Design
+Languages: JavaScript (ESNext), TypeScript, HTML5, CSS3, Python (Basic)
+Frameworks/Libraries: React, Next.js, Redux, Context API, React Router, Jest, React Testing Library, GraphQL, Apollo Client, Tailwind CSS, Styled Components
+Tools: Git, Webpack, Babel, ESLint, Prettier, Figma, Jira, Jenkins (CI/CD)
+Methodologies: Agile/Scrum, Mobile-First Development, Responsive Design, WCAG 2.1 AA Accessibility
+Soft Skills: Leadership, Mentorship, Code Review, Problem-Solving, Communication (Verbal & Written), Teamwork, Project Management, Time Management, Adaptability
 
 Experience
-Senior Software Engineer | Google | Mountain View, CA | June 2018 – Present
-- Led a team of 5 engineers in developing and launching a new machine learning platform on GCP, used by 10+ internal teams and reducing data processing time by 40%.
-- Designed and implemented scalable microservices for real-time data ingestion and analysis, handling over 1 million requests per second.
-- Contributed core components to Google's internal AI framework, improving model training efficiency by 25%.
-- Mentored and onboarded 8 junior engineers, receiving consistently positive feedback.
-- Presented research on distributed AI systems at 3 internal Google tech talks.
+Senior Frontend Developer | WebSolutions Co. | San Francisco, CA (Remote) | June 2019 – Present
+- Led the development of a new SaaS analytics platform frontend using React, TypeScript, and Next.js, resulting in a 30% improvement in user engagement and a 25% reduction in page load times.
+- Architected and implemented a reusable UI component library, adopted by 5 development teams, increasing development velocity by 40%.
+- Collaborated closely with UX/UI designers to translate complex wireframes into intuitive and visually appealing interfaces, consistently meeting project deadlines.
+- Championed and enforced WCAG 2.1 AA accessibility standards, achieving 95% compliance across all new features.
+- Authored comprehensive unit and integration tests using Jest and React Testing Library, achieving 90% code coverage for critical components.
+- Mentored 3 junior frontend developers, improving their code quality and productivity by an average of 20% within 6 months.
+- Managed frontend project timelines and deliverables for 4 major product releases, ensuring 100% on-time completion.
+- Proactively identified and resolved over 50 critical UI bugs, enhancing application stability and user satisfaction.
+- Contributed significantly to frontend architectural decisions and established team-wide coding best practices.
 
-Software Engineer | Tech Startup Inc. | San Francisco, CA | May 2015 – May 2018
-- Developed key features for a SaaS analytics platform using Java, Spring Boot, and React.
-- Optimized database queries, reducing average API response time by 200ms.
-- Implemented a CI/CD pipeline using Jenkins and Docker, automating build and deployment processes.
+Frontend Developer | AppBuilders Inc. | Oakland, CA | May 2017 – June 2019
+- Developed and maintained responsive user interfaces for multiple client projects using React and JavaScript.
+- Increased application performance by 15% through targeted code optimizations and lazy loading techniques.
+- Successfully integrated third-party APIs for payment processing and social media functionalities.
+- Participated actively in an Agile/Scrum development process, contributing to sprint planning and daily stand-ups.
 
 Education
-Master of Science in Computer Science | State University | Berkeley, CA | May 2015
-- Thesis: "Scalable Architectures for Real-time Machine Learning"
-Bachelor of Science in Computer Science | State University | Berkeley, CA | May 2013
-- Graduated Summa Cum Laude
+Bachelor of Science in Computer Science | State University | Berkeley, CA | May 2017
+- Minor in Web Design
+- Dean's List: 2015, 2016, 2017
+- Senior Project: "Interactive Data Visualization Tool" (React, D3.js)
 
 Projects
-Open-Source AI Library (Contributor) | github.com/alicew/ai-lib
-- Contributed modules for natural language understanding and sentiment analysis.
-
-Publications
-- Wonderland, A. et al. (2020). "Efficient Data Pipelines for Large-Scale AI". Journal of Cloud Computing.
+- Open-Source UI Kit: Contributed 10+ components to a popular open-source React UI library on GitHub. (github.com/alicew/ui-kit-contribution)
 `, 
-  careerInterests: 'AI Research, Large-Scale Systems, Technical Leadership', 
-  xpPoints: 3500, 
-  dailyStreak: 25, 
-  longestStreak: 50, 
-  totalActiveDays: 300, 
-  weeklyActivity: [true, true, true, false, true, true, true], 
-  referralCode: 'ALICEWONDER1',
-  earnedBadges: ['networker', 'contributor', 'profile-pro', 'analyzer-ace', 'admin-master'], 
-  affiliateCode: 'AFFALICE123',
-  pastInterviewSessions: ['session-hist-1'], 
-  interviewCredits: 8, 
-  createdAt: new Date(Date.now() - 86400000 * 365).toISOString(), 
-  isDistinguished: true,
-};
-
-
-export const samplePlatformUsers: UserProfile[] = [
-  sampleUserProfile, // Alice Wonderland (Admin)
+    careerInterests: 'AI Research, Large-Scale Systems, Technical Leadership', 
+    xpPoints: 3500, 
+    dailyStreak: 25, 
+    longestStreak: 50, 
+    totalActiveDays: 300, 
+    weeklyActivity: [true, true, true, false, true, true, true], 
+    referralCode: 'ALICEWONDER1',
+    earnedBadges: ['networker', 'contributor', 'profile-pro', 'analyzer-ace', 'admin-master'], 
+    affiliateCode: 'AFFALICE123',
+    pastInterviewSessions: ['session-hist-1'], 
+    interviewCredits: 8, 
+    createdAt: new Date(Date.now() - 86400000 * 365).toISOString(), 
+    isDistinguished: true,
+  },
   {
     id: 'alumni2',
     tenantId: 'Brainqy',
@@ -390,7 +387,7 @@ export const samplePlatformUsers: UserProfile[] = [
     appointmentCoinCost: 12,
     xpPoints: 1500,
     createdAt: new Date(Date.now() - 86400000 * 250).toISOString(),
-    isDistinguished: false,
+    isDistinguished: true,
     bio: "Cybersecurity analyst with a focus on threat detection.",
     careerInterests: "Cybersecurity leadership",
     dailyStreak: 7,
@@ -399,7 +396,7 @@ export const samplePlatformUsers: UserProfile[] = [
     referralCode: 'DIANA456',
     currentOrganization: 'SecureNet Solutions',
   },
-  { // Manager Mike for tenant-2
+  { 
     id: 'managerUser1', 
     tenantId: 'tenant-2', 
     role: 'manager', 
@@ -475,6 +472,9 @@ Team Leadership, Project Management, Alumni Relations, Strategic Planning, Stake
   },
 ];
 
+// export let sampleUserProfile: UserProfile = samplePlatformUsers.find(u => u.id === 'alumni1')!; // Default to Alice (Admin)
+export let sampleUserProfile: UserProfile = samplePlatformUsers.find(u => u.id === 'managerUser1')!; // Default to Manager Mike
+
 
 export const sampleAppointments: Appointment[] = [
     { id: 'appt1', tenantId: 'Brainqy', requesterUserId: 'alumni4', alumniUserId: 'alumni2', title: 'Mentorship Session with Bob B.', dateTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3).toISOString(), withUser: 'Bob The Builder', status: 'Confirmed', costInCoins: 10, meetingLink: 'https://zoom.us/j/1234567890', reminderDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 2).toISOString() },
@@ -543,7 +543,7 @@ export const sampleResumeScanHistory: ResumeScanHistoryItem[] = [
     userId: 'alumni1',
     resumeId: 'resume1',
     resumeName: 'Software_Engineer_Resume_v2.pdf',
-    jobTitle: `Senior Software Engineer - ${new Date(SAMPLE_DATA_BASE_DATE.getTime() - 1000 * 60 * 60 * 24 * 2).toLocaleTimeString()}`,
+    jobTitle: `Senior Software Engineer`,
     companyName: 'Innovate LLC',
     resumeTextSnapshot: placeholderResumeText.replace("professional", "software engineer for Innovate LLC"),
     jobDescriptionText: `Title: Senior Software Engineer\nCompany: Innovate LLC\n${placeholderJobDescription}`,
@@ -557,7 +557,7 @@ export const sampleResumeScanHistory: ResumeScanHistoryItem[] = [
     userId: 'alumni2',
     resumeId: 'resume2',
     resumeName: 'Product_Manager_Profile.docx',
-    jobTitle: `Product Lead - ${new Date(SAMPLE_DATA_BASE_DATE.getTime() - 1000 * 60 * 60 * 24 * 5).toLocaleTimeString()}`,
+    jobTitle: `Product Lead`,
     companyName: 'FutureTech Corp',
     resumeTextSnapshot: placeholderResumeText.replace("professional", "product manager for FutureTech"),
     jobDescriptionText: `Title: Product Lead\nCompany: FutureTech Corp\n${placeholderJobDescription}`,
@@ -571,7 +571,7 @@ export const sampleResumeScanHistory: ResumeScanHistoryItem[] = [
     userId: 'alumni3',
     resumeId: 'resume3',
     resumeName: 'General_Data_Resume.pdf',
-    jobTitle: `Data Analyst - ${new Date(SAMPLE_DATA_BASE_DATE.getTime() - 1000 * 60 * 60 * 24 * 10).toLocaleTimeString()}`,
+    jobTitle: `Data Analyst`,
     companyName: 'Data Corp',
     resumeTextSnapshot: placeholderResumeText.replace("professional", "data analyst for Data Corp"),
     jobDescriptionText: `Title: Data Analyst\nCompany: Data Corp\n${placeholderJobDescription}`,
@@ -585,7 +585,7 @@ export const sampleResumeScanHistory: ResumeScanHistoryItem[] = [
     userId: 'managerUser1',
     resumeId: 'resumeManager1',
     resumeName: 'CorpStrategyResume.pdf',
-    jobTitle: `Strategy Consultant - ${new Date(SAMPLE_DATA_BASE_DATE.getTime() - 1000 * 60 * 60 * 24 * 3).toLocaleTimeString()}`,
+    jobTitle: `Strategy Consultant`,
     companyName: 'McKinsey',
     resumeTextSnapshot: samplePlatformUsers.find(u => u.id === 'managerUser1')?.resumeText || "Strategic resume content for McKinsey...",
     jobDescriptionText: `Title: Strategy Consultant\nCompany: McKinsey\n${placeholderJobDescription}`,
@@ -603,6 +603,7 @@ export const sampleTenants: Tenant[] = [
     id: 'Brainqy', 
     name: 'Brainqy University', 
     createdAt: new Date(Date.now() - 86400000 * 30).toISOString(), 
+    domain: 'brainqy.resumematch.ai',
     settings: {
       allowPublicSignup: true,
       customLogoUrl: 'https://placehold.co/200x50/008080/FFFFFF&text=Brainqy+U', 
@@ -624,6 +625,7 @@ export const sampleTenants: Tenant[] = [
     id: 'tenant-2',
     name: 'Corporate Partner Inc.',
     createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
+    domain: 'cpp.resumematch.ai',
     settings: {
       allowPublicSignup: false,
       primaryColor: 'hsl(221 83% 53%)', 
@@ -642,6 +644,7 @@ export const sampleTenants: Tenant[] = [
     id: 'tenant-3',
     name: 'Community College Connect',
     createdAt: new Date(Date.now() - 86400000 * 10).toISOString(),
+    domain: 'ccc.resumematch.ai',
     settings: {
       allowPublicSignup: true,
       primaryColor: 'hsl(39 100% 50%)', 
@@ -1598,11 +1601,10 @@ export let sampleAnnouncements: Announcement[] = [
   },
 ];
 
-// --- Live Interview & Practice Session Sample Data ---
-export const samplePracticeSessions: PracticeSession[] = [
+export let samplePracticeSessions: PracticeSession[] = [
   {
     id: "ps1",
-    userId: "managerUser1", // Manager Mike is the candidate here, Expert is interviewer
+    userId: "managerUser1", 
     date: new Date(SAMPLE_DATA_BASE_DATE.getTime() + 86400000 * 3).toISOString(), 
     category: "Practice with Experts", 
     type: "Angular Frontend", 
@@ -1612,7 +1614,7 @@ export const samplePracticeSessions: PracticeSession[] = [
   },
   {
     id: "ps2",
-    userId: "alumni1", // Alice is the candidate
+    userId: "alumni1", 
     date: new Date(SAMPLE_DATA_BASE_DATE.getTime() + 86400000 * 7).toISOString(), 
     category: "Practice with AI",
     type: "Java Backend Developer",
@@ -1626,8 +1628,8 @@ export const samplePracticeSessions: PracticeSession[] = [
   },
   {
     id: "ps3",
-    userId: "alumni2", // Bob is the candidate
-    date: new Date(SAMPLE_DATA_BASE_DATE.getTime() - 86400000 * 2).toISOString(), // Past session
+    userId: "alumni2", 
+    date: new Date(SAMPLE_DATA_BASE_DATE.getTime() - 86400000 * 2).toISOString(), 
     category: "Practice with Friends",
     type: "Product Management Case Study",
     language: "English",
@@ -1638,12 +1640,12 @@ export const samplePracticeSessions: PracticeSession[] = [
 
 export let sampleLiveInterviewSessions: LiveInterviewSession[] = [
   {
-    id: 'ps1', // Corresponds to PracticeSession ps1
-    tenantId: 'tenant-2', // Manager Mike's tenant
+    id: 'ps1', 
+    tenantId: 'tenant-2', 
     title: 'Angular Frontend Practice (Expert Mock)',
     participants: [
       { userId: 'managerUser1', name: 'Manager Mike', role: 'interviewer', profilePictureUrl: samplePlatformUsers.find(u => u.id === 'managerUser1')?.profilePictureUrl },
-      { userId: 'expert-angular-1', name: 'Expert Angular Interviewer', role: 'candidate', profilePictureUrl: 'https://avatar.vercel.sh/expert1.png' } // Placeholder expert
+      { userId: 'expert-angular-1', name: 'Expert Angular Interviewer', role: 'candidate', profilePictureUrl: 'https://avatar.vercel.sh/expert1.png' } 
     ],
     scheduledTime: new Date(SAMPLE_DATA_BASE_DATE.getTime() + 86400000 * 3).toISOString(),
     status: 'Scheduled' as LiveInterviewSessionStatus,
@@ -1708,19 +1710,5 @@ export let sampleLiveInterviewSessions: LiveInterviewSession[] = [
     recordingReferences: []
   }
 ];
-// Ensure sampleUserProfile is one of the users in samplePlatformUsers if you want their stats to be consistent
-// For example, if sampleUserProfile.id is 'alumni1', that user object is already in samplePlatformUsers.
-// Ensure that sampleLiveInterviewSessions and samplePracticeSessions have valid user IDs present in samplePlatformUsers or sampleUserProfile.
-// This was previously commented out in the user's provided code, restoring it for completeness.
-/*
-export const sampleLiveInterviewSessions: LiveInterviewSession[] = [
-  // ... (add sample live interview sessions if needed for testing)
-];
-*/
 
-/*
-export const samplePracticeSessions: PracticeSession[] = [
-  // ... (add sample practice sessions if needed for testing)
-];
-*/
-// This comments out the definitions for `sampleLiveInterviewSessions` and `samplePracticeSessions` which were related to the live interview features, ensuring they don't cause parsing errors due to incomplete or unterminated array/object literals. This is consistent with the goal of removing the live interview feature.
+    
