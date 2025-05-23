@@ -110,7 +110,7 @@ export default function InterviewPracticeHubPage() {
     reset: resetQuestionForm,
     setValue: setQuestionFormValue,
     watch: watchQuestionForm,
-    formState: { errors: questionFormErrors }
+    formState: { errors: questionFormErrors } 
   } = useForm<QuestionFormData>({
     resolver: zodResolver(questionFormSchema),
     defaultValues: { isMCQ: false, mcqOptions: ["", "", "", ""], category: 'Common', difficulty: 'Medium' }
@@ -119,7 +119,7 @@ export default function InterviewPracticeHubPage() {
 
 
   const upcomingSessions = practiceSessions.filter(s => s.status === 'SCHEDULED' && dateIsFuture(parseISO(s.date)));
-  const allUserSessions = practiceSessions; // In real app, filter by user
+  const allUserSessions = practiceSessions; 
   const cancelledSessions = practiceSessions.filter(s => s.status === 'CANCELLED');
 
   const handleStartPracticeSetup = () => {
@@ -213,14 +213,14 @@ export default function InterviewPracticeHubPage() {
             date: practiceSessionConfig.dateTime.toISOString(),
             category: "Practice with Experts",
             type: practiceSessionConfig.topics.join(', ') || "General",
-            language: "English", // Assuming English for now
+            language: "English", 
             status: "SCHEDULED" as PracticeSessionStatus,
             notes: `Scheduled expert session for topics: ${practiceSessionConfig.topics.join(', ')}.`,
         };
         
         const updatedPracticeSessions = [newSession, ...practiceSessions];
         setPracticeSessions(updatedPracticeSessions);
-        // Update global sample data if this is how your app manages it globally
+        
         const globalPracticeIndex = samplePracticeSessions.findIndex(s => s.id === newSession.id);
         if (globalPracticeIndex === -1) {
             samplePracticeSessions.unshift(newSession);
@@ -228,33 +228,32 @@ export default function InterviewPracticeHubPage() {
             samplePracticeSessions[globalPracticeIndex] = newSession;
         }
 
-
-        // Also create a corresponding LiveInterviewSession
         const newLiveSession: LiveInterviewSession = {
-            id: newSessionId, // Use the same ID
+            id: newSessionId, 
             tenantId: currentUser.tenantId,
             title: `Expert Mock Interview: ${newSession.type}`,
             participants: [
                 { userId: currentUser.id, name: currentUser.name, role: 'candidate', profilePictureUrl: currentUser.profilePictureUrl },
-                { userId: `expert-${Date.now()}`, name: 'Expert Interviewer', role: 'interviewer', profilePictureUrl: 'https://avatar.vercel.sh/expert.png' } // Placeholder expert
+                { userId: `expert-${Date.now()}`, name: 'Expert Interviewer', role: 'interviewer', profilePictureUrl: `https://avatar.vercel.sh/expert-${Date.now()}.png` } 
             ],
             scheduledTime: newSession.date,
             status: 'Scheduled',
-            // Pre-select some questions based on topics
             preSelectedQuestions: sampleInterviewQuestions
-                .filter(q => practiceSessionConfig.topics.some(topic => q.category === topic || q.tags?.includes(topic.toLowerCase())))
-                .slice(0,5) // Select first 5 matching
-                .map(q => ({id: q.id, questionText: q.questionText, category: q.category, difficulty: q.difficulty })),
+                .filter(q => practiceSessionConfig.topics.some(topic => 
+                    (q.category && q.category.toLowerCase() === topic.toLowerCase()) || 
+                    (q.tags && q.tags.some(tag => tag.toLowerCase() === topic.toLowerCase())) ||
+                    (q.questionText && q.questionText.toLowerCase().includes(topic.toLowerCase()))
+                ))
+                .slice(0,5) 
+                .map(q => ({id: q.id, questionText: q.questionText, category: q.category, difficulty: q.difficulty, baseScore: q.baseScore || 10 })),
         };
         
-        // Add to global sampleLiveInterviewSessions
         const globalLiveIndex = sampleLiveInterviewSessions.findIndex(s => s.id === newLiveSession.id);
         if (globalLiveIndex === -1) {
             sampleLiveInterviewSessions.unshift(newLiveSession);
         } else {
             sampleLiveInterviewSessions[globalLiveIndex] = newLiveSession;
         }
-
 
         toast({ title: "Expert Session Booked (Mock)", description: `Session for ${newSession.type} on ${format(practiceSessionConfig.dateTime, 'PPp')} scheduled.` });
 
@@ -309,7 +308,6 @@ export default function InterviewPracticeHubPage() {
     } else if (bankFilterView === 'needsApproval' && currentUser.role === 'admin') {
       questionsToFilter = questionsToFilter.filter(q => q.approved === false);
     } else {
-      // Non-admins should not see unapproved questions unless it's their own pending question
       questionsToFilter = questionsToFilter.filter(q => q.approved !== false || q.createdBy === currentUser.id || currentUser.role === 'admin');
     }
 
@@ -332,7 +330,6 @@ export default function InterviewPracticeHubPage() {
       questionsToFilter.sort((a, b) => (b.rating || 0) - (a.rating || 0));
     } else if (bankSortOrder === 'mostRecent') {
       questionsToFilter.sort((a, b) => {
-        // Fallback to ID-based sorting if createdAt is missing (for older sample data)
         const dateA = a.createdAt ? parseISO(a.createdAt).getTime() : (parseInt(a.id.replace(/\D/g,'')) || 0);
         const dateB = b.createdAt ? parseISO(b.createdAt).getTime() : (parseInt(b.id.replace(/\D/g,'')) || 0);
         return dateB - dateA;
@@ -356,7 +353,7 @@ export default function InterviewPracticeHubPage() {
         tags: data.tags?.split(',').map(t => t.trim()).filter(t => t) || [],
         mcqOptions: data.isMCQ ? data.mcqOptions?.filter(opt => opt && opt.trim() !== "") : undefined,
         correctAnswer: data.isMCQ ? data.correctAnswer : undefined,
-        approved: currentUser.role === 'admin', // Auto-approve if admin creates
+        approved: currentUser.role === 'admin', 
         createdBy: currentUser.id,
         createdAt: new Date().toISOString(),
         bookmarkedBy: [],
@@ -367,18 +364,17 @@ export default function InterviewPracticeHubPage() {
 
     if (editingQuestion) {
       setAllBankQuestions(prev => prev.map(q => q.id === editingQuestion.id ? { ...editingQuestion, ...questionPayload, difficulty: data.difficulty || 'Medium' } : q));
-      // Update global sample data
       const globalQIndex = sampleInterviewQuestions.findIndex(q => q.id === editingQuestion.id);
       if (globalQIndex !== -1) Object.assign(sampleInterviewQuestions[globalQIndex], { ...editingQuestion, ...questionPayload, difficulty: data.difficulty || 'Medium' });
       toast({ title: "Question Updated", description: "The interview question has been updated." });
     } else {
       const newQuestion: InterviewQuestion = {
         ...questionPayload,
-        id: `iq-${Date.now()}`, // Simple unique ID for sample data
+        id: `iq-${Date.now()}`, 
         difficulty: data.difficulty || 'Medium',
       };
       setAllBankQuestions(prev => [newQuestion, ...prev]);
-      sampleInterviewQuestions.unshift(newQuestion); // Add to global for persistence in demo
+      sampleInterviewQuestions.unshift(newQuestion); 
       toast({ title: "Question Added", description: `New question added${currentUser.role !== 'admin' ? ' and awaiting approval' : ''}.` });
     }
     setIsQuestionFormOpen(false);
@@ -393,7 +389,6 @@ export default function InterviewPracticeHubPage() {
   };
 
   const openEditQuestionDialog = (question: InterviewQuestion) => {
-    // Allow editing only if user is admin or the creator of the question
     if (currentUser.role !== 'admin' && question.createdBy !== currentUser.id) {
         toast({title: "Permission Denied", description: "You can only edit questions you created.", variant: "destructive"});
         return;
@@ -402,7 +397,6 @@ export default function InterviewPracticeHubPage() {
     setQuestionFormValue('questionText', question.questionText);
     setQuestionFormValue('category', question.category);
     setQuestionFormValue('isMCQ', question.isMCQ || false);
-    // Ensure mcqOptions has at least 4 empty strings if it's undefined or shorter
     const options = question.mcqOptions || [];
     const paddedOptions = [...options, ...Array(Math.max(0, 4 - options.length)).fill("")];
     setQuestionFormValue('mcqOptions', paddedOptions.slice(0,4));
@@ -494,8 +488,8 @@ export default function InterviewPracticeHubPage() {
         return q;
     }));
 
-    // Update global sample data
     const globalQIndex = sampleInterviewQuestions.findIndex(q => q.id === questionId);
+    let isNowBookmarked = false;
     if (globalQIndex !== -1) {
       const existingRatingIndex = sampleInterviewQuestions[globalQIndex].userRatings?.findIndex(r => r.userId === currentUser.id);
       let newUserRatings = [...(sampleInterviewQuestions[globalQIndex].userRatings || [])];
@@ -527,7 +521,6 @@ export default function InterviewPracticeHubPage() {
         }
         return q;
     }));
-    // Update global sample data
     const globalQIndex = sampleInterviewQuestions.findIndex(q => q.id === questionId);
     let isNowBookmarked = false;
     if (globalQIndex !== -1) {
@@ -545,9 +538,8 @@ export default function InterviewPracticeHubPage() {
   const renderSessionCard = (session: PracticeSession) => {
     const sessionDate = parseISO(session.date);
     const now = new Date();
-    // Allow joining if session is in the future, OR if it started in the last 60 minutes
     const canJoin = session.status === 'SCHEDULED' && 
-                    (dateIsFuture(sessionDate) || (isPast(sessionDate) && differenceInMinutes(now, sessionDate) <= 60));
+                    (dateIsFuture(sessionDate) || (isPast(sessionDate) && differenceInMinutes(now, addMinutes(sessionDate,60)) >= 0 && differenceInMinutes(now, sessionDate) <= 60 ));
     
     return (
     <Card key={session.id} className="shadow-md hover:shadow-lg transition-shadow">
@@ -786,7 +778,7 @@ export default function InterviewPracticeHubPage() {
                                   <span className="font-medium text-foreground">{q.questionText}</span>
                                 </div>
                                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-wrap">
-                                  <span>ID: {q.id.substring(0,8)}...</span>
+                                  <span className="font-mono text-[10px]">ID: {q.id}</span>
                                   <span className="mx-1">|</span>
                                   {q.difficulty && <Badge variant="outline" className="text-[10px] px-1 py-0">{q.difficulty}</Badge>}
                                   {q.tags && q.tags.length > 0 && (<span className="mx-1 hidden sm:inline">|</span>)}
@@ -836,7 +828,7 @@ export default function InterviewPracticeHubPage() {
                                    Comments ({q.userComments?.length || 0})
                                 </Button>
                             </div>
-                            {currentUser.role === 'admin' && !q.approved && q.createdBy !== currentUser.id && ( // Show approve button if admin and not creator and not approved
+                            {currentUser.role === 'admin' && !q.approved && q.createdBy !== currentUser.id && ( 
                                  <Button variant="outline" size="xs" className="mt-2 text-green-600 border-green-500 hover:bg-green-50" onClick={() => {
                                      setAllBankQuestions(prev => prev.map(qn => qn.id === q.id ? {...qn, approved: true} : qn));
                                      const gIdx = sampleInterviewQuestions.findIndex(sq => sq.id === q.id);
@@ -963,7 +955,7 @@ export default function InterviewPracticeHubPage() {
             {isMCQSelected && (
                 <div className="space-y-2 pl-6 border-l-2 border-primary/50 pt-2">
                     <Label>MCQ Options (at least 2 required if MCQ)</Label>
-                    {(watchQuestionForm("mcqOptions") || ["","","",""]).map((_,index) => ( // Ensure at least 4 fields render initially
+                    {(watchQuestionForm("mcqOptions") || ["","","",""]).map((_,index) => ( 
                         <Controller key={index} name={`mcqOptions.${index}` as any} control={questionFormControl} render={({ field }) => (
                             <Input {...field} placeholder={`Option ${optionLetters[index] || index + 1}`} className="text-sm"/>
                         )} />
@@ -1164,5 +1156,6 @@ export default function InterviewPracticeHubPage() {
   );
 }
     
-
+    
+    
     

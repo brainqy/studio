@@ -4,23 +4,26 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Video, Settings, Users, Send, ListChecks, AlertTriangle } from "lucide-react";
+import { Video, Settings, Users, Send, ListChecks, AlertTriangle, Info } from "lucide-react";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-// import { sampleUserProfile } from "@/lib/sample-data"; // Currently not used for creator ID
 import type { LiveInterviewSession, MockInterviewQuestion } from "@/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { sampleLiveInterviewSessions, sampleInterviewQuestions, sampleUserProfile } from "@/lib/sample-data";
+
 
 export default function NewLiveInterviewPage() {
   const [title, setTitle] = useState('');
   const [participantEmails, setParticipantEmails] = useState('');
-  const [questionIds, setQuestionIds] = useState('');
+  const [questionIdsInput, setQuestionIdsInput] = useState(''); // State for the textarea
   const { toast } = useToast();
-  const router = useRouter(); // router is initialized but not used in current mock logic
+  const router = useRouter(); 
+  const currentUser = sampleUserProfile;
+
 
   const handleSubmit = () => {
     if (!title.trim()) {
@@ -34,42 +37,54 @@ export default function NewLiveInterviewPage() {
     }
 
     const newSessionId = `live-session-${Date.now()}`;
-    // In a real app, you would get the current user's ID from an authentication context.
-    // const currentUserId = sampleUserProfile.id; // Example, if sampleUserProfile was imported and used
+    
+    const preSelectedQuestions: MockInterviewQuestion[] = questionIdsInput
+        .split(',')
+        .map(id => id.trim())
+        .filter(id => id)
+        .map(id => {
+            const questionFromBank = sampleInterviewQuestions.find(q => q.id === id);
+            if (questionFromBank) {
+                return { 
+                    id: questionFromBank.id, 
+                    questionText: questionFromBank.questionText, 
+                    category: questionFromBank.category, 
+                    difficulty: questionFromBank.difficulty,
+                    baseScore: questionFromBank.baseScore || 10 // Default base score
+                };
+            }
+            return null; // Or some placeholder if ID not found
+        })
+        .filter(q => q !== null) as MockInterviewQuestion[];
 
-    const newSession: Partial<LiveInterviewSession> = {
+
+    const newSession: LiveInterviewSession = {
       id: newSessionId,
-      // tenantId: currentUserId ? sampleUserProfile.tenantId : 'default-tenant', // Example
+      tenantId: currentUser.tenantId, 
       title: title,
       participants: [
-        // Example: { userId: currentUserId, name: "Your Name (Interviewer)", role: 'interviewer', profilePictureUrl: sampleUserProfile.profilePictureUrl },
+        { userId: currentUser.id, name: currentUser.name, role: 'interviewer', profilePictureUrl: currentUser.profilePictureUrl },
         ...emails.map((email, index) => ({
             userId: `participant-temp-${index}-${Date.now()}`,
-            name: email.split('@')[0],
+            name: email.split('@')[0] || `Participant ${index + 1}`, // Use part of email or generic name
             role: 'candidate',
             profilePictureUrl: `https://avatar.vercel.sh/${email}.png`
         }))
       ],
       scheduledTime: new Date().toISOString(),
       status: 'Scheduled',
-      preSelectedQuestions: questionIds.split(',').map(id => id.trim()).filter(id => id)
-                          .map(id => ({ id: id, questionText: `(Placeholder) Question ID: ${id}`, category: 'Common', difficulty: 'Medium' } as MockInterviewQuestion)),
+      preSelectedQuestions: preSelectedQuestions,
     };
 
-    // This is where you would typically make an API call to your backend to save the new session.
-    // For demonstration, we're just showing a toast.
-    // e.g., await createLiveInterviewSessionOnBackend(newSession);
-    // If manipulating sampleData directly (not recommended for components):
-    // import { sampleLiveInterviewSessions } from "@/lib/sample-data";
-    // sampleLiveInterviewSessions.push(newSession as LiveInterviewSession);
+    sampleLiveInterviewSessions.push(newSession);
 
     toast({
-      title: "Live Interview Session Setup (Mock)",
-      description: `Session "${title}" would be created. Participants: ${emails.join(', ')}. Questions (IDs): ${questionIds || 'None'}. Backend integration needed.`,
-      duration: 8000,
+      title: "Live Interview Session Created!",
+      description: `Session "${title}" has been set up.`,
+      duration: 5000,
     });
-    // router.push(`/live-interview/${newSessionId}`); // Enable when live interview page is fully functional
-  }; // This brace correctly closes handleSubmit
+    router.push(`/live-interview/${newSessionId}`); 
+  }; 
 
   return (
     <div className="space-y-8">
@@ -86,15 +101,15 @@ export default function NewLiveInterviewPage() {
         <CardHeader>
           <CardTitle>Setup Your Interview Session</CardTitle>
           <CardDescription>
-            Define the details for your upcoming live interview. Pre-select questions from the Question Bank if desired.
+            Define the details for your upcoming live interview.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <Alert variant="default" className="bg-blue-50 border-blue-200 text-blue-700">
-            <Settings className="h-4 w-4 !text-blue-700"/>
+            <Info className="h-4 w-4 !text-blue-700"/>
             <AlertTitle>Full Feature Under Development</AlertTitle>
             <AlertDescription>
-              This page is for conceptual setup. Actual session creation and real-time features require backend integration. For a functional experience, explore AI Mock Interviews or pre-configured sessions.
+              This setup is for demonstration. Real-time video and full collaboration features require backend integration.
             </AlertDescription>
           </Alert>
           <div>
@@ -119,24 +134,27 @@ export default function NewLiveInterviewPage() {
           </div>
            <div>
              <Label htmlFor="question-ids" className="flex items-center gap-1">
-                <ListChecks className="h-4 w-4"/> Question IDs (comma-separated, from Question Bank)
+                <ListChecks className="h-4 w-4"/> Question IDs (comma-separated)
              </Label>
             <Textarea 
               id="question-ids" 
-              placeholder="e.g., iq1, mcq2 (Copy IDs from Interview Prep Hub > Question Bank)" 
+              placeholder="e.g., iq1, mcq2, coding1 (Copy IDs from Interview Prep Hub > Question Bank)" 
               rows={3} 
-              value={questionIds}
-              onChange={(e) => setQuestionIds(e.target.value)}
+              value={questionIdsInput}
+              onChange={(e) => setQuestionIdsInput(e.target.value)}
             />
-             <p className="text-xs text-muted-foreground mt-1">Visit the <Link href="/interview-prep#question-bank" className="text-primary hover:underline">Question Bank</Link> in the Interview Prep Hub to find question IDs.</p>
+             <p className="text-xs text-muted-foreground mt-1">
+                Visit the <Link href="/interview-prep#question-bank" className="text-primary hover:underline">Question Bank</Link> on the Interview Prep Hub page to find and copy question IDs.
+             </p>
           </div>
         </CardContent>
         <CardFooter>
           <Button onClick={handleSubmit} className="bg-primary hover:bg-primary/90 text-primary-foreground">
-            <Send className="mr-2 h-4 w-4" /> Create Session (Mock)
+            <Send className="mr-2 h-4 w-4" /> Create & Start Session
           </Button>
         </CardFooter>
       </Card>
     </div>
   );
 }
+    
