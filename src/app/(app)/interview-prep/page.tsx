@@ -39,14 +39,8 @@ const questionFormSchema = z.object({
   questionText: z.string().min(10, "Question text is too short.").max(500, "Question text is too long."),
   category: z.enum(ALL_CATEGORIES),
   isMCQ: z.boolean().default(false),
-  mcqOptions: z.array(z.string().min(1, "Option text cannot be empty." ).max(255, "Option too long")).optional().refine(options => !watchQuestionForm("isMCQ") || (options && options.filter(opt => opt && opt.trim() !== "").length >= 2), {
-    message: "MCQ must have at least 2 valid options.",
-    path: ["mcqOptions"], 
-  }),
-  correctAnswer: z.string().optional().refine(value => !watchQuestionForm("isMCQ") || (value && value.trim() !== ""), {
-    message: "Correct answer is required for MCQ.",
-    path: ["correctAnswer"],
-  }),
+  mcqOptions: z.array(z.string().min(1, "Option text cannot be empty." ).max(255, "Option too long")).optional(),
+  correctAnswer: z.string().optional(),
   answerOrTip: z.string().min(10, "Answer/Tip is too short.").max(1000, "Answer/Tip is too long."),
   tags: z.string().optional(),
   difficulty: z.enum(['Easy', 'Medium', 'Hard']).optional(),
@@ -117,8 +111,18 @@ export default function InterviewPracticeHubPage() {
     watch: watchQuestionForm,
     formState: { errors: questionFormErrors } 
   } = useForm<QuestionFormData>({
-    resolver: zodResolver(questionFormSchema),
-    defaultValues: { questionText: '', isMCQ: false, mcqOptions: ["", "", "", ""], category: 'Common', difficulty: 'Medium', answerOrTip: '', tags: '' }
+    resolver: zodResolver(questionFormSchema.refine(data => {
+      if (data.isMCQ) {
+        const validOptions = data.mcqOptions?.filter(opt => opt && opt.trim() !== "").length || 0;
+        if (validOptions < 2) return false; // Fails if less than 2 options
+        if (!data.correctAnswer || data.correctAnswer.trim() === "") return false; // Fails if no correct answer
+      }
+      return true;
+    }, {
+      message: "For MCQs, provide at least 2 options and a correct answer.",
+      path: ["isMCQ"], // General path, or be more specific if possible
+    })),
+    defaultValues: { questionText: '', isMCQ: false, mcqOptions: ["", "", "", ""], correctAnswer: "", category: 'Common', difficulty: 'Medium', answerOrTip: '', tags: '' }
   });
   const isMCQSelected = watchQuestionForm("isMCQ");
 
@@ -166,6 +170,8 @@ export default function InterviewPracticeHubPage() {
         setFriendEmailError(null);
         toast({ title: "Invitation Sent (Mock)", description: `Invitation sent to ${practiceSessionConfig.friendEmail}.` });
         setIsSetupDialogOpen(false);
+        setPracticeSessionConfig({type: null, topics: [], dateTime: null, friendEmail: '', aiTopicOrRole: '', aiJobDescription: '', aiNumQuestions: 5, aiDifficulty: 'medium', aiTimerPerQuestion: 0, aiQuestionCategories: []});
+        setDialogStep('selectType');
         return;
       }
       setDialogStep('selectTopics');
@@ -174,10 +180,10 @@ export default function InterviewPracticeHubPage() {
         toast({ title: "Error", description: "Please select at least one topic.", variant: "destructive" });
         return;
       }
-      if (practiceSessionConfig.type === 'ai') {
+      if (practiceSessionConfig.type === 'ai') { // Should not happen if type is 'ai' and coming to selectTopics, but for robustness
         setPracticeSessionConfig(prev => ({...prev, aiTopicOrRole: prev.topics.join(', ')}));
         setDialogStep('aiSetupBasic');
-      } else {
+      } else { // Must be 'experts' if here
         setDialogStep('selectTimeSlot');
       }
     } else if (dialogStep === 'aiSetupBasic') {
@@ -198,7 +204,9 @@ export default function InterviewPracticeHubPage() {
     else if (dialogStep === 'aiSetupCategories') setDialogStep('aiSetupAdvanced');
     else if (dialogStep === 'aiSetupAdvanced') setDialogStep('aiSetupBasic');
     else if (dialogStep === 'aiSetupBasic') {
-      if (practiceSessionConfig.type === 'ai' && practiceSessionConfig.topics.length > 0 && practiceSessionConfig.aiTopicOrRole === practiceSessionConfig.topics.join(', ')) {
+      // If AI was chosen and topics were pre-selected, go back to topics
+      if (practiceSessionConfig.type === 'ai' && practiceSessionConfig.topics.length > 0 && 
+          practiceSessionConfig.aiTopicOrRole === practiceSessionConfig.topics.join(', ')) {
         setDialogStep('selectTopics');
       } else {
         setDialogStep('selectType');
@@ -232,7 +240,6 @@ export default function InterviewPracticeHubPage() {
         const updatedPracticeSessions = [newSession, ...practiceSessions];
         setPracticeSessions(updatedPracticeSessions);
         
-        // Update global samplePracticeSessions for demo persistence
         const globalPracticeIndex = samplePracticeSessions.findIndex(s => s.id === newSession.id);
         if (globalPracticeIndex === -1) {
             samplePracticeSessions.unshift(newSession);
@@ -240,7 +247,6 @@ export default function InterviewPracticeHubPage() {
             samplePracticeSessions[globalPracticeIndex] = newSession;
         }
 
-        // Create corresponding LiveInterviewSession
         const newLiveSession: LiveInterviewSession = {
             id: newSessionId, 
             tenantId: currentUser.tenantId,
@@ -257,11 +263,10 @@ export default function InterviewPracticeHubPage() {
                     (q.tags && q.tags.some(tag => tag.toLowerCase() === topic.toLowerCase())) ||
                     (q.questionText && q.questionText.toLowerCase().includes(topic.toLowerCase()))
                 ))
-                .slice(0,5) // Take first 5 matching questions as an example
+                .slice(0,5) 
                 .map(q => ({id: q.id, questionText: q.questionText, category: q.category, difficulty: q.difficulty, baseScore: q.baseScore || 10 })),
         };
         
-        // Update global sampleLiveInterviewSessions for demo persistence
         const globalLiveIndex = sampleLiveInterviewSessions.findIndex(s => s.id === newLiveSession.id);
         if (globalLiveIndex === -1) {
             sampleLiveInterviewSessions.unshift(newLiveSession);
@@ -297,6 +302,8 @@ export default function InterviewPracticeHubPage() {
         router.push(`/ai-mock-interview?${queryParams.toString()}`);
     }
     setIsSetupDialogOpen(false);
+    setPracticeSessionConfig({type: null, topics: [], dateTime: null, friendEmail: '', aiTopicOrRole: '', aiJobDescription: '', aiNumQuestions: 5, aiDifficulty: 'medium', aiTimerPerQuestion: 0, aiQuestionCategories: []});
+    setDialogStep('selectType');
   };
 
 
@@ -322,11 +329,9 @@ export default function InterviewPracticeHubPage() {
     } else if (bankFilterView === 'needsApproval' && currentUser.role === 'admin') {
       questionsToFilter = questionsToFilter.filter(q => q.approved === false);
     } else {
-      // Show approved questions, or questions created by the current user (even if not yet approved), or all if admin
       questionsToFilter = questionsToFilter.filter(q => q.approved !== false || q.createdBy === currentUser.id || currentUser.role === 'admin');
     }
 
-    // Ensure only MCQs are shown for quiz creation
     questionsToFilter = questionsToFilter.filter(q => q.isMCQ && q.mcqOptions && q.mcqOptions.length >=2 && q.correctAnswer);
 
 
@@ -346,7 +351,6 @@ export default function InterviewPracticeHubPage() {
       questionsToFilter.sort((a, b) => (b.rating || 0) - (a.rating || 0));
     } else if (bankSortOrder === 'mostRecent') {
       questionsToFilter.sort((a, b) => {
-        // Fallback to ID for sorting if createdAt is missing
         const dateA = a.createdAt ? parseISO(a.createdAt).getTime() : (parseInt(a.id.replace(/\D/g,'')) || 0);
         const dateB = b.createdAt ? parseISO(b.createdAt).getTime() : (parseInt(b.id.replace(/\D/g,'')) || 0);
         return dateB - dateA;
@@ -370,7 +374,7 @@ export default function InterviewPracticeHubPage() {
         tags: data.tags?.split(',').map(t => t.trim()).filter(t => t) || [],
         mcqOptions: data.isMCQ ? data.mcqOptions?.filter(opt => opt && opt.trim() !== "") : undefined,
         correctAnswer: data.isMCQ ? data.correctAnswer : undefined,
-        approved: currentUser.role === 'admin', // Auto-approve if admin creates
+        approved: currentUser.role === 'admin', 
         createdBy: currentUser.id,
         createdAt: new Date().toISOString(),
         bookmarkedBy: [],
@@ -381,18 +385,17 @@ export default function InterviewPracticeHubPage() {
 
     if (editingQuestion) {
       setAllBankQuestions(prev => prev.map(q => q.id === editingQuestion.id ? { ...editingQuestion, ...questionPayload, difficulty: data.difficulty || 'Medium' } : q));
-      // Also update in global sample for demo persistence
       const globalQIndex = sampleInterviewQuestions.findIndex(q => q.id === editingQuestion.id);
       if (globalQIndex !== -1) Object.assign(sampleInterviewQuestions[globalQIndex], { ...editingQuestion, ...questionPayload, difficulty: data.difficulty || 'Medium' });
       toast({ title: "Question Updated", description: "The interview question has been updated." });
     } else {
       const newQuestion: InterviewQuestion = {
         ...questionPayload,
-        id: `iq-${Date.now()}`, // Simple unique ID
+        id: `iq-${Date.now()}`, 
         difficulty: data.difficulty || 'Medium',
       };
       setAllBankQuestions(prev => [newQuestion, ...prev]);
-      sampleInterviewQuestions.unshift(newQuestion); // Add to global sample for demo persistence
+      sampleInterviewQuestions.unshift(newQuestion); 
       toast({ title: "Question Added", description: `New question added${currentUser.role !== 'admin' ? ' and awaiting approval' : ''}.` });
     }
     setIsQuestionFormOpen(false);
@@ -407,7 +410,6 @@ export default function InterviewPracticeHubPage() {
   };
 
   const openEditQuestionDialog = (question: InterviewQuestion) => {
-    // Allow admin to edit any, or creator to edit their own (potentially if not yet approved / used)
      if (currentUser.role !== 'admin' && question.createdBy !== currentUser.id) {
         toast({title: "Permission Denied", description: "You can only edit questions you created.", variant: "destructive"});
         return;
@@ -416,10 +418,9 @@ export default function InterviewPracticeHubPage() {
     setQuestionFormValue('questionText', question.questionText);
     setQuestionFormValue('category', question.category);
     setQuestionFormValue('isMCQ', question.isMCQ || false);
-    // Ensure mcqOptions array has at least 4 elements for the form, padding with empty strings if necessary
     const options = question.mcqOptions || [];
     const paddedOptions = [...options, ...Array(Math.max(0, 4 - options.length)).fill("")];
-    setQuestionFormValue('mcqOptions', paddedOptions.slice(0,4)); // Take first 4
+    setQuestionFormValue('mcqOptions', paddedOptions.slice(0,4)); 
     setQuestionFormValue('correctAnswer', question.correctAnswer || "");
     setQuestionFormValue('answerOrTip', question.answerOrTip);
     setQuestionFormValue('tags', question.tags?.join(', ') || "");
@@ -453,8 +454,6 @@ export default function InterviewPracticeHubPage() {
       toast({ title: "No Questions Selected", description: "Please select questions to include in the quiz.", variant: "destructive" });
       return;
     }
-    // Navigate to a new page or open a dialog to name the quiz and save it
-    // For simplicity, we'll navigate to a conceptual edit page with question IDs
     const questionIds = Array.from(selectedQuestionsForQuiz).join(',');
     router.push(`/interview-prep/quiz/edit/new?questions=${questionIds}`);
   };
@@ -468,7 +467,7 @@ export default function InterviewPracticeHubPage() {
       case 'Analytical': return <Puzzle className="h-4 w-4 text-teal-500 flex-shrink-0"/>;
       case 'HR': return <Lightbulb className="h-4 w-4 text-pink-500 flex-shrink-0"/>;
       case 'Common': return <MessageSquare className="h-4 w-4 text-gray-500 flex-shrink-0"/>;
-      default: return <Puzzle className="h-4 w-4 text-gray-400 flex-shrink-0"/>; // Default icon
+      default: return <Puzzle className="h-4 w-4 text-gray-400 flex-shrink-0"/>; 
     }
   };
 
@@ -483,21 +482,19 @@ export default function InterviewPracticeHubPage() {
     setAllBankQuestions(prevQs => prevQs.map(q =>
         q.id === questionId ? { ...q, userComments: [...(q.userComments || []), newComment] } : q
     ));
-    // Update global sample data
     const globalQIndex = sampleInterviewQuestions.findIndex(q => q.id === questionId);
     if (globalQIndex !== -1) {
       const currentComments = sampleInterviewQuestions[globalQIndex].userComments || [];
       sampleInterviewQuestions[globalQIndex].userComments = [...currentComments, newComment];
     }
     resetCommentForm();
-    setCommentingQuestionId(null); // Close comment input
+    setCommentingQuestionId(null); 
     toast({ title: "Comment Added", description: "Your comment has been posted." });
   };
 
   const handleRateQuestion = (questionId: string, rating: number) => {
     setAllBankQuestions(prevQs => prevQs.map(q => {
         if (q.id === questionId) {
-            // Check if user already rated, if so, update; otherwise, add new rating
             const existingRatingIndex = q.userRatings?.findIndex(r => r.userId === currentUser.id);
             let newUserRatings = [...(q.userRatings || [])];
             if (existingRatingIndex !== undefined && existingRatingIndex !== -1) {
@@ -512,9 +509,8 @@ export default function InterviewPracticeHubPage() {
         return q;
     }));
 
-    // Update global sample data
     const globalQIndex = sampleInterviewQuestions.findIndex(q => q.id === questionId);
-    let isNowBookmarked = false; // This variable seems out of place here, related to bookmarking
+    let isNowBookmarked = false; 
     if (globalQIndex !== -1) {
       const existingRatingIndex = sampleInterviewQuestions[globalQIndex].userRatings?.findIndex(r => r.userId === currentUser.id);
       let newUserRatings = [...(sampleInterviewQuestions[globalQIndex].userRatings || [])];
@@ -529,7 +525,7 @@ export default function InterviewPracticeHubPage() {
       sampleInterviewQuestions[globalQIndex].ratingsCount = newUserRatings.length;
     }
 
-    setRatingQuestionId(null); // Close rating input
+    setRatingQuestionId(null); 
     setCurrentRating(0);
     toast({ title: "Rating Submitted", description: `You rated this question ${rating} stars.` });
   };
@@ -546,13 +542,12 @@ export default function InterviewPracticeHubPage() {
         }
         return q;
     }));
-    // Update global sample data
     const globalQIndex = sampleInterviewQuestions.findIndex(q => q.id === questionId);
     let isNowBookmarked = false;
     if (globalQIndex !== -1) {
       const currentBookmarks = sampleInterviewQuestions[globalQIndex].bookmarkedBy || [];
       const userHasBookmarked = currentBookmarks.includes(currentUser.id);
-      isNowBookmarked = !userHasBookmarked; // Determine if it's now bookmarked
+      isNowBookmarked = !userHasBookmarked; 
       sampleInterviewQuestions[globalQIndex].bookmarkedBy = isNowBookmarked
           ? [...currentBookmarks, currentUser.id]
           : currentBookmarks.filter(id => id !== currentUser.id);
@@ -560,12 +555,11 @@ export default function InterviewPracticeHubPage() {
     toast({ title: isNowBookmarked ? "Question Bookmarked" : "Bookmark Removed" });
   };
   
-  // "Edit Questions" Dialog Logic
   const openEditQuestionsDialog = (sessionId: string) => {
     const liveSession = sampleLiveInterviewSessions.find(ls => ls.id === sessionId);
     if (liveSession && liveSession.preSelectedQuestions) {
         setEditingSessionId(sessionId);
-        setCurrentEditingQuestions([...liveSession.preSelectedQuestions]); // Create a new array copy
+        setCurrentEditingQuestions([...liveSession.preSelectedQuestions]); 
         setNewQuestionIdsInput('');
         setIsEditQuestionsDialogOpen(true);
     } else {
@@ -594,7 +588,6 @@ export default function InterviewPracticeHubPage() {
 
     const updatedQuestions = [...currentEditingQuestions, ...newQuestionsFromBank];
     
-    // Update the global sampleLiveInterviewSessions
     sampleLiveInterviewSessions[liveSessionIndex].preSelectedQuestions = updatedQuestions;
 
     setIsEditQuestionsDialogOpen(false);
@@ -608,7 +601,6 @@ export default function InterviewPracticeHubPage() {
   const renderSessionCard = (session: PracticeSession) => {
     const sessionDate = parseISO(session.date);
     const now = new Date();
-    // Allow joining if scheduled and future, or if started within the last hour
     const canJoin = session.status === 'SCHEDULED' && 
                     (dateIsFuture(sessionDate) || (isPast(sessionDate) && differenceInMinutes(now, addMinutes(sessionDate,60)) >= 0 && differenceInMinutes(now, sessionDate) <= 60 ));
     
@@ -624,7 +616,7 @@ export default function InterviewPracticeHubPage() {
             "px-2 py-1 text-xs font-semibold rounded-full",
             session.status === 'SCHEDULED' ? "bg-green-100 text-green-700" :
             session.status === 'COMPLETED' ? "bg-blue-100 text-blue-700" :
-            "bg-red-100 text-red-700" // CANCELLED
+            "bg-red-100 text-red-700" 
           )}>
             {session.status}
           </span>
@@ -781,7 +773,7 @@ export default function InterviewPracticeHubPage() {
                 <CardTitle className="text-xl font-semibold flex items-center gap-2"><ListFilter className="h-5 w-5 text-primary"/>Question Bank ({filteredBankQuestions.length})</CardTitle>
                 <CardDescription>Browse, filter, and select questions for your practice quizzes.</CardDescription>
             </div>
-            {(currentUser.role === 'admin' || currentUser.role === 'manager') && ( // Allow managers to add questions too
+            {(currentUser.role === 'admin' || currentUser.role === 'manager') && ( 
                  <Button onClick={openNewQuestionDialog}><PlusCircle className="mr-2 h-4 w-4" /> Add New Question</Button>
             )}
         </CardHeader>
@@ -838,7 +830,7 @@ export default function InterviewPracticeHubPage() {
                     <Accordion key={q.id} type="single" collapsible className="border rounded-md mb-2 bg-card shadow-sm hover:shadow-md transition-shadow">
                         <AccordionItem value={`item-${q.id}`} className="border-b-0">
                            <AccordionTrigger
-                            asChild={true}
+                            asChild={true} 
                             className="px-4 py-3 text-left text-sm font-medium group hover:bg-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 data-[state=open]:bg-secondary/50 data-[state=open]:rounded-b-none rounded-t-md"
                           >
                             <div className="flex items-start flex-1 gap-3 w-full">
@@ -1046,7 +1038,7 @@ export default function InterviewPracticeHubPage() {
                             <Input id="correctAnswer" {...field} placeholder="Paste the correct option text here"/>
                         )} />
                     </div>
-                     {questionFormErrors.mcqOptions && <p className="text-sm text-destructive mt-1">{questionFormErrors.mcqOptions.message}</p>}
+                     {questionFormErrors.mcqOptions && <p className="text-sm text-destructive mt-1">{questionFormErrors.mcqOptions?.message || questionFormErrors.mcqOptions?.[0]?.message || questionFormErrors.isMCQ?.message}</p>}
                      {questionFormErrors.correctAnswer && <p className="text-sm text-destructive mt-1">{questionFormErrors.correctAnswer.message}</p>}
                 </div>
             )}
