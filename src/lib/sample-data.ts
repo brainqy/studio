@@ -1,6 +1,6 @@
 
-import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem, Appointment, Wallet, ResumeProfile, Tenant, Badge, BlogPost, ReferralHistoryItem, GamificationRule, UserStatus, SurveyResponse, Affiliate, AffiliateClick, AffiliateSignup, AffiliateStatus, SurveyStep, ResumeTemplate, TourStep, CommunityComment, InterviewQuestion, InterviewQuestionCategory, BlogGenerationSettings, MockInterviewSession, InterviewQuestionDifficulty, InterviewQuestionUserComment, PracticeSession, PracticeSessionStatus, JobApplicationStatus, KanbanColumnId, PlatformSettings, Announcement, AnnouncementStatus, AnnouncementAudience, MockInterviewQuestion, LiveInterviewSession, LiveInterviewParticipant, RecordingReference, LiveInterviewSessionStatus, InterviewerScore } from '@/types';
-import { AreasOfSupport, AppointmentStatuses, Genders, DegreePrograms, Industries, TimeCommitments, EngagementModes, SupportTypesSought, JOB_APPLICATION_STATUSES, KANBAN_COLUMNS_CONFIG, PREDEFINED_INTERVIEW_TOPICS, PRACTICE_FOCUS_AREAS, ALL_CATEGORIES, ALL_DIFFICULTIES, MOCK_INTERVIEW_STEPS, RESUME_BUILDER_STEPS, PreferredTimeSlots, AnnouncementStatuses, AnnouncementAudiences, LiveInterviewSessionStatuses } from '@/types'; 
+import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem, Appointment, Wallet, ResumeProfile, Tenant, Badge, BlogPost, ReferralHistoryItem, GamificationRule, UserStatus, SurveyResponse, Affiliate, AffiliateClick, AffiliateSignup, AffiliateStatus, SurveyStep, ResumeTemplate, TourStep, CommunityComment, InterviewQuestion, InterviewQuestionCategory, BlogGenerationSettings, MockInterviewSession, InterviewQuestionDifficulty, InterviewQuestionUserComment, PracticeSession, PracticeSessionStatus, JobApplicationStatus, KanbanColumnId, PlatformSettings, Announcement, AnnouncementStatus, AnnouncementAudience, MockInterviewQuestion, LiveInterviewSession, LiveInterviewParticipant, RecordingReference, LiveInterviewSessionStatus, LiveInterviewSessionStatuses, InterviewerScore } from '@/types';
+import { AreasOfSupport, AppointmentStatuses, Genders, DegreePrograms, Industries, TimeCommitments, EngagementModes, SupportTypesSought, JOB_APPLICATION_STATUSES, KANBAN_COLUMNS_CONFIG, PREDEFINED_INTERVIEW_TOPICS, PRACTICE_FOCUS_AREAS, ALL_CATEGORIES, ALL_DIFFICULTIES, MOCK_INTERVIEW_STEPS, RESUME_BUILDER_STEPS, PreferredTimeSlots, AnnouncementStatuses, AnnouncementAudiences } from '@/types'; 
 
 export let SAMPLE_TENANT_ID = 'Brainqy'; 
 
@@ -60,7 +60,7 @@ export let sampleAlumni: AlumniProfile[] = [
   },
   { 
     id: 'alumni3', 
-    tenantId: 'tenant-2', 
+    tenantId: 'tenant-2', // Moved to tenant-2 for Manager Mike to manage
     name: 'Charlie Brown',
     profilePictureUrl: 'https://picsum.photos/seed/charlie/200/200',
     currentJobTitle: 'Data Scientist',
@@ -70,8 +70,8 @@ export let sampleAlumni: AlumniProfile[] = [
     skills: ['R', 'Statistics', 'Big Data', 'Python', 'Data Visualization'],
     email: "charlie.brown@example.com",
     role: 'user',
-    status: 'inactive',
-    lastLogin: new Date(Date.now() - 86400000 * 30).toISOString(), 
+    status: 'active', // Changed to active for testing
+    lastLogin: new Date(Date.now() - 86400000 * 5).toISOString(), 
     interests: ['Chess', 'Reading Sci-Fi', 'Data For Good'],
     offersHelpWith: [AreasOfSupport[0], AreasOfSupport[7]], 
     appointmentCoinCost: 10,
@@ -206,10 +206,10 @@ export const sampleFeatureRequests: FeatureRequest[] = [
 ];
 
 export let sampleEvents: GalleryEvent[] = [ 
-  { id: 'event1', tenantId: 'Brainqy', title: 'Annual Alumni Meet 2023', date: '2023-10-15T10:00:00Z', imageUrls: ['https://placehold.co/600x400.png', 'https://placehold.co/600x400.png?text=Networking+View', 'https://placehold.co/600x400.png?text=Awards+Ceremony'], description: 'A wonderful evening connecting with fellow alumni.' , dataAiHint: 'conference networking', approved: true, createdByUserId: 'alumni1', attendeeUserIds: ['managerUser1', 'alumni2', 'alumni4']},
+  { id: 'event1', tenantId: 'Brainqy', title: 'Annual Alumni Meet 2023', date: '2023-10-15T10:00:00Z', imageUrls: ['https://placehold.co/600x400.png?text=Annual+Meet+Pic+1', 'https://placehold.co/600x400.png?text=Networking+View', 'https://placehold.co/600x400.png?text=Awards+Ceremony'], description: 'A wonderful evening connecting with fellow alumni.' , dataAiHint: 'conference networking', approved: true, createdByUserId: 'alumni1', attendeeUserIds: ['managerUser1', 'alumni2', 'alumni4']},
   { id: 'event2', tenantId: 'Brainqy', title: 'Tech Talk Series: AI Today', date: '2024-03-22T10:00:00Z', imageUrls: ['https://placehold.co/600x400.png?text=AI+Presentation'], description: 'Insightful talks on the future of Artificial Intelligence.' , dataAiHint: 'presentation seminar', approved: true, createdByUserId: 'managerUser1', attendeeUserIds: ['alumni1', 'alumni2']},
   { id: 'event3', tenantId: 'Brainqy', title: 'Campus Job Fair Spring 2024', date: '2024-04-10T10:00:00Z', imageUrls: ['https://placehold.co/600x400.png?text=Job+Fair+Stalls', 'https://placehold.co/600x400.png?text=Students+Interacting', 'https://placehold.co/600x400.png?text=Company+Banners'], description: 'Connecting students with top employers.', dataAiHint: 'job fair students', approved: false, createdByUserId: 'managerUser1', attendeeUserIds: ['managerUser1', 'alumni4'] },
-  { id: 'event4', tenantId: 'tenant-2', title: 'Tenant 2 Networking Mixer', date: '2024-05-10T10:00:00Z', imageUrls: ['https://placehold.co/600x400.png?text=Corporate+Event'], description: 'Exclusive networking event for Corporate Partner Inc. members.', dataAiHint: 'corporate networking', approved: true, createdByUserId: 'managerUser1', attendeeUserIds: ['alumni3', 'managerUser1'] },
+  { id: 'event4', tenantId: 'tenant-2', title: 'Tenant 2 Networking Mixer', date: '2024-05-10T10:00:00Z', imageUrls: ['https://placehold.co/600x400.png?text=Corporate+Event+Tenant2'], description: 'Exclusive networking event for Corporate Partner Inc. members.', dataAiHint: 'corporate networking', approved: true, createdByUserId: 'managerUser1', attendeeUserIds: ['alumni3', 'managerUser1'] },
 ];
 
 export const sampleJobOpenings: JobOpening[] = [
@@ -346,7 +346,7 @@ Projects
     name: 'Charlie Brown',
     email: "charlie.brown@example.com",
     role: 'user',
-    status: 'inactive',
+    status: 'active', // For testing manager view
     lastLogin: new Date(Date.now() - 86400000 * 30).toISOString(),
     profilePictureUrl: 'https://picsum.photos/seed/charlie/200/200',
     currentJobTitle: 'Data Scientist',
@@ -681,7 +681,7 @@ export let sampleBlogPosts: BlogPost[] = [
     slug: 'mastering-ai-resume-analysis',
     author: 'ResumeMatch AI Team',
     date: '2024-07-20T10:00:00Z',
-    imageUrl: 'https://placehold.co/800x400.png', 
+    imageUrl: 'https://placehold.co/800x400.png?text=AI+Resume+Analysis', 
     content: 'Learn how to leverage our AI analysis tool to its full potential. Understand match scores, keyword analysis, and how to use suggestions effectively...\n\nOur AI engine scans your resume against the provided job description, identifying key skills, experiences, and keywords. It then calculates a match score based on alignment.\n\n**Understanding the Score:**\n- **80%+:** Excellent match, likely a strong candidate.\n- **60-79%:** Good match, minor adjustments might be needed.\n- **Below 60%:** Significant gaps, consider tailoring your resume.\n\n**Using Suggestions:**\nThe AI provides suggestions for improvement. Focus on incorporating missing keywords naturally and highlighting relevant experiences mentioned in the job description. Remember, authenticity is key!\n\n*This is sample content. More details would follow in a real post.*',
     excerpt: 'Learn how to leverage our AI analysis tool to its full potential. Understand match scores, keyword analysis...',
     tags: ['resume', 'ai', 'jobsearch'],
@@ -697,7 +697,7 @@ export let sampleBlogPosts: BlogPost[] = [
     slug: 'brainqy-uni-networking-success', 
     author: 'Alumni Relations (Brainqy University)', 
     date: '2024-07-15T14:30:00Z',
-    imageUrl: 'https://placehold.co/800x400.png', 
+    imageUrl: 'https://placehold.co/800x400.png?text=Networking+Success', 
     content: 'Hear inspiring stories from fellow alumni who found opportunities through the ResumeMatch AI network. Discover tips for effective networking...\n\nAlice Wonderland (Class of \'15) shares how a connection made through the platform led to her current role at Google. "The recommendation feature pointed me towards someone I hadn\'t considered, and it turned out to be the perfect connection," she says.\n\nBob The Builder (Class of \'18) used the Alumni Directory filters to find mentors in Product Management. "Being able to filter by skills and industry was invaluable," Bob notes.\n\n**Networking Tips:**\n1. Personalize your connection requests.\n2. Be clear about what you\'re seeking (advice, referral, chat).\n3. Follow up respectfully.\n\n*This is sample content. More details would follow in a real post.*',
     excerpt: 'Hear inspiring stories from fellow alumni who found opportunities through the ResumeMatch AI network...',
     tags: ['networking', 'career', 'success stories', 'brainqy university'], 
@@ -713,7 +713,7 @@ export let sampleBlogPosts: BlogPost[] = [
     slug: 'power-of-mentorship',
     author: 'ResumeMatch AI Team',
     date: '2024-07-10T09:00:00Z',
-    imageUrl: 'https://placehold.co/800x400.png', 
+    imageUrl: 'https://placehold.co/800x400.png?text=Mentorship+Concept', 
     content: 'Explore the benefits of both being a mentor and finding a mentor within our community. How our platform facilitates these connections...\n\nMentorship provides invaluable guidance for career growth. Our platform makes it easy to identify alumni willing to offer support in specific areas.\n\n**Benefits for Mentees:**\n- Gain industry insights.\n- Receive personalized career advice.\n- Expand your professional network.\n\n**Benefits for Mentors:**\n- Develop leadership skills.\n- Give back to the community.\n- Stay connected with emerging talent.\n\nUse the Alumni Directory filters to find potential mentors or mentees based on your interests and needs.\n\n*This is sample content. More details would follow in a real post.*',
     excerpt: 'Explore the benefits of both being a mentor and finding a mentor within our community...',
     tags: ['mentorship', 'community', 'connections'],
@@ -918,7 +918,7 @@ export const sampleResumeTemplates: ResumeTemplate[] = [
     id: 'template1',
     name: 'Modern Chronological',
     description: 'A clean, modern take on the classic chronological resume. Great for experienced professionals.',
-    previewImageUrl: 'https://placehold.co/300x400.png',
+    previewImageUrl: 'https://placehold.co/300x400.png?text=Modern+Chrono',
     category: 'Modern',
     dataAiHint: 'resume modern',
     content: `[Your Name]
@@ -964,7 +964,7 @@ Certifications (Optional)
     id: 'template2',
     name: 'Creative Combination',
     description: 'Highlights skills and projects. Ideal for creative fields or career changers.',
-    previewImageUrl: 'https://placehold.co/300x400.png',
+    previewImageUrl: 'https://placehold.co/300x400.png?text=Creative+Combo',
     category: 'Creative',
     dataAiHint: 'resume creative',
     content: `[Your Name]
@@ -1006,7 +1006,7 @@ Awards & Recognition (Optional)
     id: 'template3',
     name: 'Functional Skills-Based',
     description: 'Emphasizes skills over work history. Good for those with employment gaps or students.',
-    previewImageUrl: 'https://placehold.co/300x400.png',
+    previewImageUrl: 'https://placehold.co/300x400.png?text=Functional+Skills',
     category: 'Functional',
     dataAiHint: 'resume skills',
     content: `[Your Name]
@@ -1049,7 +1049,7 @@ Volunteer Experience (Optional)
     id: 'template4',
     name: 'Academic CV',
     description: 'Designed for academic positions, research roles, and grants. Includes publication sections.',
-    previewImageUrl: 'https://placehold.co/300x400.png',
+    previewImageUrl: 'https://placehold.co/300x400.png?text=Academic+CV',
     category: 'Academic',
     dataAiHint: 'cv academic',
     content: `[Your Name]
@@ -1139,6 +1139,7 @@ export let sampleInterviewQuestions: InterviewQuestion[] = [
     id: 'iq1',
     category: 'Behavioral',
     questionText: "Tell me about a time you failed.",
+    // baseScore explicitly removed to test default assignment
     isMCQ: true,
     mcqOptions: [
       "I've never truly failed; I see everything as a learning opportunity.",
@@ -1160,12 +1161,12 @@ export let sampleInterviewQuestions: InterviewQuestion[] = [
     approved: true,
     createdAt: new Date(Date.now() - 86400000 * 10).toISOString(),
     bookmarkedBy: ['managerUser1'],
-    baseScore: 10,
   },
   {
     id: 'iq2',
     category: 'Behavioral',
     questionText: "Describe a situation where you had to work with a difficult team member.",
+    baseScore: 15,
     isMCQ: true,
     mcqOptions: [
       "I avoided them as much as possible and did my work independently.",
@@ -1184,12 +1185,12 @@ export let sampleInterviewQuestions: InterviewQuestion[] = [
     approved: true,
     createdAt: new Date(Date.now() - 86400000 * 9).toISOString(),
     bookmarkedBy: [],
-    baseScore: 15,
   },
   {
     id: 'iq3',
     category: 'Technical',
     questionText: "Explain the difference between an abstract class and an interface.",
+    baseScore: 10,
     isMCQ: true,
     mcqOptions: [
       "Abstract classes can have constructors, interfaces cannot.",
@@ -1208,12 +1209,12 @@ export let sampleInterviewQuestions: InterviewQuestion[] = [
     approved: true,
     createdAt: new Date(Date.now() - 86400000 * 8).toISOString(),
     bookmarkedBy: ['managerUser1'],
-    baseScore: 10,
   },
   {
     id: 'iq4',
     category: 'Role-Specific',
     questionText: "How would you approach designing a new feature for our product? (For Product Managers)",
+    baseScore: 20,
     isMCQ: true,
     mcqOptions: [
       "Start coding immediately based on my gut feeling for what users want.",
@@ -1232,12 +1233,12 @@ export let sampleInterviewQuestions: InterviewQuestion[] = [
     approved: true,
     createdAt: new Date(Date.now() - 86400000 * 7).toISOString(),
     bookmarkedBy: [],
-    baseScore: 20,
   },
   {
     id: 'iq5',
     category: 'Common',
     questionText: "Why are you interested in this role?",
+    baseScore: 5,
     isMCQ: true,
     mcqOptions: [
       "I need a job, and this one was available.",
@@ -1256,12 +1257,12 @@ export let sampleInterviewQuestions: InterviewQuestion[] = [
     approved: true,
     createdAt: new Date(Date.now() - 86400000 * 6).toISOString(),
     bookmarkedBy: ['managerUser1'],
-    baseScore: 5,
   },
   {
     id: 'iq6',
     category: 'Common',
     questionText: "Where do you see yourself in 5 years?",
+    baseScore: 5,
     isMCQ: true,
     mcqOptions: [
       "Running this company.",
@@ -1280,12 +1281,12 @@ export let sampleInterviewQuestions: InterviewQuestion[] = [
     approved: false, 
     createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
     bookmarkedBy: [],
-    baseScore: 5,
   },
   {
     id: 'iq7',
     category: 'Technical',
     questionText: "Explain the principles of RESTful API design.",
+    baseScore: 15,
     isMCQ: true,
     mcqOptions: [
       "Stateful, Client-Server, Uniform Interface, Cacheable.",
@@ -1304,12 +1305,12 @@ export let sampleInterviewQuestions: InterviewQuestion[] = [
     approved: true,
     createdAt: new Date(Date.now() - 86400000 * 4).toISOString(),
     bookmarkedBy: [],
-    baseScore: 15,
   },
   {
     id: 'iq8',
     category: 'Behavioral',
     questionText: "Give an example of a goal you reached and tell me how you achieved it.",
+    baseScore: 10,
     isMCQ: true,
     mcqOptions: [
       "I wanted to get a promotion, so I worked hard.",
@@ -1328,12 +1329,12 @@ export let sampleInterviewQuestions: InterviewQuestion[] = [
     approved: true,
     createdAt: new Date(Date.now() - 86400000 * 3).toISOString(),
     bookmarkedBy: ['alumni2'],
-    baseScore: 10,
   },
   {
     id: 'mcq1',
     category: 'Technical',
     questionText: "Which of the following is NOT a valid HTTP method?",
+    baseScore: 5,
     isMCQ: true,
     mcqOptions: ["GET", "POST", "PUSH", "DELETE"],
     correctAnswer: "PUSH",
@@ -1347,12 +1348,12 @@ export let sampleInterviewQuestions: InterviewQuestion[] = [
     approved: true,
     createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
     bookmarkedBy: [],
-    baseScore: 5,
   },
   {
     id: 'mcq2',
     category: 'Analytical',
     questionText: "A project's critical path is delayed by 2 days. What is the most likely impact on the project completion date?",
+    baseScore: 10,
     isMCQ: true,
     mcqOptions: ["No impact", "Completion delayed by 1 day", "Completion delayed by 2 days", "Completion delayed by more than 2 days"],
     correctAnswer: "Completion delayed by 2 days",
@@ -1366,12 +1367,12 @@ export let sampleInterviewQuestions: InterviewQuestion[] = [
     approved: true,
     createdAt: new Date(Date.now() - 86400000 * 1).toISOString(),
     bookmarkedBy: ['managerUser1'],
-    baseScore: 10,
   },
   {
     id: 'hr1',
     category: 'HR',
     questionText: "How do you handle stress and pressure?",
+    baseScore: 10,
     isMCQ: true,
     mcqOptions: [
         "I avoid stressful situations as much as possible.",
@@ -1390,12 +1391,12 @@ export let sampleInterviewQuestions: InterviewQuestion[] = [
     approved: true,
     createdAt: new Date().toISOString(),
     bookmarkedBy: [],
-    baseScore: 10,
   },
   {
     id: 'coding1',
     category: 'Coding',
     questionText: "Write a function to reverse a string in JavaScript.",
+    baseScore: 5,
     isMCQ: true,
     mcqOptions: [
         "str.split('').reverse().join('')",
@@ -1414,12 +1415,12 @@ export let sampleInterviewQuestions: InterviewQuestion[] = [
     approved: true,
     createdAt: new Date(Date.now() - 86400000 * 1.5).toISOString(),
     bookmarkedBy: [],
-    baseScore: 5,
   },
   {
     id: 'coding2',
     category: 'Coding',
     questionText: "Explain Big O notation and provide an example of O(n) and O(log n).",
+    baseScore: 20,
     isMCQ: true,
     mcqOptions: [
         "It measures exact execution time. O(n) is fast, O(log n) is slow.",
@@ -1438,7 +1439,6 @@ export let sampleInterviewQuestions: InterviewQuestion[] = [
     approved: true,
     createdAt: new Date(Date.now() - 86400000 * 0.5).toISOString(),
     bookmarkedBy: [],
-    baseScore: 20,
   },
 ];
 
@@ -1613,124 +1613,69 @@ export let sampleAnnouncements: Announcement[] = [
   },
 ];
 
-// export let samplePracticeSessions: PracticeSession[] = [
-//   {
-//     id: "ps1",
-//     userId: "managerUser1", 
-//     date: new Date(SAMPLE_DATA_BASE_DATE.getTime() + 86400000 * 3).toISOString(), 
-//     category: "Practice with Experts", 
-//     type: "Angular Frontend", 
-//     language: "English",
-//     status: "SCHEDULED" as PracticeSessionStatus,
-//     notes: "Focus on advanced component architecture and state management.",
-//   },
-//   {
-//     id: "ps2",
-//     userId: "alumni1", 
-//     date: new Date(SAMPLE_DATA_BASE_DATE.getTime() + 86400000 * 7).toISOString(), 
-//     category: "Practice with AI",
-//     type: "Java Backend Developer",
-//     language: "English",
-//     status: "SCHEDULED" as PracticeSessionStatus,
-//     notes: "Emphasis on data structures, algorithms, and common Java interview patterns.",
-//     aiQuestionCategories: ['Technical', 'Coding'],
-//     aiDifficulty: 'Hard',
-//     aiNumQuestions: 10,
-//     aiTimerPerQuestion: 180,
-//   },
-//   {
-//     id: "ps3",
-//     userId: "alumni2", 
-//     date: new Date(SAMPLE_DATA_BASE_DATE.getTime() - 86400000 * 2).toISOString(), 
-//     category: "Practice with Friends",
-//     type: "Product Management Case Study",
-//     language: "English",
-//     status: "COMPLETED" as PracticeSessionStatus,
-//     notes: "Completed session with Alice.",
-//   },
-// ];
+export const samplePracticeSessions: PracticeSession[] = [
+  {
+    id: "ps1",
+    userId: sampleUserProfile.id, // Assuming current user will be candidate for this if testing AI/Expert
+    date: new Date(SAMPLE_DATA_BASE_DATE.getTime() + 86400000 * 3).toISOString(), 
+    category: "Practice with Experts", // This will be overridden by live session participant role
+    type: "Angular Frontend", 
+    language: "English",
+    status: "SCHEDULED" as PracticeSessionStatus,
+    notes: "Focus on advanced component architecture and state management.",
+  },
+];
 
-// export let sampleLiveInterviewSessions: LiveInterviewSession[] = [
-//   {
-//     id: 'ps1', 
-//     tenantId: 'tenant-2', 
-//     title: 'Angular Frontend Practice (Expert Mock)',
-//     participants: [
-//       { userId: 'managerUser1', name: 'Manager Mike', role: 'interviewer', profilePictureUrl: samplePlatformUsers.find(u => u.id === 'managerUser1')?.profilePictureUrl },
-//       { userId: 'expert-angular-1', name: 'Expert Angular Interviewer', role: 'candidate', profilePictureUrl: 'https://avatar.vercel.sh/expert1.png' } 
-//     ],
-//     scheduledTime: new Date(SAMPLE_DATA_BASE_DATE.getTime() + 86400000 * 3).toISOString(),
-//     status: 'Scheduled' as LiveInterviewSessionStatus,
-//     meetingLink: 'https://meet.example.com/angular-live-ps1',
-//     interviewTopics: ['Angular Core Concepts', 'TypeScript', 'RxJS Problem Solving'],
-//     preSelectedQuestions: [ 
-//         sampleInterviewQuestions.find(q=>q.id === 'iq3') as MockInterviewQuestion,
-//         sampleInterviewQuestions.find(q=>q.id === 'coding1') as MockInterviewQuestion,
-//         sampleInterviewQuestions.find(q => q.questionText && typeof q.questionText === 'string' && q.questionText.toLowerCase().includes("angular")) || {id: 'angular-generic-1', questionText: "Describe the role of NgModules in Angular.", category: "Technical", difficulty: "Medium", baseScore: 10},
-//     ].filter(Boolean) as MockInterviewQuestion[],
-//     recordingReferences: [],
-//     interviewerScores: [],
-//   },
-//   {
-//     id: 'live-session-1', 
-//     tenantId: 'Brainqy',
-//     title: 'Frontend Developer Screening (Live)',
-//     participants: [
-//       { userId: 'alumni1', name: 'Alice Wonderland', role: 'interviewer', profilePictureUrl: samplePlatformUsers.find(u=>u.id === 'alumni1')?.profilePictureUrl },
-//       { userId: 'alumni2', name: 'Bob The Builder', role: 'candidate', profilePictureUrl: samplePlatformUsers.find(u=>u.id === 'alumni2')?.profilePictureUrl } 
-//     ],
-//     scheduledTime: new Date(SAMPLE_DATA_BASE_DATE.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString(), 
-//     status: 'Scheduled' as LiveInterviewSessionStatus,
-//     meetingLink: 'https://meet.example.com/live123',
-//     interviewTopics: ['React', 'JavaScript', 'CSS', 'Behavioral'],
-//     preSelectedQuestions: [
-//       sampleInterviewQuestions.find(q=>q.id === 'iq1') as MockInterviewQuestion,
-//       sampleInterviewQuestions.find(q=>q.id === 'iq5') as MockInterviewQuestion,
-//       sampleInterviewQuestions.find(q=>q.id === 'mcq1') as MockInterviewQuestion,
-//     ].filter(Boolean).map(q => ({...q, baseScore: q.baseScore || 10})),
-//     recordingReferences: [],
-//     interviewerScores: [],
-//   },
-//   {
-//     id: 'live-session-2',
-//     tenantId: 'Brainqy',
-//     title: 'Product Manager - Behavioral Round (Live)',
-//     participants: [
-//       { userId: 'alumni2', name: 'Bob The Builder', role: 'interviewer', profilePictureUrl: samplePlatformUsers.find(u=>u.id === 'alumni2')?.profilePictureUrl },
-//       { userId: 'user456', name: 'Jane Smith (Candidate)', role: 'candidate', profilePictureUrl: 'https://picsum.photos/seed/janesmith/50/50' }
-//     ],
-//     scheduledTime: new Date(SAMPLE_DATA_BASE_DATE.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString(), 
-//     actualStartTime: new Date(SAMPLE_DATA_BASE_DATE.getTime() - 1 * 24 * 60 * 60 * 1000 + 5 * 60 * 1000).toISOString(), 
-//     actualEndTime: new Date(SAMPLE_DATA_BASE_DATE.getTime() - 1 * 24 * 60 * 60 * 1000 + 65 * 60 * 1000).toISOString(), 
-//     status: 'Completed' as LiveInterviewSessionStatus,
-//     recordingReferences: [
-//       { id: 'rec1', sessionId: 'live-session-2', startTime: new Date(SAMPLE_DATA_BASE_DATE.getTime() - 1 * 24 * 60 * 60 * 1000 + 5 * 60 * 1000).toISOString(), durationSeconds: 3600, localStorageKey: 'recording_live-session-2_rec1', type: 'video', fileName: 'rec1.webm', blobUrl: ''}
-//     ],
-//     interviewTopics: ['Behavioral Questions', 'Prioritization', 'Stakeholder Management'],
-//     preSelectedQuestions: sampleInterviewQuestions.filter(q => q.category === "Behavioral").slice(0,3).map(q=> ({id: q.id, questionText: q.questionText, category: q.category, difficulty: q.difficulty, baseScore: q.baseScore || 10})),
-//     interviewerScores: [
-//         { questionId: sampleInterviewQuestions.find(q => q.category === "Behavioral")!.id, correctnessPercentage: 75, notes: "Good overall answer, could be more specific in the 'Action' part."}
-//     ],
-//     finalScore: { achievedScore: 22, totalPossibleScore: 30, percentage: 73.33, reportNotes: "Candidate performed well on behavioral aspects."}
-//   },
-//   {
-//     id: 'live-session-3',
-//     tenantId: 'tenant-2',
-//     title: 'Data Science - Technical Deep Dive (Live)',
-//     participants: [
-//       { userId: 'managerUser1', name: 'Manager Mike', role: 'interviewer', profilePictureUrl: samplePlatformUsers.find(u=>u.id === 'managerUser1')?.profilePictureUrl },
-//       { userId: 'alumni3', name: 'Charlie Brown', role: 'candidate', profilePictureUrl: samplePlatformUsers.find(u=>u.id === 'alumni3')?.profilePictureUrl }
-//     ],
-//     scheduledTime: new Date(SAMPLE_DATA_BASE_DATE.getTime() + 5 * 24 * 60 * 60 * 1000).toISOString(), 
-//     status: 'Scheduled' as LiveInterviewSessionStatus,
-//     interviewTopics: ['Machine Learning Algorithms', 'Python', 'Statistics'],
-//     preSelectedQuestions: sampleInterviewQuestions.filter(q => q.category === "Technical" && q.tags?.includes("python")).slice(0,2).map(q=> ({id: q.id, questionText: q.questionText, category: q.category, difficulty: q.difficulty, baseScore: q.baseScore || 15})),
-//     interviewerScores: [],
-//     recordingReferences: []
-//   }
-// ];
-// Commented out the definitions for `sampleLiveInterviewSessions` and `samplePracticeSessions`
-// as they were related to the live interview features which are currently removed.
-// If these features are re-added, this sample data can be uncommented and updated.
-export const samplePracticeSessions: PracticeSession[] = [];
-export let sampleLiveInterviewSessions: LiveInterviewSession[] = [];
+export let sampleLiveInterviewSessions: LiveInterviewSession[] = [
+  {
+    id: 'ps1', // Match the ID from samplePracticeSessions for easy linking
+    tenantId: 'tenant-2', // Manager Mike's tenant
+    title: 'Angular Frontend Practice (Expert Mock for Mike)',
+    participants: [
+      { userId: 'managerUser1', name: 'Manager Mike', role: 'interviewer', profilePictureUrl: samplePlatformUsers.find(u => u.id === 'managerUser1')?.profilePictureUrl },
+      { userId: 'expert-angular-1', name: 'Expert Angular Candidate', role: 'candidate', profilePictureUrl: 'https://avatar.vercel.sh/expert-candidate.png' } 
+    ],
+    scheduledTime: new Date(SAMPLE_DATA_BASE_DATE.getTime() + 86400000 * 3).toISOString(),
+    status: LiveInterviewSessionStatuses[0], // 'Scheduled'
+    meetingLink: 'https://meet.example.com/angular-live-ps1',
+    interviewTopics: ['Angular Core Concepts', 'TypeScript', 'RxJS Problem Solving'],
+    preSelectedQuestions: [
+      sampleInterviewQuestions.find(q => q.id === 'iq1'), // Behavioral - baseScore will be defaulted
+      sampleInterviewQuestions.find(q => q.id === 'iq3'), // Technical - should have baseScore
+      sampleInterviewQuestions.find(q => q.id === 'coding1'), // Coding - should have baseScore
+      {id: 'angular-generic-1', questionText: "Describe the role of NgModules in Angular.", category: "Technical", difficulty: "Medium", baseScore: 10} // Generic placeholder
+    ].filter(Boolean).map(q => ({ // Ensure q is not undefined and map
+        id: q!.id, 
+        questionText: q!.questionText, 
+        category: q!.category, 
+        difficulty: q!.difficulty, 
+        baseScore: q!.baseScore || 10 // Default baseScore if not present
+    })) as MockInterviewQuestion[],
+    recordingReferences: [],
+    interviewerScores: [],
+    finalScore: undefined,
+  },
+  {
+    id: 'live-session-1', 
+    tenantId: 'Brainqy',
+    title: 'Frontend Developer Screening (Live)',
+    participants: [
+      { userId: 'alumni1', name: 'Alice Wonderland', role: 'interviewer', profilePictureUrl: samplePlatformUsers.find(u=>u.id === 'alumni1')?.profilePictureUrl },
+      { userId: 'alumni2', name: 'Bob The Builder', role: 'candidate', profilePictureUrl: samplePlatformUsers.find(u=>u.id === 'alumni2')?.profilePictureUrl } 
+    ],
+    scheduledTime: new Date(SAMPLE_DATA_BASE_DATE.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString(), 
+    status: LiveInterviewSessionStatuses[0], // 'Scheduled'
+    meetingLink: 'https://meet.example.com/live123',
+    interviewTopics: ['React', 'JavaScript', 'CSS', 'Behavioral'],
+    preSelectedQuestions: [
+      sampleInterviewQuestions.find(q=>q.id === 'iq1'),
+      sampleInterviewQuestions.find(q=>q.id === 'iq5'),
+      sampleInterviewQuestions.find(q=>q.id === 'mcq1'),
+    ].filter(Boolean).map(q => ({id: q!.id, questionText: q!.questionText, category: q!.category, difficulty: q!.difficulty, baseScore: q!.baseScore || 10})) as MockInterviewQuestion[],
+    recordingReferences: [],
+    interviewerScores: [],
+    finalScore: undefined,
+  },
+];
+
+    
