@@ -1,9 +1,8 @@
 
-
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { BarChart, Users, Settings, Activity, Building2, FileText, MessageSquare, Zap as ZapIcon, ShieldQuestion, UserPlus, Briefcase, Handshake, Mic, ListChecks, Clock, TrendingUp, Megaphone } from "lucide-react"; 
+import { BarChart, Users, Settings, Activity, Building2, FileText, MessageSquare, Zap as ZapIcon, ShieldQuestion, UserPlus, Briefcase, Handshake, Mic, ListChecks, Clock, TrendingUp, Megaphone, CalendarDays } from "lucide-react"; 
 import { useEffect, useState, useMemo } from "react";
 import WelcomeTourDialog from '@/components/features/WelcomeTourDialog';
 import { 
@@ -19,28 +18,27 @@ import {
 } from "@/lib/sample-data"; 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import type { Tenant } from "@/types";
+import type { Tenant, UserProfile } from "@/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ResponsiveContainer, BarChart as RechartsBarChart, XAxis, YAxis, Tooltip, Legend, Bar as RechartsBar, CartesianGrid, LineChart, Line } from 'recharts';
 
 interface TenantActivityStats extends Tenant {
   userCount: number;
-  resumesAnalyzed: number;
-  communityPostsCount: number;
-  jobApplicationsCount: number;
+  newUsersThisPeriod: number; // Added for period-based stats
+  resumesAnalyzedThisPeriod: number; // Added
+  communityPostsCountThisPeriod: number; // Added
+  jobApplicationsCount: number; // Kept as total for now
 }
 
-// Mock data for time spent stats
 const mockTimeSpentData = {
-  averageSessionDuration: 25.5, // minutes
+  averageSessionDuration: 25.5, 
   topFeaturesByTime: [
-    { name: "Resume Analyzer", time: 1200 }, // minutes
+    { name: "Resume Analyzer", time: 1200 }, 
     { name: "Community Feed", time: 950 },
     { name: "Job Tracker", time: 800 },
     { name: "Alumni Connect", time: 700 },
     { name: "Profile Editing", time: 600 },
   ],
-  // Unified platformUsageData, labels will change based on period selection
   platformUsageData: {
     weekly: [
       { periodLabel: "Week 1", hours: 150 },
@@ -55,9 +53,9 @@ const mockTimeSpentData = {
       { periodLabel: "Apr", hours: 720 },
     ],
   },
-  topUsersByTime: samplePlatformUsers.slice(0,5).map((user, idx) => ({
+  topUsersByTime: (period: 'weekly' | 'monthly') => samplePlatformUsers.slice(0,5).map((user) => ({
     name: user.name,
-    time: Math.floor(Math.random() * 20) + 5, // Random hours between 5 and 25
+    time: Math.floor(Math.random() * (period === 'weekly' ? 20 : 80)) + (period === 'weekly' ? 5 : 20), 
   })).sort((a,b) => b.time - a.time),
 };
 
@@ -65,6 +63,8 @@ const mockTimeSpentData = {
 export default function AdminDashboard() {
   const [showAdminTour, setShowAdminTour] = useState(false);
   const [usagePeriod, setUsagePeriod] = useState<'weekly' | 'monthly'>('weekly');
+  const [currentTenantActivityData, setCurrentTenantActivityData] = useState<TenantActivityStats[]>([]);
+
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -76,48 +76,63 @@ export default function AdminDashboard() {
   }, []);
 
   const platformStats = useMemo(() => {
+    const now = new Date();
+    const oneWeekAgo = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
+    const oneMonthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+    
+    const startDate = usagePeriod === 'weekly' ? oneWeekAgo : oneMonthAgo;
+
     const totalUsers = samplePlatformUsers.length;
-    const activeUsersToday = samplePlatformUsers.filter(u => u.lastLogin && new Date(u.lastLogin) >= new Date(Date.now() - 24 * 60 * 60 * 1000)).length;
-    const newSignupsThisWeek = samplePlatformUsers.filter(u => u.createdAt && new Date(u.createdAt) >= new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length;
-    const totalResumesAnalyzed = sampleResumeScanHistory.length;
-    const totalJobApplications = sampleJobApplications.length;
-    const totalCommunityPosts = sampleCommunityPosts.length;
-    const totalAlumniConnections = sampleAlumni.length * 5; // Mock
+    const activeUsersThisPeriod = samplePlatformUsers.filter(u => u.lastLogin && new Date(u.lastLogin) >= startDate).length;
+    const newSignupsThisPeriod = samplePlatformUsers.filter(u => u.createdAt && new Date(u.createdAt) >= startDate).length;
+    const totalResumesAnalyzedThisPeriod = sampleResumeScanHistory.filter(s => new Date(s.scanDate) >= startDate).length;
+    const totalJobApplicationsThisPeriod = sampleJobApplications.filter(j => new Date(j.dateApplied) >= startDate).length;
+    const totalCommunityPostsThisPeriod = sampleCommunityPosts.filter(p => new Date(p.timestamp) >= startDate).length;
+    const totalAlumniConnections = sampleAlumni.length * 5; 
     const totalMockInterviews = sampleMockInterviewSessions.length;
 
     return {
       totalUsers,
-      activeUsersToday,
-      newSignupsThisWeek,
-      totalResumesAnalyzed,
-      totalJobApplications,
-      totalCommunityPosts,
+      activeUsersThisPeriod,
+      newSignupsThisPeriod,
+      totalResumesAnalyzedThisPeriod,
+      totalJobApplicationsThisPeriod,
+      totalCommunityPostsThisPeriod,
       totalAlumniConnections,
       totalMockInterviews,
     };
-  }, []);
+  }, [usagePeriod]);
+  
+  useEffect(() => {
+    const now = new Date();
+    const oneWeekAgo = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
+    const oneMonthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+    const startDate = usagePeriod === 'weekly' ? oneWeekAgo : oneMonthAgo;
 
-  const tenantActivityData = useMemo((): TenantActivityStats[] => {
-    return sampleTenants.map(tenant => {
+    const data = sampleTenants.map(tenant => {
       const usersInTenant = samplePlatformUsers.filter(u => u.tenantId === tenant.id);
-      const resumesAnalyzedInTenant = sampleResumeScanHistory.filter(s => s.tenantId === tenant.id);
-      const communityPostsInTenant = sampleCommunityPosts.filter(p => p.tenantId === tenant.id);
-      const jobApplicationsInTenant = sampleJobApplications.filter(j => j.tenantId === tenant.id);
+      const newUsersInTenantThisPeriod = usersInTenant.filter(u => u.createdAt && new Date(u.createdAt) >= startDate).length;
+      const resumesAnalyzedInTenantThisPeriod = sampleResumeScanHistory.filter(s => s.tenantId === tenant.id && new Date(s.scanDate) >= startDate).length;
+      const communityPostsInTenantThisPeriod = sampleCommunityPosts.filter(p => p.tenantId === tenant.id && new Date(p.timestamp) >= startDate).length;
+      const jobApplicationsInTenant = sampleJobApplications.filter(j => j.tenantId === tenant.id); // Total for now
       return {
         ...tenant,
         userCount: usersInTenant.length,
-        resumesAnalyzed: resumesAnalyzedInTenant.length,
-        communityPostsCount: communityPostsInTenant.length,
-        jobApplicationsCount: jobApplicationsInTenant.length,
+        newUsersThisPeriod: newUsersInTenantThisPeriod,
+        resumesAnalyzedThisPeriod: resumesAnalyzedInTenantThisPeriod,
+        communityPostsCountThisPeriod: communityPostsInTenantThisPeriod,
+        jobApplicationsCount: jobApplicationsInTenant.length, 
       };
     });
-  }, []);
+    setCurrentTenantActivityData(data);
+  }, [usagePeriod]);
   
-  const chartData = tenantActivityData.map(tenant => ({
+  const chartData = currentTenantActivityData.map(tenant => ({
       name: tenant.name.substring(0,15) + (tenant.name.length > 15 ? "..." : ""), 
-      Users: tenant.userCount,
-      Resumes: tenant.resumesAnalyzed,
-      Posts: tenant.communityPostsCount,
+      Users: tenant.userCount, // Display total users
+      NewUsers: tenant.newUsersThisPeriod, // Display new users for the period
+      ResumesAnalyzed: tenant.resumesAnalyzedThisPeriod, // Display period-specific
+      CommunityPosts: tenant.communityPostsCountThisPeriod, // Display period-specific
   }));
 
 
@@ -134,7 +149,6 @@ export default function AdminDashboard() {
         <h1 className="text-3xl font-bold tracking-tight text-foreground">Admin Dashboard</h1>
         <p className="text-muted-foreground">Manage users, system settings, and view overall platform statistics.</p>
 
-        {/* Promotional Spotlight Card */}
         <Card className="shadow-lg md:col-span-2 lg:col-span-4 bg-gradient-to-r from-primary/10 via-secondary/5 to-accent/10">
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><Megaphone className="h-5 w-5 text-primary"/>Promotional Spotlight</CardTitle>
@@ -154,7 +168,7 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{platformStats.totalUsers}</div>
-              <p className="text-xs text-muted-foreground">+{platformStats.newSignupsThisWeek} new this week</p>
+              <p className="text-xs text-muted-foreground">+{platformStats.newSignupsThisPeriod} new this {usagePeriod}</p>
             </CardContent>
           </Card>
           <Card className="shadow-lg">
@@ -173,8 +187,8 @@ export default function AdminDashboard() {
               <FileText className="h-5 w-5 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{platformStats.totalResumesAnalyzed}</div>
-              <p className="text-xs text-muted-foreground">+200 this week</p>
+              <div className="text-2xl font-bold">{platformStats.totalResumesAnalyzedThisPeriod}</div>
+              <p className="text-xs text-muted-foreground">This {usagePeriod}</p>
             </CardContent>
           </Card>
            <Card className="shadow-lg">
@@ -183,8 +197,8 @@ export default function AdminDashboard() {
               <MessageSquare className="h-5 w-5 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{platformStats.totalCommunityPosts}</div>
-              <p className="text-xs text-muted-foreground">+15 new today</p>
+              <div className="text-2xl font-bold">{platformStats.totalCommunityPostsThisPeriod}</div>
+              <p className="text-xs text-muted-foreground">New this {usagePeriod}</p>
             </CardContent>
           </Card>
         </div>
@@ -196,8 +210,8 @@ export default function AdminDashboard() {
               <Activity className="h-5 w-5 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{platformStats.activeUsersToday} Active Today</div>
-              <p className="text-xs text-muted-foreground">Users active in last 24 hours</p>
+              <div className="text-2xl font-bold">{platformStats.activeUsersThisPeriod} Active</div>
+              <p className="text-xs text-muted-foreground">Users active this {usagePeriod}</p>
             </CardContent>
           </Card>
           <Card className="shadow-lg">
@@ -206,8 +220,8 @@ export default function AdminDashboard() {
               <Briefcase className="h-5 w-5 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{platformStats.totalJobApplications}</div>
-              <p className="text-xs text-muted-foreground">Total tracked applications</p>
+              <div className="text-2xl font-bold">{platformStats.totalJobApplicationsThisPeriod}</div>
+              <p className="text-xs text-muted-foreground">Tracked this {usagePeriod}</p>
             </CardContent>
           </Card>
            <Card className="shadow-lg">
@@ -233,31 +247,17 @@ export default function AdminDashboard() {
         </div>
 
         <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle>Tenant Activity Overview</CardTitle>
-            <CardDescription>Key engagement metrics per tenant.</CardDescription>
-          </CardHeader>
-          <CardContent className="h-[400px]">
-             <ResponsiveContainer width="100%" height="100%">
-                <RechartsBarChart data={chartData} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" angle={-30} textAnchor="end" height={70} interval={0} tick={{fontSize: 10}}/>
-                  <YAxis allowDecimals={false}/>
-                  <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }} />
-                  <Legend wrapperStyle={{fontSize: "12px"}}/>
-                  <RechartsBar dataKey="Users" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
-                  <RechartsBar dataKey="Resumes" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} name="Resumes Analyzed"/>
-                  <RechartsBar dataKey="Posts" fill="hsl(var(--chart-3))" radius={[4, 4, 0, 0]} name="Community Posts"/>
-                </RechartsBarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-        
-        {/* Time Spent Statistics Section */}
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Clock className="h-5 w-5 text-primary"/>Time Spent Statistics</CardTitle>
-            <CardDescription>Insights into user engagement time.</CardDescription>
+          <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+            <div>
+              <CardTitle className="flex items-center gap-2"><Clock className="h-5 w-5 text-primary"/>Time Spent Statistics</CardTitle>
+              <CardDescription>Insights into user engagement time.</CardDescription>
+            </div>
+            <Tabs value={usagePeriod} onValueChange={(value) => setUsagePeriod(value as 'weekly' | 'monthly')} className="w-full sm:w-auto">
+                <TabsList className="grid w-full grid-cols-2 h-9 sm:w-auto">
+                    <TabsTrigger value="weekly" className="text-xs py-1 px-2">Weekly</TabsTrigger>
+                    <TabsTrigger value="monthly" className="text-xs py-1 px-2">Monthly</TabsTrigger>
+                </TabsList>
+            </Tabs>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -267,13 +267,7 @@ export default function AdminDashboard() {
                 </Card>
                  <Card className="bg-secondary/30">
                     <CardHeader className="pb-2">
-                        <Tabs value={usagePeriod} onValueChange={(value) => setUsagePeriod(value as 'weekly' | 'monthly')} className="w-full">
-                            <TabsList className="grid w-full grid-cols-2 mb-2 h-8">
-                                <TabsTrigger value="weekly" className="text-xs py-1">Weekly</TabsTrigger>
-                                <TabsTrigger value="monthly" className="text-xs py-1">Monthly</TabsTrigger>
-                            </TabsList>
-                             <CardTitle className="text-base">Total {usagePeriod.charAt(0).toUpperCase() + usagePeriod.slice(1)} Platform Usage</CardTitle>
-                        </Tabs>
+                         <CardTitle className="text-base">Total Platform Usage ({usagePeriod.charAt(0).toUpperCase() + usagePeriod.slice(1)})</CardTitle>
                     </CardHeader>
                     <CardContent className="h-[100px]">
                         <ResponsiveContainer width="100%" height="100%">
@@ -288,10 +282,10 @@ export default function AdminDashboard() {
                     </CardContent>
                 </Card>
                 <Card className="bg-secondary/30 md:col-span-2 lg:col-span-1">
-                    <CardHeader className="pb-2"><CardTitle className="text-base">Top Users (Weekly)</CardTitle></CardHeader>
+                    <CardHeader className="pb-2"><CardTitle className="text-base">Top Users ({usagePeriod.charAt(0).toUpperCase() + usagePeriod.slice(1)})</CardTitle></CardHeader>
                     <CardContent>
                         <ul className="space-y-1 text-xs">
-                            {mockTimeSpentData.topUsersByTime.map(user => (
+                            {mockTimeSpentData.topUsersByTime(usagePeriod).map(user => (
                                 <li key={user.name} className="flex justify-between">
                                     <span>{user.name}</span>
                                     <span className="font-semibold">{user.time} hrs</span>
@@ -308,7 +302,7 @@ export default function AdminDashboard() {
                         <div key={feature.name} className="text-sm">
                             <div className="flex justify-between mb-0.5">
                                 <span>{feature.name}</span>
-                                <span className="text-muted-foreground">{Math.round(feature.time / 60)} hrs</span>
+                                <span className="text-muted-foreground">{Math.round(feature.time / 60)} hrs ({feature.time} min)</span>
                             </div>
                             <div className="w-full bg-muted rounded-full h-1.5">
                                 <div className="bg-primary h-1.5 rounded-full" style={{width: `${(feature.time / mockTimeSpentData.topFeaturesByTime[0].time) * 100}%`}}></div>
@@ -319,6 +313,27 @@ export default function AdminDashboard() {
             </div>
           </CardContent>
         </Card>
+        
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle>Tenant Activity Overview ({usagePeriod.charAt(0).toUpperCase() + usagePeriod.slice(1)})</CardTitle>
+            <CardDescription>Key engagement metrics per tenant for the selected period.</CardDescription>
+          </CardHeader>
+          <CardContent className="h-[400px]">
+             <ResponsiveContainer width="100%" height="100%">
+                <RechartsBarChart data={chartData} margin={{ top: 5, right: 20, left: 20, bottom: 70 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" angle={-45} textAnchor="end" interval={0} tick={{fontSize: 10}}/>
+                  <YAxis allowDecimals={false}/>
+                  <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }} />
+                  <Legend wrapperStyle={{fontSize: "12px"}}/>
+                  <RechartsBar dataKey="NewUsers" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} name="New Users" />
+                  <RechartsBar dataKey="ResumesAnalyzed" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} name="Resumes Analyzed"/>
+                  <RechartsBar dataKey="CommunityPosts" fill="hsl(var(--chart-3))" radius={[4, 4, 0, 0]} name="Community Posts"/>
+                </RechartsBarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
 
 
         <Card className="shadow-lg">
@@ -326,14 +341,14 @@ export default function AdminDashboard() {
             <CardTitle>Admin Quick Actions</CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            <Button asChild variant="outline"><Link href="/admin/user-management"><Users className="mr-2 h-4 w-4"/>Manage Users</Link></Button>
-            <Button asChild variant="outline"><Link href="/admin/platform-settings"><Settings className="mr-2 h-4 w-4"/>Platform Settings</Link></Button>
-            <Button asChild variant="outline"><Link href="/admin/tenants"><Building2 className="mr-2 h-4 w-4"/>Manage Tenants</Link></Button>
-            <Button asChild variant="outline"><Link href="/admin/content-moderation"><MessageSquare className="mr-2 h-4 w-4"/>Content Moderation</Link></Button>
-            <Button asChild variant="outline"><Link href="/admin/announcements"><Megaphone className="mr-2 h-4 w-4"/>Announcements</Link></Button>
-            <Button asChild variant="outline"><Link href="/admin/gamification-rules"><ListChecks className="mr-2 h-4 w-4"/>Gamification Rules</Link></Button>
-            <Button asChild variant="outline"><Link href="/admin/blog-settings"><FileText className="mr-2 h-4 w-4"/>Blog Settings</Link></Button>
-            <Button asChild variant="outline"><Link href="/admin/analytics/user-activity"><TrendingUp className="mr-2 h-4 w-4"/>User Activity Analytics</Link></Button>
+            <Button asChild variant="outline" className="justify-start text-left"><Link href="/admin/user-management"><Users className="mr-2 h-4 w-4 shrink-0"/>Manage Users</Link></Button>
+            <Button asChild variant="outline" className="justify-start text-left"><Link href="/admin/platform-settings"><Settings className="mr-2 h-4 w-4 shrink-0"/>Platform Settings</Link></Button>
+            <Button asChild variant="outline" className="justify-start text-left"><Link href="/admin/tenants"><Building2 className="mr-2 h-4 w-4 shrink-0"/>Manage Tenants</Link></Button>
+            <Button asChild variant="outline" className="justify-start text-left"><Link href="/admin/content-moderation"><MessageSquare className="mr-2 h-4 w-4 shrink-0"/>Content Moderation</Link></Button>
+            <Button asChild variant="outline" className="justify-start text-left"><Link href="/admin/announcements"><Megaphone className="mr-2 h-4 w-4 shrink-0"/>Announcements</Link></Button>
+            <Button asChild variant="outline" className="justify-start text-left"><Link href="/admin/gamification-rules"><ListChecks className="mr-2 h-4 w-4 shrink-0"/>Gamification Rules</Link></Button>
+            <Button asChild variant="outline" className="justify-start text-left"><Link href="/admin/blog-settings"><FileText className="mr-2 h-4 w-4 shrink-0"/>Blog Settings</Link></Button>
+            <Button asChild variant="outline" className="justify-start text-left"><Link href="/admin/analytics/user-activity"><TrendingUp className="mr-2 h-4 w-4 shrink-0"/>User Activity Analytics</Link></Button>
           </CardContent>
         </Card>
       </div>
