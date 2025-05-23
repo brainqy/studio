@@ -1,6 +1,6 @@
 
-import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem, Appointment, Wallet, ResumeProfile, Tenant, Badge, BlogPost, ReferralHistoryItem, GamificationRule, UserStatus, SurveyResponse, Affiliate, AffiliateClick, AffiliateSignup, AffiliateStatus, SurveyStep, ResumeTemplate, TourStep, CommunityComment, InterviewQuestion, InterviewQuestionCategory, BlogGenerationSettings, MockInterviewSession, InterviewQuestionDifficulty, InterviewQuestionUserComment, PracticeSession, PracticeSessionStatus, JobApplicationStatus, KanbanColumnId, PlatformSettings, Announcement, AnnouncementStatus, AnnouncementAudience, MockInterviewQuestion, LiveInterviewSession, LiveInterviewParticipant, RecordingReference, LiveInterviewSessionStatus, LiveInterviewSessionStatuses, InterviewerScore } from '@/types';
-import { AreasOfSupport, AppointmentStatuses, Genders, DegreePrograms, Industries, TimeCommitments, EngagementModes, SupportTypesSought, JOB_APPLICATION_STATUSES, KANBAN_COLUMNS_CONFIG, PREDEFINED_INTERVIEW_TOPICS, PRACTICE_FOCUS_AREAS, ALL_CATEGORIES, ALL_DIFFICULTIES, MOCK_INTERVIEW_STEPS, RESUME_BUILDER_STEPS, PreferredTimeSlots, AnnouncementStatuses, AnnouncementAudiences } from '@/types'; 
+import type { JobApplication, AlumniProfile, Activity, CommunityPost, FeatureRequest, GalleryEvent, JobOpening, UserProfile, UserRole, Gender, DegreeProgram, Industry, SupportArea, TimeCommitment, EngagementMode, SupportTypeSought, ResumeScanHistoryItem, Appointment, Wallet, ResumeProfile, Tenant, Badge, BlogPost, ReferralHistoryItem, GamificationRule, UserStatus, SurveyResponse, Affiliate, AffiliateClick, AffiliateSignup, AffiliateStatus, SurveyStep, ResumeTemplate, TourStep, CommunityComment, InterviewQuestion, InterviewQuestionCategory, BlogGenerationSettings, MockInterviewSession, InterviewQuestionDifficulty, InterviewQuestionUserComment, PracticeSession, PracticeSessionStatus, JobApplicationStatus, KanbanColumnId, PlatformSettings, Announcement, AnnouncementStatus, AnnouncementAudience, MockInterviewQuestion as AIMockQuestionType, LiveInterviewSession, LiveInterviewParticipant, RecordingReference, LiveInterviewSessionStatus, InterviewerScore } from '@/types';
+import { AreasOfSupport, AppointmentStatuses, Genders, DegreePrograms, Industries, TimeCommitments, EngagementModes, SupportTypesSought, JOB_APPLICATION_STATUSES, KANBAN_COLUMNS_CONFIG, PREDEFINED_INTERVIEW_TOPICS, PRACTICE_FOCUS_AREAS, ALL_CATEGORIES, ALL_DIFFICULTIES, MOCK_INTERVIEW_STEPS, RESUME_BUILDER_STEPS, PreferredTimeSlots, AnnouncementStatuses, AnnouncementAudiences, LiveInterviewSessionStatuses } from '@/types'; 
 
 export let SAMPLE_TENANT_ID = 'Brainqy'; 
 
@@ -60,7 +60,7 @@ export let sampleAlumni: AlumniProfile[] = [
   },
   { 
     id: 'alumni3', 
-    tenantId: 'tenant-2', // Moved to tenant-2 for Manager Mike to manage
+    tenantId: 'tenant-2', 
     name: 'Charlie Brown',
     profilePictureUrl: 'https://picsum.photos/seed/charlie/200/200',
     currentJobTitle: 'Data Scientist',
@@ -70,7 +70,7 @@ export let sampleAlumni: AlumniProfile[] = [
     skills: ['R', 'Statistics', 'Big Data', 'Python', 'Data Visualization'],
     email: "charlie.brown@example.com",
     role: 'user',
-    status: 'active', // Changed to active for testing
+    status: 'active',
     lastLogin: new Date(Date.now() - 86400000 * 5).toISOString(), 
     interests: ['Chess', 'Reading Sci-Fi', 'Data For Good'],
     offersHelpWith: [AreasOfSupport[0], AreasOfSupport[7]], 
@@ -346,7 +346,7 @@ Projects
     name: 'Charlie Brown',
     email: "charlie.brown@example.com",
     role: 'user',
-    status: 'active', // For testing manager view
+    status: 'active', 
     lastLogin: new Date(Date.now() - 86400000 * 30).toISOString(),
     profilePictureUrl: 'https://picsum.photos/seed/charlie/200/200',
     currentJobTitle: 'Data Scientist',
@@ -472,7 +472,7 @@ Team Leadership, Project Management, Alumni Relations, Strategic Planning, Stake
   },
 ];
 
-export let sampleUserProfile: UserProfile = samplePlatformUsers.find(u => u.id === 'managerUser1')!; 
+export let sampleUserProfile: UserProfile = samplePlatformUsers.find(u => u.id === 'alumni1')!; 
 
 
 export const sampleAppointments: Appointment[] = [
@@ -1139,7 +1139,7 @@ export let sampleInterviewQuestions: InterviewQuestion[] = [
     id: 'iq1',
     category: 'Behavioral',
     questionText: "Tell me about a time you failed.",
-    // baseScore explicitly removed to test default assignment
+    // baseScore is intentionally removed here to test default assignment
     isMCQ: true,
     mcqOptions: [
       "I've never truly failed; I see everything as a learning opportunity.",
@@ -1613,16 +1613,27 @@ export let sampleAnnouncements: Announcement[] = [
   },
 ];
 
+// Commented out as part of removing live interview feature, then re-added
 export const samplePracticeSessions: PracticeSession[] = [
   {
     id: "ps1",
-    userId: sampleUserProfile.id, // Assuming current user will be candidate for this if testing AI/Expert
+    userId: 'managerUser1', // This session is for Manager Mike to conduct
     date: new Date(SAMPLE_DATA_BASE_DATE.getTime() + 86400000 * 3).toISOString(), 
-    category: "Practice with Experts", // This will be overridden by live session participant role
-    type: "Angular Frontend", 
+    category: "Practice with Experts", // The category from user's perspective when booking
+    type: "Angular Frontend", // The topic
     language: "English",
     status: "SCHEDULED" as PracticeSessionStatus,
-    notes: "Focus on advanced component architecture and state management.",
+    notes: "Focus on advanced component architecture and state management for the candidate.",
+  },
+   {
+    id: "ps2",
+    userId: 'alumni1', // Alice is the candidate
+    date: new Date(SAMPLE_DATA_BASE_DATE.getTime() + 86400000 * 5).toISOString(),
+    category: "Practice with Experts",
+    type: "System Design Interview",
+    language: "English",
+    status: "SCHEDULED" as PracticeSessionStatus,
+    notes: "Candidate wants to practice system design for a large-scale e-commerce platform.",
   },
 ];
 
@@ -1633,24 +1644,24 @@ export let sampleLiveInterviewSessions: LiveInterviewSession[] = [
     title: 'Angular Frontend Practice (Expert Mock for Mike)',
     participants: [
       { userId: 'managerUser1', name: 'Manager Mike', role: 'interviewer', profilePictureUrl: samplePlatformUsers.find(u => u.id === 'managerUser1')?.profilePictureUrl },
-      { userId: 'expert-angular-1', name: 'Expert Angular Candidate', role: 'candidate', profilePictureUrl: 'https://avatar.vercel.sh/expert-candidate.png' } 
+      { userId: 'expert-candidate-1', name: 'Angular Candidate Alpha', role: 'candidate', profilePictureUrl: 'https://avatar.vercel.sh/expert-candidate-alpha.png' } 
     ],
     scheduledTime: new Date(SAMPLE_DATA_BASE_DATE.getTime() + 86400000 * 3).toISOString(),
     status: LiveInterviewSessionStatuses[0], // 'Scheduled'
     meetingLink: 'https://meet.example.com/angular-live-ps1',
     interviewTopics: ['Angular Core Concepts', 'TypeScript', 'RxJS Problem Solving'],
     preSelectedQuestions: [
-      sampleInterviewQuestions.find(q => q.id === 'iq1'), // Behavioral - baseScore will be defaulted
-      sampleInterviewQuestions.find(q => q.id === 'iq3'), // Technical - should have baseScore
-      sampleInterviewQuestions.find(q => q.id === 'coding1'), // Coding - should have baseScore
-      {id: 'angular-generic-1', questionText: "Describe the role of NgModules in Angular.", category: "Technical", difficulty: "Medium", baseScore: 10} // Generic placeholder
-    ].filter(Boolean).map(q => ({ // Ensure q is not undefined and map
+      sampleInterviewQuestions.find(q => q.id === 'iq1'),
+      sampleInterviewQuestions.find(q => q.id === 'iq3'),
+      sampleInterviewQuestions.find(q => q.id === 'coding1'),
+      sampleInterviewQuestions.find(q => q.questionText && q.questionText.toLowerCase().includes("angular")) || {id: 'angular-generic-1', questionText: "Describe the role of NgModules in Angular.", category: "Technical", difficulty: "Medium", baseScore: 10},
+    ].filter(Boolean).map(q => ({
         id: q!.id, 
         questionText: q!.questionText, 
         category: q!.category, 
         difficulty: q!.difficulty, 
         baseScore: q!.baseScore || 10 // Default baseScore if not present
-    })) as MockInterviewQuestion[],
+    })) as AIMockQuestionType[],
     recordingReferences: [],
     interviewerScores: [],
     finalScore: undefined,
@@ -1671,11 +1682,26 @@ export let sampleLiveInterviewSessions: LiveInterviewSession[] = [
       sampleInterviewQuestions.find(q=>q.id === 'iq1'),
       sampleInterviewQuestions.find(q=>q.id === 'iq5'),
       sampleInterviewQuestions.find(q=>q.id === 'mcq1'),
-    ].filter(Boolean).map(q => ({id: q!.id, questionText: q!.questionText, category: q!.category, difficulty: q!.difficulty, baseScore: q!.baseScore || 10})) as MockInterviewQuestion[],
+    ].filter(Boolean).map(q => ({id: q!.id, questionText: q!.questionText, category: q!.category, difficulty: q!.difficulty, baseScore: q!.baseScore || 10})) as AIMockQuestionType[],
     recordingReferences: [],
     interviewerScores: [],
     finalScore: undefined,
   },
+  {
+    id: 'live-session-3', // New session where Manager Mike is interviewer
+    tenantId: 'tenant-2',
+    title: 'Data Structures Practice with Mike',
+    participants: [
+      { userId: 'managerUser1', name: 'Manager Mike', role: 'interviewer', profilePictureUrl: samplePlatformUsers.find(u => u.id === 'managerUser1')?.profilePictureUrl },
+      { userId: 'alumni3', name: 'Charlie Brown', role: 'candidate', profilePictureUrl: samplePlatformUsers.find(u => u.id === 'alumni3')?.profilePictureUrl }
+    ],
+    scheduledTime: new Date(SAMPLE_DATA_BASE_DATE.getTime() + 86400000 * 4).toISOString(),
+    status: LiveInterviewSessionStatuses[0], // 'Scheduled'
+    meetingLink: 'https://meet.example.com/ds-mike-charlie',
+    interviewTopics: ['Data Structures', 'Algorithms', 'Problem Solving'],
+    preSelectedQuestions: [
+      sampleInterviewQuestions.find(q => q.id === 'coding2'),
+      sampleInterviewQuestions.find(q => q.id === 'iq8'),
+    ].filter(Boolean).map(q => ({id: q!.id, questionText: q!.questionText, category: q!.category, difficulty: q!.difficulty, baseScore: q!.baseScore || 15})) as AIMockQuestionType[],
+  },
 ];
-
-    
