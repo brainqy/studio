@@ -31,8 +31,6 @@ import PracticeTopicSelection from '@/components/features/interview-prep/Practic
 import PracticeDateTimeSelector from '@/components/features/interview-prep/PracticeDateTimeSelector';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-
-type InterviewType = "friends" | "experts" | "ai";
 const optionLetters = ['A', 'B', 'C', 'D', 'E', 'F'];
 
 const questionFormSchema = z.object({
@@ -72,7 +70,6 @@ export default function InterviewPracticeHubPage() {
     aiQuestionCategories: [],
   });
   const [friendEmailError, setFriendEmailError] = useState<string | null>(null);
-
 
   const [practiceSessions, setPracticeSessions] = useState<PracticeSession[]>(samplePracticeSessions.filter(s => s.userId === sampleUserProfile.id));
   const router = useRouter();
@@ -114,24 +111,23 @@ export default function InterviewPracticeHubPage() {
     resolver: zodResolver(questionFormSchema.refine(data => {
       if (data.isMCQ) {
         const validOptions = data.mcqOptions?.filter(opt => opt && opt.trim() !== "").length || 0;
-        if (validOptions < 2) return false; // Fails if less than 2 options
-        if (!data.correctAnswer || data.correctAnswer.trim() === "") return false; // Fails if no correct answer
+        if (validOptions < 2) return false; 
+        if (!data.correctAnswer || data.correctAnswer.trim() === "") return false;
       }
       return true;
     }, {
       message: "For MCQs, provide at least 2 options and a correct answer.",
-      path: ["isMCQ"], // General path, or be more specific if possible
+      path: ["isMCQ"], 
     })),
     defaultValues: { questionText: '', isMCQ: false, mcqOptions: ["", "", "", ""], correctAnswer: "", category: 'Common', difficulty: 'Medium', answerOrTip: '', tags: '' }
   });
+
   const isMCQSelected = watchQuestionForm("isMCQ");
 
-  // State for "Edit Questions" Dialog
   const [isEditQuestionsDialogOpen, setIsEditQuestionsDialogOpen] = useState(false);
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [currentEditingQuestions, setCurrentEditingQuestions] = useState<AIMockQuestionType[]>([]);
   const [newQuestionIdsInput, setNewQuestionIdsInput] = useState('');
-
 
   const upcomingSessions = practiceSessions.filter(s => s.status === 'SCHEDULED' && dateIsFuture(parseISO(s.date)));
   const allUserSessions = practiceSessions; 
@@ -180,10 +176,10 @@ export default function InterviewPracticeHubPage() {
         toast({ title: "Error", description: "Please select at least one topic.", variant: "destructive" });
         return;
       }
-      if (practiceSessionConfig.type === 'ai') { // Should not happen if type is 'ai' and coming to selectTopics, but for robustness
+      if (practiceSessionConfig.type === 'ai') { 
         setPracticeSessionConfig(prev => ({...prev, aiTopicOrRole: prev.topics.join(', ')}));
         setDialogStep('aiSetupBasic');
-      } else { // Must be 'experts' if here
+      } else { 
         setDialogStep('selectTimeSlot');
       }
     } else if (dialogStep === 'aiSetupBasic') {
@@ -204,7 +200,6 @@ export default function InterviewPracticeHubPage() {
     else if (dialogStep === 'aiSetupCategories') setDialogStep('aiSetupAdvanced');
     else if (dialogStep === 'aiSetupAdvanced') setDialogStep('aiSetupBasic');
     else if (dialogStep === 'aiSetupBasic') {
-      // If AI was chosen and topics were pre-selected, go back to topics
       if (practiceSessionConfig.type === 'ai' && practiceSessionConfig.topics.length > 0 && 
           practiceSessionConfig.aiTopicOrRole === practiceSessionConfig.topics.join(', ')) {
         setDialogStep('selectTopics');
@@ -237,15 +232,8 @@ export default function InterviewPracticeHubPage() {
             notes: `Scheduled expert session for topics: ${practiceSessionConfig.topics.join(', ')}.`,
         };
         
-        const updatedPracticeSessions = [newSession, ...practiceSessions];
-        setPracticeSessions(updatedPracticeSessions);
-        
-        const globalPracticeIndex = samplePracticeSessions.findIndex(s => s.id === newSession.id);
-        if (globalPracticeIndex === -1) {
-            samplePracticeSessions.unshift(newSession);
-        } else {
-            samplePracticeSessions[globalPracticeIndex] = newSession;
-        }
+        setPracticeSessions(prev => [newSession, ...prev]);
+        samplePracticeSessions.unshift(newSession);
 
         const newLiveSession: LiveInterviewSession = {
             id: newSessionId, 
@@ -261,18 +249,13 @@ export default function InterviewPracticeHubPage() {
                 .filter(q => practiceSessionConfig.topics.some(topic => 
                     (q.category && q.category.toLowerCase() === topic.toLowerCase()) || 
                     (q.tags && q.tags.some(tag => tag.toLowerCase() === topic.toLowerCase())) ||
-                    (q.questionText && q.questionText.toLowerCase().includes(topic.toLowerCase()))
+                    (q.questionText && typeof q.questionText === 'string' && q.questionText.toLowerCase().includes(topic.toLowerCase()))
                 ))
                 .slice(0,5) 
                 .map(q => ({id: q.id, questionText: q.questionText, category: q.category, difficulty: q.difficulty, baseScore: q.baseScore || 10 })),
         };
         
-        const globalLiveIndex = sampleLiveInterviewSessions.findIndex(s => s.id === newLiveSession.id);
-        if (globalLiveIndex === -1) {
-            sampleLiveInterviewSessions.unshift(newLiveSession);
-        } else {
-            sampleLiveInterviewSessions[globalLiveIndex] = newLiveSession;
-        }
+        sampleLiveInterviewSessions.unshift(newLiveSession);
 
         toast({ title: "Expert Session Booked (Mock)", description: `Session for ${newSession.type} on ${format(practiceSessionConfig.dateTime, 'PPp')} scheduled.` });
 
@@ -308,11 +291,10 @@ export default function InterviewPracticeHubPage() {
 
 
   const handleCancelPracticeSession = (sessionId: string) => {
-    const updater = (session: PracticeSession) => session.id === sessionId ? { ...session, status: 'CANCELLED' as PracticeSession['status'] } : session;
-    setPracticeSessions(prev => prev.map(updater));
+    setPracticeSessions(prev => prev.map(s => s.id === sessionId ? { ...s, status: 'CANCELLED' } : s));
     const globalIndex = samplePracticeSessions.findIndex(s => s.id === sessionId);
     if (globalIndex !== -1) {
-        (samplePracticeSessions[globalIndex] as any).status = 'CANCELLED';
+        samplePracticeSessions[globalIndex].status = 'CANCELLED';
     }
     toast({ title: "Session Cancelled", description: "The practice session has been cancelled.", variant: "destructive" });
   };
@@ -767,7 +749,7 @@ export default function InterviewPracticeHubPage() {
       </Card>
 
 
-      <Card className="shadow-lg">
+      <Card className="shadow-lg" id="question-bank">
         <CardHeader className="flex flex-row justify-between items-center">
             <div>
                 <CardTitle className="text-xl font-semibold flex items-center gap-2"><ListFilter className="h-5 w-5 text-primary"/>Question Bank ({filteredBankQuestions.length})</CardTitle>
@@ -830,7 +812,7 @@ export default function InterviewPracticeHubPage() {
                     <Accordion key={q.id} type="single" collapsible className="border rounded-md mb-2 bg-card shadow-sm hover:shadow-md transition-shadow">
                         <AccordionItem value={`item-${q.id}`} className="border-b-0">
                            <AccordionTrigger
-                            asChild={true} 
+                            asChild={true}
                             className="px-4 py-3 text-left text-sm font-medium group hover:bg-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 data-[state=open]:bg-secondary/50 data-[state=open]:rounded-b-none rounded-t-md"
                           >
                             <div className="flex items-start flex-1 gap-3 w-full">
@@ -1055,7 +1037,6 @@ export default function InterviewPracticeHubPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Questions Dialog */}
       <Dialog open={isEditQuestionsDialogOpen} onOpenChange={(isOpen) => {
         if (!isOpen) {
             setEditingSessionId(null);
@@ -1111,3 +1092,5 @@ export default function InterviewPracticeHubPage() {
     </div>
   );
 }
+
+    
