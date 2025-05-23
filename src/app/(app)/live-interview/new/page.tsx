@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import type { LiveInterviewSession, MockInterviewQuestion } from "@/types";
+import type { LiveInterviewSession, MockInterviewQuestion } from '@/types';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { sampleLiveInterviewSessions, sampleInterviewQuestions, sampleUserProfile } from "@/lib/sample-data";
 
@@ -19,7 +19,7 @@ import { sampleLiveInterviewSessions, sampleInterviewQuestions, sampleUserProfil
 export default function NewLiveInterviewPage() {
   const [title, setTitle] = useState('');
   const [participantEmails, setParticipantEmails] = useState('');
-  const [questionIdsInput, setQuestionIdsInput] = useState(''); // State for the textarea
+  const [questionIdsInput, setQuestionIdsInput] = useState(''); 
   const { toast } = useToast();
   const router = useRouter(); 
   const currentUser = sampleUserProfile;
@@ -50,10 +50,10 @@ export default function NewLiveInterviewPage() {
                     questionText: questionFromBank.questionText, 
                     category: questionFromBank.category, 
                     difficulty: questionFromBank.difficulty,
-                    baseScore: questionFromBank.baseScore || 10 // Default base score
+                    baseScore: questionFromBank.baseScore || 10 
                 };
             }
-            return null; // Or some placeholder if ID not found
+            return null; 
         })
         .filter(q => q !== null) as MockInterviewQuestion[];
 
@@ -66,7 +66,7 @@ export default function NewLiveInterviewPage() {
         { userId: currentUser.id, name: currentUser.name, role: 'interviewer', profilePictureUrl: currentUser.profilePictureUrl },
         ...emails.map((email, index) => ({
             userId: `participant-temp-${index}-${Date.now()}`,
-            name: email.split('@')[0] || `Participant ${index + 1}`, // Use part of email or generic name
+            name: email.split('@')[0] || `Participant ${index + 1}`, 
             role: 'candidate',
             profilePictureUrl: `https://avatar.vercel.sh/${email}.png`
         }))

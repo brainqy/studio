@@ -113,7 +113,7 @@ export default function InterviewPracticeHubPage() {
     formState: { errors: questionFormErrors } 
   } = useForm<QuestionFormData>({
     resolver: zodResolver(questionFormSchema),
-    defaultValues: { isMCQ: false, mcqOptions: ["", "", "", ""], category: 'Common', difficulty: 'Medium' }
+    defaultValues: { questionText: '', isMCQ: false, mcqOptions: ["", "", "", ""], category: 'Common', difficulty: 'Medium', answerOrTip: '', tags: '' }
   });
   const isMCQSelected = watchQuestionForm("isMCQ");
 
@@ -758,10 +758,7 @@ export default function InterviewPracticeHubPage() {
                     paginatedBankQuestions.map(q => (
                     <Accordion key={q.id} type="single" collapsible className="border rounded-md mb-2 bg-card shadow-sm hover:shadow-md transition-shadow">
                         <AccordionItem value={`item-${q.id}`} className="border-b-0">
-                          <AccordionTrigger
-                            asChild={true}
-                            className="px-4 py-3 text-left text-sm font-medium group hover:bg-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 data-[state=open]:bg-secondary/50 data-[state=open]:rounded-b-none rounded-t-md"
-                          >
+                           <AccordionTrigger asChild={true} className="px-4 py-3 text-left text-sm font-medium group hover:bg-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 data-[state=open]:bg-secondary/50 data-[state=open]:rounded-b-none rounded-t-md">
                             <div className="flex items-start flex-1 gap-3 w-full">
                                 <div className="flex items-center pt-0.5">
                                     <Checkbox
@@ -804,6 +801,7 @@ export default function InterviewPracticeHubPage() {
                             </div>
                           </AccordionTrigger>
                         <AccordionContent className="px-4 pb-3 pt-1 space-y-3">
+                            <p className="text-xs font-semibold text-muted-foreground">Question ID: <span className="font-mono text-primary">{q.id}</span></p> {/* Display Question ID */}
                             <div className="bg-primary/5 p-3 rounded-md">
                                 <p className="text-xs font-semibold text-primary mb-1">Suggested Answer/Tip:</p>
                                 <p className="text-xs text-foreground whitespace-pre-line">{q.answerOrTip}</p>
