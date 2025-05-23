@@ -586,6 +586,7 @@ export interface MockInterviewQuestion {
   questionText: string;
   category?: InterviewQuestionCategory;
   difficulty?: InterviewQuestionDifficulty;
+  baseScore?: number; // Added for interviewer scoring
 }
 
 export interface MockInterviewAnswer {
@@ -735,7 +736,7 @@ export interface PracticeSession {
 
 export const PREDEFINED_INTERVIEW_TOPICS: string[] = Array.from(new Set([
     "Java", "Python", "DSA", "Angular", "Javascript", "Microservices",
-    "System Design", /* Removed "Behavioral" here as it's in ALL_CATEGORIES */ "Product Management", "Data Science",
+    "System Design", "Product Management", "Data Science", // Removed Behavioral here
     ...ALL_CATEGORIES
 ]));
 
@@ -1026,6 +1027,12 @@ export interface RecordingReference {
   blobUrl?: string; // For temporary local playback
 }
 
+export interface InterviewerScore {
+  questionId: string;
+  correctnessPercentage: 0 | 25 | 50 | 75 | 100;
+  notes?: string;
+}
+
 export interface LiveInterviewSession {
   id: string;
   tenantId: string;
@@ -1039,6 +1046,22 @@ export interface LiveInterviewSession {
   interviewTopics?: string[];
   notes?: string;
   preSelectedQuestions?: MockInterviewQuestion[];
-  // aiSuggestedQuestionsLog?: Array<{ timestamp: string; contextSent: GenerateLiveInterviewQuestionsInput, suggestionsReceived: GenerateLiveInterviewQuestionsOutput['suggestedQuestions'] }>; // Commented out as flow is removed
   recordingReferences?: RecordingReference[];
+  interviewerScores?: InterviewerScore[];
+  finalScore?: {
+    achievedScore: number;
+    totalPossibleScore: number;
+    percentage: number;
+    reportNotes?: string;
+  };
 }
+
+export type Locale = 'en' | 'hi' | 'mr'; // Removed es, zh, vi for now
+export const locales: Locale[] = ['en', 'hi', 'mr']; // Removed es, zh, vi
+export const localePrefix = 'as-needed';
+
+export const localeDisplayNames: Record<Locale, string> = {
+  en: 'English',
+  hi: 'हिन्दी',
+  mr: 'मराठी',
+};

@@ -12,10 +12,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Mic, Video as VideoIcon, ScreenShare, PhoneOff, Send, Bot, ListChecks, Loader2, AlertTriangle, ThumbsUp, ChevronDown, Square, Play, Download as DownloadIcon, VideoOff, MessageSquare as ChatIcon, Users as ParticipantsIcon, HelpCircle, Maximize, Minimize, Radio, CheckSquare as CheckSquareIcon, RotateCcw } from 'lucide-react';
-// import { generateLiveInterviewQuestions, type GenerateLiveInterviewQuestionsInput, type GenerateLiveInterviewQuestionsOutput } from '@/ai/flows/generate-live-interview-questions'; // Removed for pre-selected questions
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Mic, Video as VideoIcon, ScreenShare, PhoneOff, Send, Bot, ListChecks, Loader2, AlertTriangle, ThumbsUp, ChevronDown, Square, Play, Download as DownloadIcon, VideoOff, MessageSquare as ChatIcon, Users as ParticipantsIcon, HelpCircle, Maximize, Minimize, Radio, CheckSquare, RotateCcw, Star, ThumbsDown, Save } from 'lucide-react';
 import { sampleUserProfile, sampleLiveInterviewSessions, sampleInterviewQuestions } from '@/lib/sample-data';
-import type { LiveInterviewSession, LiveInterviewParticipant, RecordingReference, MockInterviewQuestion } from '@/types';
+import type { LiveInterviewSession, LiveInterviewParticipant, RecordingReference, MockInterviewQuestion, InterviewerScore } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -27,6 +27,8 @@ const logger = {
   warn: (message: string, ...args: any[]) => console.warn(`[LiveInterviewPage] ${message}`, ...args),
   error: (message: string, ...args: any[]) => console.error(`[LiveInterviewPage] ${message}`, ...args),
 };
+
+const CORRECTNESS_PERCENTAGES: Array<InterviewerScore['correctnessPercentage']> = [0, 25, 50, 75, 100];
 
 
 export default function LiveInterviewPage() {
@@ -57,6 +59,10 @@ export default function LiveInterviewPage() {
   const [chatInput, setChatInput] = useState('');
 
   const [askedQuestions, setAskedQuestions] = useState<Set<string>>(new Set());
+  const [currentQuestionScores, setCurrentQuestionScores] = useState<Record<string, InterviewerScore>>({});
+  const [overallReportNotes, setOverallReportNotes] = useState('');
+  const [showReportView, setShowReportView] = useState(false);
+
 
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -83,8 +89,15 @@ export default function LiveInterviewPage() {
     if (sessionId) {
       const foundSession = sampleLiveInterviewSessions.find(s => s.id === sessionId);
       if (foundSession) {
-        setSessionDetails(foundSession);
+        setSessionDetails(prev => ({...prev, ...foundSession, interviewerScores: foundSession.interviewerScores || []}));
         setLocalRecordingReferences(foundSession.recordingReferences || []);
+        if(foundSession.interviewerScores) {
+            const initialScores: Record<string, InterviewerScore> = {};
+            foundSession.interviewerScores.forEach(score => {
+                initialScores[score.questionId] = score;
+            });
+            setCurrentQuestionScores(initialScores);
+        }
         logger.info("[LiveInterviewPage] Session details loaded:", foundSession.title);
       } else {
         setSessionDetails(null);
@@ -112,14 +125,14 @@ export default function LiveInterviewPage() {
                 await liveInterviewContainerRef.current.requestFullscreen();
             } catch (err) {
                 console.warn("Auto-fullscreen for live interview failed:", err);
-                toast({ title: "Fullscreen Note", description: "Automatic fullscreen failed. You can enable it manually.", variant: "default", duration: 4000 });
+                // toast({ title: "Fullscreen Note", description: "Automatic fullscreen failed. You can enable it manually.", variant: "default", duration: 4000 });
             }
         }
     };
-    if (!isLoadingSession && sessionDetails) { // Ensure session is ready
+    if (!isLoadingSession && sessionDetails) { 
         requestFs();
     }
-  }, [isLoadingSession, sessionDetails, toast]); // Dependencies updated
+  }, [isLoadingSession, sessionDetails]); 
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -134,8 +147,8 @@ export default function LiveInterviewPage() {
     if (isInterviewer && sessionDetails?.preSelectedQuestions && sessionDetails.preSelectedQuestions.length > 0) {
       setOpenAccordionItems(['interview-questions', 'chat', 'participants']);
     } else if (isInterviewer) {
-      setOpenAccordionItems(['chat', 'participants']); // Open chat/participants if no questions
-    } else { // Candidate
+      setOpenAccordionItems(['chat', 'participants']); 
+    } else { 
       setOpenAccordionItems(['chat', 'participants']);
     }
   }, [isInterviewer, sessionDetails]);
@@ -171,7 +184,7 @@ export default function LiveInterviewPage() {
       return null;
     }
     try {
-      if (cameraStream) { // Stop existing camera stream first
+      if (cameraStream) { 
         stopStreamTracks(cameraStream);
       }
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: !isMicMuted });
@@ -222,8 +235,8 @@ export default function LiveInterviewPage() {
         stopStreamTracks(screenStream);
       }
       const stream = await navigator.mediaDevices.getDisplayMedia({
-        video: { cursor: "always" } as any,
-        audio: false
+        video: { cursor: "always" } as any, 
+        audio: false 
       });
 
       stream.getVideoTracks()[0].onended = () => {
@@ -274,13 +287,11 @@ export default function LiveInterviewPage() {
 
     if (activeStreamType === 'screen' && screenStream) {
       newStream = screenStream;
-      newMutedState = true;
+      newMutedState = true; 
       logger.debug("Main view: Attempting to show screen stream:", screenStream.id);
     } else if (activeStreamType === 'camera' && cameraStream && isVideoActive) {
-      // In a real app, this would be the OTHER participant's stream.
-      // For this mock, if user's camera is on and set as primary, show it.
-      newStream = cameraStream; // Mock: Show self in main if camera is the active type
-      newMutedState = false; // Unmuted if it's a participant's camera
+      newStream = cameraStream; // Mock: Show self in main if camera is the active type for "other participant"
+      newMutedState = true; // Mute self if showing self in main panel
       logger.debug("Main view: Attempting to show camera stream (mock other participant):", cameraStream.id);
     } else {
       logger.debug("Main view: No active stream to show, or local camera is off.");
@@ -299,14 +310,14 @@ export default function LiveInterviewPage() {
 
   const handleToggleVideo = async () => {
     if (isVideoActive) {
-      stopCameraStream(); // This sets isVideoActive to false
+      stopCameraStream(); 
       if (activeStreamType === 'camera') {
         setActiveStreamType('none');
       }
     } else {
-      const stream = await startCameraStream(); // This sets isVideoActive to true on success
+      const stream = await startCameraStream(); 
       if (stream) {
-        if (activeStreamType !== 'screen') { // Don't switch from screen share just by turning on camera
+        if (activeStreamType !== 'screen') { 
           setActiveStreamType('camera');
         }
       }
@@ -315,7 +326,7 @@ export default function LiveInterviewPage() {
 
   const handleToggleScreenShare = async () => {
     if (activeStreamType === 'screen') {
-      stopScreenShareStream(); // This will also update activeStreamType
+      stopScreenShareStream(); 
     } else {
       const stream = await startScreenShareStream();
       if (stream) {
@@ -336,15 +347,79 @@ export default function LiveInterviewPage() {
   };
 
 
-  const handleEndCall = () => {
+  const handleEndCallAndGenerateReport = () => {
     if (isRecording) stopRecording();
     stopCameraStream();
     stopScreenShareStream();
     setActiveStreamType('none');
-    toast({ title: "Interview Ended", description: "You have left the interview session." });
+    
+    if (!sessionDetails || !sessionDetails.preSelectedQuestions) {
+      toast({ title: "Error", description: "Session details or questions missing for report.", variant: "destructive"});
+      router.push('/interview-prep');
+      return;
+    }
+
+    let achievedScore = 0;
+    let totalPossibleScore = 0;
+
+    sessionDetails.preSelectedQuestions.forEach(q => {
+      const questionBaseScore = q.baseScore || 0; // Default to 0 if not set
+      totalPossibleScore += questionBaseScore;
+      const scoreData = currentQuestionScores[q.id];
+      if (scoreData) {
+        achievedScore += questionBaseScore * (scoreData.correctnessPercentage / 100);
+      }
+    });
+    
+    const percentage = totalPossibleScore > 0 ? (achievedScore / totalPossibleScore) * 100 : 0;
+
+    setSessionDetails(prev => prev ? {
+      ...prev,
+      interviewerScores: Object.values(currentQuestionScores),
+      finalScore: {
+        achievedScore: parseFloat(achievedScore.toFixed(2)),
+        totalPossibleScore,
+        percentage: parseFloat(percentage.toFixed(2)),
+        reportNotes: overallReportNotes // Will be empty initially
+      },
+      status: 'Completed'
+    } : null);
+    
+    // Persist to sample data (mock)
+    const sessionIndex = sampleLiveInterviewSessions.findIndex(s => s.id === sessionId);
+    if(sessionIndex !== -1) {
+        sampleLiveInterviewSessions[sessionIndex] = {
+            ...sampleLiveInterviewSessions[sessionIndex],
+            interviewerScores: Object.values(currentQuestionScores),
+            finalScore: {
+                achievedScore: parseFloat(achievedScore.toFixed(2)),
+                totalPossibleScore,
+                percentage: parseFloat(percentage.toFixed(2)),
+                reportNotes: overallReportNotes 
+            },
+            status: 'Completed'
+        };
+    }
+
+    setShowReportView(true); // Switch to report view
+    toast({ title: "Interview Ended", description: "Report generated. Please review and send." });
     if (document.fullscreenElement) {
       document.exitFullscreen();
     }
+  };
+
+  const handleSendReport = () => {
+    // Mock sending report
+    if (sessionDetails?.finalScore) {
+        const updatedFinalScore = {...sessionDetails.finalScore, reportNotes: overallReportNotes};
+         setSessionDetails(prev => prev ? {...prev, finalScore: updatedFinalScore} : null);
+        // Persist overallReportNotes to sample data if needed
+        const sessionIndex = sampleLiveInterviewSessions.findIndex(s => s.id === sessionId);
+        if(sessionIndex !== -1 && sampleLiveInterviewSessions[sessionIndex].finalScore) {
+            sampleLiveInterviewSessions[sessionIndex].finalScore!.reportNotes = overallReportNotes;
+        }
+    }
+    toast({ title: "Report Sent (Mock)", description: `Report for ${sessionDetails?.title} would be sent to participants.`});
     router.push('/interview-prep');
   };
 
@@ -367,6 +442,20 @@ export default function LiveInterviewPage() {
     setAskedQuestions(new Set());
     toast({title: "Asked Questions Reset", duration: 2000});
     logger.debug("Asked questions list reset.");
+  };
+
+  const handleScoreChange = (questionId: string, percentage: InterviewerScore['correctnessPercentage']) => {
+    setCurrentQuestionScores(prev => ({
+      ...prev,
+      [questionId]: { ...prev[questionId], questionId, correctnessPercentage: percentage }
+    }));
+  };
+
+  const handleNotesChange = (questionId: string, notes: string) => {
+     setCurrentQuestionScores(prev => ({
+      ...prev,
+      [questionId]: { ...prev[questionId], questionId, notes }
+    }));
   };
 
 
@@ -433,7 +522,7 @@ export default function LiveInterviewPage() {
                 id: `rec-${Date.now()}`,
                 sessionId: sessionDetails.id,
                 startTime: new Date().toISOString(),
-                durationSeconds: 0,
+                durationSeconds: 0, // This would need to be calculated
                 localStorageKey: `recording_${sessionDetails.id}_${Date.now()}`,
                 type: recordingType,
                 blobUrl: url,
@@ -450,9 +539,9 @@ export default function LiveInterviewPage() {
         logger.info("Recording stopped. Blob URL created:", url);
         toast({ title: "Recording Stopped", description: "Recording available for playback/download.", duration: 5000 });
       };
-      mediaRecorderRef.current.start(1000);
+      mediaRecorderRef.current.start(1000); // Collect data in 1-second chunks
       setIsRecording(true);
-      setAudioURL(null);
+      setAudioURL(null); // Clear previous recording URL
       toast({ title: "Recording Started" });
       logger.info("Recording started.");
     } catch (err) {
@@ -466,6 +555,7 @@ export default function LiveInterviewPage() {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
       logger.info("Recording stop requested.");
+      // The onstop handler will process the blob.
     }
   };
 
@@ -507,6 +597,63 @@ export default function LiveInterviewPage() {
 
   const mainFeedName = activeStreamType === 'screen' && screenStream ? `${selfParticipant.name}'s Screen Share` : (activeStreamType === 'camera' && isVideoActive ? otherParticipant.name : `${otherParticipant.name}'s Video Off`);
   const mainFeedIsActive = (activeStreamType === 'camera' && isVideoActive && cameraStream) || (activeStreamType === 'screen' && screenStream);
+
+  if (showReportView && sessionDetails.finalScore) {
+    const { achievedScore, totalPossibleScore, percentage, reportNotes } = sessionDetails.finalScore;
+    return (
+        <div className="flex flex-col items-center justify-center min-h-screen p-4 md:p-8 bg-secondary/30 dark:bg-background">
+            <Card className="w-full max-w-2xl shadow-xl">
+                <CardHeader>
+                    <CardTitle className="text-2xl md:text-3xl font-bold text-primary">Interview Report: {sessionDetails.title}</CardTitle>
+                    <CardDescription>Candidate: {isInterviewer ? otherParticipant.name : selfParticipant.name}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    <div className="text-center p-6 bg-primary/10 rounded-lg">
+                        <p className="text-sm text-muted-foreground">Overall Score</p>
+                        <p className="text-5xl font-bold text-primary my-2">{percentage.toFixed(1)}%</p>
+                        <p className="text-md text-foreground">Achieved {achievedScore} out of {totalPossibleScore} points</p>
+                    </div>
+                    <div>
+                        <Label htmlFor="reportNotes" className="font-semibold">Interviewer's Overall Notes:</Label>
+                        <Textarea
+                            id="reportNotes"
+                            value={overallReportNotes}
+                            onChange={(e) => setOverallReportNotes(e.target.value)}
+                            placeholder="Add overall comments or summary for the report..."
+                            rows={4}
+                            disabled={!isInterviewer}
+                        />
+                    </div>
+                    <Accordion type="single" collapsible className="w-full">
+                        <AccordionItem value="details">
+                            <AccordionTrigger>View Per-Question Scores & Notes</AccordionTrigger>
+                            <AccordionContent>
+                                <ScrollArea className="h-[200px] pr-2">
+                                    <ul className="space-y-2 text-sm">
+                                        {sessionDetails.preSelectedQuestions?.map(q => {
+                                            const scoreInfo = sessionDetails.interviewerScores?.find(s => s.questionId === q.id);
+                                            return (
+                                                <li key={q.id} className="p-2 border rounded-md bg-card">
+                                                    <p className="font-medium text-foreground">{q.questionText}</p>
+                                                    <p className="text-xs text-primary">Score: {scoreInfo ? `${scoreInfo.correctnessPercentage}% (${(q.baseScore || 0) * (scoreInfo.correctnessPercentage / 100)}/${q.baseScore || 0})` : "Not Scored"}</p>
+                                                    {scoreInfo?.notes && <p className="text-xs text-muted-foreground mt-1 italic">Notes: {scoreInfo.notes}</p>}
+                                                </li>
+                                            );
+                                        })}
+                                    </ul>
+                                </ScrollArea>
+                            </AccordionContent>
+                        </AccordionItem>
+                    </Accordion>
+                </CardContent>
+                <CardFooter className="flex flex-col sm:flex-row justify-end gap-2">
+                    <Button variant="outline" onClick={() => router.push('/interview-prep')}>Back to Prep Hub</Button>
+                    {isInterviewer && <Button onClick={handleSendReport} className="bg-green-600 hover:bg-green-700">Send Report (Mock)</Button>}
+                </CardFooter>
+            </Card>
+        </div>
+    );
+  }
 
 
   return (
@@ -562,7 +709,7 @@ export default function LiveInterviewPage() {
                 {isRecording ? <Square className="h-4 w-4 md:h-5 md:w-5 animate-pulse text-red-400 fill-current" /> : <Radio className="h-4 w-4 md:h-5 md:w-5 text-red-400" />}
               </Button>
             )}
-            <Button variant="destructive" size="default" onClick={handleEndCall} className="px-2 py-1 md:px-3 md:py-2 text-xs md:text-sm h-9 md:h-10"><PhoneOff className="mr-0 md:mr-1 h-4 w-4 md:h-5 md:w-5" /> <span className="hidden md:inline">End</span></Button>
+            <Button variant="destructive" size="default" onClick={isInterviewer ? handleEndCallAndGenerateReport : () => { /* Candidate specific end */ handleEndCallAndGenerateReport() /* For now, candidate also triggers report calc if they end */}} className="px-2 py-1 md:px-3 md:py-2 text-xs md:text-sm h-9 md:h-10"><PhoneOff className="mr-0 md:mr-1 h-4 w-4 md:h-5 md:w-5" /> <span className="hidden md:inline">End Call</span></Button>
           </div>
         </div>
 
@@ -580,32 +727,41 @@ export default function LiveInterviewPage() {
                 </AccordionTrigger>
                 <AccordionContent className="px-3 py-2 md:px-4 md:pb-3 space-y-1 md:space-y-2 text-xs md:text-sm">
                    <Button size="xs" variant="outline" onClick={resetAskedQuestions} className="mb-2 text-[10px] h-6"><RotateCcw className="mr-1 h-3 w-3"/> Reset Asked</Button>
-                  {sessionDetails.preSelectedQuestions.filter(q => !askedQuestions.has(q.id)).length > 0 ? (
-                    <ScrollArea className="h-28 md:h-32 mt-1 p-0.5 border rounded-md bg-secondary/20">
-                      <ul className="space-y-0.5">
-                        {sessionDetails.preSelectedQuestions.filter(q => !askedQuestions.has(q.id)).map((q) => (
-                          <li key={q.id} className="text-[10px] md:text-xs p-1 md:p-1.5 rounded hover:bg-primary/10 flex justify-between items-center group">
-                            <span className="flex-1 mr-1 truncate" title={q.questionText}>{q.questionText} {q.category && <span className="text-[9px] md:text-[10px] text-muted-foreground">({q.category})</span>}</span>
-                            <Button variant="ghost" size="xs" className="h-auto p-px md:p-0.5 text-primary shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => markQuestionAsAsked(q.id)}>Ask</Button>
+                  <ScrollArea className="h-40 md:h-48 mt-1 p-0.5 border rounded-md bg-secondary/20">
+                      <ul className="space-y-1">
+                        {sessionDetails.preSelectedQuestions.map((q) => (
+                          <li key={q.id} className={cn("text-[10px] md:text-xs p-1.5 md:p-2 rounded hover:bg-primary/10 group", askedQuestions.has(q.id) && "bg-green-100/50 line-through text-muted-foreground")}>
+                            <div className="flex justify-between items-start">
+                                <span className="flex-1 mr-1 " title={q.questionText}>{q.questionText} {q.category && <span className="text-[9px] md:text-[10px] text-muted-foreground">({q.category}, {q.baseScore || 0} pts)</span>}</span>
+                                {!askedQuestions.has(q.id) && <Button variant="ghost" size="xs" className="h-auto p-px md:p-0.5 text-primary shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => markQuestionAsAsked(q.id)}>Ask</Button>}
+                            </div>
+                            {askedQuestions.has(q.id) && (
+                                <div className="mt-2 space-y-1.5">
+                                    <Label className="text-[10px] font-medium">Correctness:</Label>
+                                    <RadioGroup 
+                                        defaultValue={currentQuestionScores[q.id]?.correctnessPercentage?.toString()}
+                                        onValueChange={(value) => handleScoreChange(q.id, parseInt(value) as InterviewerScore['correctnessPercentage'])}
+                                        className="flex flex-wrap gap-1.5"
+                                    >
+                                        {CORRECTNESS_PERCENTAGES.map(p => (
+                                            <div key={p} className="flex items-center space-x-1">
+                                                <RadioGroupItem value={String(p)} id={`${q.id}-score-${p}`} className="h-3 w-3"/>
+                                                <Label htmlFor={`${q.id}-score-${p}`} className="text-[10px] font-normal">{p}%</Label>
+                                            </div>
+                                        ))}
+                                    </RadioGroup>
+                                    <Textarea 
+                                        placeholder="Notes for this question..." 
+                                        className="text-[10px] h-12 p-1" 
+                                        value={currentQuestionScores[q.id]?.notes || ''}
+                                        onChange={(e) => handleNotesChange(q.id, e.target.value)}
+                                    />
+                                </div>
+                            )}
                           </li>
                         ))}
                       </ul>
                     </ScrollArea>
-                  ) : <p className="text-[10px] md:text-xs text-muted-foreground text-center py-1 md:py-2">All pre-selected questions asked.</p>}
-
-                  {askedQuestions.size > 0 && (
-                    <div className="mt-2">
-                        <h4 className="text-[10px] md:text-xs font-semibold text-muted-foreground mb-0.5">Asked Questions:</h4>
-                        <ScrollArea className="h-16 md:h-20 p-0.5 border rounded-md bg-background">
-                             <ul className="space-y-0.5">
-                                {Array.from(askedQuestions).map(qid => {
-                                    const q = sessionDetails.preSelectedQuestions?.find(pq => pq.id === qid);
-                                    return q ? <li key={qid} className="text-[10px] md:text-xs p-1 rounded text-muted-foreground line-through truncate" title={q.questionText}>{q.questionText}</li> : null;
-                                })}
-                            </ul>
-                        </ScrollArea>
-                    </div>
-                  )}
                 </AccordionContent>
               </AccordionItem>
             )}
