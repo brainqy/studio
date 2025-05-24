@@ -2,19 +2,20 @@
 "use client";
 
 import type React from 'react';
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef }
+from "react";
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle as DialogUITitle, DialogDescription as DialogUIDescription, DialogFooter as DialogUIFooter, DialogClose } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Brain, Calendar, Users, ShieldAlert, Type, Languages, MessageSquare, CheckCircle, XCircle, Mic, ListChecks, Search, ChevronLeft, ChevronRight, Tag, Settings2, Puzzle, Lightbulb, Code, Eye, Edit3, Play, PlusCircle, Star as StarIcon, Send, Bookmark as BookmarkIcon, Video, Trash2 } from "lucide-react";
+import { Brain, Calendar, Users, ShieldAlert, Type, Languages, MessageSquare, CheckCircle, XCircle, Mic, ListChecks, Search, ChevronLeft, ChevronRight, Tag, Settings2, Puzzle, Lightbulb, Code, Eye, Edit3, Play, PlusCircle, Star as StarIcon, Send, Bookmark as BookmarkIcon, Video, Trash2, ListFilter } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { sampleUserProfile, samplePracticeSessions, sampleInterviewQuestions, sampleCreatedQuizzes, sampleLiveInterviewSessions } from "@/lib/sample-data";
-import type { PracticeSession, InterviewQuestion, InterviewQuestionCategory, MockInterviewSession, DialogStep, PracticeSessionConfig, InterviewQuestionUserComment, InterviewQuestionDifficulty, PracticeFocusArea, BankQuestionSortOrder, BankQuestionFilterView, GenerateMockInterviewQuestionsInput, PracticeSessionStatus, LiveInterviewSession, LiveInterviewParticipant, AIMockQuestionType } from '@/types';
+import type { PracticeSession, InterviewQuestion, InterviewQuestionCategory, MockInterviewSession, DialogStep, PracticeSessionConfig, InterviewQuestionUserComment, InterviewQuestionDifficulty, PracticeFocusArea, BankQuestionSortOrder, BankQuestionFilterView, GenerateMockInterviewQuestionsInput, PracticeSessionStatus, AIMockQuestionType } from '@/types';
 import { ALL_CATEGORIES, PREDEFINED_INTERVIEW_TOPICS, PRACTICE_FOCUS_AREAS, MOCK_INTERVIEW_STEPS, RESUME_BUILDER_STEPS } from '@/types';
-import { format, parseISO, isFuture, isPast, addMinutes, compareAsc, differenceInMinutes, formatDistanceToNow } from "date-fns";
+import { format, parseISO, isFuture, addMinutes, compareAsc, differenceInMinutes, formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -60,13 +61,14 @@ const SessionDateTimeDisplay = ({ dateString }: { dateString: string }) => {
   useEffect(() => {
     // This effect runs only on the client after hydration
     const sessionDate = parseISO(dateString);
-    setFormattedDateTime(format(sessionDate, "MMM dd, yyyy - p"));
+    // Format date and time separately based on client's locale for time
+    const datePart = format(sessionDate, "MMM dd, yyyy");
+    const timePart = format(sessionDate, "p"); // 'p' is locale-sensitive time
+    setFormattedDateTime(`${datePart} - ${timePart}`);
   }, [dateString]);
 
-  // Initial render on server and client before hydration will be just the date part or empty
-  // This could be further improved by rendering the date part initially if needed.
   if (!formattedDateTime) {
-    // Fallback for SSR or before client-side effect runs
+    // Fallback for SSR or before client-side effect runs, render only date part
     try {
         return <span>{format(parseISO(dateString), "MMM dd, yyyy")} (Loading time...)</span>;
     } catch (e) {
@@ -166,7 +168,7 @@ export default function InterviewPracticeHubPage() {
     }
   }, [isSetupDialogOpen]);
 
-  const upcomingSessions = practiceSessions.filter(s => s.status === 'SCHEDULED' && isFuture(parseISO(s.date)));
+  const upcomingSessions = practiceSessions.filter(s => s.status === 'SCHEDULED' && s.date && isFuture(parseISO(s.date)));
   const allUserSessions = practiceSessions; 
   const cancelledSessions = practiceSessions.filter(s => s.status === 'CANCELLED');
 
@@ -211,8 +213,6 @@ export default function InterviewPracticeHubPage() {
         setFriendEmailError(null);
         toast({ title: "Invitation Sent (Mock)", description: `Invitation sent to ${practiceSessionConfig.friendEmail}.` });
         setIsSetupDialogOpen(false); 
-        setPracticeSessionConfig({ type: null, topics: [], dateTime: null, friendEmail: '', aiTopicOrRole: '', aiJobDescription: '', aiNumQuestions: 5, aiDifficulty: 'medium', aiTimerPerQuestion: 0, aiQuestionCategories: [] });
-        setDialogStep('selectType');
         return;
       }
       setDialogStep('selectTopics');
@@ -266,7 +266,7 @@ export default function InterviewPracticeHubPage() {
             return;
         }
         const newSessionId = `ps-expert-${Date.now()}`;
-        const newSession: PracticeSession = {
+        const newPracticeSess: PracticeSession = {
             id: newSessionId,
             userId: currentUser.id,
             date: practiceSessionConfig.dateTime.toISOString(),
@@ -276,20 +276,19 @@ export default function InterviewPracticeHubPage() {
             status: "SCHEDULED" as PracticeSessionStatus,
             notes: `Scheduled expert session for topics: ${practiceSessionConfig.topics.join(', ')}.`,
         };
+        setPracticeSessions(prev => [newPracticeSess, ...prev]);
+        samplePracticeSessions.unshift(newPracticeSess);
         
-        setPracticeSessions(prev => [newSession, ...prev]);
-        samplePracticeSessions.unshift(newSession);
-
         const expertInterviewer = samplePlatformUsers.find(u => u.role === 'admin' || u.role === 'manager') || currentUser; 
-        const newLiveSession: LiveInterviewSession = {
+        const newLiveSess: LiveInterviewSession = {
             id: newSessionId, 
             tenantId: currentUser.tenantId,
-            title: `Expert Mock Interview: ${newSession.type}`,
+            title: `Expert Mock Interview: ${newPracticeSess.type}`,
             participants: [
                 { userId: expertInterviewer.id, name: expertInterviewer.name, role: 'interviewer', profilePictureUrl: expertInterviewer.profilePictureUrl },
                 { userId: currentUser.id, name: currentUser.name, role: 'candidate', profilePictureUrl: currentUser.profilePictureUrl }
             ],
-            scheduledTime: newSession.date,
+            scheduledTime: newPracticeSess.date,
             status: 'Scheduled',
             preSelectedQuestions: sampleInterviewQuestions
                 .filter(q => practiceSessionConfig.topics.some(topic => 
@@ -300,9 +299,9 @@ export default function InterviewPracticeHubPage() {
                 .slice(0,5) 
                 .map(q => ({id: q.id, questionText: q.questionText, category: q.category, difficulty: q.difficulty, baseScore: q.baseScore || 10 })),
         };
-        sampleLiveInterviewSessions.unshift(newLiveSession);
+        sampleLiveInterviewSessions.unshift(newLiveSess);
 
-        toast({ title: "Expert Session Booked (Mock)", description: `Session for ${newSession.type} on ${format(practiceSessionConfig.dateTime, 'PPp')} scheduled.` });
+        toast({ title: "Expert Session Booked (Mock)", description: `Session for ${newPracticeSess.type} on ${format(practiceSessionConfig.dateTime, 'PPp')} scheduled.` });
 
     } else if (practiceSessionConfig.type === 'ai') {
         if (!practiceSessionConfig.aiTopicOrRole?.trim()) {
@@ -361,13 +360,13 @@ export default function InterviewPracticeHubPage() {
 
     questionsToFilter = questionsToFilter.filter(q => {
         if (q.isMCQ) {
-            return q.mcqOptions && q.mcqOptions.length >= 2 && q.correctAnswer && q.mcqOptions.some(opt => opt.trim() !== '');
+            return q.mcqOptions && q.mcqOptions.length >= 2 && q.correctAnswer && q.mcqOptions.some(opt => opt && opt.trim() !== '');
         }
         return true; 
     });
 
     if (selectedBankCategories.length > 0) {
-      questionsToFilter = questionsToFilter.filter(q => selectedBankCategories.includes(q.category));
+      questionsToFilter = questionsToFilter.filter(q => q.category && selectedBankCategories.includes(q.category));
     }
 
     if (bankSearchTerm.trim() !== '') {
@@ -400,9 +399,9 @@ export default function InterviewPracticeHubPage() {
   const onQuestionFormSubmit = (data: QuestionFormData) => {
     const questionPayload = {
         ...data,
-        questionText: data.questionText, // Ensure questionText is mapped from form field
+        questionText: data.questionText, 
         tags: data.tags?.split(',').map(t => t.trim()).filter(t => t) || [],
-        mcqOptions: data.isMCQ ? data.mcqOptions?.map(opt => opt.trim()).filter(opt => opt) : undefined,
+        mcqOptions: data.isMCQ ? data.mcqOptions?.map(opt => opt ? opt.trim() : "").filter(opt => opt) : undefined,
         correctAnswer: data.isMCQ ? data.correctAnswer?.trim() : undefined,
         approved: currentUser.role === 'admin', 
         createdBy: currentUser.id,
@@ -450,7 +449,7 @@ export default function InterviewPracticeHubPage() {
     setQuestionFormValue('category', question.category);
     setQuestionFormValue('isMCQ', question.isMCQ || false);
     const options = question.mcqOptions || [];
-    const paddedOptions = [...options, ...Array(Math.max(0, 4 - options.length)).fill("")];
+    const paddedOptions = [...options, ...Array(Math.max(0, 4 - options.length)).fill("")].map(opt => opt || "");
     setQuestionFormValue('mcqOptions', paddedOptions.slice(0,4)); 
     setQuestionFormValue('correctAnswer', question.correctAnswer || "");
     setQuestionFormValue('answerOrTip', question.answerOrTip);
@@ -489,7 +488,8 @@ export default function InterviewPracticeHubPage() {
     router.push(`/interview-prep/quiz/edit/new?questions=${questionIds}`);
   };
 
-  const getCategoryIcon = (category: InterviewQuestionCategory) => {
+  const getCategoryIcon = (category?: InterviewQuestionCategory) => {
+    if (!category) return <Puzzle className="h-4 w-4 text-gray-400 flex-shrink-0"/>;
     switch(category) {
       case 'Behavioral': return <Users className="h-4 w-4 text-purple-500 flex-shrink-0"/>;
       case 'Technical': return <Settings2 className="h-4 w-4 text-orange-500 flex-shrink-0"/>;
@@ -629,9 +629,9 @@ export default function InterviewPracticeHubPage() {
 
 
   const renderSessionCard = (session: PracticeSession) => {
-    const sessionDate = parseISO(session.date);
+    const sessionDate = session.date ? parseISO(session.date) : null;
     const now = new Date();
-    const canJoin = session.status === 'SCHEDULED' && 
+    const canJoin = session.status === 'SCHEDULED' && sessionDate &&
                     (isFuture(sessionDate) || (isPast(sessionDate) && differenceInMinutes(now, addMinutes(sessionDate,60)) >= 0 && differenceInMinutes(now, sessionDate) <= 60 ));
     
     const liveSession = sampleLiveInterviewSessions.find(ls => ls.id === session.id);
@@ -641,7 +641,7 @@ export default function InterviewPracticeHubPage() {
     <Card key={session.id} className="shadow-md hover:shadow-lg transition-shadow">
       <CardHeader>
         <div className="flex justify-between items-start">
-          <CardTitle className="text-lg"><SessionDateTimeDisplay dateString={session.date} /></CardTitle>
+          <CardTitle className="text-lg">{sessionDate ? <SessionDateTimeDisplay dateString={session.date!} /> : "Date Not Set"}</CardTitle>
           <span className={cn(
             "px-2 py-1 text-xs font-semibold rounded-full",
             session.status === 'SCHEDULED' ? "bg-green-100 text-green-700" :
@@ -666,7 +666,7 @@ export default function InterviewPracticeHubPage() {
             </Link>
           </Button>
         )}
-        {session.status === 'SCHEDULED' && !canJoin && !isFuture(sessionDate) && (
+        {session.status === 'SCHEDULED' && sessionDate && !canJoin && !isFuture(sessionDate) && (
             <Badge variant="outline">Session time passed</Badge>
         )}
         {session.status === 'SCHEDULED' && (
@@ -859,7 +859,8 @@ export default function InterviewPracticeHubPage() {
                     paginatedBankQuestions.map(q => (
                     <Accordion key={q.id} type="single" collapsible className="border rounded-md mb-2 bg-card shadow-sm hover:shadow-md transition-shadow">
                         <AccordionItem value={`item-${q.id}`} className="border-b-0">
-                          <AccordionTrigger asChild={true}
+                          <AccordionTrigger
+                            asChild={true}
                             className="px-4 py-3 text-left text-sm font-medium group hover:bg-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 data-[state=open]:bg-secondary/50 data-[state=open]:rounded-b-none rounded-t-md"
                           >
                             <div className="flex items-start flex-1 gap-3 w-full">
@@ -1056,15 +1057,20 @@ export default function InterviewPracticeHubPage() {
             {isMCQSelected && (
                 <div className="space-y-2 pl-6 border-l-2 border-primary/50 pt-2">
                     <Label>MCQ Options (at least 2 required if MCQ)</Label>
-                    {(watchQuestionForm("mcqOptions") || ["","","",""]).map((_,index) => ( 
-                        <Controller key={index} name={`mcqOptions.${index}` as any} control={questionFormControl} render={({ field }) => (
-                            <Input {...field} placeholder={`Option ${optionLetters[index] || index + 1}`} className="text-sm"/>
-                        )} />
+                    {(watchQuestionForm("mcqOptions") || ["","","",""]).map((optVal,index) => ( 
+                        <Controller 
+                            key={index} 
+                            name={`mcqOptions.${index}` as any} 
+                            control={questionFormControl} 
+                            render={({ field }) => (
+                                <Input {...field} value={field.value || ""} placeholder={`Option ${optionLetters[index] || index + 1}`} className="text-sm"/>
+                            )} 
+                        />
                     ))}
                      <div>
                         <Label htmlFor="correctAnswer">Correct Answer (exact text of one option)</Label>
                         <Controller name="correctAnswer" control={questionFormControl} render={({ field }) => (
-                            <Input id="correctAnswer" {...field} placeholder="Paste the correct option text here"/>
+                            <Input id="correctAnswer" {...field} value={field.value || ""} placeholder="Paste the correct option text here"/>
                         )} />
                     </div>
                      {questionFormErrors.mcqOptions && <p className="text-sm text-destructive mt-1">{questionFormErrors.mcqOptions?.message || questionFormErrors.mcqOptions?.[0]?.message || questionFormErrors.isMCQ?.message}</p>}
@@ -1139,5 +1145,3 @@ export default function InterviewPracticeHubPage() {
     </div>
   );
 }
-
-    
