@@ -9,12 +9,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle as DialogUITitle, DialogDescription as DialogUIDescription, DialogFooter as DialogUIFooter, DialogClose } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Brain, Calendar, Users, ShieldAlert, Type, Languages, MessageSquare, CheckCircle, XCircle, Mic, ListChecks, Search, ChevronLeft, ChevronRight, Tag, Settings2, Puzzle, Lightbulb, Code, Eye, Edit3, Play, PlusCircle, Star as StarIcon, Send, Mail, ChevronDown, ListFilter, Bookmark as BookmarkIcon, Video, Trash2 } from "lucide-react";
+import { Brain, Calendar, Users, ShieldAlert, Type, Languages, MessageSquare, CheckCircle, XCircle, Mic, ListChecks, Search, ChevronLeft, ChevronRight, Tag, Settings2, Puzzle, Lightbulb, Code, Eye, Edit3, Play, PlusCircle, Star as StarIcon, Send, Bookmark as BookmarkIcon, Video, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { sampleUserProfile, samplePracticeSessions, sampleInterviewQuestions, sampleCreatedQuizzes, sampleLiveInterviewSessions } from "@/lib/sample-data";
 import type { PracticeSession, InterviewQuestion, InterviewQuestionCategory, MockInterviewSession, DialogStep, PracticeSessionConfig, InterviewQuestionUserComment, InterviewQuestionDifficulty, PracticeFocusArea, BankQuestionSortOrder, BankQuestionFilterView, GenerateMockInterviewQuestionsInput, PracticeSessionStatus, LiveInterviewSession, LiveInterviewParticipant, AIMockQuestionType } from '@/types';
 import { ALL_CATEGORIES, PREDEFINED_INTERVIEW_TOPICS, PRACTICE_FOCUS_AREAS, MOCK_INTERVIEW_STEPS, RESUME_BUILDER_STEPS } from '@/types';
-import { format, parseISO, isFuture as dateIsFuture, isPast, addMinutes, compareAsc, differenceInMinutes } from "date-fns";
+import { format, parseISO, isFuture, isPast, addMinutes, compareAsc, differenceInMinutes, formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -51,6 +51,31 @@ const commentFormSchema = z.object({
 type CommentFormData = z.infer<typeof commentFormSchema>;
 
 const friendEmailSchema = z.string().email("Please enter a valid email address.");
+
+
+// Client-side component for displaying session date and time to avoid hydration mismatch
+const SessionDateTimeDisplay = ({ dateString }: { dateString: string }) => {
+  const [formattedDateTime, setFormattedDateTime] = useState('');
+
+  useEffect(() => {
+    // This effect runs only on the client after hydration
+    const sessionDate = parseISO(dateString);
+    setFormattedDateTime(format(sessionDate, "MMM dd, yyyy - p"));
+  }, [dateString]);
+
+  // Initial render on server and client before hydration will be just the date part or empty
+  // This could be further improved by rendering the date part initially if needed.
+  if (!formattedDateTime) {
+    // Fallback for SSR or before client-side effect runs
+    try {
+        return <span>{format(parseISO(dateString), "MMM dd, yyyy")} (Loading time...)</span>;
+    } catch (e) {
+        return <span>Invalid date</span>
+    }
+  }
+
+  return <span>{formattedDateTime}</span>;
+};
 
 
 export default function InterviewPracticeHubPage() {
@@ -101,12 +126,12 @@ export default function InterviewPracticeHubPage() {
   const [bankFilterView, setBankFilterView] = useState<BankQuestionFilterView>('all');
 
   const {
-    control: questionFormControl, // This is the 'control' object for the question form
+    control: questionFormControl,
     handleSubmit: handleQuestionFormSubmit,
     reset: resetQuestionForm,
     setValue: setQuestionFormValue,
     watch: watchQuestionForm,
-    formState: { errors: questionFormErrors } // Correctly destructure errors here
+    formState: { errors: questionFormErrors } 
   } = useForm<QuestionFormData>({
     resolver: zodResolver(questionFormSchema.refine(data => {
       if (data.isMCQ) {
@@ -130,7 +155,6 @@ export default function InterviewPracticeHubPage() {
   const [newQuestionIdsInput, setNewQuestionIdsInput] = useState('');
 
   useEffect(() => {
-    // This effect handles resetting the dialog state when it's closed.
     if (!isSetupDialogOpen) {
       setDialogStep('selectType');
       setPracticeSessionConfig({
@@ -142,7 +166,7 @@ export default function InterviewPracticeHubPage() {
     }
   }, [isSetupDialogOpen]);
 
-  const upcomingSessions = practiceSessions.filter(s => s.status === 'SCHEDULED' && dateIsFuture(parseISO(s.date)));
+  const upcomingSessions = practiceSessions.filter(s => s.status === 'SCHEDULED' && isFuture(parseISO(s.date)));
   const allUserSessions = practiceSessions; 
   const cancelledSessions = practiceSessions.filter(s => s.status === 'CANCELLED');
 
@@ -187,6 +211,8 @@ export default function InterviewPracticeHubPage() {
         setFriendEmailError(null);
         toast({ title: "Invitation Sent (Mock)", description: `Invitation sent to ${practiceSessionConfig.friendEmail}.` });
         setIsSetupDialogOpen(false); 
+        setPracticeSessionConfig({ type: null, topics: [], dateTime: null, friendEmail: '', aiTopicOrRole: '', aiJobDescription: '', aiNumQuestions: 5, aiDifficulty: 'medium', aiTimerPerQuestion: 0, aiQuestionCategories: [] });
+        setDialogStep('selectType');
         return;
       }
       setDialogStep('selectTopics');
@@ -254,7 +280,7 @@ export default function InterviewPracticeHubPage() {
         setPracticeSessions(prev => [newSession, ...prev]);
         samplePracticeSessions.unshift(newSession);
 
-        const expertInterviewer = samplePlatformUsers.find(u => u.role === 'admin' || u.role === 'manager') || currentUser; // Find an admin/manager or default to current user
+        const expertInterviewer = samplePlatformUsers.find(u => u.role === 'admin' || u.role === 'manager') || currentUser; 
         const newLiveSession: LiveInterviewSession = {
             id: newSessionId, 
             tenantId: currentUser.tenantId,
@@ -374,6 +400,7 @@ export default function InterviewPracticeHubPage() {
   const onQuestionFormSubmit = (data: QuestionFormData) => {
     const questionPayload = {
         ...data,
+        questionText: data.questionText, // Ensure questionText is mapped from form field
         tags: data.tags?.split(',').map(t => t.trim()).filter(t => t) || [],
         mcqOptions: data.isMCQ ? data.mcqOptions?.map(opt => opt.trim()).filter(opt => opt) : undefined,
         correctAnswer: data.isMCQ ? data.correctAnswer?.trim() : undefined,
@@ -594,6 +621,10 @@ export default function InterviewPracticeHubPage() {
     sampleLiveInterviewSessions[liveSessionIndex].preSelectedQuestions = updatedQuestions;
 
     setIsEditQuestionsDialogOpen(false);
+    setEditingSessionId(null);
+    setCurrentEditingQuestions([]);
+    setNewQuestionIdsInput('');
+    toast({ title: "Questions Updated", description: "Pre-selected questions for the session have been updated." });
   };
 
 
@@ -601,7 +632,7 @@ export default function InterviewPracticeHubPage() {
     const sessionDate = parseISO(session.date);
     const now = new Date();
     const canJoin = session.status === 'SCHEDULED' && 
-                    (dateIsFuture(sessionDate) || (isPast(sessionDate) && differenceInMinutes(now, addMinutes(sessionDate,60)) >= 0 && differenceInMinutes(now, sessionDate) <= 60 ));
+                    (isFuture(sessionDate) || (isPast(sessionDate) && differenceInMinutes(now, addMinutes(sessionDate,60)) >= 0 && differenceInMinutes(now, sessionDate) <= 60 ));
     
     const liveSession = sampleLiveInterviewSessions.find(ls => ls.id === session.id);
     const isCurrentUserInterviewer = liveSession?.participants.find(p => p.userId === currentUser.id && p.role === 'interviewer');
@@ -610,7 +641,7 @@ export default function InterviewPracticeHubPage() {
     <Card key={session.id} className="shadow-md hover:shadow-lg transition-shadow">
       <CardHeader>
         <div className="flex justify-between items-start">
-          <CardTitle className="text-lg">{format(sessionDate, "MMM dd, yyyy - p")}</CardTitle>
+          <CardTitle className="text-lg"><SessionDateTimeDisplay dateString={session.date} /></CardTitle>
           <span className={cn(
             "px-2 py-1 text-xs font-semibold rounded-full",
             session.status === 'SCHEDULED' ? "bg-green-100 text-green-700" :
@@ -635,7 +666,7 @@ export default function InterviewPracticeHubPage() {
             </Link>
           </Button>
         )}
-        {session.status === 'SCHEDULED' && !canJoin && !dateIsFuture(sessionDate) && (
+        {session.status === 'SCHEDULED' && !canJoin && !isFuture(sessionDate) && (
             <Badge variant="outline">Session time passed</Badge>
         )}
         {session.status === 'SCHEDULED' && (
@@ -828,8 +859,7 @@ export default function InterviewPracticeHubPage() {
                     paginatedBankQuestions.map(q => (
                     <Accordion key={q.id} type="single" collapsible className="border rounded-md mb-2 bg-card shadow-sm hover:shadow-md transition-shadow">
                         <AccordionItem value={`item-${q.id}`} className="border-b-0">
-                           <AccordionTrigger
-                            asChild={true}
+                          <AccordionTrigger asChild={true}
                             className="px-4 py-3 text-left text-sm font-medium group hover:bg-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 data-[state=open]:bg-secondary/50 data-[state=open]:rounded-b-none rounded-t-md"
                           >
                             <div className="flex items-start flex-1 gap-3 w-full">
@@ -932,7 +962,7 @@ export default function InterviewPracticeHubPage() {
                                     <ScrollArea className="h-24 pr-2 text-xs space-y-1.5">
                                         {q.userComments.map(comment => (
                                         <div key={comment.id} className="p-1.5 bg-secondary rounded">
-                                            <p className="font-semibold">{comment.userName} <span className="text-muted-foreground/70 text-[10px]">{format(parseISO(comment.timestamp), 'PPp')}</span></p>
+                                            <p className="font-semibold">{comment.userName} <span className="text-muted-foreground/70 text-[10px]">{formatDistanceToNow(parseISO(comment.timestamp), { addSuffix: true })}</span></p>
                                             <p>{comment.text}</p>
                                         </div>
                                         ))}
@@ -988,7 +1018,7 @@ export default function InterviewPracticeHubPage() {
           </DialogHeader>
           <form onSubmit={handleQuestionFormSubmit(onQuestionFormSubmit)} className="space-y-4 py-4 max-h-[80vh] overflow-y-auto pr-2">
             <div>
-              <Label htmlFor="question-text-form">Question Text *</Label> {/* Changed id to avoid conflict */}
+              <Label htmlFor="question-text-form">Question Text *</Label>
               <Controller name="questionText" control={questionFormControl} render={({ field }) => <Textarea id="question-text-form" {...field} rows={3} />} />
               {questionFormErrors.questionText && <p className="text-sm text-destructive mt-1">{questionFormErrors.questionText.message}</p>}
             </div>
