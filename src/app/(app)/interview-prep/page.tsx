@@ -1,4 +1,3 @@
-
 "use client";
 
 import type React from 'react';
@@ -7,13 +6,13 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle as DialogUITitle, DialogDescription as DialogUIDescription, DialogFooter as DialogUIFooter, DialogClose } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogUITitle, DialogUIDescription, DialogUIFooter, DialogClose } from '@/components/ui/dialog'; // Corrected Dialog imports
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Brain, Calendar, Users, ShieldAlert, Type, Languages, MessageSquare, CheckCircle, XCircle, Mic, ListChecks, Search, ChevronLeft, ChevronRight, Tag, Settings2, Puzzle, Lightbulb, Code, Eye, Edit3, Play, PlusCircle, Star as StarIcon, Send, Bookmark as BookmarkIcon, Video, Trash2, ListFilter, ChevronDown } from "lucide-react";
+import { Mic, ListChecks, Search, ChevronLeft, ChevronRight, Tag, Settings2, Puzzle, Lightbulb, Code as CodeIcon, Eye, Edit3, Play, PlusCircle, Star as StarIcon, Send, Bookmark as BookmarkIcon, Video, Trash2, ListFilter, ChevronDown, User as UserIcon, XCircle as XCircleIcon, Calendar, MessageSquare, Users as UsersGroupIcon, Brain as BrainIcon } from "lucide-react"; // Added missing icons
 import { useToast } from "@/hooks/use-toast";
 import { sampleUserProfile, samplePracticeSessions, sampleInterviewQuestions, sampleCreatedQuizzes, sampleLiveInterviewSessions, PREDEFINED_INTERVIEW_TOPICS } from "@/lib/sample-data";
-import type { PracticeSession, InterviewQuestion, InterviewQuestionCategory, MockInterviewSession, DialogStep, PracticeSessionConfig, InterviewQuestionUserComment, InterviewQuestionDifficulty, PracticeFocusArea, BankQuestionSortOrder, BankQuestionFilterView, GenerateMockInterviewQuestionsInput, PracticeSessionStatus, AIMockQuestionType, LiveInterviewSession } from '@/types';
-import { ALL_CATEGORIES, PRACTICE_FOCUS_AREAS, MOCK_INTERVIEW_STEPS, RESUME_BUILDER_STEPS, ALL_DIFFICULTIES } from '@/types';
+import type { PracticeSession, InterviewQuestion, InterviewQuestionCategory, MockInterviewSession, DialogStep, PracticeSessionConfig, InterviewQuestionUserComment, InterviewQuestionDifficulty, PracticeSessionStatus, AIMockQuestionType, LiveInterviewSession } from '@/types';
+import { ALL_CATEGORIES, PRACTICE_FOCUS_AREAS, MOCK_INTERVIEW_STEPS, RESUME_BUILDER_STEPS, ALL_DIFFICULTIES, PreferredTimeSlots } from '@/types';
 import { format, parseISO, isFuture, addMinutes, compareAsc, differenceInMinutes, formatDistanceToNow, isPast } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Input } from '@/components/ui/input';
@@ -30,6 +29,8 @@ import * as z from 'zod';
 import PracticeTopicSelection from '@/components/features/interview-prep/PracticeTopicSelection';
 import PracticeDateTimeSelector from '@/components/features/interview-prep/PracticeDateTimeSelector';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"; // Added RadioGroup imports
+
 
 const optionLetters = ['A', 'B', 'C', 'D', 'E', 'F'];
 
@@ -78,14 +79,15 @@ const SessionDateTimeDisplay: React.FC<{ dateString?: string }> = ({ dateString 
     }
   }, [dateString, isClient]);
 
-  if (!isClient) {
-    if (dateString) {
-      try {
-        return <span>{format(parseISO(dateString), "MMM dd, yyyy")} (loading time...)</span>;
-      } catch {
-        return <span>Invalid Date</span>;
-      }
+  if (!isClient && dateString) {
+    try {
+      // Provide a non-time-specific format for SSR or pre-hydration to minimize mismatch potential
+      return <span>{format(parseISO(dateString), "MMM dd, yyyy")} (loading time...)</span>;
+    } catch {
+      return <span>Invalid Date</span>; // Fallback if parseISO fails
     }
+  }
+  if (!isClient && !dateString) {
     return <span>Date Not Set</span>;
   }
   return <span>{formattedDateTime}</span>;
@@ -140,12 +142,12 @@ export default function InterviewPracticeHubPage() {
   const [bankFilterView, setBankFilterView] = useState<BankQuestionFilterView>('all');
 
   const {
-    control: questionFormControl,
+    control: questionFormControl, // This is for the main page form, not the dialog's form elements
     handleSubmit: handleQuestionFormSubmit,
     reset: resetQuestionForm,
     setValue: setQuestionFormValue,
     watch: watchQuestionForm,
-    formState: { errors: questionFormErrors }
+    formState: { errors: questionFormErrors } // Aliased correctly here
   } = useForm<QuestionFormData>({
     resolver: zodResolver(questionFormSchema.refine(data => {
       if (data.isMCQ) {
@@ -158,7 +160,7 @@ export default function InterviewPracticeHubPage() {
       message: "For MCQs, provide at least 2 options and a correct answer.",
       path: ["isMCQ"],
     })),
-    defaultValues: { questionText: '', isMCQ: false, mcqOptions: ["", "", "", ""], correctAnswer: "", category: 'Common', difficulty: 'Medium', answerOrTip: '', tags: '' }
+    defaultValues: { questionText: '', category: 'Common', isMCQ: false, mcqOptions: ["", "", "", ""], correctAnswer: '', answerOrTip: '', tags: '', difficulty: 'Medium' }
   });
 
 
@@ -170,8 +172,12 @@ export default function InterviewPracticeHubPage() {
   const [newQuestionIdsInput, setNewQuestionIdsInput] = useState('');
 
   useEffect(() => {
+    console.log("[InterviewPrep] isSetupDialogOpen changed to:", isSetupDialogOpen);
+  }, [isSetupDialogOpen]);
+
+  useEffect(() => {
     if (!isSetupDialogOpen) {
-      // This effect handles cleanup when the dialog is closed
+      console.log("[InterviewPrep] Dialog closed via useEffect, resetting config and step.");
       setDialogStep('selectType');
       setPracticeSessionConfig({
         type: null, topics: [], dateTime: null, friendEmail: '',
@@ -188,6 +194,7 @@ export default function InterviewPracticeHubPage() {
   const cancelledSessions = useMemo(() => practiceSessions.filter(s => s.status === 'CANCELLED'), [practiceSessions]);
 
   const handleStartPracticeSetup = () => {
+    console.log("[InterviewPrep] handleStartPracticeSetup called");
     setPracticeSessionConfig({
       type: null,
       topics: [],
@@ -203,9 +210,13 @@ export default function InterviewPracticeHubPage() {
     setDialogStep('selectType');
     setFriendEmailError(null);
     setIsSetupDialogOpen(true);
+    // The log below might show the old value of isSetupDialogOpen due to closure,
+    // use the useEffect log to see the actual updated value.
+    console.log("[InterviewPrep] isSetupDialogOpen attempted to be set to true.");
   };
 
   const handleDialogNextStep = () => {
+    console.log("[InterviewPrep] handleDialogNextStep called. Current step:", dialogStep, "Config type:", practiceSessionConfig.type);
     if (dialogStep === 'selectType') {
       if (!practiceSessionConfig.type) {
         toast({ title: "Error", description: "Please select an interview type.", variant: "destructive" });
@@ -228,9 +239,7 @@ export default function InterviewPracticeHubPage() {
         setFriendEmailError(null);
         toast({ title: "Invitation Sent (Mock)", description: `Invitation sent to ${practiceSessionConfig.friendEmail}.` });
         setIsSetupDialogOpen(false);
-         // Reset for next time
-        setPracticeSessionConfig({ type: null, topics: [], dateTime: null, friendEmail: '', aiTopicOrRole: '', aiJobDescription: '', aiNumQuestions: 5, aiDifficulty: 'medium', aiTimerPerQuestion: 0, aiQuestionCategories: [] });
-        setDialogStep('selectType');
+        // No need to reset config here, useEffect for isSetupDialogOpen will handle it.
         return;
       }
       setDialogStep('selectTopics');
@@ -239,10 +248,10 @@ export default function InterviewPracticeHubPage() {
         toast({ title: "Error", description: "Please select at least one topic.", variant: "destructive" });
         return;
       }
-      if (practiceSessionConfig.type === 'ai') {
+      if (practiceSessionConfig.type === 'ai') { // Should not happen if type is 'experts'
         setPracticeSessionConfig(prev => ({...prev, aiTopicOrRole: prev.topics.join(', ')}));
         setDialogStep('aiSetupBasic');
-      } else {
+      } else { // This path is for 'experts'
         setDialogStep('selectTimeSlot');
       }
     } else if (dialogStep === 'aiSetupBasic') {
@@ -258,14 +267,16 @@ export default function InterviewPracticeHubPage() {
 
 
   const handleDialogPreviousStep = () => {
+    console.log("[InterviewPrep] handleDialogPreviousStep called. Current step:", dialogStep);
     if (dialogStep === 'selectTimeSlot') setDialogStep('selectTopics');
     else if (dialogStep === 'selectTopics') setDialogStep('selectType');
     else if (dialogStep === 'aiSetupCategories') setDialogStep('aiSetupAdvanced');
     else if (dialogStep === 'aiSetupAdvanced') setDialogStep('aiSetupBasic');
     else if (dialogStep === 'aiSetupBasic') {
-      if (practiceSessionConfig.type === 'ai' && practiceSessionConfig.topics.length > 0 &&
+      if (practiceSessionConfig.type === 'ai' && 
+          practiceSessionConfig.topics.length > 0 &&
           practiceSessionConfig.aiTopicOrRole === practiceSessionConfig.topics.join(', ')) {
-        setDialogStep('selectTopics');
+        setDialogStep('selectTopics'); // Go back to topic selection if AI topic was derived from it
       } else {
         setDialogStep('selectType');
       }
@@ -273,6 +284,7 @@ export default function InterviewPracticeHubPage() {
   };
 
   const handleFinalBookSession = () => {
+    console.log("[InterviewPrep] handleFinalBookSession called. Config:", practiceSessionConfig);
     if (!practiceSessionConfig.type) {
         toast({ title: "Booking Error", description: "Interview type not selected.", variant: "destructive"});
         return;
@@ -297,9 +309,20 @@ export default function InterviewPracticeHubPage() {
         setPracticeSessions(prev => [newPracticeSess, ...prev]);
         samplePracticeSessions.unshift(newPracticeSess);
 
-        const expertInterviewer = samplePlatformUsers.find(u => u.role === 'admin' || u.role === 'manager') || currentUser;
+        // Also create a corresponding LiveInterviewSession
+        const expertInterviewer = samplePlatformUsers.find(u => u.role === 'admin' || u.role === 'manager') || currentUser; // Placeholder for expert
+        const liveSessionQuestions = sampleInterviewQuestions
+            .filter(q => practiceSessionConfig.topics.some(topic =>
+                (q.category && q.category.toLowerCase() === topic.toLowerCase()) ||
+                (q.tags && q.tags.some(tag => tag.toLowerCase() === topic.toLowerCase())) ||
+                (q.questionText && typeof q.questionText === 'string' && q.questionText.toLowerCase().includes(topic.toLowerCase()))
+            ))
+            .slice(0,5) // Take first 5 matching
+            .map(q => ({id: q.id, questionText: q.questionText, category: q.category, difficulty: q.difficulty, baseScore: q.baseScore || 10 }));
+
+
         const newLiveSess: LiveInterviewSession = {
-            id: newSessionId,
+            id: newSessionId, // Use the same ID
             tenantId: currentUser.tenantId,
             title: `Expert Mock Interview: ${newPracticeSess.type}`,
             participants: [
@@ -308,18 +331,11 @@ export default function InterviewPracticeHubPage() {
             ],
             scheduledTime: newPracticeSess.date,
             status: 'Scheduled',
-            preSelectedQuestions: sampleInterviewQuestions
-                .filter(q => practiceSessionConfig.topics.some(topic =>
-                    (q.category && q.category.toLowerCase() === topic.toLowerCase()) ||
-                    (q.tags && q.tags.some(tag => tag.toLowerCase() === topic.toLowerCase())) ||
-                    (q.questionText && typeof q.questionText === 'string' && q.questionText.toLowerCase().includes(topic.toLowerCase()))
-                ))
-                .slice(0,5)
-                .map(q => ({id: q.id, questionText: q.questionText, category: q.category, difficulty: q.difficulty, baseScore: q.baseScore || 10 })),
+            preSelectedQuestions: liveSessionQuestions,
         };
-        sampleLiveInterviewSessions.unshift(newLiveSess);
-        toast({ title: "Expert Session Booked (Mock)", description: `Session for ${newPracticeSess.type} on ${practiceSessionConfig.dateTime ? format(practiceSessionConfig.dateTime, 'PPp') : 'N/A'} scheduled.` });
+        sampleLiveInterviewSessions.unshift(newLiveSess); // Add to global sample data
 
+        toast({ title: "Expert Session Booked (Mock)", description: `Session for ${newPracticeSess.type} on ${practiceSessionConfig.dateTime ? format(practiceSessionConfig.dateTime, 'PPp') : 'N/A'} scheduled.` });
     } else if (practiceSessionConfig.type === 'ai') {
         if (!practiceSessionConfig.aiTopicOrRole?.trim()) {
             toast({ title: "Booking Error", description: "Missing AI interview topic/role.", variant: "destructive"});
@@ -344,9 +360,7 @@ export default function InterviewPracticeHubPage() {
         queryParams.append('autoFullScreen', 'true');
         router.push(`/ai-mock-interview?${queryParams.toString()}`);
     }
-    setIsSetupDialogOpen(false);
-    setPracticeSessionConfig({ type: null, topics: [], dateTime: null, friendEmail: '', aiTopicOrRole: '', aiJobDescription: '', aiNumQuestions: 5, aiDifficulty: 'medium', aiTimerPerQuestion: 0, aiQuestionCategories: [] });
-    setDialogStep('selectType');
+    setIsSetupDialogOpen(false); // This will trigger the useEffect for cleanup
   };
 
 
@@ -370,15 +384,16 @@ export default function InterviewPracticeHubPage() {
       questionsToFilter = questionsToFilter.filter(q => q.bookmarkedBy?.includes(currentUser.id));
     } else if (bankFilterView === 'needsApproval' && currentUser.role === 'admin') {
       questionsToFilter = questionsToFilter.filter(q => q.approved === false);
-    } else {
+    } else { // 'all' view respects approval status unless user is admin or creator
       questionsToFilter = questionsToFilter.filter(q => q.approved === true || q.createdBy === currentUser.id || currentUser.role === 'admin');
     }
 
+    // Ensure only valid MCQs are considered for quiz creation if that's a strict rule everywhere
     questionsToFilter = questionsToFilter.filter(q => {
-        if (q.isMCQ) {
+        if (q.isMCQ) { // Only apply MCQ validity checks if it IS an MCQ type
             return q.mcqOptions && q.mcqOptions.length >= 2 && q.correctAnswer && q.mcqOptions.some(opt => opt && opt.trim() !== '');
         }
-        return true;
+        return true; // Non-MCQ questions are fine by default
     });
 
     if (selectedBankCategories.length > 0) {
@@ -403,7 +418,7 @@ export default function InterviewPracticeHubPage() {
       });
     }
     return questionsToFilter;
-  }, [allBankQuestions, selectedBankCategories, bankSearchTerm, currentUser.role, bankSortOrder, bankFilterView, currentUser.id]);
+  }, [allBankQuestions, selectedBankCategories, bankSearchTerm, currentUser.role, currentUser.id, bankSortOrder, bankFilterView]);
 
   const paginatedBankQuestions = useMemo(() => {
     const startIndex = (currentPage - 1) * questionsPerPage;
@@ -413,12 +428,14 @@ export default function InterviewPracticeHubPage() {
   const totalPages = Math.ceil(filteredBankQuestions.length / questionsPerPage);
 
   const onQuestionFormSubmit = (data: QuestionFormData) => {
+    console.log("[InterviewPrep] onQuestionFormSubmit data:", data);
     const questionPayload = {
         ...data,
+        questionText: data.questionText, // Ensure questionText is passed
         tags: data.tags?.split(',').map(t => t.trim()).filter(t => t) || [],
         mcqOptions: data.isMCQ ? data.mcqOptions?.map(opt => opt ? opt.trim() : "").filter(opt => opt) : undefined,
         correctAnswer: data.isMCQ ? data.correctAnswer?.trim() : undefined,
-        approved: currentUser.role === 'admin',
+        approved: currentUser.role === 'admin', // Auto-approve if admin creates
         createdBy: currentUser.id,
         createdAt: new Date().toISOString(),
         bookmarkedBy: [],
@@ -426,22 +443,21 @@ export default function InterviewPracticeHubPage() {
         userRatings: [],
         rating: 0,
         ratingsCount: 0,
+        difficulty: data.difficulty || 'Medium',
     };
 
     if (editingQuestion) {
-      setAllBankQuestions(prev => prev.map(q => q.id === editingQuestion.id ? { ...editingQuestion, ...questionPayload, difficulty: data.difficulty || 'Medium', id: String(editingQuestion.id), questionText: data.questionText  } : q));
+      setAllBankQuestions(prev => prev.map(q => q.id === editingQuestion.id ? { ...editingQuestion, ...questionPayload, id: String(editingQuestion.id) } : q));
       const globalQIndex = sampleInterviewQuestions.findIndex(q => q.id === editingQuestion.id);
-      if (globalQIndex !== -1) Object.assign(sampleInterviewQuestions[globalQIndex], { ...editingQuestion, ...questionPayload, difficulty: data.difficulty || 'Medium', id: String(editingQuestion.id), questionText: data.questionText });
+      if (globalQIndex !== -1) Object.assign(sampleInterviewQuestions[globalQIndex], { ...editingQuestion, ...questionPayload, id: String(editingQuestion.id) });
       toast({ title: "Question Updated", description: "The interview question has been updated." });
     } else {
       const newQuestion: InterviewQuestion = {
         ...questionPayload,
-        id: `iq-${Date.now()}`,
-        difficulty: data.difficulty || 'Medium',
-        questionText: data.questionText, // Ensure questionText is included
+        id: `iq-${Date.now()}`, // Ensure new questions get a unique ID
       };
       setAllBankQuestions(prev => [newQuestion, ...prev]);
-      sampleInterviewQuestions.unshift(newQuestion);
+      sampleInterviewQuestions.unshift(newQuestion); // Add to global sample data
       toast({ title: "Question Added", description: `New question added${currentUser.role !== 'admin' ? ' and awaiting approval' : ''}.` });
     }
     setIsQuestionFormOpen(false);
@@ -450,12 +466,14 @@ export default function InterviewPracticeHubPage() {
   };
 
   const openNewQuestionDialog = () => {
+    console.log("[InterviewPrep] openNewQuestionDialog called");
     setEditingQuestion(null);
     resetQuestionForm({ questionText: '', category: 'Common', isMCQ: false, mcqOptions: ["", "", "", ""], correctAnswer: '', answerOrTip: '', tags: '', difficulty: 'Medium' });
     setIsQuestionFormOpen(true);
   };
 
   const openEditQuestionDialog = (question: InterviewQuestion) => {
+    console.log("[InterviewPrep] openEditQuestionDialog called for question:", question.id);
      if (currentUser.role !== 'admin' && question.createdBy !== currentUser.id) {
         toast({title: "Permission Denied", description: "You can only edit questions you created.", variant: "destructive"});
         return;
@@ -475,6 +493,7 @@ export default function InterviewPracticeHubPage() {
   };
 
   const handleDeleteQuestion = (questionId: string) => {
+    console.log("[InterviewPrep] handleDeleteQuestion called for ID:", questionId);
      const questionToDelete = allBankQuestions.find(q => q.id === questionId);
      if (currentUser.role !== 'admin' && questionToDelete?.createdBy !== currentUser.id) {
         toast({title: "Permission Denied", description: "You can only delete questions you created.", variant: "destructive"});
@@ -491,11 +510,13 @@ export default function InterviewPracticeHubPage() {
       const newSet = new Set(prev);
       if (newSet.has(questionId)) newSet.delete(questionId);
       else newSet.add(questionId);
+      console.log("[InterviewPrep] handleToggleQuestionForQuiz, new selection count:", newSet.size);
       return newSet;
     });
   };
 
   const handleCreateQuiz = () => {
+    console.log("[InterviewPrep] handleCreateQuiz called. Selected questions:", selectedQuestionsForQuiz);
     if (selectedQuestionsForQuiz.size === 0) {
       toast({ title: "No Questions Selected", description: "Please select questions to include in the quiz.", variant: "destructive" });
       return;
@@ -505,20 +526,21 @@ export default function InterviewPracticeHubPage() {
   };
 
   const getCategoryIcon = (category?: InterviewQuestionCategory) => {
-    if (!category) return <Puzzle className="h-4 w-4 text-gray-400 flex-shrink-0"/>;
+    if (!category) return <PuzzleIcon className="h-4 w-4 text-gray-400 flex-shrink-0"/>;
     switch(category) {
-      case 'Behavioral': return <Users className="h-4 w-4 text-purple-500 flex-shrink-0"/>;
+      case 'Behavioral': return <UsersGroupIcon className="h-4 w-4 text-purple-500 flex-shrink-0"/>;
       case 'Technical': return <Settings2 className="h-4 w-4 text-orange-500 flex-shrink-0"/>;
-      case 'Coding': return <Code className="h-4 w-4 text-sky-500 flex-shrink-0"/>;
-      case 'Role-Specific': return <Brain className="h-4 w-4 text-indigo-500 flex-shrink-0"/>;
-      case 'Analytical': return <Puzzle className="h-4 w-4 text-teal-500 flex-shrink-0"/>;
+      case 'Coding': return <CodeIcon className="h-4 w-4 text-sky-500 flex-shrink-0"/>;
+      case 'Role-Specific': return <BrainIcon className="h-4 w-4 text-indigo-500 flex-shrink-0"/>;
+      case 'Analytical': return <PuzzleIcon className="h-4 w-4 text-teal-500 flex-shrink-0"/>;
       case 'HR': return <Lightbulb className="h-4 w-4 text-pink-500 flex-shrink-0"/>;
       case 'Common': return <MessageSquare className="h-4 w-4 text-gray-500 flex-shrink-0"/>;
-      default: return <Puzzle className="h-4 w-4 text-gray-400 flex-shrink-0"/>;
+      default: return <PuzzleIcon className="h-4 w-4 text-gray-400 flex-shrink-0"/>;
     }
   };
 
   const onCommentSubmit = (data: CommentFormData, questionId: string) => {
+    console.log("[InterviewPrep] onCommentSubmit for question ID:", questionId, "Data:", data);
     const newComment: InterviewQuestionUserComment = {
         id: `uc-${questionId}-${Date.now()}`,
         userId: currentUser.id,
@@ -540,6 +562,7 @@ export default function InterviewPracticeHubPage() {
   };
 
   const handleRateQuestion = (questionId: string, rating: number) => {
+    console.log("[InterviewPrep] handleRateQuestion for ID:", questionId, "Rating:", rating);
     setAllBankQuestions(prevQs => prevQs.map(q => {
         if (q.id === questionId) {
             const existingRatingIndex = q.userRatings?.findIndex(r => r.userId === currentUser.id);
@@ -577,6 +600,7 @@ export default function InterviewPracticeHubPage() {
   };
 
   const handleToggleBookmarkQuestion = (questionId: string) => {
+    console.log("[InterviewPrep] handleToggleBookmarkQuestion for ID:", questionId);
     setAllBankQuestions(prevQs => prevQs.map(q => {
         if (q.id === questionId) {
             const currentBookmarks = q.bookmarkedBy || [];
@@ -602,6 +626,7 @@ export default function InterviewPracticeHubPage() {
   };
 
   const openEditQuestionsDialog = (sessionId: string) => {
+    console.log("[InterviewPrep] openEditQuestionsDialog for session ID:", sessionId);
     const liveSession = sampleLiveInterviewSessions.find(ls => ls.id === sessionId);
     if (liveSession && liveSession.preSelectedQuestions) {
         setEditingSessionId(sessionId);
@@ -614,10 +639,12 @@ export default function InterviewPracticeHubPage() {
   };
 
   const handleRemoveQuestionFromDialog = (questionIdToRemove: string) => {
+    console.log("[InterviewPrep] handleRemoveQuestionFromDialog, removing ID:", questionIdToRemove);
     setCurrentEditingQuestions(prev => prev.filter(q => q.id !== questionIdToRemove));
   };
 
   const handleSaveQuestionChanges = () => {
+    console.log("[InterviewPrep] handleSaveQuestionChanges for session ID:", editingSessionId);
     if (!editingSessionId) return;
 
     const liveSessionIndex = sampleLiveInterviewSessions.findIndex(ls => ls.id === editingSessionId);
@@ -649,13 +676,9 @@ export default function InterviewPracticeHubPage() {
     const now = new Date();
     let canJoin = false;
     if (session.status === 'SCHEDULED' && sessionDate) {
-      if (isFuture(sessionDate)) {
-        canJoin = true;
-      } else {
-        // Allow joining if session started within the last hour
         const sessionEndTime = addMinutes(sessionDate, 60); // Assume 1 hour duration
         canJoin = compareAsc(now, sessionEndTime) <= 0 && compareAsc(now, sessionDate) >=0;
-      }
+        if (isFuture(sessionDate)) canJoin = true; // Also allow joining if it's in the future
     }
 
     const liveSession = sampleLiveInterviewSessions.find(ls => ls.id === session.id);
@@ -665,7 +688,9 @@ export default function InterviewPracticeHubPage() {
     <Card key={session.id} className="shadow-md hover:shadow-lg transition-shadow">
       <CardHeader>
         <div className="flex justify-between items-start">
-          <CardTitle className="text-lg"><SessionDateTimeDisplay dateString={session.date} /></CardTitle>
+          <CardTitle className="text-lg">
+            <SessionDateTimeDisplay dateString={session.date} />
+          </CardTitle>
           <span className={cn(
             "px-2 py-1 text-xs font-semibold rounded-full",
             session.status === 'SCHEDULED' ? "bg-green-100 text-green-700" :
@@ -678,8 +703,8 @@ export default function InterviewPracticeHubPage() {
         <CardDescription className="text-sm">{session.category}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-1 text-xs text-muted-foreground">
-        <p className="flex items-center gap-1"><Type className="h-3.5 w-3.5"/>Focus: {session.type}</p>
-        <p className="flex items-center gap-1"><Languages className="h-3.5 w-3.5"/>Language: {session.language}</p>
+        <p className="flex items-center gap-1"><BrainIcon className="h-3.5 w-3.5"/>Focus: {session.type}</p>
+        <p className="flex items-center gap-1"><MessageSquare className="h-3.5 w-3.5"/>Language: {session.language}</p>
         {session.notes && <p className="text-xs text-muted-foreground pt-1 italic">Notes: {session.notes}</p>}
       </CardContent>
       <CardFooter className="flex flex-wrap gap-2 justify-end">
@@ -701,7 +726,7 @@ export default function InterviewPracticeHubPage() {
                  </Button>
             )}
             <Button variant="destructive" size="sm" onClick={() => handleCancelPracticeSession(session.id)}>
-              <XCircle className="mr-1 h-4 w-4"/>Cancel
+              <XCircleIcon className="mr-1 h-4 w-4"/>Cancel
             </Button>
             <Button variant="outline" size="sm" onClick={() => handleRescheduleSession(session.id)}>
               <Calendar className="mr-1 h-4 w-4"/>Reschedule
@@ -774,7 +799,7 @@ export default function InterviewPracticeHubPage() {
               {cancelledSessions.map(renderSessionCard)}
             </div>
           ) : (
-            <Card className="text-center py-10"><CardContent><ShieldAlert className="h-12 w-12 text-muted-foreground mx-auto mb-3"/><p className="text-muted-foreground">No cancelled interviews found.</p></CardContent></Card>
+            <Card className="text-center py-10"><CardContent><XCircleIcon className="h-12 w-12 text-muted-foreground mx-auto mb-3"/><p className="text-muted-foreground">No cancelled interviews found.</p></CardContent></Card>
           )}
         </TabsContent>
       </Tabs>
@@ -920,7 +945,7 @@ export default function InterviewPracticeHubPage() {
                                 )}
                                 {currentUser.role === 'admin' && (
                                   <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:bg-destructive/10" onClick={(e) => { e.stopPropagation(); handleDeleteQuestion(q.id);}}>
-                                     <XCircle className="h-4 w-4"/>
+                                     <XCircleIcon className="h-4 w-4"/>
                                   </Button>
                                 )}
                                 <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180" />
@@ -1080,13 +1105,13 @@ export default function InterviewPracticeHubPage() {
             {isMCQSelected && (
                 <div className="space-y-2 pl-6 border-l-2 border-primary/50 pt-2">
                     <Label>MCQ Options (at least 2 required if MCQ)</Label>
-                    {(watchQuestionForm("mcqOptions") || ["","","",""]).map((optVal,index) => (
+                    {(watchQuestionForm("mcqOptions") || ["","","",""]).map((_,index) => ( // Iterate based on a fixed or dynamic length
                         <Controller
                             key={index}
                             name={`mcqOptions.${index}` as any}
                             control={questionFormControl}
                             render={({ field }) => (
-                                <Input {...field} value={field.value || ""} placeholder={`Option ${optionLetters[index] || index + 1}`} className="text-sm"/>
+                                <Input {...field} value={field.value || ""} placeholder={`Option ${optionLetters[index] || index + 1}`} className="text-sm mb-1"/>
                             )}
                         />
                     ))}
