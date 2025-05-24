@@ -552,7 +552,7 @@ export interface InterviewQuestionUserRating {
 export interface InterviewQuestion {
   id: string;
   category: InterviewQuestionCategory;
-  questionText: string; // Renamed from 'question' for clarity
+  questionText: string;
   isMCQ?: boolean;
   mcqOptions?: string[];
   correctAnswer?: string;
@@ -567,6 +567,7 @@ export interface InterviewQuestion {
   approved?: boolean;
   createdAt?: string;
   bookmarkedBy?: string[];
+  baseScore?: number;
 }
 
 
@@ -586,7 +587,7 @@ export interface MockInterviewQuestion {
   questionText: string;
   category?: InterviewQuestionCategory;
   difficulty?: InterviewQuestionDifficulty;
-  baseScore?: number; // Added for interviewer scoring
+  baseScore?: number;
 }
 
 export interface MockInterviewAnswer {
@@ -728,6 +729,9 @@ export interface PracticeSession {
   language: string;
   status: PracticeSessionStatus;
   notes?: string;
+  // AI specific fields
+  aiTopicOrRole?: string;
+  aiJobDescription?: string;
   aiNumQuestions?: number;
   aiDifficulty?: 'easy' | 'medium' | 'hard';
   aiTimerPerQuestion?: number;
@@ -736,8 +740,8 @@ export interface PracticeSession {
 
 export const PREDEFINED_INTERVIEW_TOPICS: string[] = Array.from(new Set([
     "Java", "Python", "DSA", "Angular", "Javascript", "Microservices",
-    "System Design", "Product Management", "Data Science", // Removed Behavioral here
-    ...ALL_CATEGORIES
+    "System Design", "Product Management", "Data Science",
+    ...ALL_CATEGORIES.filter(cat => cat !== "Behavioral") // Ensure Behavioral is not duplicated
 ]));
 
 
@@ -1056,9 +1060,10 @@ export interface LiveInterviewSession {
   };
 }
 
-export type Locale = 'en' | 'hi' | 'mr'; // Removed es, zh, vi for now
-export const locales: Locale[] = ['en', 'hi', 'mr']; // Removed es, zh, vi
-export const localePrefix = 'as-needed';
+export type Locale = 'en' | 'hi' | 'mr';
+export const locales: Locale[] = ['en', 'hi', 'mr'];
+export const localePrefix = 'as-needed'; // Or 'always', 'never'
+export const defaultLocale: Locale = 'en';
 
 export const localeDisplayNames: Record<Locale, string> = {
   en: 'English',
