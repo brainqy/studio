@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Mic, ListChecks, Search, ChevronLeft, ChevronRight, Tag, Settings2, Puzzle, Lightbulb, Code as CodeIcon, Eye, Edit3, Play, PlusCircle, Star as StarIcon, Send, Bookmark as BookmarkIcon, Video, Trash2, ListFilter, ChevronDown, User as UserIcon, XCircle as XCircleIcon, Calendar, MessageSquare, Users as UsersGroupIcon, Brain as BrainIcon } from "lucide-react";
+import { Mic, ListChecks, Search, ChevronLeft, ChevronRight, Tag, Settings2, Puzzle, Lightbulb, Code as CodeIcon, Eye, Edit3, Play, PlusCircle, Star as StarIcon, Send, Bookmark as BookmarkIcon, Video, Trash2, ListFilter, ChevronDown, User as UserIcon, XCircle as XCircleIcon, Calendar, MessageSquare, Users as UsersGroupIcon, Brain as BrainIcon, CheckCircle } from "lucide-react"; // Added CheckCircle
 import { useToast } from "@/hooks/use-toast";
 import { sampleUserProfile, samplePracticeSessions, sampleInterviewQuestions, sampleCreatedQuizzes, sampleLiveInterviewSessions, PREDEFINED_INTERVIEW_TOPICS } from "@/lib/sample-data";
 import type { PracticeSession, InterviewQuestion, InterviewQuestionCategory, MockInterviewSession, DialogStep, PracticeSessionConfig, InterviewQuestionUserComment, InterviewQuestionDifficulty, PracticeSessionStatus, AIMockQuestionType, LiveInterviewSession } from '@/types';
@@ -245,8 +245,7 @@ export default function InterviewPracticeHubPage() {
         }
         setFriendEmailError(null);
         toast({ title: "Invitation Sent (Mock)", description: `Invitation sent to ${practiceSessionConfig.friendEmail}.` });
-        setIsSetupDialogOpen(false);
-        // State reset will be handled by useEffect listening to isSetupDialogOpen
+        setIsSetupDialogOpen(false); // This will trigger useEffect to reset states
         return;
       }
       setDialogStep('selectTopics');
@@ -294,39 +293,41 @@ export default function InterviewPracticeHubPage() {
     console.log("[InterviewPrep] handleFinalBookSession called. Config:", practiceSessionConfig);
     if (!practiceSessionConfig.type) {
         toast({ title: "Booking Error", description: "Interview type not selected.", variant: "destructive"});
+        setIsSetupDialogOpen(false); // Close dialog on error too
         return;
     }
 
     let newSessionId: string;
-    let newPracticeSess: PracticeSession;
 
     if (practiceSessionConfig.type === 'experts') {
         if (practiceSessionConfig.topics.length === 0 || !practiceSessionConfig.dateTime) {
             toast({ title: "Booking Error", description: "Missing expert session details (topics or date/time).", variant: "destructive"});
+            setIsSetupDialogOpen(false);
             return;
         }
         newSessionId = `ps-expert-${Date.now()}`;
-        newPracticeSess = {
+        const newPracticeSess: PracticeSession = {
             id: newSessionId,
             userId: currentUser.id,
             date: practiceSessionConfig.dateTime.toISOString(),
             category: "Practice with Experts",
             type: practiceSessionConfig.topics.join(', ') || "General",
-            language: "English",
+            language: "English", // Assuming English, make configurable if needed
             status: "SCHEDULED" as PracticeSessionStatus,
             notes: `Scheduled expert session for topics: ${practiceSessionConfig.topics.join(', ')}.`,
         };
         setPracticeSessions(prev => [newPracticeSess, ...prev]);
-        samplePracticeSessions.unshift(newPracticeSess);
+        samplePracticeSessions.unshift(newPracticeSess); // Update global sample data
 
-        const expertInterviewer = samplePlatformUsers.find(u => u.role === 'admin' || u.role === 'manager') || currentUser;
+        // Create corresponding LiveInterviewSession
+        const expertInterviewer = samplePlatformUsers.find(u => u.role === 'admin' || u.role === 'manager') || currentUser; // Find an admin/manager as expert
         const liveSessionQuestions = sampleInterviewQuestions
             .filter(q => practiceSessionConfig.topics.some(topic =>
                 (q.category && q.category.toLowerCase() === topic.toLowerCase()) ||
                 (q.tags && q.tags.some(tag => tag.toLowerCase() === topic.toLowerCase())) ||
                 (q.questionText && typeof q.questionText === 'string' && q.questionText.toLowerCase().includes(topic.toLowerCase()))
             ))
-            .slice(0,5)
+            .slice(0,5) // Take first 5 matching questions
             .map(q => ({id: String(q.id), questionText: q.questionText, category: q.category, difficulty: q.difficulty, baseScore: q.baseScore || 10 }));
 
         const newLiveSess: LiveInterviewSession = {
@@ -340,13 +341,15 @@ export default function InterviewPracticeHubPage() {
             scheduledTime: newPracticeSess.date,
             status: 'Scheduled',
             preSelectedQuestions: liveSessionQuestions,
+            recordingReferences: [],
+            interviewerScores: [],
         };
-        sampleLiveInterviewSessions.unshift(newLiveSess);
-
+        sampleLiveInterviewSessions.unshift(newLiveSess); // Update global sample data
         toast({ title: "Expert Session Booked (Mock)", description: `Session for ${newPracticeSess.type} on ${practiceSessionConfig.dateTime ? format(practiceSessionConfig.dateTime, 'PPp') : 'N/A'} scheduled.` });
     } else if (practiceSessionConfig.type === 'ai') {
         if (!practiceSessionConfig.aiTopicOrRole?.trim()) {
             toast({ title: "Booking Error", description: "Missing AI interview topic/role.", variant: "destructive"});
+            setIsSetupDialogOpen(false);
             return;
         }
         const aiConfigPayload: GenerateMockInterviewQuestionsInput = {
@@ -365,12 +368,18 @@ export default function InterviewPracticeHubPage() {
         if(aiConfigPayload.difficulty) queryParams.append('difficulty', aiConfigPayload.difficulty);
         if(aiConfigPayload.timerPerQuestion) queryParams.append('timerPerQuestion', String(aiConfigPayload.timerPerQuestion));
         if(aiConfigPayload.questionCategories && aiConfigPayload.questionCategories.length > 0) queryParams.append('categories', aiConfigPayload.questionCategories.join(','));
-        queryParams.append('autoFullScreen', 'true');
+        queryParams.append('autoFullScreen', 'true'); // Add this to trigger auto fullscreen
+
+        setIsSetupDialogOpen(false); // Close dialog *before* redirecting
         router.push(`/ai-mock-interview?${queryParams.toString()}`);
+        return; // Exit early as we're redirecting
+    } else if (practiceSessionConfig.type === 'friends') {
+        // The "friends" type is handled in handleDialogNextStep which calls setIsSetupDialogOpen(false)
+        // No further action needed here as invitation is "sent" there.
+        // We still ensure the dialog cleanup runs by not returning early for this case if we didn't already.
     }
     
-    setIsSetupDialogOpen(false);
-    // Resetting state is now handled by useEffect on isSetupDialogOpen
+    setIsSetupDialogOpen(false); // This triggers useEffect for cleanup
   };
 
 
@@ -686,8 +695,8 @@ export default function InterviewPracticeHubPage() {
     let canJoin = false;
     if (session.status === 'SCHEDULED' && sessionDate) {
       const sessionStartTime = sessionDate;
-      const sessionEndTime = addMinutes(sessionDate, 60); 
-      canJoin = (compareAsc(now, sessionEndTime) <= 0 && compareAsc(now, sessionStartTime) >=0 ) || isFuture(sessionStartTime);
+      const sessionEndTime = addMinutes(sessionDate, 60); // Assume 1 hour duration for joining buffer
+      canJoin = (compareAsc(now, sessionEndTime) <= 0 && compareAsc(now, addMinutes(sessionStartTime, -15)) >=0 ); // Can join 15 min before
     }
 
     const liveSession = sampleLiveInterviewSessions.find(ls => ls.id === session.id);
