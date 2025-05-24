@@ -10,9 +10,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle as DialogUITitle, DialogDescription as DialogUIDescription, DialogFooter as DialogUIFooter, DialogClose } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Brain, Calendar, Users, ShieldAlert, Type, Languages, MessageSquare, CheckCircle, XCircle, Mic, ListChecks, Search, ChevronLeft, ChevronRight, Tag, Settings2, Puzzle, Lightbulb, Code, Eye, Edit3, Play, PlusCircle, Star as StarIcon, Send, Bookmark as BookmarkIcon, Video, Trash2, ListFilter } from "lucide-react";
+import { Brain, Calendar, Users, ShieldAlert, Type, Languages, MessageSquare, CheckCircle, XCircle, Mic, ListChecks, Search, ChevronLeft, ChevronRight, Tag, Settings2, Puzzle, Lightbulb, Code, Eye, Edit3, Play, PlusCircle, Star as StarIcon, Send, Bookmark as BookmarkIcon, Video, Trash2, ListFilter, ChevronDown } from "lucide-react"; // Added ChevronDown
 import { useToast } from "@/hooks/use-toast";
-import { sampleUserProfile, samplePracticeSessions, sampleInterviewQuestions, sampleCreatedQuizzes, sampleLiveInterviewSessions } from "@/lib/sample-data";
+import { sampleUserProfile, samplePracticeSessions, sampleInterviewQuestions, sampleCreatedQuizzes } from "@/lib/sample-data";
 import type { PracticeSession, InterviewQuestion, InterviewQuestionCategory, MockInterviewSession, DialogStep, PracticeSessionConfig, InterviewQuestionUserComment, InterviewQuestionDifficulty, PracticeFocusArea, BankQuestionSortOrder, BankQuestionFilterView, GenerateMockInterviewQuestionsInput, PracticeSessionStatus, AIMockQuestionType } from '@/types';
 import { ALL_CATEGORIES, PREDEFINED_INTERVIEW_TOPICS, PRACTICE_FOCUS_AREAS, MOCK_INTERVIEW_STEPS, RESUME_BUILDER_STEPS } from '@/types';
 import { format, parseISO, isFuture, addMinutes, compareAsc, differenceInMinutes, formatDistanceToNow } from "date-fns";
@@ -70,13 +70,12 @@ const SessionDateTimeDisplay = ({ dateString }: { dateString: string }) => {
   if (!formattedDateTime) {
     // Fallback for SSR or before client-side effect runs, render only date part
     try {
-        return <span>{format(parseISO(dateString), "MMM dd, yyyy")} (Loading time...)</span>;
+        return React.createElement('span', null, format(parseISO(dateString), "MMM dd, yyyy") + " (Loading time...)");
     } catch (e) {
-        return <span>Invalid date</span>
+        return React.createElement('span', null, 'Invalid date');
     }
   }
-
-  return <span>{formattedDateTime}</span>;
+  return React.createElement('span', null, formattedDateTime);
 };
 
 
@@ -157,20 +156,19 @@ export default function InterviewPracticeHubPage() {
   const [newQuestionIdsInput, setNewQuestionIdsInput] = useState('');
 
   useEffect(() => {
+    // This effect runs if the dialog closes unexpectedly or by other means
+    // It ensures state is reset. The primary reset is now in the onOpenChange handler.
     if (!isSetupDialogOpen) {
+      // Minimal reset here, more comprehensive reset in onOpenChange
       setDialogStep('selectType');
-      setPracticeSessionConfig({
-        type: null, topics: [], dateTime: null, friendEmail: '',
-        aiTopicOrRole: '', aiJobDescription: '', aiNumQuestions: 5, aiDifficulty: 'medium',
-        aiTimerPerQuestion: 0, aiQuestionCategories: []
-      });
-      setFriendEmailError(null);
+      // practiceSessionConfig is reset by handleStartPracticeSetup or the explicit close
     }
   }, [isSetupDialogOpen]);
 
-  const upcomingSessions = practiceSessions.filter(s => s.status === 'SCHEDULED' && s.date && isFuture(parseISO(s.date)));
-  const allUserSessions = practiceSessions; 
-  const cancelledSessions = practiceSessions.filter(s => s.status === 'CANCELLED');
+
+  const upcomingSessions = useMemo(() => practiceSessions.filter(s => s.status === 'SCHEDULED' && s.date && isFuture(parseISO(s.date))), [practiceSessions]);
+  const allUserSessions = useMemo(() => practiceSessions, [practiceSessions]);
+  const cancelledSessions = useMemo(() => practiceSessions.filter(s => s.status === 'CANCELLED'), [practiceSessions]);
 
   const handleStartPracticeSetup = () => {
     setPracticeSessionConfig({
@@ -213,6 +211,9 @@ export default function InterviewPracticeHubPage() {
         setFriendEmailError(null);
         toast({ title: "Invitation Sent (Mock)", description: `Invitation sent to ${practiceSessionConfig.friendEmail}.` });
         setIsSetupDialogOpen(false); 
+        // Reset internal dialog state for next open
+        setDialogStep('selectType');
+        setPracticeSessionConfig({ type: null, topics: [], dateTime: null, friendEmail: '', aiTopicOrRole: '', aiJobDescription: '', aiNumQuestions: 5, aiDifficulty: 'medium', aiTimerPerQuestion: 0, aiQuestionCategories: [] });
         return;
       }
       setDialogStep('selectTopics');
@@ -586,6 +587,8 @@ export default function InterviewPracticeHubPage() {
   };
   
   const openEditQuestionsDialog = (sessionId: string) => {
+    // Ensure sampleLiveInterviewSessions is imported if not already.
+    // For now, assuming it's available in this scope or globally.
     const liveSession = sampleLiveInterviewSessions.find(ls => ls.id === sessionId);
     if (liveSession && liveSession.preSelectedQuestions) {
         setEditingSessionId(sessionId);
@@ -631,8 +634,9 @@ export default function InterviewPracticeHubPage() {
   const renderSessionCard = (session: PracticeSession) => {
     const sessionDate = session.date ? parseISO(session.date) : null;
     const now = new Date();
+    // Allow joining if session is scheduled and is in the future OR started within the last hour
     const canJoin = session.status === 'SCHEDULED' && sessionDate &&
-                    (isFuture(sessionDate) || (isPast(sessionDate) && differenceInMinutes(now, addMinutes(sessionDate,60)) >= 0 && differenceInMinutes(now, sessionDate) <= 60 ));
+                    (isFuture(sessionDate) || (compareAsc(now, addMinutes(sessionDate,60)) <= 0 && compareAsc(now, sessionDate) >= 0));
     
     const liveSession = sampleLiveInterviewSessions.find(ls => ls.id === session.id);
     const isCurrentUserInterviewer = liveSession?.participants.find(p => p.userId === currentUser.id && p.role === 'interviewer');
@@ -713,7 +717,7 @@ export default function InterviewPracticeHubPage() {
           </div>
           <div className="mt-4">
             <p className="text-sm text-foreground">Credits left: <span className="font-semibold text-primary">{currentUser.interviewCredits || 0} AI interviews</span></p>
-            <Button variant="link" className="p-0 h-auto text-primary text-sm">GET MORE FOR FREE</Button>
+            {/* <Button variant="link" className="p-0 h-auto text-primary text-sm">GET MORE FOR FREE</Button> */}
           </div>
         </CardContent>
       </Card>
@@ -1073,7 +1077,7 @@ export default function InterviewPracticeHubPage() {
                             <Input id="correctAnswer" {...field} value={field.value || ""} placeholder="Paste the correct option text here"/>
                         )} />
                     </div>
-                     {questionFormErrors.mcqOptions && <p className="text-sm text-destructive mt-1">{questionFormErrors.mcqOptions?.message || questionFormErrors.mcqOptions?.[0]?.message || questionFormErrors.isMCQ?.message}</p>}
+                     {questionFormErrors.mcqOptions && <p className="text-sm text-destructive mt-1">{questionFormErrors.mcqOptions?.message || (questionFormErrors.mcqOptions as any)?.[0]?.message || (questionFormErrors as any).isMCQ?.message}</p>}
                      {questionFormErrors.correctAnswer && <p className="text-sm text-destructive mt-1">{questionFormErrors.correctAnswer.message}</p>}
                 </div>
             )}
@@ -1145,3 +1149,5 @@ export default function InterviewPracticeHubPage() {
     </div>
   );
 }
+
+    
