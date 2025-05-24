@@ -7,13 +7,13 @@ import { Toaster } from "@/components/ui/toaster";
 
 const fontSans = FontSans({
   subsets: ["latin"],
-  variable: "--font-sans",
+  variable: "--font-sans", // Ensure this matches the variable name used in globals.css
 })
 
 export const metadata: Metadata = {
   title: 'ResumeMatch AI',
   description: 'AI-powered resume analysis and job matching platform.',
-  // manifest: '/manifest.json', // Removed to prevent CORS error due to environment redirect
+  // The 'manifest' property has been removed to prevent fetching /manifest.json
   appleWebApp: { // Kept for iOS specific "add to homescreen" behavior if needed
     capable: true,
     statusBarStyle: 'default',
@@ -34,10 +34,9 @@ interface RootLayoutProps {
 }
 
 export default function RootLayout({ children }: RootLayoutProps) {
-  // Ensure there's no whitespace between <html>, <head />, and <body> in the JSX
-  return (<html lang="en" suppressHydrationWarning>
-      {/* Next.js automatically manages most head elements via metadata */}
-      {/* No explicit <head /> tag here is standard for App Router */}
+  return (
+    <html lang="en" suppressHydrationWarning>
+      {/* No explicit <head /> tag. Next.js will populate it based on metadata. */}
       <body className={cn(
         "min-h-screen bg-background font-sans antialiased",
         fontSans.variable
@@ -45,5 +44,6 @@ export default function RootLayout({ children }: RootLayoutProps) {
         {children}
         <Toaster />
       </body>
-    </html>);
+    </html>
+  );
 }
