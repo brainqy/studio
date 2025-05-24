@@ -3,7 +3,8 @@
 @tailwind utilities;
 
 body {
-  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  /* Directly use Inter font, ensure it's loaded via <link> in layout.tsx */
+  font-family: 'Inter', Arial, Helvetica, sans-serif;
 }
 
 @layer base {

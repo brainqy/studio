@@ -1,22 +1,22 @@
 // src/app/layout.tsx
 import type { Metadata, Viewport } from 'next';
-import { Inter as FontSans } from "next/font/google";
+// import { Inter as FontSans } from "next/font/google"; // Removed next/font/google
 import './globals.css';
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/toaster";
 
-const fontSans = FontSans({
-  subsets: ["latin"],
-  variable: "--font-sans", // Ensure this matches the variable name used in globals.css
-})
+// const fontSans = FontSans({ // Removed next/font/google
+//   subsets: ["latin"],
+//   variable: "--font-sans",
+// })
 
 export const metadata: Metadata = {
   title: 'ResumeMatch AI',
   description: 'AI-powered resume analysis and job matching platform.',
-  // The 'manifest' property has been removed to prevent fetching /manifest.json
-  appleWebApp: { // Kept for iOS specific "add to homescreen" behavior if needed
+  // manifest: '/manifest.json', // Keep manifest commented out or removed if still causing issues
+  appleWebApp: {
     capable: true,
-    statusBarStyle: 'default',
+    statusBarStyle: 'default', // Or 'black-translucent'
     title: 'ResumeMatch AI',
   },
 };
@@ -36,10 +36,15 @@ interface RootLayoutProps {
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="en" suppressHydrationWarning>
-      {/* No explicit <head /> tag. Next.js will populate it based on metadata. */}
+      <head>
+        {/* Manually link to Google Fonts */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet" />
+      </head>
       <body className={cn(
-        "min-h-screen bg-background font-sans antialiased",
-        fontSans.variable
+        "min-h-screen bg-background font-sans antialiased"
+        // fontSans.variable // Removed as fontSans is no longer used
       )}>
         {children}
         <Toaster />
