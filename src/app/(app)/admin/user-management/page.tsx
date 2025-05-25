@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, type ChangeEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -9,18 +9,19 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogTrigger } from "@/components/ui/dialog"; // Added DialogTrigger
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { UserCog, PlusCircle, Edit3, Trash2, UploadCloud, DownloadCloud, ChevronDown, Search, HelpCircle, ShieldAlert } from "lucide-react";
+import { UserCog, PlusCircle, Edit3, Trash2, UploadCloud, DownloadCloud, ChevronDown, Search, HelpCircle, ShieldAlert, Upload } from "lucide-react"; // Added Upload
 import { useToast } from "@/hooks/use-toast";
 import type { UserProfile, UserRole, UserStatus } from "@/types";
-import { samplePlatformUsers, sampleUserProfile } from "@/lib/sample-data";
+import { samplePlatformUsers, sampleUserProfile, sampleTenants } from "@/lib/sample-data";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format } from "date-fns";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import Link from "next/link";
+import AccessDeniedMessage from "@/components/ui/AccessDeniedMessage";
 
 const userSchema = z.object({
   id: z.string().optional(),
@@ -28,31 +29,30 @@ const userSchema = z.object({
   email: z.string().email("Invalid email address"),
   role: z.enum(['admin', 'manager', 'user'] as [UserRole, ...UserRole[]]),
   status: z.enum(['active', 'inactive', 'pending', 'suspended'] as [UserStatus, ...UserStatus[]]),
-  tenantId: z.string().optional(), // Added for admin creation
+  tenantId: z.string().optional(),
 });
 
 type UserFormData = z.infer<typeof userSchema>;
 
 export default function UserManagementPage() {
   const currentUser = sampleUserProfile;
-  const [users, setUsers] = useState<UserProfile[]>(
-    currentUser.role === 'admin'
-      ? samplePlatformUsers
-      : samplePlatformUsers.filter(u => u.tenantId === currentUser.tenantId)
-  );
+  const [users, setUsers] = useState<UserProfile[]>([]);
   const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
   const [searchTerm, setSearchTerm] = useState("");
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
   const { toast } = useToast();
 
+  // State for import users dialog
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+
   const { control, handleSubmit, reset, setValue, formState: { errors } } = useForm<UserFormData>({
     resolver: zodResolver(userSchema),
   });
 
   useEffect(() => {
-    // Re-filter users if the current user's role or tenantId might change (e.g., in a dynamic context)
-    // For sample data, this ensures it's correctly filtered on initial load based on role
     setUsers(
       currentUser.role === 'admin'
         ? samplePlatformUsers
@@ -65,7 +65,7 @@ export default function UserManagementPage() {
     return users.filter(user =>
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.id.toLowerCase().includes(searchTerm.toLowerCase())
+      (user.id && user.id.toLowerCase().includes(searchTerm.toLowerCase()))
     );
   }, [users, searchTerm]);
 
@@ -92,11 +92,9 @@ export default function UserManagementPage() {
       const updatedUser = { 
         ...editingUser, 
         ...data, 
-        // Ensure tenantId is not changed by manager if editing, admin can change
         tenantId: currentUser.role === 'admin' && data.tenantId ? data.tenantId : editingUser.tenantId,
       };
       setUsers(prev => prev.map(u => u.id === editingUser.id ? updatedUser : u));
-      // Update samplePlatformUsers if editing an existing one
       const platformUserIndex = samplePlatformUsers.findIndex(pu => pu.id === editingUser.id);
       if (platformUserIndex !== -1) {
         samplePlatformUsers[platformUserIndex] = updatedUser;
@@ -107,7 +105,7 @@ export default function UserManagementPage() {
       const newUser: UserProfile = {
         ...data,
         id: `user-${Date.now()}`,
-        tenantId: newTenantId,
+        tenantId: newTenantId!,
         lastLogin: new Date().toISOString(),
         profilePictureUrl: `https://avatar.vercel.sh/${data.email}.png`,
         createdAt: new Date().toISOString(),
@@ -117,11 +115,11 @@ export default function UserManagementPage() {
         company: '',
       };
       setUsers(prev => [newUser, ...prev]);
-      samplePlatformUsers.push(newUser); // Add to global sample data
+      samplePlatformUsers.push(newUser);
       toast({ title: "User Created", description: `User "${data.name}" has been created for tenant ${newTenantId}.` });
     }
     setIsUserDialogOpen(false);
-    reset();
+    reset({ name: '', email: '', role: 'user', status: 'pending', tenantId: currentUser.role === 'manager' ? currentUser.tenantId : ''});
     setEditingUser(null);
   };
 
@@ -161,34 +159,57 @@ export default function UserManagementPage() {
         toast({title: "No Users Selected", description: "Please select users to perform bulk action.", variant:"destructive"});
         return;
     }
-    let updatedUsers = [...users];
-    let updatedPlatformUsers = [...samplePlatformUsers];
+    let updatedUsersLocally = [...users];
+    let updatedPlatformUsersGlobally = [...samplePlatformUsers];
 
     switch(action) {
         case 'activate':
-            updatedUsers = users.map(u => selectedUserIds.has(u.id) ? {...u, status: 'active'} : u);
-            updatedPlatformUsers = samplePlatformUsers.map(u => selectedUserIds.has(u.id) ? {...u, status: 'active'} : u);
+            updatedUsersLocally = users.map(u => selectedUserIds.has(u.id) ? {...u, status: 'active'} : u);
+            updatedPlatformUsersGlobally = samplePlatformUsers.map(u => selectedUserIds.has(u.id) ? {...u, status: 'active'} : u);
             toast({title: "Users Activated", description: `${selectedUserIds.size} users activated.`});
             break;
         case 'deactivate':
-            updatedUsers = users.map(u => selectedUserIds.has(u.id) ? {...u, status: 'inactive'} : u);
-            updatedPlatformUsers = samplePlatformUsers.map(u => selectedUserIds.has(u.id) ? {...u, status: 'inactive'} : u);
+            updatedUsersLocally = users.map(u => selectedUserIds.has(u.id) ? {...u, status: 'inactive'} : u);
+            updatedPlatformUsersGlobally = samplePlatformUsers.map(u => selectedUserIds.has(u.id) ? {...u, status: 'inactive'} : u);
             toast({title: "Users Deactivated", description: `${selectedUserIds.size} users deactivated.`});
             break;
         case 'delete':
-            updatedUsers = users.filter(u => !selectedUserIds.has(u.id));
-            updatedPlatformUsers = samplePlatformUsers.filter(u => !selectedUserIds.has(u.id));
+            updatedUsersLocally = users.filter(u => !selectedUserIds.has(u.id));
+            updatedPlatformUsersGlobally = samplePlatformUsers.filter(u => !selectedUserIds.has(u.id));
             toast({title: "Users Deleted", description: `${selectedUserIds.size} users deleted.`, variant: "destructive"});
             break;
     }
-    setUsers(updatedUsers);
-    // This direct mutation is for sample data persistence across app.
-    // In real app, this would be an API call.
+    setUsers(updatedUsersLocally);
     samplePlatformUsers.length = 0; 
-    samplePlatformUsers.push(...updatedPlatformUsers);
-
+    samplePlatformUsers.push(...updatedPlatformUsersGlobally);
     setSelectedUserIds(new Set());
   };
+
+  const handleFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      setSelectedFile(event.target.files[0]);
+    } else {
+      setSelectedFile(null);
+    }
+  };
+
+  const handleConfirmImport = () => {
+    if (!selectedFile) {
+      toast({ title: "No File Selected", description: "Please select a CSV file to import.", variant: "destructive" });
+      return;
+    }
+    // Mock import logic
+    console.log("Importing users from file (mock):", selectedFile.name);
+    toast({ title: "Import Started (Mock)", description: `Processing users from ${selectedFile.name}. This is a mocked feature.` });
+    // In a real app, you'd parse the CSV, validate data, and call an API to create users.
+    // For now, we just close the dialog and reset.
+    setIsImportDialogOpen(false);
+    setSelectedFile(null);
+  };
+
+  if (currentUser.role !== 'admin' && currentUser.role !== 'manager') {
+    return <AccessDeniedMessage />;
+  }
 
   return (
     <TooltipProvider>
@@ -218,8 +239,41 @@ export default function UserManagementPage() {
                 </TooltipTrigger>
                 <TooltipContent><p>Manually add a new user to the platform.</p></TooltipContent>
             </Tooltip>
-            {currentUser.role === 'admin' && ( // Only admin can bulk upload/download all users
+            {currentUser.role === 'admin' && (
               <>
+                <Dialog open={isImportDialogOpen} onOpenChange={(isOpen) => {
+                  setIsImportDialogOpen(isOpen);
+                  if (!isOpen) setSelectedFile(null);
+                }}>
+                  <DialogTrigger asChild>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                           <Button variant="outline">
+                                <Upload className="mr-2 h-5 w-5" /> Import Users
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent><p>Bulk import users via CSV file.</p></TooltipContent>
+                    </Tooltip>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Import Users from CSV</DialogTitle>
+                      <CardDescription>Select a CSV file with user data. Ensure it has columns: Name, Email, Role (user/manager), Status (active/pending), TenantID (optional).</CardDescription>
+                    </DialogHeader>
+                    <div className="py-4 space-y-3">
+                      <Label htmlFor="csv-file-upload">CSV File</Label>
+                      <Input id="csv-file-upload" type="file" accept=".csv" onChange={handleFileSelect} />
+                      {selectedFile && <p className="text-xs text-muted-foreground">Selected: {selectedFile.name}</p>}
+                    </div>
+                    <DialogFooter>
+                      <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
+                      <Button onClick={handleConfirmImport} disabled={!selectedFile} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                        Confirm Import
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+
                 <Tooltip>
                     <TooltipTrigger asChild>
                         <Button variant="outline" onClick={() => toast({ title: "Mock Action", description: "User upload initiated." })}>
@@ -269,7 +323,7 @@ export default function UserManagementPage() {
                   <TableHead className="w-[40px]">
                     <Checkbox
                       checked={selectedUserIds.size === filteredUsers.length && filteredUsers.length > 0 ? true : (selectedUserIds.size > 0 ? "indeterminate" : false)}
-                      onCheckedChange={(checked) => handleSelectAll(checked)}
+                      onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
                     />
                   </TableHead>
                   <TableHead>User ID</TableHead>
@@ -349,7 +403,7 @@ export default function UserManagementPage() {
                     <SelectTrigger id="user-role"><SelectValue placeholder="Select role" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="user">User</SelectItem>
-                      {currentUser.role === 'admin' && <SelectItem value="manager">Manager</SelectItem>}
+                      {(currentUser.role === 'admin' || currentUser.role === 'manager') && <SelectItem value="manager">Manager</SelectItem>}
                       {currentUser.role === 'admin' && <SelectItem value="admin">Admin</SelectItem>}
                     </SelectContent>
                   </Select>
@@ -379,7 +433,17 @@ export default function UserManagementPage() {
             {currentUser.role === 'admin' && (
                 <div>
                     <Label htmlFor="user-tenantId">Tenant ID</Label>
-                    <Controller name="tenantId" control={control} render={({ field }) => <Input id="user-tenantId" placeholder="e.g., tenant-1" {...field} />} />
+                    <Controller name="tenantId" control={control} render={({ field }) => (
+                       <Select onValueChange={field.onChange} value={field.value || ""}>
+                         <SelectTrigger id="user-tenantId"><SelectValue placeholder="Assign to Tenant" /></SelectTrigger>
+                         <SelectContent>
+                           {sampleTenants.map(tenant => (
+                             <SelectItem key={tenant.id} value={tenant.id}>{tenant.name} ({tenant.id})</SelectItem>
+                           ))}
+                         </SelectContent>
+                       </Select>
+                    )} />
+                     {errors.tenantId && <p className="text-sm text-destructive mt-1">{errors.tenantId.message}</p>}
                 </div>
             )}
             <DialogFooter>
@@ -393,3 +457,4 @@ export default function UserManagementPage() {
     </TooltipProvider>
   );
 }
+
