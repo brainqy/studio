@@ -36,10 +36,11 @@ type UserFormData = z.infer<typeof userSchema>;
 
 // Helper function to parse simple CSV content
 const parseCSV = (csvText: string): Record<string, string>[] => {
-  const lines = csvText.trim().split('\n');
+  if (!csvText || typeof csvText !== 'string') return [];
+  const lines = csvText.trim().split(/\r\n|\n|\r/); // Handle different line endings
   if (lines.length < 2) return []; // Header + at least one data row
 
-  const header = lines[0].split(',').map(h => h.trim());
+  const header = lines[0].split(',').map(h => h.trim().toLowerCase()); // Use lowercase headers for easier matching
   const dataRows = lines.slice(1);
 
   return dataRows.map(rowText => {
@@ -50,6 +51,26 @@ const parseCSV = (csvText: string): Record<string, string>[] => {
     });
     return rowObject;
   });
+};
+
+// Helper to convert array of objects to CSV string
+const convertToCSV = (data: UserProfile[]): string => {
+  if (!data || data.length === 0) return "";
+  const headers = ["ID", "Name", "Email", "Role", "Status", "TenantID", "LastLogin", "CreatedAt"];
+  const csvRows = [
+    headers.join(','),
+    ...data.map(user => [
+      user.id,
+      `"${user.name.replace(/"/g, '""')}"`, // Handle commas/quotes in names
+      user.email,
+      user.role,
+      user.status || 'N/A',
+      user.tenantId || 'N/A',
+      user.lastLogin ? format(new Date(user.lastLogin), 'yyyy-MM-dd HH:mm:ss') : 'N/A',
+      user.createdAt ? format(new Date(user.createdAt), 'yyyy-MM-dd HH:mm:ss') : 'N/A'
+    ].join(','))
+  ];
+  return csvRows.join('\n');
 };
 
 
@@ -73,7 +94,7 @@ export default function UserManagementPage() {
   useEffect(() => {
     setUsers(
       currentUser.role === 'admin'
-        ? samplePlatformUsers
+        ? [...samplePlatformUsers] // Use a copy to allow local modifications
         : samplePlatformUsers.filter(u => u.tenantId === currentUser.tenantId)
     );
   }, [currentUser.role, currentUser.tenantId]);
@@ -178,36 +199,41 @@ export default function UserManagementPage() {
         return;
     }
     let updatedUsersLocally = [...users];
-    let updatedPlatformUsersGlobally = [...samplePlatformUsers];
+    // Note: Directly mutating samplePlatformUsers is for demo. In real app, API calls would handle this.
+    
+    selectedUserIds.forEach(selectedId => {
+        const userIndexGlobal = samplePlatformUsers.findIndex(u => u.id === selectedId);
+        if (userIndexGlobal !== -1) {
+            if (action === 'activate') samplePlatformUsers[userIndexGlobal].status = 'active';
+            else if (action === 'deactivate') samplePlatformUsers[userIndexGlobal].status = 'inactive';
+        }
+    });
 
-    switch(action) {
-        case 'activate':
-            updatedUsersLocally = users.map(u => selectedUserIds.has(u.id) ? {...u, status: 'active'} : u);
-            updatedPlatformUsersGlobally = samplePlatformUsers.map(u => selectedUserIds.has(u.id) ? {...u, status: 'active'} : u);
-            toast({title: "Users Activated", description: `${selectedUserIds.size} users activated.`});
-            break;
-        case 'deactivate':
-            updatedUsersLocally = users.map(u => selectedUserIds.has(u.id) ? {...u, status: 'inactive'} : u);
-            updatedPlatformUsersGlobally = samplePlatformUsers.map(u => selectedUserIds.has(u.id) ? {...u, status: 'inactive'} : u);
-            toast({title: "Users Deactivated", description: `${selectedUserIds.size} users deactivated.`});
-            break;
-        case 'delete':
-            updatedUsersLocally = users.filter(u => !selectedUserIds.has(u.id));
-            updatedPlatformUsersGlobally = samplePlatformUsers.filter(u => !selectedUserIds.has(u.id));
-            toast({title: "Users Deleted", description: `${selectedUserIds.size} users deleted.`, variant: "destructive"});
-            break;
+    if (action === 'delete') {
+        updatedUsersLocally = users.filter(u => !selectedUserIds.has(u.id));
+        const originalLength = samplePlatformUsers.length;
+        samplePlatformUsers.splice(0, samplePlatformUsers.length, ...samplePlatformUsers.filter(u => !selectedUserIds.has(u.id)));
+        console.log(`Global users deleted: ${originalLength - samplePlatformUsers.length}`);
+        toast({title: "Users Deleted", description: `${selectedUserIds.size} users deleted.`, variant: "destructive"});
+    } else if (action === 'activate') {
+        updatedUsersLocally = users.map(u => selectedUserIds.has(u.id) ? {...u, status: 'active'} : u);
+        toast({title: "Users Activated", description: `${selectedUserIds.size} users activated.`});
+    } else if (action === 'deactivate') {
+        updatedUsersLocally = users.map(u => selectedUserIds.has(u.id) ? {...u, status: 'inactive'} : u);
+        toast({title: "Users Deactivated", description: `${selectedUserIds.size} users deactivated.`});
     }
+
     setUsers(updatedUsersLocally);
-    samplePlatformUsers.length = 0;
-    samplePlatformUsers.push(...updatedPlatformUsersGlobally);
     setSelectedUserIds(new Set());
   };
 
   const handleFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       setSelectedFile(event.target.files[0]);
+      console.log("File selected:", event.target.files[0].name);
     } else {
       setSelectedFile(null);
+      console.log("File selection cleared.");
     }
   };
 
@@ -216,18 +242,22 @@ export default function UserManagementPage() {
       toast({ title: "No File Selected", description: "Please select a CSV file to import.", variant: "destructive" });
       return;
     }
+    console.log("Attempting to import file:", selectedFile.name);
 
     const reader = new FileReader();
     reader.onload = (event) => {
       const csvText = event.target?.result as string;
       if (!csvText) {
         toast({ title: "File Error", description: "Could not read the file content.", variant: "destructive" });
+        console.error("FileReader result is null or undefined.");
         return;
       }
+      console.log("CSV content read, length:", csvText.length);
       try {
         const parsedUsers = parseCSV(csvText);
+        console.log("Parsed CSV data:", parsedUsers);
         if (parsedUsers.length === 0) {
-          toast({ title: "Empty or Invalid CSV", description: "No valid user data found in the CSV. Ensure it has a header row (Name,Email,Role,Status,TenantID) and data.", variant: "destructive" });
+          toast({ title: "Empty or Invalid CSV", description: "No valid user data found. Ensure header: Name,Email,Role,Status,TenantID (Role,Status,TenantID optional).", variant: "destructive" });
           return;
         }
 
@@ -236,11 +266,12 @@ export default function UserManagementPage() {
         let skippedCount = 0;
 
         for (const row of parsedUsers) {
-          const name = row.Name || row.name;
-          const email = row.Email || row.email;
-          const role = (row.Role || row.role || 'user').toLowerCase() as UserRole;
-          const status = (row.Status || row.status || 'pending').toLowerCase() as UserStatus;
-          const tenantId = row.TenantID || row.tenantId || currentUser.tenantId; // Default to admin's tenant if not specified
+          const name = row.name; // Assumes 'name' header in CSV
+          const email = row.email; // Assumes 'email' header
+          const role = (row.role?.toLowerCase() || 'user') as UserRole;
+          const status = (row.status?.toLowerCase() || 'pending') as UserStatus;
+          // For admin, tenantId from CSV. For manager, imported users go to manager's tenant.
+          let tenantId = currentUser.role === 'admin' ? row.tenantid : currentUser.tenantId;
 
           if (!name || !email) {
             console.warn("Skipping row due to missing name or email:", row);
@@ -248,26 +279,29 @@ export default function UserManagementPage() {
             continue;
           }
           if (!['admin', 'manager', 'user'].includes(role)) {
-            console.warn(`Skipping row due to invalid role '${role}':`, row);
-            skippedCount++;
-            continue;
+             console.warn(`Skipping row due to invalid role '${row.role}':`, row);
+             skippedCount++;
+             continue;
           }
           if (!['active', 'inactive', 'pending', 'suspended'].includes(status)) {
-            console.warn(`Skipping row due to invalid status '${status}':`, row);
-            skippedCount++;
-            continue;
+             console.warn(`Skipping row due to invalid status '${row.status}':`, row);
+             skippedCount++;
+             continue;
           }
-          // Basic email validation (more robust validation would be needed)
-          if (!email.includes('@')) {
+          if (!email.includes('@')) { // Basic email format check
               console.warn(`Skipping row due to invalid email format '${email}':`, row);
               skippedCount++;
               continue;
           }
-          // Check if tenant exists (admin context)
+
+          // Admin can import to any valid tenant, manager imports to their own.
           if (currentUser.role === 'admin' && tenantId && !sampleTenants.find(t => t.id === tenantId)) {
-            console.warn(`Skipping row due to non-existent tenantId '${tenantId}' for admin import:`, row);
+            console.warn(`Admin import: Tenant ID '${tenantId}' not found. Skipping user:`, row.email);
             skippedCount++;
             continue;
+          }
+          if (currentUser.role === 'manager') {
+            tenantId = currentUser.tenantId; // Force manager's tenant
           }
 
 
@@ -284,7 +318,7 @@ export default function UserManagementPage() {
             email,
             role,
             status,
-            tenantId: currentUser.role === 'admin' ? tenantId! : currentUser.tenantId!,
+            tenantId: tenantId!,
             lastLogin: new Date().toISOString(),
             profilePictureUrl: `https://avatar.vercel.sh/${email}.png`,
             createdAt: new Date().toISOString(),
@@ -292,6 +326,43 @@ export default function UserManagementPage() {
             bio: 'Imported via CSV',
             currentJobTitle: '',
             company: '',
+            // ... add other UserProfile defaults ...
+            dateOfBirth: undefined,
+            gender: undefined,
+            mobileNumber: '',
+            currentAddress: '',
+            graduationYear: '',
+            degreeProgram: undefined,
+            department: '',
+            currentOrganization: '',
+            industry: undefined,
+            workLocation: '',
+            linkedInProfile: '',
+            yearsOfExperience: '',
+            areasOfSupport: [],
+            timeCommitment: undefined,
+            preferredEngagementMode: undefined,
+            otherComments: '',
+            lookingForSupportType: undefined,
+            helpNeededDescription: '',
+            shareProfileConsent: true,
+            featureInSpotlightConsent: false,
+            isDistinguished: false,
+            resumeText: '',
+            careerInterests: '',
+            interests: [],
+            offersHelpWith: [],
+            appointmentCoinCost: 10, // Default
+            xpPoints: 0,
+            dailyStreak: 0,
+            longestStreak: 0,
+            totalActiveDays: 0,
+            weeklyActivity: Array(7).fill(false),
+            referralCode: `REFCSV${Date.now().toString().slice(-5)}`,
+            earnedBadges: [],
+            affiliateCode: undefined,
+            pastInterviewSessions: [],
+            interviewCredits: 0,
           };
           newUsersToAdd.push(newUser);
           importedCount++;
@@ -299,27 +370,56 @@ export default function UserManagementPage() {
 
         if (newUsersToAdd.length > 0) {
           setUsers(prev => [...prev, ...newUsersToAdd]);
-          samplePlatformUsers.push(...newUsersToAdd);
+          samplePlatformUsers.push(...newUsersToAdd); // Update global sample data
+          console.log(`${newUsersToAdd.length} new users added to local and global state.`);
         }
 
         toast({
           title: "Import Processed",
-          description: `${importedCount} users imported successfully. ${skippedCount} users skipped due to errors or duplicates.`,
+          description: `${importedCount} users imported successfully. ${skippedCount} users skipped (check console for details).`,
           duration: 7000
         });
 
       } catch (error) {
-        console.error("Error parsing CSV:", error);
-        toast({ title: "CSV Parsing Error", description: "Could not parse the CSV file. Please ensure it's valid.", variant: "destructive" });
+        console.error("Error parsing or processing CSV:", error);
+        toast({ title: "CSV Processing Error", description: "Could not process the CSV file. Please ensure it's valid and check console.", variant: "destructive" });
       }
     };
-    reader.onerror = () => {
+    reader.onerror = (e) => {
+      console.error("FileReader error:", e);
       toast({ title: "File Read Error", description: "Could not read the selected file.", variant: "destructive" });
     };
     reader.readAsText(selectedFile);
 
     setIsImportDialogOpen(false);
     setSelectedFile(null);
+  };
+
+  const handleExportUsers = () => {
+    if (currentUser.role !== 'admin') {
+      toast({ title: "Permission Denied", description: "Only admins can export users.", variant: "destructive"});
+      return;
+    }
+    if (filteredUsers.length === 0) {
+      toast({ title: "No Users to Export", description: "There are no users matching the current filter.", variant: "default" });
+      return;
+    }
+    const csvString = convertToCSV(filteredUsers);
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", `users_export_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast({ title: "Export Successful", description: `Exported ${filteredUsers.length} users.` });
+    } else {
+      toast({ title: "Export Failed", description: "Browser does not support file download.", variant: "destructive" });
+    }
   };
 
 
@@ -374,12 +474,17 @@ export default function UserManagementPage() {
                   <DialogContent className="sm:max-w-md">
                     <DialogHeader>
                       <DialogTitle>Import Users from CSV</DialogTitle>
-                      <CardDescription>Select a CSV file with user data. Header row should be: Name,Email,Role,Status,TenantID (Role, Status, TenantID are optional and will default if blank or invalid).</CardDescription>
+                      <CardDescription>Select a CSV file with user data. Header row should include: Name,Email. Optional: Role,Status,TenantID (case-insensitive headers).</CardDescription>
                     </DialogHeader>
                     <div className="py-4 space-y-3">
                       <Label htmlFor="csv-file-upload">CSV File</Label>
                       <Input id="csv-file-upload" type="file" accept=".csv" onChange={handleFileSelect} />
                       {selectedFile && <p className="text-xs text-muted-foreground">Selected: {selectedFile.name}</p>}
+                       <p className="text-xs text-muted-foreground">Example CSV format:<br/>
+                          <code>Name,Email,Role,Status,TenantID</code><br/>
+                          <code>Jane Doe,jane@example.com,user,active,Brainqy</code><br/>
+                          <code>John Smith,john@example.com,manager,pending,tenant-2</code>
+                       </p>
                     </div>
                     <DialogFooter>
                       <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
@@ -392,7 +497,7 @@ export default function UserManagementPage() {
 
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button variant="outline" onClick={() => toast({ title: "Mock Action", description: "User export initiated. This would download a CSV of current users." })}>
+                        <Button variant="outline" onClick={handleExportUsers}>
                             <DownloadCloud className="mr-2 h-5 w-5" /> Export Users
                         </Button>
                     </TooltipTrigger>
@@ -566,3 +671,5 @@ export default function UserManagementPage() {
   );
 }
 
+
+    
