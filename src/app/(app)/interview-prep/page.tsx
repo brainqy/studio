@@ -10,9 +10,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Mic, ListChecks, Search, ChevronLeft, ChevronRight, Tag, Settings2, Puzzle, Lightbulb, Code as CodeIcon, Eye, Edit3, Play, PlusCircle, Star as StarIcon, Send, Bookmark as BookmarkIcon, Video, Trash2, ListFilter, ChevronDown, User as UserIcon, XCircle as XCircleIcon, Calendar, MessageSquare, Users as UsersGroupIcon, Brain as BrainIcon, CheckCircle as CheckCircleIcon } from "lucide-react"; // Added missing icons
+import { Mic, ListChecks, Search, ChevronLeft, ChevronRight, Tag, Settings2, Puzzle, Lightbulb, Code as CodeIcon, Eye, Edit3, Play, PlusCircle, Star as StarIcon, Send, Bookmark as BookmarkIcon, Video, Trash2, ListFilter, ChevronDown, User as UserIcon, XCircle as XCircleIcon, Calendar, MessageSquare, Users as UsersGroupIcon, Brain as BrainIcon, CheckCircle as CheckCircleIcon, Timer } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { sampleUserProfile, samplePracticeSessions, sampleInterviewQuestions, sampleCreatedQuizzes, SAMPLE_DATA_BASE_DATE } from "@/lib/sample-data";
+import { sampleUserProfile, samplePracticeSessions, sampleInterviewQuestions, sampleCreatedQuizzes, SAMPLE_DATA_BASE_DATE, sampleLiveInterviewSessions } from '@/lib/sample-data';
 import type { PracticeSession, InterviewQuestion, InterviewQuestionCategory, MockInterviewSession, DialogStep, PracticeSessionConfig, InterviewQuestionUserComment, InterviewQuestionDifficulty, PracticeFocusArea, BankQuestionSortOrder, BankQuestionFilterView, GenerateMockInterviewQuestionsInput, PracticeSessionStatus, PracticeSessionType, LiveInterviewSession } from '@/types';
 import { ALL_CATEGORIES, PREDEFINED_INTERVIEW_TOPICS, MOCK_INTERVIEW_STEPS, RESUME_BUILDER_STEPS } from '@/types';
 import { format, parseISO, isFuture, addMinutes, compareAsc, differenceInMinutes, isPast } from "date-fns";
@@ -66,6 +66,7 @@ const optionLetters = ['A', 'B', 'C', 'D', 'E', 'F'];
 export default function InterviewPracticeHubPage() {
   const [isSetupDialogOpen, setIsSetupDialogOpen] = useState(false);
   const [dialogStep, setDialogStep] = useState<DialogStep>('selectType');
+  console.log("[InterviewPrep] Initial dialogStep:", dialogStep, "isSetupDialogOpen:", isSetupDialogOpen);
 
   const [practiceSessionConfig, setPracticeSessionConfig] = useState<PracticeSessionConfig>({
     type: null,
@@ -130,19 +131,37 @@ export default function InterviewPracticeHubPage() {
   });
   const isMCQSelected = watchQuestionForm("isMCQ");
 
+  // Logging effect for dialog state
+  useEffect(() => {
+    console.log("[InterviewPrep] isSetupDialogOpen changed to:", isSetupDialogOpen);
+  }, [isSetupDialogOpen]);
+
+  // Effect for dialog cleanup
+  useEffect(() => {
+    if (!isSetupDialogOpen) {
+      console.log("[InterviewPrep] Dialog closed, resetting config and step.");
+      setDialogStep('selectType');
+      setPracticeSessionConfig({
+        type: null, topics: [], dateTime: null, friendEmail: '',
+        aiTopicOrRole: '', aiJobDescription: '', aiNumQuestions: 5, aiDifficulty: 'medium', aiTimerPerQuestion: 0, aiQuestionCategories: []
+      });
+      setFriendEmailError(null);
+    }
+  }, [isSetupDialogOpen]);
+
   const upcomingSessions = useMemo(() => {
-    console.log("[InterviewPrep] Recalculating upcomingSessions. practiceSessions length:", practiceSessions.length, "currentUser.id:", currentUser.id);
     return practiceSessions
       .filter(s => {
         const isUserSession = s.userId === currentUser.id;
         const isScheduled = s.status === 'SCHEDULED';
         let isFutureDate = false;
-        try {
-          isFutureDate = isFuture(parseISO(s.date));
-        } catch (e) {
-          console.error(`[InterviewPrep] Invalid date format for session ${s.id}: ${s.date}`, e);
+        if (s.date) {
+            try {
+                isFutureDate = isFuture(parseISO(s.date));
+            } catch (e) {
+                console.error(`[InterviewPrep] Invalid date format for session ${s.id}: ${s.date}`, e);
+            }
         }
-        // console.log(`[InterviewPrep] Session ${s.id}: isUser=${isUserSession}, isScheduled=${isScheduled}, isFuture=${isFutureDate}`);
         return isUserSession && isScheduled && isFutureDate;
       })
       .sort((a, b) => compareAsc(parseISO(a.date), parseISO(b.date)));
@@ -164,20 +183,6 @@ export default function InterviewPracticeHubPage() {
       .sort((a, b) => compareAsc(parseISO(b.date), parseISO(a.date)));
   }, [practiceSessions, currentUser.id]);
 
-  useEffect(() => {
-    console.log("[InterviewPrep] isSetupDialogOpen changed to:", isSetupDialogOpen);
-    if (!isSetupDialogOpen) {
-      // Reset state when dialog closes
-      setDialogStep('selectType');
-      setPracticeSessionConfig({
-        type: null, topics: [], dateTime: null, friendEmail: '',
-        aiTopicOrRole: '', aiJobDescription: '', aiNumQuestions: 5, aiDifficulty: 'medium', aiTimerPerQuestion: 0, aiQuestionCategories: []
-      });
-      setFriendEmailError(null);
-    }
-  }, [isSetupDialogOpen]);
-
-
   const handleStartPracticeSetup = useCallback(() => {
     console.log("[InterviewPrep] handleStartPracticeSetup called");
     setPracticeSessionConfig({
@@ -194,10 +199,11 @@ export default function InterviewPracticeHubPage() {
     });
     setDialogStep('selectType');
     setFriendEmailError(null);
-    setIsSetupDialogOpen(true);
-    console.log("[InterviewPrep] isSetupDialogOpen attempted to be set to true...");
+    setIsSetupDialogOpen(true); // This should trigger the dialog
+    console.log("[InterviewPrep] isSetupDialogOpen attempted to be set to true.");
   }, []);
   
+
   const handleDialogNextStep = () => {
     console.log("[InterviewPrep] handleDialogNextStep called. Current step:", dialogStep, "Config:", practiceSessionConfig);
     if (dialogStep === 'selectType') {
@@ -304,7 +310,7 @@ export default function InterviewPracticeHubPage() {
             status: 'Scheduled',
             preSelectedQuestions: sampleInterviewQuestions
                 .filter(q => practiceSessionConfig.topics.some(topic => 
-                    q.category.toLowerCase() === topic.toLowerCase() || 
+                    (q.category && q.category.toLowerCase() === topic.toLowerCase()) || 
                     (q.tags && q.tags.some(tag => tag.toLowerCase() === topic.toLowerCase()))
                 ))
                 .slice(0,5) 
@@ -313,7 +319,6 @@ export default function InterviewPracticeHubPage() {
         sampleLiveInterviewSessions.unshift(newLiveSession); 
 
         toast({ title: "Expert Session Booked (Mock)", description: `Session for ${newPracticeSession.type} on ${format(parseISO(newPracticeSession.date), 'PPp')} scheduled.` });
-
     } else if (practiceSessionConfig.type === 'ai') {
         if (!practiceSessionConfig.aiTopicOrRole?.trim()) {
             toast({ title: "Booking Error", description: "Missing AI interview topic/role.", variant: "destructive"});
@@ -326,7 +331,7 @@ export default function InterviewPracticeHubPage() {
           date: new Date().toISOString(), 
           category: "Practice with AI",
           type: practiceSessionConfig.aiTopicOrRole,
-          language: "English",
+          language: "English", 
           status: "SCHEDULED", 
           notes: `AI Mock interview configured for: ${practiceSessionConfig.aiTopicOrRole}`,
           aiTopicOrRole: practiceSessionConfig.aiTopicOrRole,
@@ -346,17 +351,20 @@ export default function InterviewPracticeHubPage() {
         if(newPracticeSession.aiDifficulty) queryParams.append('difficulty', newPracticeSession.aiDifficulty);
         if(newPracticeSession.aiTimerPerQuestion) queryParams.append('timerPerQuestion', String(newPracticeSession.aiTimerPerQuestion));
         if(newPracticeSession.aiQuestionCategories && newPracticeSession.aiQuestionCategories.length > 0) queryParams.append('categories', newPracticeSession.aiQuestionCategories.join(','));
-        queryParams.append('autoFullScreen', 'true');
-        queryParams.append('sourceSessionId', newPracticeSession.id);
+        queryParams.append('autoFullScreen', 'true'); 
+        queryParams.append('sourceSessionId', newPracticeSession.id); 
 
         toast({ title: "AI Interview Setup Complete!", description: `Redirecting to start your AI mock interview for "${newPracticeSession.aiTopicOrRole}".`, duration: 4000 });
         router.push(`/ai-mock-interview?${queryParams.toString()}`);
     }
 
     setIsSetupDialogOpen(false);
-    setPracticeSessionConfig({ type: null, topics: [], dateTime: null, friendEmail: '', aiTopicOrRole: '', aiJobDescription: '', aiNumQuestions: 5, aiDifficulty: 'medium', aiTimerPerQuestion: 0, aiQuestionCategories: [] });
+    setPracticeSessionConfig({
+        type: null, topics: [], dateTime: null, friendEmail: '',
+        aiTopicOrRole: '', aiJobDescription: '', aiNumQuestions: 5, aiDifficulty: 'medium', aiTimerPerQuestion: 0, aiQuestionCategories: []
+    });
     setDialogStep('selectType');
-    console.log("[InterviewPrep] Dialog closed and state reset after booking.");
+    console.log("[InterviewPrep] Dialog should close and state reset after booking.");
   };
 
 
@@ -367,6 +375,7 @@ export default function InterviewPracticeHubPage() {
     if (globalIndex !== -1) {
         (samplePracticeSessions[globalIndex] as any).status = 'CANCELLED'; 
     }
+    // Also update corresponding LiveInterviewSession if it exists
     const liveSessionIndex = sampleLiveInterviewSessions.findIndex(s => s.id === sessionId);
     if (liveSessionIndex !== -1) {
         sampleLiveInterviewSessions[liveSessionIndex].status = 'Cancelled';
@@ -389,7 +398,7 @@ export default function InterviewPracticeHubPage() {
       questionsToFilter = questionsToFilter.filter(q => q.approved !== false || q.createdBy === currentUser.id || currentUser.role === 'admin');
     }
     if (selectedBankCategories.length > 0) {
-      questionsToFilter = questionsToFilter.filter(q => selectedBankCategories.includes(q.category));
+      questionsToFilter = questionsToFilter.filter(q => q.category && selectedBankCategories.includes(q.category));
     }
     if (bankSearchTerm.trim() !== '') {
       const searchTermLower = bankSearchTerm.toLowerCase();
@@ -552,7 +561,7 @@ export default function InterviewPracticeHubPage() {
       sampleInterviewQuestions[globalQIndex].userComments = [...currentComments, newComment];
     }
     resetCommentForm();
-    setCommentingQuestionId(null); 
+    setCommentingQuestionId(null);
     toast({ title: "Comment Added", description: "Your comment has been posted." });
   };
 
@@ -588,7 +597,7 @@ export default function InterviewPracticeHubPage() {
       sampleInterviewQuestions[globalQIndex].ratingsCount = newUserRatings.length;
     }
 
-    setRatingQuestionId(null); 
+    setRatingQuestionId(null);
     setCurrentRating(0);
     toast({ title: "Rating Submitted", description: `You rated this question ${rating} stars.` });
   };
@@ -623,7 +632,7 @@ export default function InterviewPracticeHubPage() {
     if (sessionToEdit) {
       setEditingSessionId(sessionId);
       setCurrentEditingQuestions(sessionToEdit.preSelectedQuestions || []);
-      setNewQuestionIdsInput(''); 
+      setNewQuestionIdsInput('');
       setIsEditQuestionsDialogOpen(true);
     } else {
       toast({ title: "Error", description: "Could not find the live interview session to edit questions.", variant: "destructive" });
@@ -640,7 +649,13 @@ export default function InterviewPracticeHubPage() {
     const newQuestionsFromBank = newIdsArray
         .map(id => allBankQuestions.find(bq => bq.id === id))
         .filter(q => q !== undefined) 
-        .map(q => ({ id: q!.id, questionText: q!.questionText, category: q!.category, difficulty: q!.difficulty, baseScore: q!.baseScore || 10 })); 
+        .map(q => ({ 
+            id: q!.id, 
+            questionText: q!.questionText, 
+            category: q!.category, 
+            difficulty: q!.difficulty, 
+            baseScore: q!.baseScore || 10 
+        })); 
 
     const combinedQuestions = [...currentEditingQuestions];
     newQuestionsFromBank.forEach(newQ => {
@@ -693,8 +708,7 @@ export default function InterviewPracticeHubPage() {
     const liveSession = sampleLiveInterviewSessions.find(ls => ls.id === session.id);
     const isCurrentUserInterviewerForThisLiveSession = liveSession?.participants.find(p => p.userId === currentUser.id && p.role === 'interviewer');
     
-    // Log values for debugging the button visibility
-    // console.log(`[RenderSessionCard] Session ID: ${session.id}, User: ${currentUser.id}, IsInterviewer: ${isCurrentUserInterviewerForThisLiveSession}, CanJoin: ${canJoin}, Status: ${session.status}, Category: ${session.category}`);
+    console.log(`[RenderSessionCard] Session ID: ${session.id}, User: ${currentUser.id}, IsInterviewer: ${isCurrentUserInterviewerForThisLiveSession}, CanJoin: ${canJoin}, Status: ${session.status}, Category: ${session.category}`);
 
     return (
     <Card key={session.id} className="shadow-md hover:shadow-lg transition-shadow">
@@ -707,7 +721,7 @@ export default function InterviewPracticeHubPage() {
             "px-2 py-1 text-xs font-semibold rounded-full",
             session.status === 'SCHEDULED' ? "bg-green-100 text-green-700" :
             session.status === 'COMPLETED' ? "bg-blue-100 text-blue-700" :
-            "bg-red-100 text-red-700" // For CANCELLED
+            "bg-red-100 text-red-700"
           )}>
             {session.status}
           </span>
@@ -771,7 +785,9 @@ export default function InterviewPracticeHubPage() {
       if (isoDateString) {
         try {
           const sessionDate = parseISO(isoDateString);
-          setFormattedDateTime(format(sessionDate, "MMM dd, yyyy - p"));
+          const datePart = format(sessionDate, "MMM dd, yyyy");
+          const timePart = format(sessionDate, "p"); // Time with AM/PM
+          setFormattedDateTime(`${datePart} - ${timePart}`);
         } catch (e) {
           console.error("[SessionDateTime] Error formatting date:", isoDateString, e);
           setFormattedDateTime("Invalid Date");
@@ -781,17 +797,14 @@ export default function InterviewPracticeHubPage() {
       }
     }, [isoDateString]);
   
-    if (!formattedDateTime) {
-      if (isoDateString) {
-        try {
-          return <span>{format(parseISO(isoDateString), "MMM dd, yyyy")} - Loading time...</span>;
-        } catch {
-          return <span>Invalid Date</span>;
-        }
+    if (!formattedDateTime && isoDateString) {
+      try {
+        return <span>{format(parseISO(isoDateString), "MMM dd, yyyy")} - Loading time...</span>;
+      } catch {
+        return <span>Invalid Date</span>;
       }
-      return <span>Date not set</span>;
     }
-    return <span>{formattedDateTime}</span>;
+    return <span>{formattedDateTime || "Date not set"}</span>;
   };
 
 
@@ -1181,13 +1194,11 @@ export default function InterviewPracticeHubPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={isSetupDialogOpen} onOpenChange={(open) => {
-        console.log("[InterviewPrep] Setup Dialog onOpenChange, open:", open);
-        setIsSetupDialogOpen(open);
-      }}>
+      <Dialog open={isSetupDialogOpen} onOpenChange={setIsSetupDialogOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="text-xl text-center font-semibold">
+              {console.log("[InterviewPrep] DialogContent rendering. dialogStep:", dialogStep, "isSetupDialogOpen:", isSetupDialogOpen)}
               {dialogStep === 'selectType' && "Select Interview Type"}
               {dialogStep === 'selectTopics' && `Select Practice Topics for ${practiceSessionConfig.type === 'ai' ? 'AI Interview' : 'Expert Session'}`}
               {dialogStep === 'selectTimeSlot' && "Choose Date & Time"}
@@ -1364,7 +1375,6 @@ export default function InterviewPracticeHubPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog for Editing Questions for a Live Session */}
       <Dialog open={isEditQuestionsDialogOpen} onOpenChange={setIsEditQuestionsDialogOpen}>
         <DialogContent className="sm:max-w-xl">
           <DialogHeader>
@@ -1411,6 +1421,7 @@ export default function InterviewPracticeHubPage() {
     </div>
   );
 }
+    
     
 
     
