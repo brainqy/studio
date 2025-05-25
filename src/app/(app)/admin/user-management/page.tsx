@@ -9,9 +9,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogTrigger } from "@/components/ui/dialog"; // Added DialogTrigger
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogTrigger } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { UserCog, PlusCircle, Edit3, Trash2, UploadCloud, DownloadCloud, ChevronDown, Search, HelpCircle, ShieldAlert, Upload } from "lucide-react"; // Added Upload
+import { UserCog, PlusCircle, Edit3, Trash2, UploadCloud, DownloadCloud, ChevronDown, Search, HelpCircle, ShieldAlert, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { UserProfile, UserRole, UserStatus } from "@/types";
 import { samplePlatformUsers, sampleUserProfile, sampleTenants } from "@/lib/sample-data";
@@ -34,6 +34,25 @@ const userSchema = z.object({
 
 type UserFormData = z.infer<typeof userSchema>;
 
+// Helper function to parse simple CSV content
+const parseCSV = (csvText: string): Record<string, string>[] => {
+  const lines = csvText.trim().split('\n');
+  if (lines.length < 2) return []; // Header + at least one data row
+
+  const header = lines[0].split(',').map(h => h.trim());
+  const dataRows = lines.slice(1);
+
+  return dataRows.map(rowText => {
+    const values = rowText.split(',').map(v => v.trim());
+    const rowObject: Record<string, string> = {};
+    header.forEach((colName, index) => {
+      rowObject[colName] = values[index];
+    });
+    return rowObject;
+  });
+};
+
+
 export default function UserManagementPage() {
   const currentUser = sampleUserProfile;
   const [users, setUsers] = useState<UserProfile[]>([]);
@@ -43,7 +62,6 @@ export default function UserManagementPage() {
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
   const { toast } = useToast();
 
-  // State for import users dialog
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
@@ -89,9 +107,9 @@ export default function UserManagementPage() {
 
   const onUserFormSubmit = (data: UserFormData) => {
     if (editingUser) {
-      const updatedUser = { 
-        ...editingUser, 
-        ...data, 
+      const updatedUser = {
+        ...editingUser,
+        ...data,
         tenantId: currentUser.role === 'admin' && data.tenantId ? data.tenantId : editingUser.tenantId,
       };
       setUsers(prev => prev.map(u => u.id === editingUser.id ? updatedUser : u));
@@ -153,7 +171,7 @@ export default function UserManagementPage() {
     });
     toast({ title: "User Deleted", description: `User ID ${userId} deleted.`, variant: "destructive" });
   };
-  
+
   const handleBulkAction = (action: 'activate' | 'deactivate' | 'delete') => {
     if (selectedUserIds.size === 0) {
         toast({title: "No Users Selected", description: "Please select users to perform bulk action.", variant:"destructive"});
@@ -180,7 +198,7 @@ export default function UserManagementPage() {
             break;
     }
     setUsers(updatedUsersLocally);
-    samplePlatformUsers.length = 0; 
+    samplePlatformUsers.length = 0;
     samplePlatformUsers.push(...updatedPlatformUsersGlobally);
     setSelectedUserIds(new Set());
   };
@@ -198,14 +216,112 @@ export default function UserManagementPage() {
       toast({ title: "No File Selected", description: "Please select a CSV file to import.", variant: "destructive" });
       return;
     }
-    // Mock import logic
-    console.log("Importing users from file (mock):", selectedFile.name);
-    toast({ title: "Import Started (Mock)", description: `Processing users from ${selectedFile.name}. This is a mocked feature.` });
-    // In a real app, you'd parse the CSV, validate data, and call an API to create users.
-    // For now, we just close the dialog and reset.
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const csvText = event.target?.result as string;
+      if (!csvText) {
+        toast({ title: "File Error", description: "Could not read the file content.", variant: "destructive" });
+        return;
+      }
+      try {
+        const parsedUsers = parseCSV(csvText);
+        if (parsedUsers.length === 0) {
+          toast({ title: "Empty or Invalid CSV", description: "No valid user data found in the CSV. Ensure it has a header row (Name,Email,Role,Status,TenantID) and data.", variant: "destructive" });
+          return;
+        }
+
+        const newUsersToAdd: UserProfile[] = [];
+        let importedCount = 0;
+        let skippedCount = 0;
+
+        for (const row of parsedUsers) {
+          const name = row.Name || row.name;
+          const email = row.Email || row.email;
+          const role = (row.Role || row.role || 'user').toLowerCase() as UserRole;
+          const status = (row.Status || row.status || 'pending').toLowerCase() as UserStatus;
+          const tenantId = row.TenantID || row.tenantId || currentUser.tenantId; // Default to admin's tenant if not specified
+
+          if (!name || !email) {
+            console.warn("Skipping row due to missing name or email:", row);
+            skippedCount++;
+            continue;
+          }
+          if (!['admin', 'manager', 'user'].includes(role)) {
+            console.warn(`Skipping row due to invalid role '${role}':`, row);
+            skippedCount++;
+            continue;
+          }
+          if (!['active', 'inactive', 'pending', 'suspended'].includes(status)) {
+            console.warn(`Skipping row due to invalid status '${status}':`, row);
+            skippedCount++;
+            continue;
+          }
+          // Basic email validation (more robust validation would be needed)
+          if (!email.includes('@')) {
+              console.warn(`Skipping row due to invalid email format '${email}':`, row);
+              skippedCount++;
+              continue;
+          }
+          // Check if tenant exists (admin context)
+          if (currentUser.role === 'admin' && tenantId && !sampleTenants.find(t => t.id === tenantId)) {
+            console.warn(`Skipping row due to non-existent tenantId '${tenantId}' for admin import:`, row);
+            skippedCount++;
+            continue;
+          }
+
+
+          const existingUser = samplePlatformUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
+          if (existingUser) {
+            console.warn(`Skipping existing user: ${email}`);
+            skippedCount++;
+            continue;
+          }
+
+          const newUser: UserProfile = {
+            id: `user-csv-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+            name,
+            email,
+            role,
+            status,
+            tenantId: currentUser.role === 'admin' ? tenantId! : currentUser.tenantId!,
+            lastLogin: new Date().toISOString(),
+            profilePictureUrl: `https://avatar.vercel.sh/${email}.png`,
+            createdAt: new Date().toISOString(),
+            skills: [],
+            bio: 'Imported via CSV',
+            currentJobTitle: '',
+            company: '',
+          };
+          newUsersToAdd.push(newUser);
+          importedCount++;
+        }
+
+        if (newUsersToAdd.length > 0) {
+          setUsers(prev => [...prev, ...newUsersToAdd]);
+          samplePlatformUsers.push(...newUsersToAdd);
+        }
+
+        toast({
+          title: "Import Processed",
+          description: `${importedCount} users imported successfully. ${skippedCount} users skipped due to errors or duplicates.`,
+          duration: 7000
+        });
+
+      } catch (error) {
+        console.error("Error parsing CSV:", error);
+        toast({ title: "CSV Parsing Error", description: "Could not parse the CSV file. Please ensure it's valid.", variant: "destructive" });
+      }
+    };
+    reader.onerror = () => {
+      toast({ title: "File Read Error", description: "Could not read the selected file.", variant: "destructive" });
+    };
+    reader.readAsText(selectedFile);
+
     setIsImportDialogOpen(false);
     setSelectedFile(null);
   };
+
 
   if (currentUser.role !== 'admin' && currentUser.role !== 'manager') {
     return <AccessDeniedMessage />;
@@ -258,7 +374,7 @@ export default function UserManagementPage() {
                   <DialogContent className="sm:max-w-md">
                     <DialogHeader>
                       <DialogTitle>Import Users from CSV</DialogTitle>
-                      <CardDescription>Select a CSV file with user data. Ensure it has columns: Name, Email, Role (user/manager), Status (active/pending), TenantID (optional).</CardDescription>
+                      <CardDescription>Select a CSV file with user data. Header row should be: Name,Email,Role,Status,TenantID (Role, Status, TenantID are optional and will default if blank or invalid).</CardDescription>
                     </DialogHeader>
                     <div className="py-4 space-y-3">
                       <Label htmlFor="csv-file-upload">CSV File</Label>
@@ -276,19 +392,11 @@ export default function UserManagementPage() {
 
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button variant="outline" onClick={() => toast({ title: "Mock Action", description: "User upload initiated." })}>
-                            <UploadCloud className="mr-2 h-5 w-5" /> Upload Users
+                        <Button variant="outline" onClick={() => toast({ title: "Mock Action", description: "User export initiated. This would download a CSV of current users." })}>
+                            <DownloadCloud className="mr-2 h-5 w-5" /> Export Users
                         </Button>
                     </TooltipTrigger>
-                    <TooltipContent><p>Bulk upload users via CSV file (mocked feature).</p></TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Button variant="outline" onClick={() => toast({ title: "Mock Action", description: "User download initiated." })}>
-                            <DownloadCloud className="mr-2 h-5 w-5" /> Download Users
-                        </Button>
-                    </TooltipTrigger>
-                    <TooltipContent><p>Download a list of current users in CSV format (mocked feature).</p></TooltipContent>
+                    <TooltipContent><p>Download a list of current users in CSV format.</p></TooltipContent>
                 </Tooltip>
               </>
             )}
