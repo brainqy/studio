@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -6,11 +7,10 @@ import type { UserRole } from "@/types";
 import AdminDashboard from "@/components/dashboards/AdminDashboard";
 import ManagerDashboard from "@/components/dashboards/ManagerDashboard";
 import UserDashboard from "@/components/dashboards/UserDashboard";
-import { Skeleton } from "@/components/ui/skeleton"; 
-import DailyStreakPopup from "@/components/features/DailyStreakPopup"; 
+import { Skeleton } from "@/components/ui/skeleton";
+import DailyStreakPopup from "@/components/features/DailyStreakPopup";
 import WelcomeTourDialog from '@/components/features/WelcomeTourDialog';
 import { userDashboardTourSteps, adminDashboardTourSteps, managerDashboardTourSteps } from "@/lib/sample-data";
-// Removed useTranslations
 
 export default function DashboardPage() {
   const [userRole, setUserRole] = useState<UserRole | null>(null);
@@ -22,20 +22,30 @@ export default function DashboardPage() {
   const [tourTitle, setTourTitle] = useState('');
 
   useEffect(() => {
-    const role = sampleUserProfile.role; 
+    if (!sampleUserProfile) {
+      console.error("[DashboardPage] sampleUserProfile is not available.");
+      setIsLoading(false);
+      return;
+    }
+
+    const role = sampleUserProfile.role;
     setUserRole(role);
     setIsLoading(false);
 
     const today = new Date().toISOString().split('T')[0];
     if (typeof window !== 'undefined') {
-      if (role === 'user') {
-        const popupShownKey = `dailyStreakPopupShown_${today}`;
+      // Condition to show popup for user, manager, or admin roles
+      if (role === 'user' || role === 'manager' || role === 'admin') {
+        const popupShownKey = `dailyStreakPopupShown_${sampleUserProfile.id}_${today}`;
         if (!localStorage.getItem(popupShownKey)) {
+          console.log(`[DashboardPage] Daily streak popup condition met for user ${sampleUserProfile.id}, role ${role}. Key: ${popupShownKey}`);
           setShowStreakPopup(true);
           localStorage.setItem(popupShownKey, 'true');
+        } else {
+          console.log(`[DashboardPage] Daily streak popup already shown today for user ${sampleUserProfile.id}. Key: ${popupShownKey}`);
         }
       }
-      
+
       let currentTourKey = '';
       let currentTourSteps: any[] = [];
       let currentTourTitle = '';
@@ -53,7 +63,7 @@ export default function DashboardPage() {
         currentTourSteps = userDashboardTourSteps;
         currentTourTitle = "Welcome to Your Dashboard!";
       }
-      
+
       setTourKey(currentTourKey);
       setTourSteps(currentTourSteps);
       setTourTitle(currentTourTitle);
@@ -63,12 +73,12 @@ export default function DashboardPage() {
         setShowWelcomeTour(true);
       }
     }
-  }, []);
+  }, []); // Empty dependency array ensures this runs once on mount
 
   const handleCloseStreakPopup = () => {
     setShowStreakPopup(false);
   };
-  
+
   const handleCloseWelcomeTour = () => {
     setShowWelcomeTour(false);
     if (typeof window !== 'undefined' && tourKey) {
@@ -79,7 +89,7 @@ export default function DashboardPage() {
   if (isLoading) {
     return (
       <div className="space-y-8">
-        <Skeleton className="h-10 w-1/4" /> 
+        <Skeleton className="h-10 w-1/4" />
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <Skeleton className="h-28 w-full" />
           <Skeleton className="h-28 w-full" />
@@ -109,11 +119,11 @@ export default function DashboardPage() {
   return (
     <>
       {renderDashboard()}
-      {userRole === 'user' && sampleUserProfile && (
-         <DailyStreakPopup 
-          isOpen={showStreakPopup} 
-          onClose={handleCloseStreakPopup} 
-          userProfile={sampleUserProfile} 
+      {(userRole === 'user' || userRole === 'manager' || userRole === 'admin') && sampleUserProfile && (
+         <DailyStreakPopup
+          isOpen={showStreakPopup}
+          onClose={handleCloseStreakPopup}
+          userProfile={sampleUserProfile}
         />
       )}
       {tourSteps.length > 0 && tourKey && (
