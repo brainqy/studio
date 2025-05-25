@@ -11,10 +11,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogTrigger } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { UserCog, PlusCircle, Edit3, Trash2, UploadCloud, DownloadCloud, ChevronDown, Search, HelpCircle, ShieldAlert, Upload } from "lucide-react";
+import { UserCog, PlusCircle, Edit3, Trash2, Upload, DownloadCloud, ChevronDown, Search, HelpCircle, ShieldAlert } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { UserProfile, UserRole, UserStatus } from "@/types";
-import { samplePlatformUsers, sampleUserProfile, sampleTenants } from "@/lib/sample-data";
+import { samplePlatformUsers, sampleUserProfile, sampleTenants, SAMPLE_TENANT_ID } from "@/lib/sample-data";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -34,26 +34,34 @@ const userSchema = z.object({
 
 type UserFormData = z.infer<typeof userSchema>;
 
-// Helper function to parse simple CSV content
 const parseCSV = (csvText: string): Record<string, string>[] => {
-  if (!csvText || typeof csvText !== 'string') return [];
-  const lines = csvText.trim().split(/\r\n|\n|\r/); // Handle different line endings
-  if (lines.length < 2) return []; // Header + at least one data row
+  if (!csvText || typeof csvText !== 'string') {
+    console.warn("[UserManagement] parseCSV: Input CSV text is invalid or empty.");
+    return [];
+  }
+  const lines = csvText.trim().split(/\r\n|\n|\r/).filter(line => line.trim() !== ''); // Filter out empty lines
+  if (lines.length < 2) {
+    console.warn("[UserManagement] parseCSV: CSV requires at least a header and one data row.");
+    return []; 
+  }
 
-  const header = lines[0].split(',').map(h => h.trim().toLowerCase()); // Use lowercase headers for easier matching
+  const header = lines[0].split(',').map(h => h.trim().toLowerCase());
   const dataRows = lines.slice(1);
+  console.log("[UserManagement] parseCSV: Headers found:", header);
 
-  return dataRows.map(rowText => {
+  return dataRows.map((rowText, rowIndex) => {
+    // This simple split won't handle commas inside quoted fields correctly.
+    // For a more robust solution, consider a dedicated CSV parsing library if complex CSVs are expected.
     const values = rowText.split(',').map(v => v.trim());
     const rowObject: Record<string, string> = {};
     header.forEach((colName, index) => {
-      rowObject[colName] = values[index];
+      rowObject[colName] = values[index] || ''; // Default to empty string if value is missing for a header
     });
+    console.log(`[UserManagement] parseCSV: Parsed row ${rowIndex + 1}:`, rowObject);
     return rowObject;
   });
 };
 
-// Helper to convert array of objects to CSV string
 const convertToCSV = (data: UserProfile[]): string => {
   if (!data || data.length === 0) return "";
   const headers = ["ID", "Name", "Email", "Role", "Status", "TenantID", "LastLogin", "CreatedAt"];
@@ -61,7 +69,7 @@ const convertToCSV = (data: UserProfile[]): string => {
     headers.join(','),
     ...data.map(user => [
       user.id,
-      `"${user.name.replace(/"/g, '""')}"`, // Handle commas/quotes in names
+      `"${user.name.replace(/"/g, '""')}"`,
       user.email,
       user.role,
       user.status || 'N/A',
@@ -94,7 +102,7 @@ export default function UserManagementPage() {
   useEffect(() => {
     setUsers(
       currentUser.role === 'admin'
-        ? [...samplePlatformUsers] // Use a copy to allow local modifications
+        ? [...samplePlatformUsers]
         : samplePlatformUsers.filter(u => u.tenantId === currentUser.tenantId)
     );
   }, [currentUser.role, currentUser.tenantId]);
@@ -140,18 +148,64 @@ export default function UserManagementPage() {
       }
       toast({ title: "User Updated", description: `User "${data.name}" has been updated.` });
     } else {
-      const newTenantId = currentUser.role === 'admin' && data.tenantId ? data.tenantId : currentUser.tenantId;
+      let newTenantId = currentUser.role === 'manager' ? currentUser.tenantId : data.tenantId;
+      if (currentUser.role === 'admin' && !newTenantId) {
+          newTenantId = SAMPLE_TENANT_ID; // Default for admin if no tenant specified
+          toast({ title: "Notice", description: `New user assigned to default tenant '${newTenantId}'.`, variant: "default"});
+      } else if (currentUser.role === 'admin' && newTenantId && !sampleTenants.find(t => t.id === newTenantId)) {
+          toast({ title: "Warning", description: `Specified Tenant ID '${newTenantId}' not found. User not created.`, variant: "destructive"});
+          setIsLoading(false);
+          return;
+      }
+
+
       const newUser: UserProfile = {
         ...data,
         id: `user-${Date.now()}`,
         tenantId: newTenantId!,
         lastLogin: new Date().toISOString(),
-        profilePictureUrl: `https://avatar.vercel.sh/${data.email}.png`,
+        profilePictureUrl: `https://avatar.vercel.sh/${data.email.split('@')[0]}.png`,
         createdAt: new Date().toISOString(),
         skills: [],
         bio: '',
         currentJobTitle: '',
         company: '',
+        currentOrganization: '',
+        dateOfBirth: undefined,
+        gender: undefined,
+        mobileNumber: '',
+        currentAddress: '',
+        graduationYear: '',
+        degreeProgram: undefined,
+        department: '',
+        industry: undefined,
+        workLocation: '',
+        linkedInProfile: '',
+        yearsOfExperience: '',
+        areasOfSupport: [],
+        timeCommitment: undefined,
+        preferredEngagementMode: undefined,
+        otherComments: '',
+        lookingForSupportType: undefined,
+        helpNeededDescription: '',
+        shareProfileConsent: true,
+        featureInSpotlightConsent: false,
+        isDistinguished: false,
+        resumeText: '',
+        careerInterests: '',
+        interests: [],
+        offersHelpWith: [],
+        appointmentCoinCost: 10,
+        xpPoints: 0,
+        dailyStreak: 0,
+        longestStreak: 0,
+        totalActiveDays: 0,
+        weeklyActivity: Array(7).fill(false),
+        referralCode: `REF-${Date.now().toString().slice(-6)}`,
+        earnedBadges: [],
+        affiliateCode: undefined,
+        pastInterviewSessions: [],
+        interviewCredits: 0,
       };
       setUsers(prev => [newUser, ...prev]);
       samplePlatformUsers.push(newUser);
@@ -199,7 +253,6 @@ export default function UserManagementPage() {
         return;
     }
     let updatedUsersLocally = [...users];
-    // Note: Directly mutating samplePlatformUsers is for demo. In real app, API calls would handle this.
     
     selectedUserIds.forEach(selectedId => {
         const userIndexGlobal = samplePlatformUsers.findIndex(u => u.id === selectedId);
@@ -211,9 +264,10 @@ export default function UserManagementPage() {
 
     if (action === 'delete') {
         updatedUsersLocally = users.filter(u => !selectedUserIds.has(u.id));
+        // Update global sample data
         const originalLength = samplePlatformUsers.length;
         samplePlatformUsers.splice(0, samplePlatformUsers.length, ...samplePlatformUsers.filter(u => !selectedUserIds.has(u.id)));
-        console.log(`Global users deleted: ${originalLength - samplePlatformUsers.length}`);
+        console.log(`[UserManagement] Global users deleted: ${originalLength - samplePlatformUsers.length}`);
         toast({title: "Users Deleted", description: `${selectedUserIds.size} users deleted.`, variant: "destructive"});
     } else if (action === 'activate') {
         updatedUsersLocally = users.map(u => selectedUserIds.has(u.id) ? {...u, status: 'active'} : u);
@@ -230,10 +284,10 @@ export default function UserManagementPage() {
   const handleFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       setSelectedFile(event.target.files[0]);
-      console.log("File selected:", event.target.files[0].name);
+      console.log("[UserManagement] File selected:", event.target.files[0].name);
     } else {
       setSelectedFile(null);
-      console.log("File selection cleared.");
+      console.log("[UserManagement] File selection cleared.");
     }
   };
 
@@ -242,22 +296,22 @@ export default function UserManagementPage() {
       toast({ title: "No File Selected", description: "Please select a CSV file to import.", variant: "destructive" });
       return;
     }
-    console.log("Attempting to import file:", selectedFile.name);
+    console.log("[UserManagement] Attempting to import file:", selectedFile.name);
 
     const reader = new FileReader();
     reader.onload = (event) => {
       const csvText = event.target?.result as string;
       if (!csvText) {
         toast({ title: "File Error", description: "Could not read the file content.", variant: "destructive" });
-        console.error("FileReader result is null or undefined.");
+        console.error("[UserManagement] FileReader result is null or undefined.");
         return;
       }
-      console.log("CSV content read, length:", csvText.length);
+      console.log("[UserManagement] CSV content read, length:", csvText.length);
       try {
-        const parsedUsers = parseCSV(csvText);
-        console.log("Parsed CSV data:", parsedUsers);
-        if (parsedUsers.length === 0) {
-          toast({ title: "Empty or Invalid CSV", description: "No valid user data found. Ensure header: Name,Email,Role,Status,TenantID (Role,Status,TenantID optional).", variant: "destructive" });
+        const parsedUsersFromCSV = parseCSV(csvText);
+        console.log("[UserManagement] Parsed CSV data:", parsedUsersFromCSV);
+        if (parsedUsersFromCSV.length === 0) {
+          toast({ title: "Empty or Invalid CSV", description: "No valid user data found. Expected headers: Name,Email. Optional: Role,Status,TenantID (case-insensitive).", variant: "destructive", duration: 7000 });
           return;
         }
 
@@ -265,128 +319,123 @@ export default function UserManagementPage() {
         let importedCount = 0;
         let skippedCount = 0;
 
-        for (const row of parsedUsers) {
-          const name = row.name; // Assumes 'name' header in CSV
-          const email = row.email; // Assumes 'email' header
-          const role = (row.role?.toLowerCase() || 'user') as UserRole;
-          const status = (row.status?.toLowerCase() || 'pending') as UserStatus;
-          // For admin, tenantId from CSV. For manager, imported users go to manager's tenant.
-          let tenantId = currentUser.role === 'admin' ? row.tenantid : currentUser.tenantId;
+        for (const row of parsedUsersFromCSV) {
+          const name = (row.name || '').trim();
+          const email = (row.email || '').trim();
+          
+          const rawRole = (row.role || '').trim().toLowerCase();
+          const role: UserRole = ['admin', 'manager', 'user'].includes(rawRole) ? rawRole as UserRole : 'user';
+
+          const rawStatus = (row.status || '').trim().toLowerCase();
+          const status: UserStatus = ['active', 'inactive', 'pending', 'suspended'].includes(rawStatus) ? rawStatus as UserStatus : 'pending';
+          
+          let csvTenantId = (row.tenantid || '').trim(); // Header: 'tenantid' (lowercase from parseCSV)
+
+          console.log(`[UserManagement] Processing CSV row: Name='${name}', Email='${email}', Role='${role}', Status='${status}', CSVTenantID='${csvTenantId}'`);
 
           if (!name || !email) {
-            console.warn("Skipping row due to missing name or email:", row);
+            console.warn("[UserManagement] Skipping row due to missing Name or Email:", row);
             skippedCount++;
             continue;
           }
-          if (!['admin', 'manager', 'user'].includes(role)) {
-             console.warn(`Skipping row due to invalid role '${row.role}':`, row);
-             skippedCount++;
-             continue;
-          }
-          if (!['active', 'inactive', 'pending', 'suspended'].includes(status)) {
-             console.warn(`Skipping row due to invalid status '${row.status}':`, row);
-             skippedCount++;
-             continue;
-          }
-          if (!email.includes('@')) { // Basic email format check
-              console.warn(`Skipping row due to invalid email format '${email}':`, row);
+          if (!email.includes('@')) {
+              console.warn(`[UserManagement] Skipping row due to invalid email format '${email}':`, row);
               skippedCount++;
               continue;
           }
 
-          // Admin can import to any valid tenant, manager imports to their own.
-          if (currentUser.role === 'admin' && tenantId && !sampleTenants.find(t => t.id === tenantId)) {
-            console.warn(`Admin import: Tenant ID '${tenantId}' not found. Skipping user:`, row.email);
+          let finalTenantId: string | undefined = undefined;
+          if (currentUser.role === 'admin') {
+            if (csvTenantId) {
+              if (sampleTenants.find(t => t.id.toLowerCase() === csvTenantId.toLowerCase())) { // Case-insensitive check for tenant ID
+                finalTenantId = sampleTenants.find(t => t.id.toLowerCase() === csvTenantId.toLowerCase())!.id; // Use actual ID casing
+              } else {
+                console.warn(`[UserManagement] Admin import: Tenant ID '${csvTenantId}' not found for user ${email}. Skipping user.`);
+                skippedCount++;
+                continue;
+              }
+            } else { // No tenantID in CSV, admin importing
+              finalTenantId = SAMPLE_TENANT_ID; // Default tenant (e.g., 'Brainqy')
+              console.log(`[UserManagement] Admin import: No Tenant ID in CSV for ${email}, assigning to default: ${finalTenantId}`);
+            }
+          } else if (currentUser.role === 'manager') {
+            finalTenantId = currentUser.tenantId!;
+            if (csvTenantId && csvTenantId.toLowerCase() !== finalTenantId.toLowerCase()) {
+                console.warn(`[UserManagement] Manager import: User ${email} CSV TenantID '${csvTenantId}' differs from manager's tenant '${finalTenantId}'. User will be assigned to manager's tenant.`);
+            }
+             console.log(`[UserManagement] Manager import: Assigning user ${email} to manager's tenant: ${finalTenantId}`);
+          } else {
+            console.warn("[UserManagement] Import attempt by non-admin/manager. Skipping.");
             skippedCount++;
             continue;
           }
-          if (currentUser.role === 'manager') {
-            tenantId = currentUser.tenantId; // Force manager's tenant
+          
+          if (finalTenantId && !sampleTenants.find(t => t.id === finalTenantId)) { // Final check with correct casing
+              console.warn(`[UserManagement] Critical Error: Final Tenant ID '${finalTenantId}' resolved but not found for user ${email}. Skipping user.`);
+              skippedCount++;
+              continue;
           }
-
 
           const existingUser = samplePlatformUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
           if (existingUser) {
-            console.warn(`Skipping existing user: ${email}`);
+            console.warn(`[UserManagement] Skipping existing user (email already exists): ${email}`);
             skippedCount++;
             continue;
           }
 
           const newUser: UserProfile = {
-            id: `user-csv-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+            id: `user-csv-${Date.now()}-${importedCount}-${Math.random().toString(16).slice(2)}`,
             name,
             email,
             role,
             status,
-            tenantId: tenantId!,
+            tenantId: finalTenantId!,
             lastLogin: new Date().toISOString(),
-            profilePictureUrl: `https://avatar.vercel.sh/${email}.png`,
+            profilePictureUrl: `https://avatar.vercel.sh/${email.split('@')[0]}.png`,
             createdAt: new Date().toISOString(),
-            skills: [],
-            bio: 'Imported via CSV',
-            currentJobTitle: '',
-            company: '',
-            // ... add other UserProfile defaults ...
-            dateOfBirth: undefined,
-            gender: undefined,
-            mobileNumber: '',
-            currentAddress: '',
-            graduationYear: '',
-            degreeProgram: undefined,
-            department: '',
-            currentOrganization: '',
-            industry: undefined,
-            workLocation: '',
-            linkedInProfile: '',
-            yearsOfExperience: '',
-            areasOfSupport: [],
-            timeCommitment: undefined,
-            preferredEngagementMode: undefined,
-            otherComments: '',
-            lookingForSupportType: undefined,
-            helpNeededDescription: '',
-            shareProfileConsent: true,
-            featureInSpotlightConsent: false,
-            isDistinguished: false,
-            resumeText: '',
-            careerInterests: '',
-            interests: [],
-            offersHelpWith: [],
-            appointmentCoinCost: 10, // Default
-            xpPoints: 0,
-            dailyStreak: 0,
-            longestStreak: 0,
-            totalActiveDays: 0,
-            weeklyActivity: Array(7).fill(false),
-            referralCode: `REFCSV${Date.now().toString().slice(-5)}`,
-            earnedBadges: [],
-            affiliateCode: undefined,
-            pastInterviewSessions: [],
-            interviewCredits: 0,
+            skills: [], bio: 'Imported via CSV', currentJobTitle: '', company: '', currentOrganization: '',
+            dateOfBirth: undefined, gender: undefined, mobileNumber: '', currentAddress: '',
+            graduationYear: '', degreeProgram: undefined, department: '', industry: undefined,
+            workLocation: '', linkedInProfile: '', yearsOfExperience: '', areasOfSupport: [],
+            timeCommitment: undefined, preferredEngagementMode: undefined, otherComments: '',
+            lookingForSupportType: undefined, helpNeededDescription: '', shareProfileConsent: true,
+            featureInSpotlightConsent: false, isDistinguished: false, resumeText: '', careerInterests: '',
+            interests: [], offersHelpWith: [], appointmentCoinCost: 10, xpPoints: 0, dailyStreak: 0,
+            longestStreak: 0, totalActiveDays: 0, weeklyActivity: Array(7).fill(false),
+            referralCode: `REFCSV${Date.now().toString().slice(-5)}-${importedCount}`,
+            earnedBadges: [], affiliateCode: undefined, pastInterviewSessions: [], interviewCredits: 0,
           };
           newUsersToAdd.push(newUser);
           importedCount++;
+          console.log(`[UserManagement] User ${email} prepared for import to tenant ${finalTenantId}.`);
         }
 
         if (newUsersToAdd.length > 0) {
-          setUsers(prev => [...prev, ...newUsersToAdd]);
-          samplePlatformUsers.push(...newUsersToAdd); // Update global sample data
-          console.log(`${newUsersToAdd.length} new users added to local and global state.`);
+          samplePlatformUsers.push(...newUsersToAdd);
+          setUsers(prev => {
+            const currentDisplayedIds = new Set(prev.map(u => u.id));
+            const trulyNewForDisplay = newUsersToAdd.filter(nu => 
+                !currentDisplayedIds.has(nu.id) && 
+                (currentUser.role === 'admin' || nu.tenantId === currentUser.tenantId)
+            );
+            return [...prev, ...trulyNewForDisplay];
+          });
+          console.log(`[UserManagement] ${newUsersToAdd.length} new users added to samplePlatformUsers. Displayed users updated.`);
         }
 
         toast({
           title: "Import Processed",
-          description: `${importedCount} users imported successfully. ${skippedCount} users skipped (check console for details).`,
+          description: `${importedCount} users processed for import. ${skippedCount} users skipped (check browser console for details). Refresh might be needed to see all changes if not immediately visible.`,
           duration: 7000
         });
 
       } catch (error) {
-        console.error("Error parsing or processing CSV:", error);
-        toast({ title: "CSV Processing Error", description: "Could not process the CSV file. Please ensure it's valid and check console.", variant: "destructive" });
+        console.error("[UserManagement] Error parsing or processing CSV:", error);
+        toast({ title: "CSV Processing Error", description: "Could not process the CSV file. Ensure it's valid and check console.", variant: "destructive" });
       }
     };
     reader.onerror = (e) => {
-      console.error("FileReader error:", e);
+      console.error("[UserManagement] FileReader error:", e);
       toast({ title: "File Read Error", description: "Could not read the selected file.", variant: "destructive" });
     };
     reader.readAsText(selectedFile);
@@ -400,11 +449,14 @@ export default function UserManagementPage() {
       toast({ title: "Permission Denied", description: "Only admins can export users.", variant: "destructive"});
       return;
     }
-    if (filteredUsers.length === 0) {
-      toast({ title: "No Users to Export", description: "There are no users matching the current filter.", variant: "default" });
+    // For export, use the 'users' state which is already filtered for managers, or full for admins
+    const usersToExport = currentUser.role === 'admin' ? samplePlatformUsers : users;
+
+    if (usersToExport.length === 0) {
+      toast({ title: "No Users to Export", description: "There are no users to export.", variant: "default" });
       return;
     }
-    const csvString = convertToCSV(filteredUsers);
+    const csvString = convertToCSV(usersToExport);
     const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
     if (link.download !== undefined) {
@@ -416,7 +468,7 @@ export default function UserManagementPage() {
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      toast({ title: "Export Successful", description: `Exported ${filteredUsers.length} users.` });
+      toast({ title: "Export Successful", description: `Exported ${usersToExport.length} users.` });
     } else {
       toast({ title: "Export Failed", description: "Browser does not support file download.", variant: "destructive" });
     }
@@ -474,7 +526,7 @@ export default function UserManagementPage() {
                   <DialogContent className="sm:max-w-md">
                     <DialogHeader>
                       <DialogTitle>Import Users from CSV</DialogTitle>
-                      <CardDescription>Select a CSV file with user data. Header row should include: Name,Email. Optional: Role,Status,TenantID (case-insensitive headers).</CardDescription>
+                      <CardDescription>Select a CSV file with user data. Expected header (case-insensitive): Name,Email. Optional: Role,Status,TenantID.</CardDescription>
                     </DialogHeader>
                     <div className="py-4 space-y-3">
                       <Label htmlFor="csv-file-upload">CSV File</Label>
@@ -648,8 +700,9 @@ export default function UserManagementPage() {
                     <Label htmlFor="user-tenantId">Tenant ID</Label>
                     <Controller name="tenantId" control={control} render={({ field }) => (
                        <Select onValueChange={field.onChange} value={field.value || ""}>
-                         <SelectTrigger id="user-tenantId"><SelectValue placeholder="Assign to Tenant" /></SelectTrigger>
+                         <SelectTrigger id="user-tenantId"><SelectValue placeholder="Assign to Tenant (optional)" /></SelectTrigger>
                          <SelectContent>
+                           <SelectItem value="">-- No Specific Tenant --</SelectItem>
                            {sampleTenants.map(tenant => (
                              <SelectItem key={tenant.id} value={tenant.id}>{tenant.name} ({tenant.id})</SelectItem>
                            ))}
@@ -657,6 +710,7 @@ export default function UserManagementPage() {
                        </Select>
                     )} />
                      {errors.tenantId && <p className="text-sm text-destructive mt-1">{errors.tenantId.message}</p>}
+                     <p className="text-xs text-muted-foreground mt-1">If no tenant is selected, user will be assigned to default ('{SAMPLE_TENANT_ID}').</p>
                 </div>
             )}
             <DialogFooter>
@@ -670,6 +724,5 @@ export default function UserManagementPage() {
     </TooltipProvider>
   );
 }
-
 
     
