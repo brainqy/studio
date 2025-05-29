@@ -2,12 +2,10 @@
 "use client";
 
 import { Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarMenuItem, SidebarMenuButton, SidebarSeparator, SidebarGroup, SidebarGroupLabel, SidebarMenu } from "@/components/ui/sidebar";
-import { Aperture, Award, BarChart2, BookOpen, Briefcase, Building2, CalendarDays, FileText, GalleryVerticalEnd, GitFork, Gift, Handshake, History, Home, Layers3, ListChecks, MessageSquare, Settings, ShieldAlert, ShieldQuestion, User, Users, Wallet, Zap, UserCog, BotMessageSquare, Target, Users2, BookText as BookTextIcon, Activity, Edit, FileType, Brain, FilePlus2, Trophy, Settings2Icon, Puzzle as PuzzleIcon, Mic, Server, Megaphone } from "lucide-react";
+import { Aperture, Award, BarChart2, BookOpen, Briefcase, Building2, CalendarDays, FileText, GalleryVerticalEnd, GitFork, Gift, Handshake, History, Home, Layers3, ListChecks, MessageSquare, Settings, ShieldAlert, ShieldQuestion, User, Users, Wallet, Zap, UserCog, BotMessageSquare, Target, Users2, BookText as BookTextIcon, Activity, Edit, FileType, Brain, FilePlus2, Trophy, Settings2Icon, Puzzle as PuzzleIcon, Mic, Server, Megaphone, PlusCircle } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { sampleUserProfile } from "@/lib/sample-data";
-// Removed: import { useLocale } from 'next-intl';
-// Removed: import type { Locale } from '@/i18n-config';
+import { sampleUserProfile, samplePlatformSettings } from "@/lib/sample-data"; // Added samplePlatformSettings
 
 const navItems = [
   { href: "/community-feed", label: "Community Feed", icon: MessageSquare },
@@ -59,7 +57,7 @@ const blogItems = [
 ];
 
 const adminItems = [
-   { href: "/admin/dashboard", label: "Admin Dashboard", icon: Activity }, // Corrected path if admin dashboard is different
+   { href: "/admin/dashboard", label: "Admin Dashboard", icon: Activity },
    { href: "/admin/tenants", label: "Tenant Management", icon: Building2 },
    { href: "/admin/tenant-onboarding", label: "Tenant Onboarding", icon: Layers3 },
    { href: "/admin/user-management", label: "User Management", icon: UserCog },
@@ -74,20 +72,19 @@ const adminItems = [
 ];
 
 export function AppSidebar() {
-  const pathname = usePathname(); // Direct pathname, no locale stripping needed now
+  const pathname = usePathname();
   const currentUser = sampleUserProfile;
-  
-  // Removed getLocalePrefixedPath function
+  const platformName = samplePlatformSettings.platformName || "ResumeMatch"; // Fallback if not set
 
   const renderMenuItem = (item: any, isSubItem = false) => {
-    const href = item.href; // Direct href
     let isActive;
-    if (item.href === "/dashboard" && item.label !== "Admin Dashboard") { 
-        isActive = pathname === href && currentUser.role !== 'admin';
-    } else if (item.href === "/admin/dashboard" && item.label === "Admin Dashboard") { // Ensure admin dashboard path matches
-        isActive = pathname === href && currentUser.role === 'admin';
+    // Handle specific dashboard routes for active state
+    if (item.href === "/dashboard" && currentUser.role !== 'admin' && currentUser.role !== 'manager') {
+        isActive = pathname === item.href;
+    } else if (item.href === "/admin/dashboard" && (currentUser.role === 'admin' || currentUser.role === 'manager')) { // Managers might see admin dashboard too
+        isActive = pathname === item.href;
     } else {
-        isActive = href ? pathname.startsWith(href) : false;
+        isActive = item.href ? pathname.startsWith(item.href) : false;
     }
     
     if (item.adminOnly && currentUser.role !== 'admin') {
@@ -98,9 +95,9 @@ export function AppSidebar() {
     }
 
     return (
-      <SidebarMenuItem key={href || item.label}>
-         {href ? (
-           <Link href={href} passHref legacyBehavior>
+      <SidebarMenuItem key={item.href || item.label}>
+         {item.href ? (
+           <Link href={item.href} passHref legacyBehavior>
             <SidebarMenuButton isActive={isActive} size={isSubItem ? "sm" : "default"} className="w-full justify-start">
               <item.icon className={`h-5 w-5 ${isActive ? "text-sidebar-primary-foreground" : "text-sidebar-foreground/80"}`} />
               <span className={`${isActive ? "text-sidebar-primary-foreground" : ""} group-data-[collapsible=icon]:hidden`}>{item.label}</span>
@@ -121,7 +118,7 @@ export function AppSidebar() {
       <SidebarHeader className="p-4 border-b border-sidebar-border">
         <Link href={"/dashboard"} className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
           <FileText className="h-7 w-7 text-primary" />
-          <span className="font-semibold text-lg text-sidebar-foreground group-data-[collapsible=icon]:hidden">ResumeMatch</span>
+          <span className="font-semibold text-lg text-sidebar-foreground group-data-[collapsible=icon]:hidden">{platformName}</span>
         </Link>
       </SidebarHeader>
       <SidebarContent className="p-2">
@@ -169,9 +166,8 @@ export function AppSidebar() {
               <SidebarMenu>
                 {adminItems.filter(item => {
                     if(currentUser.role === 'manager') {
-                        // For managers, ensure the admin dashboard link is also adjusted or handled
-                        if (item.href === "/admin/dashboard") return true; // Assuming manager can see a version of admin dashboard
                         const managerAccessible = [
+                            "/admin/dashboard", // Managers should see their specific dashboard view via this link
                             "/admin/user-management", 
                             "/admin/content-moderation",
                             "/admin/gallery-management",
