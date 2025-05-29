@@ -21,7 +21,7 @@ export type AnalyzeResumeAndJobDescriptionInput = z.infer<typeof AnalyzeResumeAn
 const SearchabilityDetailsSchema = z.object({
   hasPhoneNumber: z.boolean().optional().describe("Resume contains a phone number."),
   hasEmail: z.boolean().optional().describe("Resume contains an email address."),
-  hasAddress: z.boolean().optional().describe("Resume contains a physical address."),
+  hasAddress: z.boolean().optional().describe("Resume contains a physical address (city, state is sufficient)."),
   jobTitleMatchesJD: z.boolean().optional().describe("Job title in resume aligns with or is found in the job description."),
   hasWorkExperienceSection: z.boolean().optional().describe("A distinct work experience section was identified."),
   hasEducationSection: z.boolean().optional().describe("A distinct education section was identified."),
@@ -43,7 +43,7 @@ const AtsFormattingIssueSchema = z.object({
 
 const AtsParsingConfidenceSchema = z.object({
     overall: z.number().min(0).max(100).optional().describe("Overall confidence score (0-100) for ATS parsing."),
-    // sections: z.record(z.number().min(0).max(100)).optional().describe("Confidence scores for parsing specific sections (e.g., contactInfo: 90, experience: 75)."), // Removed due to API schema error
+    // sections field was removed due to API schema error with z.record for properties
     warnings: z.array(z.string()).optional().describe("Specific warnings or potential issues for ATS parsing."),
 });
 
@@ -92,7 +92,7 @@ const AnalyzeResumeAndJobDescriptionOutputSchema = z.object({
   identifiedSoftSkills: z.array(z.string()).optional().describe('Soft skills identified in the resume that are relevant to the job description. These contribute to Soft Skills Score.'),
   
   searchabilityDetails: SearchabilityDetailsSchema.optional().describe("Detailed breakdown of searchability aspects."),
-  formattingDetails: z.array(AtsFormattingIssueSchema).optional().describe("Detailed breakdown of formatting aspects and feedback, renamed from formattingItems to match type."),
+  formattingDetails: z.array(AtsFormattingIssueSchema).optional().describe("Detailed breakdown of formatting aspects and feedback."),
   
   atsParsingConfidence: AtsParsingConfidenceSchema.optional().describe("Confidence scores for ATS parsing."),
   atsStandardFormattingComplianceScore: z.number().min(0).max(100).optional().describe("Score for compliance with standard ATS-friendly formatting."),
@@ -109,12 +109,13 @@ export type AnalyzeResumeAndJobDescriptionOutput = z.infer<typeof AnalyzeResumeA
 
 function getDefaultOutput(errorMessage?: string): AnalyzeResumeAndJobDescriptionOutput {
   const errorMsg = errorMessage || "AI analysis could not be completed or some parts are missing.";
+  logger.warn(`[AI FLOW] getDefaultOutput called. Error message: "${errorMsg}"`);
   return {
     hardSkillsScore: 0,
     matchingSkills: [],
     missingSkills: [],
-    resumeKeyStrengths: "N/A due to error.",
-    jobDescriptionKeyRequirements: "N/A due to error.",
+    resumeKeyStrengths: "N/A",
+    jobDescriptionKeyRequirements: "N/A",
     overallQualityScore: 0,
     recruiterTips: [{ category: "General", finding: errorMsg, status: 'negative', suggestion: "Please ensure resume and job description are sufficiently detailed, or try again." }],
     overallFeedback: errorMsg,
@@ -163,37 +164,50 @@ function getDefaultOutput(errorMessage?: string): AnalyzeResumeAndJobDescription
 }
 
 
+const logger = { // Simple logger for server-side visibility
+  info: (message: string, ...args: any[]) => console.log(`[AI FLOW INFO] ${message}`, ...args),
+  warn: (message: string, ...args: any[]) => console.warn(`[AI FLOW WARN] ${message}`, ...args),
+  error: (message: string, ...args: any[]) => console.error(`[AI FLOW ERROR] ${message}`, ...args),
+};
+
+
 export async function analyzeResumeAndJobDescription(
   input: AnalyzeResumeAndJobDescriptionInput
 ): Promise<AnalyzeResumeAndJobDescriptionOutput> {
-  console.log("[AI FLOW] DIAGNOSTIC: Starting analyzeResumeAndJobDescription with input:", { resumeLength: input.resumeText.length, jdLength: input.jobDescriptionText.length });
+  logger.info("Starting analyzeResumeAndJobDescription with input lengths:", { resume: input.resumeText?.length, jd: input.jobDescriptionText?.length });
   
-  // DIAGNOSTIC: Bypassing AI call entirely and returning default error output
-  // console.log("[AI FLOW] DIAGNOSTIC: Bypassing AI call and returning default error data.");
-  // return getDefaultOutput("Diagnostic mode: AI call bypassed.");
-
-  if (!input.resumeText.trim() || !input.jobDescriptionText.trim()) {
-    console.error("[AI FLOW] Error: Resume text or Job Description text is empty.");
+  if (!input.resumeText?.trim() || !input.jobDescriptionText?.trim()) {
+    logger.error("Error: Resume text or Job Description text is empty or whitespace only.");
     return getDefaultOutput("Resume text or Job Description text cannot be empty.");
   }
   
   let aiResponse;
   try {
+    logger.info("Calling analyzeResumeAndJobDescriptionPrompt...");
     aiResponse = await analyzeResumeAndJobDescriptionPrompt(input);
-  } catch (error) {
-    console.error("[AI FLOW] Error during AI prompt execution:", error);
-    return getDefaultOutput(`An error occurred during AI analysis: ${error instanceof Error ? error.message : String(error)}`);
+    logger.info("AI prompt call completed.");
+  } catch (error: any) {
+    logger.error("CRITICAL ERROR during AI prompt execution:", error);
+    // Log the full error object, which might contain more details from Google AI
+    console.error("[AI FLOW CRITICAL ERROR STACK] ", error.stack);
+    if (error.details) console.error("[AI FLOW CRITICAL ERROR DETAILS] ", error.details);
+    return getDefaultOutput(`An error occurred during AI analysis: ${error.message || String(error)}`);
   }
 
-  console.log("[AI FLOW] Raw AI model output:", JSON.stringify(aiResponse?.output, null, 2));
+  logger.info("Raw AI model output object:", aiResponse); // Log the entire response object
+  // Using JSON.stringify for potentially large objects if the above doesn't show well in logs.
+  // Be cautious with this in production if outputs are huge.
+  // console.log("[AI FLOW] Raw AI model output (JSON stringified):", JSON.stringify(aiResponse?.output, null, 2));
+
 
   if (!aiResponse?.output) {
-    console.error("[AI FLOW] AI prompt did not return any parsable output for input:", { resumeLength: input.resumeText.length, jdLength: input.jobDescriptionText.length });
+    logger.error("AI prompt did not return any parsable output for input lengths:", { resume: input.resumeText.length, jd: input.jobDescriptionText.length });
     return getDefaultOutput("AI analysis did not return any parsable output.");
   }
 
   const output = aiResponse.output;
 
+  // Enhanced mapping with defaults for all fields, including nested optional objects
   return {
     hardSkillsScore: output.hardSkillsScore ?? 0,
     matchingSkills: output.matchingSkills ?? [],
@@ -201,8 +215,8 @@ export async function analyzeResumeAndJobDescription(
     resumeKeyStrengths: output.resumeKeyStrengths ?? "N/A",
     jobDescriptionKeyRequirements: output.jobDescriptionKeyRequirements ?? "N/A",
     overallQualityScore: output.overallQualityScore ?? 0,
-    recruiterTips: output.recruiterTips ?? [],
-    overallFeedback: output.overallFeedback ?? "Analysis incomplete.",
+    recruiterTips: output.recruiterTips ?? [{ category: "General", finding: "Recruiter tips not generated.", status: 'neutral' }],
+    overallFeedback: output.overallFeedback ?? "Overall feedback not generated.",
     
     searchabilityScore: output.searchabilityScore ?? 0,
     recruiterTipsScore: output.recruiterTipsScore ?? 0,
@@ -211,18 +225,18 @@ export async function analyzeResumeAndJobDescription(
     softSkillsScore: output.softSkillsScore ?? 0,
     identifiedSoftSkills: output.identifiedSoftSkills ?? [],
     
-    searchabilityDetails: output.searchabilityDetails ?? getDefaultOutput().searchabilityDetails,
-    formattingDetails: output.formattingDetails ?? getDefaultOutput().formattingDetails,
+    searchabilityDetails: output.searchabilityDetails ?? getDefaultOutput().searchabilityDetails!,
+    formattingDetails: output.formattingDetails ?? getDefaultOutput().formattingDetails!,
     
-    atsParsingConfidence: output.atsParsingConfidence ?? getDefaultOutput().atsParsingConfidence,
+    atsParsingConfidence: output.atsParsingConfidence ?? getDefaultOutput().atsParsingConfidence!,
     atsStandardFormattingComplianceScore: output.atsStandardFormattingComplianceScore ?? 0,
-    standardFormattingIssues: output.standardFormattingIssues ?? getDefaultOutput().standardFormattingIssues,
+    standardFormattingIssues: output.standardFormattingIssues ?? getDefaultOutput().standardFormattingIssues!,
     undefinedAcronyms: output.undefinedAcronyms ?? [],
 
-    quantifiableAchievementDetails: output.quantifiableAchievementDetails ?? getDefaultOutput().quantifiableAchievementDetails,
-    actionVerbDetails: output.actionVerbDetails ?? getDefaultOutput().actionVerbDetails,
-    impactStatementDetails: output.impactStatementDetails ?? getDefaultOutput().impactStatementDetails,
-    readabilityDetails: output.readabilityDetails ?? getDefaultOutput().readabilityDetails,
+    quantifiableAchievementDetails: output.quantifiableAchievementDetails ?? getDefaultOutput().quantifiableAchievementDetails!,
+    actionVerbDetails: output.actionVerbDetails ?? getDefaultOutput().actionVerbDetails!,
+    impactStatementDetails: output.impactStatementDetails ?? getDefaultOutput().impactStatementDetails!,
+    readabilityDetails: output.readabilityDetails ?? getDefaultOutput().readabilityDetails!,
   };
 }
 
@@ -231,7 +245,7 @@ const analyzeResumeAndJobDescriptionPrompt = ai.definePrompt({
   input: {schema: AnalyzeResumeAndJobDescriptionInputSchema},
   output: {schema: AnalyzeResumeAndJobDescriptionOutputSchema},
   config: {
-    safetySettings: [ // Relaxed safety settings
+    safetySettings: [ 
       { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_ONLY_HIGH' },
       { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },
       { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_ONLY_HIGH' },
@@ -239,7 +253,8 @@ const analyzeResumeAndJobDescriptionPrompt = ai.definePrompt({
     ],
   },
   prompt: `You are an expert resume and job description analyst. Your task is to provide a comprehensive analysis of the given resume against the provided job description.
-Evaluate the resume based on the following categories and provide detailed feedback and scores as per the output schema. If some information is insufficient to make a detailed assessment for a specific sub-section, provide default values like 0 for scores, empty arrays for lists, "N/A" for strings, or a default empty object structure for optional nested objects to ensure a valid JSON output according to the schema.
+Evaluate the resume based on the following categories and provide detailed feedback and scores as per the output schema. 
+If information is insufficient for a specific field or sub-section, you MUST provide default values (e.g., 0 for scores, empty arrays [] for lists, "N/A" or a concise "Could not assess" for strings, or a default empty object structure for optional nested objects like 'searchabilityDetails: {}') to ensure a valid JSON output according to the schema. DO NOT OMIT optional fields; provide their default state if data is insufficient.
 
 Resume Text:
 {{{resumeText}}}
@@ -250,46 +265,84 @@ Job Description Text:
 Analysis Categories and Instructions for JSON Output Fields:
 
 1.  **Core Skill Match & Quality:**
-    *   hardSkillsScore: Number (0-100) for hard skill alignment.
-    *   matchingSkills: Array of strings listing skills in both resume and JD.
-    *   missingSkills: Array of strings listing crucial skills from JD missing in resume.
-    *   resumeKeyStrengths: String summarizing resume's key strengths aligned with JD.
-    *   jobDescriptionKeyRequirements: String summarizing key requirements from JD.
-    *   overallQualityScore: Optional number (0-100) for overall resume quality against JD.
-    *   overallFeedback: String with general overall feedback and summary.
+    *   hardSkillsScore: Number (0-100). If not assessable, default to 0.
+    *   matchingSkills: Array of strings. Default to [].
+    *   missingSkills: Array of strings. Default to [].
+    *   resumeKeyStrengths: String. Default to "N/A".
+    *   jobDescriptionKeyRequirements: String. Default to "N/A".
+    *   overallQualityScore: Number (0-100). Default to 0.
+    *   overallFeedback: String. Default to "N/A".
 
-2.  **Category Scores (0-100 for each, optional if not assessable):**
-    *   searchabilityScore: For contact info, section headings, job title match, professional summary presence, and keyword density.
-    *   recruiterTipsScore: For word count, action verbs, measurable results, tailoring, etc.
-    *   formattingScore: For clarity, consistency, length, ATS-friendliness of general formatting.
-    *   highlightsScore: For quality and relevance of resume highlights against JD.
-    *   softSkillsScore: For identified soft skills relevant to the job.
-    *   identifiedSoftSkills: Array of strings listing relevant soft skills found.
-    *   atsStandardFormattingComplianceScore: Score for compliance with standard ATS-friendly formatting.
+2.  **Category Scores (0-100 for each):**
+    *   searchabilityScore: Default to 0.
+    *   recruiterTipsScore: Default to 0.
+    *   formattingScore: Default to 0.
+    *   highlightsScore: Default to 0.
+    *   softSkillsScore: Default to 0.
+    *   identifiedSoftSkills: Array of strings. Default to [].
+    *   atsStandardFormattingComplianceScore: Default to 0.
 
-3.  **Detailed Breakdowns (optional if not assessable, ensure valid empty structures if AI cannot populate fully):**
-    *   searchabilityDetails (SearchabilityDetailsSchema): Object with booleans (hasPhoneNumber, hasEmail, hasAddress, jobTitleMatchesJD, hasWorkExperienceSection, hasEducationSection, hasProfessionalSummary) and a string for keywordDensityFeedback. If a boolean cannot be determined, default to false. If feedback string cannot be determined, use "N/A".
-    *   recruiterTips (Array of RecruiterTipItemSchema): If no specific tips, return an empty array or a single generic tip.
-    *   formattingDetails (Array of AtsFormattingIssueSchema): General formatting issues. If none, return empty array.
-    *   standardFormattingIssues (Array of AtsFormattingIssueSchema): Specific ATS formatting issues. If none, return empty array.
-    *   atsParsingConfidence (AtsParsingConfidenceSchema): Object with optional overall score (0-100) and optional warnings array. If not assessable, provide overall: 0 and empty warnings. Do NOT include a 'sections' sub-object.
-    *   undefinedAcronyms: Array of strings. If none, return empty array.
+3.  **Detailed Breakdowns (Ensure valid empty/default structures if AI cannot populate fully):**
+    *   searchabilityDetails (SearchabilityDetailsSchema): Object with booleans (default false) and keywordDensityFeedback (default "N/A"). Example if not assessable: { "hasPhoneNumber": false, "hasEmail": false, "hasAddress": false, "jobTitleMatchesJD": false, "hasWorkExperienceSection": false, "hasEducationSection": false, "hasProfessionalSummary": false, "keywordDensityFeedback": "N/A" }.
+    *   recruiterTips (Array of RecruiterTipItemSchema): If no specific tips, return an empty array [] or a single generic tip like [{ "category": "General", "finding": "No specific recruiter tips generated.", "status": "neutral" }].
+    *   formattingDetails (Array of AtsFormattingIssueSchema): General formatting issues. Default to [].
+    *   standardFormattingIssues (Array of AtsFormattingIssueSchema): Specific ATS formatting issues. Default to [].
+    *   atsParsingConfidence (AtsParsingConfidenceSchema): Object with optional overall score (default 0) and optional warnings array (default []). Example if not assessable: { "overall": 0, "warnings": ["ATS parsing confidence could not be determined."] }. Do NOT include a 'sections' sub-object.
+    *   undefinedAcronyms: Array of strings. Default to [].
 
-4.  **Content Quality Details (optional if not assessable, ensure valid empty structures if AI cannot populate fully):**
-    *   quantifiableAchievementDetails (QuantifiableAchievementDetailsSchema): Object with optional score (0-100), optional examplesFound (array), optional areasLackingQuantification (array). If not assessable, score 0, empty arrays.
-    *   actionVerbDetails (ActionVerbDetailsSchema): Object with optional score (0-100), optional strongVerbsUsed (array), optional weakVerbsUsed (array), optional overusedVerbs (array), optional suggestedStrongerVerbs (array of {original, suggestion}). If not assessable, score 0, empty arrays.
-    *   impactStatementDetails (ImpactStatementDetailsSchema): Object with optional clarityScore (0-100), optional unclearImpactStatements (array), optional exampleWellWrittenImpactStatements (array). If not assessable, score 0, empty arrays.
-    *   readabilityDetails (ReadabilityDetailsSchema): Object with optional fleschKincaidGradeLevel, optional fleschReadingEase, optional readabilityFeedback string. If not assessable, omit numbers or provide "N/A" for feedback.
+4.  **Content Quality Details (Ensure valid empty/default structures if AI cannot populate fully):**
+    *   quantifiableAchievementDetails (QuantifiableAchievementDetailsSchema): Object with score (default 0), examplesFound (default []), areasLackingQuantification (default []). Example: { "score": 0, "examplesFound": [], "areasLackingQuantification": ["Could not assess quantifiable achievements."] }.
+    *   actionVerbDetails (ActionVerbDetailsSchema): Object with score (default 0), strongVerbsUsed (default []), weakVerbsUsed (default []), overusedVerbs (default []), suggestedStrongerVerbs (default []). Example: { "score": 0, "strongVerbsUsed": [], "weakVerbsUsed": ["Could not assess action verbs."], "overusedVerbs": [], "suggestedStrongerVerbs": [] }.
+    *   impactStatementDetails (ImpactStatementDetailsSchema): Object with clarityScore (default 0), unclearImpactStatements (default []), exampleWellWrittenImpactStatements (default []). Example: { "clarityScore": 0, "unclearImpactStatements": ["Could not assess impact statements."], "exampleWellWrittenImpactStatements": [] }.
+    *   readabilityDetails (ReadabilityDetailsSchema): Object with optional numbers and readabilityFeedback (default "N/A"). Example: { "readabilityFeedback": "Could not assess readability." }.
 
-**IMPORTANT FINAL INSTRUCTION:** Your entire response MUST be a single, valid JSON object that strictly adheres to the AnalyzeResumeAndJobDescriptionOutputSchema. It is CRITICAL that all fields expected by the schema are present, even if their value must be a default like 0, null, an empty array [], an empty object {}, or "N/A" (for optional strings) when specific details cannot be derived from the input. Do NOT omit optional fields; provide their default empty/null/0 state if data is insufficient. Ensure all nested objects also adhere to this, providing their full structure with default/empty values if necessary.
+**CRITICAL FINAL INSTRUCTION:** Your entire response MUST be a single, valid JSON object that strictly adheres to the AnalyzeResumeAndJobDescriptionOutputSchema. It is IMPERATIVE that all fields expected by the schema, including all nested optional objects and their fields, are present. If you cannot determine a value for a field, YOU MUST use a sensible default (0 for numbers, null for optional numbers if appropriate but 0 is safer here, "N/A" or "Could not assess" for strings, [] for arrays, and fully structured default objects for nested schemas as shown in the examples above). DO NOT OMIT ANY FIELD OR SUB-FIELD from the defined schema.
 `,
 });
 
+// Note: analyzeResumeAndJobDescriptionFlow is not directly called if the main exported function bypasses it.
+// For full Genkit tracing/UI, you'd typically call this flow.
+// const analyzeResumeAndJobDescriptionFlow = ai.defineFlow(
+//   {
+//     name: 'analyzeResumeAndJobDescriptionFlow',
+//     inputSchema: AnalyzeResumeAndJobDescriptionInputSchema,
+//     outputSchema: AnalyzeResumeAndJobDescriptionOutputSchema,
+//   },
+//   analyzeResumeAndJobDescription // This creates a recursive definition if not careful
+// );
+// To use with Genkit UI, the flow function would typically call the prompt directly:
+/*
 const analyzeResumeAndJobDescriptionFlow = ai.defineFlow(
   {
     name: 'analyzeResumeAndJobDescriptionFlow',
     inputSchema: AnalyzeResumeAndJobDescriptionInputSchema,
     outputSchema: AnalyzeResumeAndJobDescriptionOutputSchema,
   },
-  analyzeResumeAndJobDescription
+  async (input) => {
+    logger.info("Flow: Starting analyzeResumeAndJobDescription with input lengths:", { resume: input.resumeText?.length, jd: input.jobDescriptionText?.length });
+    if (!input.resumeText?.trim() || !input.jobDescriptionText?.trim()) {
+      logger.error("Flow Error: Resume text or Job Description text is empty.");
+      return getDefaultOutput("Resume text or Job Description text cannot be empty.");
+    }
+    try {
+      const { output } = await analyzeResumeAndJobDescriptionPrompt(input);
+      if (!output) {
+        logger.error("Flow Error: AI prompt did not return any parsable output.");
+        return getDefaultOutput("AI analysis did not return any parsable output.");
+      }
+      // Here, you might do light massaging of the output if needed, similar to the main function,
+      // but the main function's robust defaulting is key.
+      return output;
+    } catch (error: any) {
+      logger.error("Flow CRITICAL ERROR during AI prompt execution:", error);
+      console.error("[AI FLOW CRITICAL ERROR STACK] ", error.stack);
+      if (error.details) console.error("[AI FLOW CRITICAL ERROR DETAILS] ", error.details);
+      return getDefaultOutput(`An error occurred during AI analysis in flow: ${error.message || String(error)}`);
+    }
+  }
 );
+*/
+// For now, the exported async function `analyzeResumeAndJobDescription` is what Next.js Server Actions will use.
+// If you want Genkit Dev UI to trace this, you'd define and export the flow like above,
+// and your server action would call `analyzeResumeAndJobDescriptionFlow(input)` instead of `analyzeResumeAndJobDescriptionPrompt(input)`.
+// For simplicity and directness, the current setup calls the prompt from the exported function.
