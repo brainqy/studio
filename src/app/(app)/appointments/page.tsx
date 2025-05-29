@@ -25,7 +25,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from '@/components/ui/badge';
 
 const rescheduleSchema = z.object({
   preferredDate: z.date({ required_error: "New date is required." }),
@@ -66,7 +66,7 @@ export default function AppointmentsPage() {
     return sampleCommunityPosts.filter(
       post => post.type === 'request' && post.assignedTo === sampleUserProfile.name && post.status === 'assigned'
     );
-  }, [sampleCommunityPosts, sampleUserProfile.name]);
+  }, []); // Removed sampleCommunityPosts and sampleUserProfile.name from deps as they are stable
 
 
   const getStatusClass = (status: AppointmentStatus) => {
@@ -264,7 +264,7 @@ export default function AppointmentsPage() {
                         {appt.status === 'Confirmed' && <CheckCircle className="inline h-3 w-3 mr-1"/>}
                         {appt.status === 'Pending' && <Clock className="inline h-3 w-3 mr-1"/>}
                         {appt.status === 'Cancelled' && <XCircle className="inline h-3 w-3 mr-1"/>}
-                        {appt.status === 'Completed' && <CheckCircle className="inline h-3 w-3 mr-1 text-blue-600"/>}
+                        {appt.status === 'Completed' && <CheckCircle className="inline h-3 w-3 text-blue-600"/>}
                         {appt.status}
                       </span>
                     </div>
@@ -274,7 +274,7 @@ export default function AppointmentsPage() {
                             <span>With {alumni.name} {isCurrentUserRequester ? '' : '(Incoming Request)'}</span>
                         </div>
                     )}
-                    {!alumni && appt.withUser && ( // If it's an appointment from a community request, alumni might not exist
+                    {!alumni && appt.withUser && ( 
                         <div className="flex items-center gap-2 text-sm text-muted-foreground pt-1">
                             <UsersIcon className="h-4 w-4"/>
                             <span>With {appt.withUser} {isCurrentUserRequester ? '' : '(Incoming Request)'}</span>
@@ -292,26 +292,27 @@ export default function AppointmentsPage() {
                     )}
                      {appt.notes && <p className="text-xs mt-2 italic text-muted-foreground">Notes: {appt.notes.substring(0,100)}{appt.notes.length > 100 ? '...' : ''}</p>}
                   </CardContent>
-                  <CardFooter className="border-t pt-4 mt-auto flex justify-end space-x-2">
+                  <CardFooter className="flex flex-col items-stretch sm:flex-row sm:justify-end gap-2 border-t pt-4 mt-auto">
                     {appt.status === 'Confirmed' && (
                       <>
-                      <Button size="sm" variant="default" onClick={() => toast({title: "Join Meeting (Mock)", description: "This would typically open a video call link."})}><Video className="mr-2 h-4 w-4" /> Join Meeting</Button>
-                       <Button size="sm" variant="outline" onClick={() => handleMarkComplete(appt.id)}>Mark as Completed</Button>
+                      <Button size="sm" variant="default" onClick={() => toast({title: "Join Meeting (Mock)", description: "This would typically open a video call link."})} className="w-full sm:w-auto bg-primary hover:bg-primary/90"><Video className="mr-2 h-4 w-4" /> Join Meeting</Button>
+                       <Button size="sm" variant="outline" onClick={() => handleMarkComplete(appt.id)} className="w-full sm:w-auto"><CheckCircle className="mr-2 h-4 w-4"/> Mark as Completed</Button>
+                       <Button size="sm" variant="outline" onClick={() => openRescheduleDialog(appt)} className="w-full sm:w-auto"><Edit3 className="mr-1 h-4 w-4"/> Manage/Reschedule</Button>
                       </>
                     )}
                     {appt.status === 'Pending' && !isCurrentUserRequester && (
                       <>
-                        <Button size="sm" variant="default" onClick={() => handleAcceptAppointment(appt.id)} className="bg-green-600 hover:bg-green-700 text-white"><ThumbsUp className="mr-2 h-4 w-4"/> Accept</Button>
-                        <Button size="sm" variant="destructive" onClick={() => handleDeclineAppointment(appt.id)}><XCircle className="mr-2 h-4 w-4"/> Decline</Button>
+                        <Button size="sm" variant="default" onClick={() => handleAcceptAppointment(appt.id)} className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white"><ThumbsUp className="mr-2 h-4 w-4"/> Accept</Button>
+                        <Button size="sm" variant="destructive" onClick={() => handleDeclineAppointment(appt.id)} className="w-full sm:w-auto"><XCircle className="mr-2 h-4 w-4"/> Decline</Button>
                       </>
                     )}
-                     {(appt.status === 'Pending' || appt.status === 'Confirmed') && isCurrentUserRequester && (
-                         <Button size="sm" variant="outline" onClick={() => openRescheduleDialog(appt)}><Edit3 className="mr-1 h-4 w-4"/> Manage/Reschedule</Button>
+                     {appt.status === 'Pending' && isCurrentUserRequester && (
+                         <Button size="sm" variant="outline" onClick={() => openRescheduleDialog(appt)} className="w-full sm:w-auto"><Edit3 className="mr-1 h-4 w-4"/> Manage/Reschedule</Button>
                      )}
-                     {appt.status === 'Completed' && (
-                        <Button size="sm" variant="outline" onClick={() => openFeedbackDialog(appt)}><FeedbackIcon className="mr-1 h-4 w-4"/> Provide Feedback</Button>
+                     {appt.status === 'Completed' && isCurrentUserRequester && (
+                        <Button size="sm" variant="outline" onClick={() => openFeedbackDialog(appt)} className="w-full sm:w-auto"><FeedbackIcon className="mr-1 h-4 w-4"/> Provide Feedback</Button>
                      )}
-                     {appt.status === 'Cancelled' && (<p className="text-sm text-muted-foreground">This appointment was cancelled.</p>)}
+                     {appt.status === 'Cancelled' && (<p className="text-sm text-muted-foreground text-center sm:text-right w-full">This appointment was cancelled.</p>)}
                   </CardFooter>
                 </Card>
               );
@@ -398,3 +399,5 @@ export default function AppointmentsPage() {
     </div>
   );
 }
+
+    
