@@ -1,10 +1,11 @@
+
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CalendarDays, PlusCircle, Video, CheckCircle, Clock, XCircle, ThumbsUp, Filter, Edit3, CalendarPlus, MessageSquare as FeedbackIcon, Star as StarIcon } from "lucide-react";
-import { sampleAppointments, sampleAlumni, sampleUserProfile } from "@/lib/sample-data";
-import type { Appointment, AlumniProfile, AppointmentStatus, PreferredTimeSlot } from "@/types";
+import { CalendarDays, PlusCircle, Video, CheckCircle, Clock, XCircle, ThumbsUp, Filter, Edit3, CalendarPlus, MessageSquare as FeedbackIcon, Star as StarIcon, Users as UsersIcon } from "lucide-react";
+import { sampleAppointments, sampleAlumni, sampleUserProfile, sampleCommunityPosts } from "@/lib/sample-data";
+import type { Appointment, AlumniProfile, AppointmentStatus, PreferredTimeSlot, CommunityPost } from "@/types";
 import { AppointmentStatuses, PreferredTimeSlots } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { format, formatDistanceToNow, parseISO, isFuture, differenceInDays } from 'date-fns';
@@ -23,6 +24,8 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
+import { Badge } from "@/components/ui/badge";
 
 const rescheduleSchema = z.object({
   preferredDate: z.date({ required_error: "New date is required." }),
@@ -40,7 +43,7 @@ type FeedbackFormData = z.infer<typeof feedbackSchema>;
 
 export default function AppointmentsPage() {
   const { toast } = useToast();
-  const [appointments, setAppointments] = useState<Appointment[]>(sampleAppointments);
+  const [appointments, setAppointments] = useState<Appointment[]>(sampleAppointments.filter(a => a.requesterUserId === sampleUserProfile.id || a.alumniUserId === sampleUserProfile.id));
   const [filterStatuses, setFilterStatuses] = useState<Set<AppointmentStatus>>(new Set());
   const [filterStartDate, setFilterStartDate] = useState<Date | undefined>();
   const [filterEndDate, setFilterEndDate] = useState<Date | undefined>();
@@ -59,6 +62,12 @@ export default function AppointmentsPage() {
     defaultValues: { rating: 0, comments: ''}
   });
 
+  const assignedPosts = useMemo(() => {
+    return sampleCommunityPosts.filter(
+      post => post.type === 'request' && post.assignedTo === sampleUserProfile.name && post.status === 'assigned'
+    );
+  }, [sampleCommunityPosts, sampleUserProfile.name]);
+
 
   const getStatusClass = (status: AppointmentStatus) => {
     if (status === 'Confirmed') return 'text-green-600 bg-green-100';
@@ -73,29 +82,32 @@ export default function AppointmentsPage() {
   };
 
   const handleAcceptAppointment = (appointmentId: string) => {
-    setAppointments(prevAppointments =>
-      prevAppointments.map(appt =>
-        appt.id === appointmentId ? { ...appt, status: 'Confirmed' } : appt
-      )
-    );
+    const updateGlobalAndLocal = (updater: (appt: Appointment) => Appointment) => {
+        setAppointments(prevAppointments => prevAppointments.map(appt => appt.id === appointmentId ? updater(appt) : appt));
+        const globalIndex = sampleAppointments.findIndex(sa => sa.id === appointmentId);
+        if (globalIndex !== -1) sampleAppointments[globalIndex] = updater(sampleAppointments[globalIndex]);
+    };
+    updateGlobalAndLocal(appt => ({ ...appt, status: 'Confirmed' as AppointmentStatus }));
     toast({ title: "Appointment Confirmed", description: "The appointment has been marked as confirmed." });
   };
 
   const handleDeclineAppointment = (appointmentId: string) => {
-     setAppointments(prevAppointments =>
-      prevAppointments.map(appt =>
-        appt.id === appointmentId ? { ...appt, status: 'Cancelled' } : appt
-      )
-    );
+     const updateGlobalAndLocal = (updater: (appt: Appointment) => Appointment) => {
+        setAppointments(prevAppointments => prevAppointments.map(appt => appt.id === appointmentId ? updater(appt) : appt));
+        const globalIndex = sampleAppointments.findIndex(sa => sa.id === appointmentId);
+        if (globalIndex !== -1) sampleAppointments[globalIndex] = updater(sampleAppointments[globalIndex]);
+    };
+    updateGlobalAndLocal(appt => ({ ...appt, status: 'Cancelled' as AppointmentStatus }));
     toast({ title: "Appointment Declined", description: "The appointment has been marked as cancelled.", variant: "destructive" });
   };
 
   const handleMarkComplete = (appointmentId: string) => {
-    setAppointments(prevAppointments =>
-      prevAppointments.map(appt =>
-        appt.id === appointmentId ? { ...appt, status: 'Completed' } : appt
-      )
-    );
+    const updateGlobalAndLocal = (updater: (appt: Appointment) => Appointment) => {
+        setAppointments(prevAppointments => prevAppointments.map(appt => appt.id === appointmentId ? updater(appt) : appt));
+        const globalIndex = sampleAppointments.findIndex(sa => sa.id === appointmentId);
+        if (globalIndex !== -1) sampleAppointments[globalIndex] = updater(sampleAppointments[globalIndex]);
+    };
+    updateGlobalAndLocal(appt => ({ ...appt, status: 'Completed' as AppointmentStatus }));
     toast({ title: "Appointment Completed", description: "The appointment has been marked as completed." });
   };
 
@@ -116,16 +128,22 @@ export default function AppointmentsPage() {
     if (timeParts) {
       let hour = parseInt(timeParts[1]);
       if (timeParts[2] === 'PM' && hour !== 12) hour += 12;
-      if (timeParts[2] === 'AM' && hour === 12) hour = 0;
+      if (timeParts[2] === 'AM' && hour === 12) hour = 0; // Midnight case
       newDateTime.setHours(hour, 0, 0, 0);
     }
-    setAppointments(prevAppointments =>
-      prevAppointments.map(appt =>
-        appt.id === appointmentToReschedule.id
-          ? { ...appt, dateTime: newDateTime.toISOString(), status: 'Pending' }
-          : appt
-      )
-    );
+
+    const updateGlobalAndLocal = (updater: (appt: Appointment) => Appointment) => {
+        setAppointments(prevAppointments => prevAppointments.map(appt => appt.id === appointmentToReschedule.id ? updater(appt) : appt));
+        const globalIndex = sampleAppointments.findIndex(sa => sa.id === appointmentToReschedule.id);
+        if (globalIndex !== -1) sampleAppointments[globalIndex] = updater(sampleAppointments[globalIndex]);
+    };
+
+    updateGlobalAndLocal(appt => ({ 
+        ...appt, 
+        dateTime: newDateTime.toISOString(), 
+        status: 'Pending' as AppointmentStatus // Reschedule implies pending re-confirmation
+    }));
+
     toast({ title: "Reschedule Request Sent (Mock)", description: `Reschedule request sent for appointment with ${appointmentToReschedule.withUser}.` });
     setIsRescheduleDialogOpen(false);
   };
@@ -139,6 +157,7 @@ export default function AppointmentsPage() {
   const onFeedbackSubmit = (data: FeedbackFormData) => {
     if (!appointmentForFeedback) return;
     console.log("Feedback Submitted (Mock):", { appointmentId: appointmentForFeedback.id, ...data });
+    // Here you would typically save this feedback to your backend
     toast({ title: "Feedback Submitted (Mock)", description: `Thank you for your feedback on the session with ${appointmentForFeedback.withUser}.` });
     setIsFeedbackDialogOpen(false);
   };
@@ -175,7 +194,7 @@ export default function AppointmentsPage() {
           <PlusCircle className="mr-2 h-5 w-5" /> Schedule New
         </Button>
       </div>
-      <CardDescription>View and manage your scheduled meetings with alumni.</CardDescription>
+      <CardDescription>View and manage your scheduled meetings with alumni and community requests.</CardDescription>
 
       <Accordion type="single" collapsible className="w-full bg-card shadow-lg rounded-lg">
         <AccordionItem value="filters">
@@ -217,78 +236,117 @@ export default function AppointmentsPage() {
         </AccordionItem>
       </Accordion>
 
-      {filteredAppointments.length === 0 ? (
+      {filteredAppointments.length === 0 && assignedPosts.length === 0 ? (
         <Card className="text-center py-12 shadow-lg">
           <CardHeader>
             <CalendarDays className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-            <CardTitle className="text-2xl">No Appointments Found</CardTitle>
-            <CardDescription>{appointments.length > 0 ? "Try adjusting your filters." : "You have no appointments scheduled."}</CardDescription>
+            <CardTitle className="text-2xl">No Appointments or Assigned Requests</CardTitle>
+            <CardDescription>{appointments.length > 0 ? "Try adjusting your filters." : "You have no scheduled appointments or assigned community requests."}</CardDescription>
           </CardHeader>
         </Card>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2">
-          {filteredAppointments.map((appt) => {
-            const alumni = getAlumniDetails(appt.withUser);
-            const isCurrentUserRequester = appt.requesterUserId === sampleUserProfile.id;
-            const apptDate = parseISO(appt.dateTime);
-            const reminderDate = appt.reminderDate ? parseISO(appt.reminderDate) : null;
-            const daysToReminder = reminderDate && isFuture(reminderDate) ? differenceInDays(reminderDate, new Date()) : null;
+        <>
+          {filteredAppointments.length > 0 && (
+            <div className="grid gap-6 md:grid-cols-2">
+              {filteredAppointments.map((appt) => {
+                const alumni = getAlumniDetails(appt.withUser);
+                const isCurrentUserRequester = appt.requesterUserId === sampleUserProfile.id;
+                const apptDate = parseISO(appt.dateTime);
+                const reminderDate = appt.reminderDate ? parseISO(appt.reminderDate) : null;
+                const daysToReminder = reminderDate && isFuture(reminderDate) ? differenceInDays(reminderDate, new Date()) : null;
 
-            return (
-            <Card key={appt.id} className="shadow-lg hover:shadow-xl transition-shadow duration-300">
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <CardTitle className="text-lg">{appt.title}</CardTitle>
-                  <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusClass(appt.status)}`}>
-                    {appt.status === 'Confirmed' && <CheckCircle className="inline h-3 w-3 mr-1"/>}
-                    {appt.status === 'Pending' && <Clock className="inline h-3 w-3 mr-1"/>}
-                    {appt.status === 'Cancelled' && <XCircle className="inline h-3 w-3 mr-1"/>}
-                    {appt.status === 'Completed' && <CheckCircle className="inline h-3 w-3 mr-1 text-blue-600"/>}
-                    {appt.status}
-                  </span>
-                </div>
-                {alumni && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground pt-1">
-                        <Avatar className="h-6 w-6"><AvatarImage src={alumni.profilePictureUrl} alt={alumni.name} data-ai-hint="person face"/><AvatarFallback>{alumni.name.substring(0,1)}</AvatarFallback></Avatar>
-                        <span>With {alumni.name} {isCurrentUserRequester ? '' : '(Incoming)'}</span>
+                return (
+                <Card key={appt.id} className="shadow-lg hover:shadow-xl transition-shadow duration-300">
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                      <CardTitle className="text-lg">{appt.title}</CardTitle>
+                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusClass(appt.status)}`}>
+                        {appt.status === 'Confirmed' && <CheckCircle className="inline h-3 w-3 mr-1"/>}
+                        {appt.status === 'Pending' && <Clock className="inline h-3 w-3 mr-1"/>}
+                        {appt.status === 'Cancelled' && <XCircle className="inline h-3 w-3 mr-1"/>}
+                        {appt.status === 'Completed' && <CheckCircle className="inline h-3 w-3 mr-1 text-blue-600"/>}
+                        {appt.status}
+                      </span>
                     </div>
-                )}
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-foreground"><strong>Date & Time:</strong> {format(apptDate, "PPPp")}</p>
-                <p className="text-sm text-muted-foreground mt-1">({formatDistanceToNow(apptDate, { addSuffix: true })})</p>
-                {daysToReminder !== null && (
-                    <p className={cn("text-xs mt-1 flex items-center gap-1", daysToReminder === 0 ? "text-red-600 font-semibold" : "text-amber-600")}>
-                        <Clock className="h-3 w-3"/>
-                        Reminder {daysToReminder === 0 ? "Today!" : `in ${daysToReminder} day${daysToReminder > 1 ? 's' : ''}`}
-                    </p>
-                )}
-              </CardContent>
-              <CardFooter className="border-t pt-4 mt-auto flex justify-end space-x-2">
-                {appt.status === 'Confirmed' && (
-                  <>
-                  <Button size="sm" variant="default" onClick={() => toast({title: "Join Meeting (Mock)", description: "This would typically open a video call link."})}><Video className="mr-2 h-4 w-4" /> Join Meeting</Button>
-                   <Button size="sm" variant="outline" onClick={() => handleMarkComplete(appt.id)}>Mark as Completed</Button>
-                  </>
-                )}
-                {appt.status === 'Pending' && !isCurrentUserRequester && (
-                  <>
-                    <Button size="sm" variant="default" onClick={() => handleAcceptAppointment(appt.id)} className="bg-green-600 hover:bg-green-700 text-white"><ThumbsUp className="mr-2 h-4 w-4"/> Accept</Button>
-                    <Button size="sm" variant="destructive" onClick={() => handleDeclineAppointment(appt.id)}><XCircle className="mr-2 h-4 w-4"/> Decline</Button>
-                  </>
-                )}
-                 {(appt.status === 'Pending' || appt.status === 'Confirmed') && isCurrentUserRequester && (
-                     <Button size="sm" variant="outline" onClick={() => openRescheduleDialog(appt)}><Edit3 className="mr-1 h-4 w-4"/> Manage/Reschedule</Button>
-                 )}
-                 {appt.status === 'Completed' && (
-                    <Button size="sm" variant="outline" onClick={() => openFeedbackDialog(appt)}><FeedbackIcon className="mr-1 h-4 w-4"/> Provide Feedback</Button>
-                 )}
-                 {appt.status === 'Cancelled' && (<p className="text-sm text-muted-foreground">This appointment was cancelled.</p>)}
-              </CardFooter>
-            </Card>
-          );
-        })}
-        </div>
+                    {alumni && (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground pt-1">
+                            <Avatar className="h-6 w-6"><AvatarImage src={alumni.profilePictureUrl} alt={alumni.name} data-ai-hint="person face"/><AvatarFallback>{alumni.name.substring(0,1)}</AvatarFallback></Avatar>
+                            <span>With {alumni.name} {isCurrentUserRequester ? '' : '(Incoming Request)'}</span>
+                        </div>
+                    )}
+                    {!alumni && appt.withUser && ( // If it's an appointment from a community request, alumni might not exist
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground pt-1">
+                            <UsersIcon className="h-4 w-4"/>
+                            <span>With {appt.withUser} {isCurrentUserRequester ? '' : '(Incoming Request)'}</span>
+                        </div>
+                    )}
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-foreground"><strong>Date & Time:</strong> {format(apptDate, "PPPp")}</p>
+                    <p className="text-sm text-muted-foreground mt-1">({formatDistanceToNow(apptDate, { addSuffix: true })})</p>
+                    {daysToReminder !== null && (
+                        <p className={cn("text-xs mt-1 flex items-center gap-1", daysToReminder === 0 ? "text-red-600 font-semibold" : "text-amber-600")}>
+                            <Clock className="h-3 w-3"/>
+                            Reminder {daysToReminder === 0 ? "Today!" : `in ${daysToReminder} day${daysToReminder > 1 ? 's' : ''}`}
+                        </p>
+                    )}
+                     {appt.notes && <p className="text-xs mt-2 italic text-muted-foreground">Notes: {appt.notes.substring(0,100)}{appt.notes.length > 100 ? '...' : ''}</p>}
+                  </CardContent>
+                  <CardFooter className="border-t pt-4 mt-auto flex justify-end space-x-2">
+                    {appt.status === 'Confirmed' && (
+                      <>
+                      <Button size="sm" variant="default" onClick={() => toast({title: "Join Meeting (Mock)", description: "This would typically open a video call link."})}><Video className="mr-2 h-4 w-4" /> Join Meeting</Button>
+                       <Button size="sm" variant="outline" onClick={() => handleMarkComplete(appt.id)}>Mark as Completed</Button>
+                      </>
+                    )}
+                    {appt.status === 'Pending' && !isCurrentUserRequester && (
+                      <>
+                        <Button size="sm" variant="default" onClick={() => handleAcceptAppointment(appt.id)} className="bg-green-600 hover:bg-green-700 text-white"><ThumbsUp className="mr-2 h-4 w-4"/> Accept</Button>
+                        <Button size="sm" variant="destructive" onClick={() => handleDeclineAppointment(appt.id)}><XCircle className="mr-2 h-4 w-4"/> Decline</Button>
+                      </>
+                    )}
+                     {(appt.status === 'Pending' || appt.status === 'Confirmed') && isCurrentUserRequester && (
+                         <Button size="sm" variant="outline" onClick={() => openRescheduleDialog(appt)}><Edit3 className="mr-1 h-4 w-4"/> Manage/Reschedule</Button>
+                     )}
+                     {appt.status === 'Completed' && (
+                        <Button size="sm" variant="outline" onClick={() => openFeedbackDialog(appt)}><FeedbackIcon className="mr-1 h-4 w-4"/> Provide Feedback</Button>
+                     )}
+                     {appt.status === 'Cancelled' && (<p className="text-sm text-muted-foreground">This appointment was cancelled.</p>)}
+                  </CardFooter>
+                </Card>
+              );
+            })}
+            </div>
+          )}
+
+          {assignedPosts.length > 0 && (
+            <div className="mt-8">
+              <h2 className="text-xl font-semibold mb-4 text-foreground">Assigned Community Requests</h2>
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {assignedPosts.map(post => (
+                  <Card key={post.id} className="shadow-lg hover:shadow-xl transition-shadow duration-300 bg-blue-50 border-blue-200">
+                    <CardHeader>
+                      <CardTitle className="text-lg text-blue-700">Request: {post.content ? post.content.substring(0, 50) : 'Untitled Request'}...</CardTitle>
+                      <CardDescription className="text-xs text-blue-600">
+                        From: {post.userName} (Community Feed) <br/>
+                        Assigned to you
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground">Status: <Badge variant="info">{post.status}</Badge></p>
+                       {post.tags && post.tags.length > 0 && <p className="text-xs mt-2 text-muted-foreground">Tags: {post.tags.join(', ')}</p>}
+                    </CardContent>
+                     <CardFooter className="flex justify-end">
+                        <Button size="sm" variant="outline" asChild>
+                            <Link href={`/community-feed#post-${post.id}`}>View on Feed</Link>
+                        </Button>
+                    </CardFooter>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       <Dialog open={isRescheduleDialogOpen} onOpenChange={setIsRescheduleDialogOpen}>

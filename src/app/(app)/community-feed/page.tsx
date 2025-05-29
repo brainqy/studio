@@ -12,8 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MessageSquare, PlusCircle, ThumbsUp, MessageCircle as MessageIcon, Share2, Send, Filter, Edit3, Calendar, MapPin, Flag, ShieldCheck, Trash2, User as UserIcon, TrendingUp, Star, Ticket, Users as UsersIcon, CheckCircle as CheckCircleIcon, XCircle as XCircleIcon, Brain as BrainIcon, ListChecks, Mic, Video, Settings2, Puzzle, Lightbulb, Code as CodeIcon, Eye } from "lucide-react";
-import { sampleCommunityPosts, sampleUserProfile, samplePlatformUsers } from "@/lib/sample-data"; 
-import type { CommunityPost, CommunityComment, UserProfile } from "@/types"; 
+import { sampleCommunityPosts, sampleUserProfile, samplePlatformUsers, sampleAppointments } from "@/lib/sample-data"; 
+import type { CommunityPost, CommunityComment, UserProfile, AppointmentStatus, Appointment } from "@/types"; 
 import { formatDistanceToNow, parseISO, isFuture as dateIsFuture } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import { useForm, Controller } from "react-hook-form";
@@ -48,7 +48,7 @@ const postSchema = z.object({
   return true;
 }, {
   message: "Event title, date, and location are required for event posts.",
-  path: ["eventTitle"], // Path can be any of the event fields
+  path: ["eventTitle"], 
 });
 
 
@@ -87,8 +87,6 @@ export default function CommunityFeedPage() {
   const currentUser = sampleUserProfile; 
 
   useEffect(() => {
-    // Filter posts based on tenantId (only for managers for now)
-    // Admins see all, users see their tenant's and platform-wide
     let viewablePosts = sampleCommunityPosts;
     if (currentUser.role === 'manager') {
       viewablePosts = sampleCommunityPosts.filter(p => p.tenantId === currentUser.tenantId || p.tenantId === 'platform');
@@ -137,7 +135,7 @@ export default function CommunityFeedPage() {
     } else {
       const newPost: CommunityPost = {
         id: String(Date.now()),
-        tenantId: sampleUserProfile.tenantId || 'platform', // Default to platform if user has no tenantId
+        tenantId: sampleUserProfile.tenantId || 'platform', 
         userId: sampleUserProfile.id,
         userName: sampleUserProfile.name,
         userAvatar: sampleUserProfile.profilePictureUrl,
@@ -157,7 +155,6 @@ export default function CommunityFeedPage() {
         status: data.type === 'request' ? 'open' : undefined,
       };
       setPosts(prevPosts => [newPost, ...prevPosts]);
-      // Also add to global sample data for demo persistence
       sampleCommunityPosts.unshift(newPost);
       toast({ title: "Post Created", description: "Your post has been added to the feed." });
     }
@@ -216,29 +213,61 @@ export default function CommunityFeedPage() {
   };
 
   const handleAssign = (postId: string, userName: string) => {
-     const updateGlobalAndLocal = (updater: (post: CommunityPost) => CommunityPost) => {
-        setPosts(prevPosts => prevPosts.map(post => post.id === postId ? updater(post) : post));
-        const globalPostIndex = sampleCommunityPosts.findIndex(p => p.id === postId);
-        if (globalPostIndex !== -1) {
-            sampleCommunityPosts[globalPostIndex] = updater(sampleCommunityPosts[globalPostIndex]);
-        }
-    };
+    let appointmentCreated = false;
+    let alreadyAssigned = false;
+    let originalPostCreatorId = '';
+    let originalPostContent = '';
+    let originalPostTenantId = '';
+    let originalPostUserName = '';
 
-    let assigned = false;
-    updateGlobalAndLocal(post => {
-      if (post.type === 'request') {
-        if (post.assignedTo) {
-          toast({ title: "Already Assigned", description: `This request is already assigned to ${post.assignedTo}.`, variant: "default" });
-          return post;
+
+    const updatedPosts = posts.map(post => {
+        if (post.id === postId && post.type === 'request') {
+            if (post.assignedTo) {
+                alreadyAssigned = true;
+                return post; 
+            }
+            originalPostCreatorId = post.userId;
+            originalPostContent = post.content || 'Community Request';
+            originalPostTenantId = post.tenantId;
+            originalPostUserName = post.userName;
+
+            appointmentCreated = true;
+            return { ...post, assignedTo: userName, status: 'assigned' as CommunityPost['status'] };
         }
-        assigned = true;
-        return { ...post, assignedTo: userName, status: 'assigned' };
-      }
-      return post;
+        return post;
     });
 
-    if (assigned) {
-        toast({ title: "Request Assigned", description: `You have been assigned to this request: "${posts.find(p=>p.id === postId)?.content?.substring(0,30)}..."` });
+    if (alreadyAssigned) {
+        toast({ title: "Already Assigned", description: "This request is already assigned to someone." });
+    } else if (appointmentCreated) {
+        const newAppointment: Appointment = {
+            id: `appt-req-${postId}-${Date.now()}`,
+            tenantId: originalPostTenantId,
+            requesterUserId: originalPostCreatorId, 
+            alumniUserId: sampleUserProfile.id, 
+            title: `Assigned Request: ${originalPostContent.substring(0, 30)}...`,
+            dateTime: new Date().toISOString(), 
+            withUser: originalPostUserName, 
+            status: 'Confirmed' as AppointmentStatus, 
+            notes: `Taken from community request: "${originalPostContent}"`,
+            costInCoins: 0, 
+        };
+        sampleAppointments.unshift(newAppointment); 
+
+        setPosts(updatedPosts); 
+        const globalPostIndex = sampleCommunityPosts.findIndex(p => p.id === postId);
+        if (globalPostIndex !== -1) {
+            const postToUpdate = sampleCommunityPosts[globalPostIndex];
+            if (postToUpdate.type === 'request') {
+                 sampleCommunityPosts[globalPostIndex] = {
+                    ...postToUpdate,
+                    assignedTo: userName,
+                    status: 'assigned'
+                };
+            }
+        }
+        toast({ title: "Request Assigned & Appointment Created", description: "You've been assigned, and an appointment placeholder has been added to your 'Appointments' page." });
     }
   };
   
@@ -270,7 +299,7 @@ export default function CommunityFeedPage() {
         return { ...post, attendees: (post.attendees || 0) + 1 };
       } else if (post.type === 'event') {
          toast({ title: "Registration Failed", description: `Cannot register for "${eventTitle || 'the event'}". It might be full.`, variant: "destructive"});
-         return null; // Indicate no change
+         return null; 
       }
       return post;
     });
@@ -575,9 +604,8 @@ export default function CommunityFeedPage() {
                           {post.pollOptions?.map((option, index) => (
                               <div key={index} className="flex items-center space-x-2 mb-1 group cursor-pointer p-1.5 rounded hover:bg-primary/10" onClick={() => handleVote(post.id, index)}>
                                 <div className={cn("h-4 w-4 rounded-full border-2 flex items-center justify-center shrink-0", "border-primary group-hover:border-primary/70")}>
-                                    {/* Potential to show if user voted for this option later */}
                                 </div>
-                                <Label htmlFor={`poll-option-${post.id}-${index}`} className="text-sm text-foreground cursor-pointer">{option.optionText} ({option.votes})</Label>
+                                <Label htmlFor={`poll-option-${post.id}-${index}`} className="text-sm text-foreground cursor-pointer">{option.option} ({option.votes})</Label>
                               </div>
                             ))}
                         </div>
@@ -749,4 +777,3 @@ export default function CommunityFeedPage() {
     </React.Fragment>
   );
 }
-
