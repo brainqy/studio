@@ -19,12 +19,12 @@ const AnalyzeResumeAndJobDescriptionInputSchema = z.object({
 export type AnalyzeResumeAndJobDescriptionInput = z.infer<typeof AnalyzeResumeAndJobDescriptionInputSchema>;
 
 const SearchabilityDetailsSchema = z.object({
-  hasPhoneNumber: z.boolean().describe("Resume contains a phone number."),
-  hasEmail: z.boolean().describe("Resume contains an email address."),
+  hasPhoneNumber: z.boolean().optional().describe("Resume contains a phone number."),
+  hasEmail: z.boolean().optional().describe("Resume contains an email address."),
   hasAddress: z.boolean().optional().describe("Resume contains a physical address."),
-  jobTitleMatchesJD: z.boolean().describe("Job title in resume aligns with or is found in the job description."),
-  hasWorkExperienceSection: z.boolean().describe("A distinct work experience section was identified."),
-  hasEducationSection: z.boolean().describe("A distinct education section was identified."),
+  jobTitleMatchesJD: z.boolean().optional().describe("Job title in resume aligns with or is found in the job description."),
+  hasWorkExperienceSection: z.boolean().optional().describe("A distinct work experience section was identified."),
+  hasEducationSection: z.boolean().optional().describe("A distinct education section was identified."),
   hasProfessionalSummary: z.boolean().optional().describe("Resume contains a professional summary or objective statement."),
   keywordDensityFeedback: z.string().optional().describe("Feedback on keyword density and relevance to the job description."),
 });
@@ -75,17 +75,15 @@ const ReadabilityDetailsSchema = z.object({
 
 
 const AnalyzeResumeAndJobDescriptionOutputSchema = z.object({
-  // Core Scores (were present in simplified version)
-  hardSkillsScore: z.number().min(0).max(100).describe("Score for hard skill alignment with the job description (0-100)."),
-  matchingSkills: z.array(z.string()).describe('Skills that appear in both the resume and the job description. These contribute to Hard Skills Score.'),
-  missingSkills: z.array(z.string()).describe('Skills crucial for the job description that are missing from the resume. These impact Hard Skills Score negatively.'),
-  resumeKeyStrengths: z.string().describe('Key strengths and experiences highlighted from the resume that align with the job. This feeds into Highlights Score.'),
-  jobDescriptionKeyRequirements: z.string().describe('Key requirements and critical expectations extracted from the job description for comparison.'),
+  hardSkillsScore: z.number().min(0).max(100).optional().describe("Score for hard skill alignment with the job description (0-100)."),
+  matchingSkills: z.array(z.string()).optional().describe('Skills that appear in both the resume and the job description. These contribute to Hard Skills Score.'),
+  missingSkills: z.array(z.string()).optional().describe('Skills crucial for the job description that are missing from the resume. These impact Hard Skills Score negatively.'),
+  resumeKeyStrengths: z.string().optional().describe('Key strengths and experiences highlighted from the resume that align with the job. This feeds into Highlights Score.'),
+  jobDescriptionKeyRequirements: z.string().optional().describe('Key requirements and critical expectations extracted from the job description for comparison.'),
   overallQualityScore: z.number().min(0).max(100).optional().describe('An overall quality score (0-100) for the resume against the job description, considering content, structure, and alignment beyond just keywords.'),
-  recruiterTips: z.array(RecruiterTipItemSchema).describe("Detailed breakdown of recruiter tips and assessments."),
+  recruiterTips: z.array(RecruiterTipItemSchema).optional().describe("Detailed breakdown of recruiter tips and assessments."),
   overallFeedback: z.string().optional().describe("General overall feedback and summary of the resume's effectiveness for this job."),
 
-  // Scores for the progress bars on the left (many were present before, ensuring they are here)
   searchabilityScore: z.number().min(0).max(100).optional().describe("Overall searchability score (0-100). Based on presence of contact info, section headings, and job title match."),
   recruiterTipsScore: z.number().min(0).max(100).optional().describe("Overall score based on recruiter tips (0-100), such as word count, action verbs, and measurable results."),
   formattingScore: z.number().min(0).max(100).optional().describe("Overall formatting score (0-100), considering clarity, consistency, and length."),
@@ -93,17 +91,14 @@ const AnalyzeResumeAndJobDescriptionOutputSchema = z.object({
   softSkillsScore: z.number().min(0).max(100).optional().describe("Score for identified soft skills relevant to the job (0-100)."),
   identifiedSoftSkills: z.array(z.string()).optional().describe('Soft skills identified in the resume that are relevant to the job description. These contribute to Soft Skills Score.'),
   
-  // Detailed breakdown for the right panel
   searchabilityDetails: SearchabilityDetailsSchema.optional().describe("Detailed breakdown of searchability aspects."),
-  formattingDetails: z.array(AtsFormattingIssueSchema).optional().describe("Detailed breakdown of formatting aspects and feedback, renamed from formattingItems to match type."), // Reused AtsFormattingIssueSchema for consistency
+  formattingDetails: z.array(AtsFormattingIssueSchema).optional().describe("Detailed breakdown of formatting aspects and feedback, renamed from formattingItems to match type."),
   
-  // ATS Friendliness
   atsParsingConfidence: AtsParsingConfidenceSchema.optional().describe("Confidence scores for ATS parsing."),
   atsStandardFormattingComplianceScore: z.number().min(0).max(100).optional().describe("Score for compliance with standard ATS-friendly formatting."),
   standardFormattingIssues: z.array(AtsFormattingIssueSchema).optional().describe("Specific standard formatting issues identified."),
   undefinedAcronyms: z.array(z.string()).optional().describe("Acronyms used without prior definition."),
 
-  // Content Quality Details
   quantifiableAchievementDetails: QuantifiableAchievementDetailsSchema.optional().describe("Details on quantifiable achievements."),
   actionVerbDetails: ActionVerbDetailsSchema.optional().describe("Details on action verb usage."),
   impactStatementDetails: ImpactStatementDetailsSchema.optional().describe("Analysis of impact statement clarity and effectiveness."),
@@ -118,10 +113,10 @@ function getDefaultOutput(errorMessage?: string): AnalyzeResumeAndJobDescription
     hardSkillsScore: 0,
     matchingSkills: [],
     missingSkills: [],
-    resumeKeyStrengths: "N/A",
-    jobDescriptionKeyRequirements: "N/A",
+    resumeKeyStrengths: "N/A due to error.",
+    jobDescriptionKeyRequirements: "N/A due to error.",
     overallQualityScore: 0,
-    recruiterTips: [{ category: "General", finding: errorMsg, status: 'negative', suggestion: "Please ensure resume and job description are sufficiently detailed." }],
+    recruiterTips: [{ category: "General", finding: errorMsg, status: 'negative', suggestion: "Please ensure resume and job description are sufficiently detailed, or try again." }],
     overallFeedback: errorMsg,
     searchabilityScore: 0,
     recruiterTipsScore: 0,
@@ -139,7 +134,7 @@ function getDefaultOutput(errorMessage?: string): AnalyzeResumeAndJobDescription
       hasProfessionalSummary: false,
       keywordDensityFeedback: "N/A",
     },
-    formattingDetails: [{issue: "Overall Formatting", recommendation: "Could not assess due to an error or missing data."}],
+    formattingDetails: [{issue: "General Formatting", recommendation: "Could not assess due to an error or missing data."}],
     atsParsingConfidence: { overall: 0, warnings: ["Could not assess ATS parsing confidence."] },
     atsStandardFormattingComplianceScore: 0,
     standardFormattingIssues: [{ issue: "Standard Formatting", recommendation: "Could not assess standard formatting compliance." }],
@@ -171,7 +166,11 @@ function getDefaultOutput(errorMessage?: string): AnalyzeResumeAndJobDescription
 export async function analyzeResumeAndJobDescription(
   input: AnalyzeResumeAndJobDescriptionInput
 ): Promise<AnalyzeResumeAndJobDescriptionOutput> {
-  console.log("[AI FLOW] Starting analyzeResumeAndJobDescription with input:", { resumeLength: input.resumeText.length, jdLength: input.jobDescriptionText.length });
+  console.log("[AI FLOW] DIAGNOSTIC: Starting analyzeResumeAndJobDescription with input:", { resumeLength: input.resumeText.length, jdLength: input.jobDescriptionText.length });
+  
+  // DIAGNOSTIC: Bypassing AI call entirely and returning default error output
+  // console.log("[AI FLOW] DIAGNOSTIC: Bypassing AI call and returning default error data.");
+  // return getDefaultOutput("Diagnostic mode: AI call bypassed.");
 
   if (!input.resumeText.trim() || !input.jobDescriptionText.trim()) {
     console.error("[AI FLOW] Error: Resume text or Job Description text is empty.");
@@ -180,8 +179,6 @@ export async function analyzeResumeAndJobDescription(
   
   let aiResponse;
   try {
-    // The direct call to analyzeResumeAndJobDescriptionPrompt is made here as analyzeResumeAndJobDescriptionFlow
-    // was a wrapper. This is fine.
     aiResponse = await analyzeResumeAndJobDescriptionPrompt(input);
   } catch (error) {
     console.error("[AI FLOW] Error during AI prompt execution:", error);
@@ -197,8 +194,6 @@ export async function analyzeResumeAndJobDescription(
 
   const output = aiResponse.output;
 
-  // Construct the full object, providing defaults for any missing optional fields
-  // This ensures the returned object always matches the schema.
   return {
     hardSkillsScore: output.hardSkillsScore ?? 0,
     matchingSkills: output.matchingSkills ?? [],
@@ -207,7 +202,7 @@ export async function analyzeResumeAndJobDescription(
     jobDescriptionKeyRequirements: output.jobDescriptionKeyRequirements ?? "N/A",
     overallQualityScore: output.overallQualityScore ?? 0,
     recruiterTips: output.recruiterTips ?? [],
-    overallFeedback: output.overallFeedback ?? "N/A",
+    overallFeedback: output.overallFeedback ?? "Analysis incomplete.",
     
     searchabilityScore: output.searchabilityScore ?? 0,
     recruiterTipsScore: output.recruiterTipsScore ?? 0,
@@ -236,15 +231,15 @@ const analyzeResumeAndJobDescriptionPrompt = ai.definePrompt({
   input: {schema: AnalyzeResumeAndJobDescriptionInputSchema},
   output: {schema: AnalyzeResumeAndJobDescriptionOutputSchema},
   config: {
-    safetySettings: [ 
-      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+    safetySettings: [ // Relaxed safety settings
+      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_ONLY_HIGH' },
+      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },
+      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_ONLY_HIGH' },
+      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_ONLY_HIGH' },
     ],
   },
   prompt: `You are an expert resume and job description analyst. Your task is to provide a comprehensive analysis of the given resume against the provided job description.
-Evaluate the resume based on the following categories and provide detailed feedback and scores as per the output schema. If some information is insufficient to make a detailed assessment for a specific sub-section, indicate "Insufficient information to assess" in string fields or use default values like 0 for scores or empty arrays for lists in that sub-section.
+Evaluate the resume based on the following categories and provide detailed feedback and scores as per the output schema. If some information is insufficient to make a detailed assessment for a specific sub-section, provide default values like 0 for scores, empty arrays for lists, "N/A" for strings, or a default empty object structure for optional nested objects to ensure a valid JSON output according to the schema.
 
 Resume Text:
 {{{resumeText}}}
@@ -263,39 +258,38 @@ Analysis Categories and Instructions for JSON Output Fields:
     *   overallQualityScore: Optional number (0-100) for overall resume quality against JD.
     *   overallFeedback: String with general overall feedback and summary.
 
-2.  **Category Scores (0-100 for each):**
+2.  **Category Scores (0-100 for each, optional if not assessable):**
     *   searchabilityScore: For contact info, section headings, job title match, professional summary presence, and keyword density.
     *   recruiterTipsScore: For word count, action verbs, measurable results, tailoring, etc.
     *   formattingScore: For clarity, consistency, length, ATS-friendliness of general formatting.
     *   highlightsScore: For quality and relevance of resume highlights against JD.
     *   softSkillsScore: For identified soft skills relevant to the job.
     *   identifiedSoftSkills: Array of strings listing relevant soft skills found.
-    *   atsStandardFormattingComplianceScore: Score for compliance with standard ATS-friendly formatting (fonts, no tables for layout, etc.).
+    *   atsStandardFormattingComplianceScore: Score for compliance with standard ATS-friendly formatting.
 
-3.  **Detailed Breakdowns:**
-    *   searchabilityDetails: Object with booleans for hasPhoneNumber, hasEmail, hasAddress, jobTitleMatchesJD, hasWorkExperienceSection, hasEducationSection, hasProfessionalSummary, and a string for keywordDensityFeedback.
-    *   recruiterTips: Array of RecruiterTipItemSchema objects.
-    *   formattingDetails: Array of AtsFormattingIssueSchema objects (feedback on clarity, consistency, length etc. from a general perspective).
-    *   standardFormattingIssues: Array of AtsFormattingIssueSchema objects (specific ATS formatting issues like font choice, use of tables for layout, special characters).
-    *   atsParsingConfidence: Object with optional overall score (0-100) and optional warnings array. Do NOT include a 'sections' sub-object here.
-    *   undefinedAcronyms: Array of strings listing acronyms used without prior definition.
+3.  **Detailed Breakdowns (optional if not assessable, ensure valid empty structures if AI cannot populate fully):**
+    *   searchabilityDetails (SearchabilityDetailsSchema): Object with booleans (hasPhoneNumber, hasEmail, hasAddress, jobTitleMatchesJD, hasWorkExperienceSection, hasEducationSection, hasProfessionalSummary) and a string for keywordDensityFeedback. If a boolean cannot be determined, default to false. If feedback string cannot be determined, use "N/A".
+    *   recruiterTips (Array of RecruiterTipItemSchema): If no specific tips, return an empty array or a single generic tip.
+    *   formattingDetails (Array of AtsFormattingIssueSchema): General formatting issues. If none, return empty array.
+    *   standardFormattingIssues (Array of AtsFormattingIssueSchema): Specific ATS formatting issues. If none, return empty array.
+    *   atsParsingConfidence (AtsParsingConfidenceSchema): Object with optional overall score (0-100) and optional warnings array. If not assessable, provide overall: 0 and empty warnings. Do NOT include a 'sections' sub-object.
+    *   undefinedAcronyms: Array of strings. If none, return empty array.
 
-4.  **Content Quality Details:**
-    *   quantifiableAchievementDetails: Object with optional score (0-100), optional examplesFound (array of strings), and optional areasLackingQuantification (array of strings).
-    *   actionVerbDetails: Object with optional score (0-100), optional strongVerbsUsed (array of strings), optional weakVerbsUsed (array of strings), optional overusedVerbs (array of strings), and optional suggestedStrongerVerbs (array of {original: string, suggestion: string}).
-    *   impactStatementDetails: Object with optional clarityScore (0-100), optional unclearImpactStatements (array of strings for statements that could be clearer), and optional exampleWellWrittenImpactStatements (array of strings for good statements found).
-    *   readabilityDetails: Object with optional fleschKincaidGradeLevel (number), optional fleschReadingEase (number), and optional readabilityFeedback (string).
+4.  **Content Quality Details (optional if not assessable, ensure valid empty structures if AI cannot populate fully):**
+    *   quantifiableAchievementDetails (QuantifiableAchievementDetailsSchema): Object with optional score (0-100), optional examplesFound (array), optional areasLackingQuantification (array). If not assessable, score 0, empty arrays.
+    *   actionVerbDetails (ActionVerbDetailsSchema): Object with optional score (0-100), optional strongVerbsUsed (array), optional weakVerbsUsed (array), optional overusedVerbs (array), optional suggestedStrongerVerbs (array of {original, suggestion}). If not assessable, score 0, empty arrays.
+    *   impactStatementDetails (ImpactStatementDetailsSchema): Object with optional clarityScore (0-100), optional unclearImpactStatements (array), optional exampleWellWrittenImpactStatements (array). If not assessable, score 0, empty arrays.
+    *   readabilityDetails (ReadabilityDetailsSchema): Object with optional fleschKincaidGradeLevel, optional fleschReadingEase, optional readabilityFeedback string. If not assessable, omit numbers or provide "N/A" for feedback.
 
-**IMPORTANT FINAL INSTRUCTION:** Your entire response MUST be a single, valid JSON object that strictly adheres to the AnalyzeResumeAndJobDescriptionOutputSchema. If you cannot determine a value for an optional field or a sub-field within an optional object due to insufficient information in the resume or job description, either omit the optional field/sub-field, or use a sensible default (e.g., 0 for scores, empty array [] for lists of strings/objects, "N/A" or "Insufficient information to assess" for string fields, or a default empty object for optional object fields as defined in the schema's defaults). Do NOT invent information. Ensure all required fields in the schema are present in your JSON output.
+**IMPORTANT FINAL INSTRUCTION:** Your entire response MUST be a single, valid JSON object that strictly adheres to the AnalyzeResumeAndJobDescriptionOutputSchema. It is CRITICAL that all fields expected by the schema are present, even if their value must be a default like 0, null, an empty array [], an empty object {}, or "N/A" (for optional strings) when specific details cannot be derived from the input. Do NOT omit optional fields; provide their default empty/null/0 state if data is insufficient. Ensure all nested objects also adhere to this, providing their full structure with default/empty values if necessary.
 `,
 });
 
-// The flow definition remains for Genkit's system, but the exported function now calls the prompt directly.
 const analyzeResumeAndJobDescriptionFlow = ai.defineFlow(
   {
     name: 'analyzeResumeAndJobDescriptionFlow',
     inputSchema: AnalyzeResumeAndJobDescriptionInputSchema,
     outputSchema: AnalyzeResumeAndJobDescriptionOutputSchema,
   },
-  analyzeResumeAndJobDescription // Use the refactored function which now calls the prompt and handles output
+  analyzeResumeAndJobDescription
 );

@@ -1,8 +1,7 @@
 
 "use client";
 
-import React from 'react'; // Explicitly import React
-import { useState, type FormEvent, useEffect, useMemo } from 'react';
+import React, { useState, type FormEvent, useEffect, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -15,28 +14,27 @@ import {
     Search, UploadCloud, ArrowRight, Loader2, Download, CheckCircle, BarChart, Edit3, 
     Wrench, AlignLeft, SlidersHorizontal, Wand2, Lightbulb, Brain, SearchCheck, 
     ChevronsUpDown, ListChecks, History, Star, Trash2, Bookmark, PlusCircle, HelpCircle, XCircle, Info, Zap, MessageSquare, ThumbsUp, Users, FileText, FileCheck2, EyeOff, Columns, Palette, CalendarDays
-} from "lucide-react"; // Consolidated imports
+} from "lucide-react";
 import { analyzeResumeAndJobDescription, type AnalyzeResumeAndJobDescriptionOutput } from '@/ai/flows/analyze-resume-and-job-description';
-import { calculateMatchScore, type CalculateMatchScoreOutput } from '@/ai/flows/calculate-match-score'; // Kept for potential future use
-import { suggestResumeImprovements, type SuggestResumeImprovementsOutput } from '@/ai/flows/suggest-resume-improvements'; // Kept for potential future use
-import { suggestDynamicSkills, type SuggestDynamicSkillsInput, type SuggestDynamicSkillsOutput } from '@/ai/flows/suggest-dynamic-skills';
+// calculateMatchScore and suggestResumeImprovements are kept for potential future re-integration or separate features
+// import { calculateMatchScore, type CalculateMatchScoreOutput } from '@/ai/flows/calculate-match-score';
+// import { suggestResumeImprovements, type SuggestResumeImprovementsOutput } from '@/ai/flows/suggest-resume-improvements';
+// import { suggestDynamicSkills, type SuggestDynamicSkillsInput, type SuggestDynamicSkillsOutput } from '@/ai/flows/suggest-dynamic-skills';
 import { useToast } from '@/hooks/use-toast';
 import { sampleResumeScanHistory as initialScanHistory, sampleResumeProfiles, sampleUserProfile } from '@/lib/sample-data';
-import type { ResumeScanHistoryItem, ResumeProfile, AtsFormattingIssue } from '@/types'; // Added AtsFormattingIssue
+import type { ResumeScanHistoryItem, ResumeProfile, AtsFormattingIssue } from '@/types';
 import { format } from 'date-fns';
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"; 
-import ScoreCircle from '@/components/ui/score-circle'; 
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import ScoreCircle from '@/components/ui/score-circle';
 
 interface AnalysisResults {
-  overallScoreData: CalculateMatchScoreOutput | null;
+  // overallScoreData: CalculateMatchScoreOutput | null; // Simplified for now
   detailedReport: AnalyzeResumeAndJobDescriptionOutput | null;
-  improvementsData: SuggestResumeImprovementsOutput | null;
-  skillSuggestions: SuggestDynamicSkillsOutput | null;
+  // improvementsData: SuggestResumeImprovementsOutput | null; // Simplified
+  // skillSuggestions: SuggestDynamicSkillsOutput | null; // Simplified
 }
-
-type SuggestedSkillFromAI = SuggestDynamicSkillsOutput['suggestedSkills'][0];
 
 export default function ResumeAnalyzerPage() {
   const [resumeFile, setResumeFile] = useState<File | null>(null);
@@ -54,10 +52,11 @@ export default function ResumeAnalyzerPage() {
    useEffect(() => {
     const selectedResume = resumes.find(r => r.id === selectedResumeId);
     if (selectedResume) {
-      setResumeText(selectedResume.resumeText);
+      setResumeText(selectedResume.resumeText ?? '');
       toast({ title: "Resume Loaded", description: `Loaded content for ${selectedResume.name}.`});
     } else if (!resumeFile) {
-        // setResumeText(''); // Commented out to prevent clearing pasted text when deselecting
+        // Only clear if no file selected and no resume ID selected. Avoids clearing pasted text.
+        // if(!selectedResumeId) setResumeText('');
     }
    }, [selectedResumeId, resumes, toast, resumeFile]);
 
@@ -70,22 +69,22 @@ export default function ResumeAnalyzerPage() {
       if (file.type === "text/plain") {
         const reader = new FileReader();
         reader.onload = (e) => {
-          setResumeText(e.target?.result as string);
+          setResumeText(e.target?.result as string ?? '');
         };
         reader.readAsText(file);
       } else {
-        toast({ title: "File Selected", description: `Selected ${file.name}. Content will be extracted upon analysis.` });
+        toast({ title: "File Selected", description: `Selected ${file.name}. Content will be extracted upon analysis (simulated for non-txt).` });
       }
     }
   };
 
   const handleSubmit = async (event?: FormEvent) => {
     if(event) event.preventDefault();
-    if (!resumeText && !resumeFile) {
+    if (!resumeText.trim() && !resumeFile) {
       toast({ title: "Error", description: "Please upload or select a resume, or paste resume text.", variant: "destructive" });
       return;
     }
-    if (!jobDescription) {
+    if (!jobDescription.trim()) {
       toast({ title: "Error", description: "Please provide a job description.", variant: "destructive" });
       return;
     }
@@ -95,28 +94,31 @@ export default function ResumeAnalyzerPage() {
 
     try {
       let currentResumeText = resumeText;
-      if (resumeFile && !resumeText) {
-        currentResumeText = `Simulated content for ${resumeFile.name}. Actual text extraction would happen on a server. The resume mentions skills like React, Node.js, and project management. It highlights experience leading a team of 5 developers and increasing efficiency by 15%. Education includes a Master's degree in Computer Science.`;
-        if(resumeFile.name.toLowerCase().includes("product")) {
-            currentResumeText += " Experience in product strategy, user research, and agile methodologies. Launched 3 successful products."
+      if (resumeFile && !resumeText.trim()) {
+        // Simulate text extraction for non-txt files for demo purposes
+        currentResumeText = `Simulated content for ${resumeFile.name}. This resume highlights experience in full-stack development with React, Node.js, and Python. It includes leadership of a team of 5 and successful project delivery increasing efficiency by 15%. Education includes a Master's degree in Computer Science.`;
+        if (resumeFile.name.toLowerCase().includes("product")) {
+            currentResumeText += " Additionally, showcases expertise in product strategy, user research, and agile methodologies. Successfully launched 3 new products to market.";
+        } else if (resumeFile.name.toLowerCase().includes("data")) {
+            currentResumeText += " Focuses on data analysis, machine learning model development, and data visualization using Python (Pandas, Scikit-learn) and Tableau.";
         }
-        setResumeText(currentResumeText);
+        setResumeText(currentResumeText); // Update state if we're simulating text
       }
       
       const currentResumeProfile = selectedResumeId ? resumes.find(r => r.id === selectedResumeId) : null;
 
       const jdLines = jobDescription.split('\n');
-      const jobTitleMatch = jdLines.find(line => line.toLowerCase().includes('title:'))?.split(/:(.*)/s)[1]?.trim() || "Job Title Placeholder";
-      const companyMatch = jdLines.find(line => line.toLowerCase().includes('company:'))?.split(/:(.*)/s)[1]?.trim() || "Company Placeholder";
+      const jobTitleMatch = jdLines.find(line => typeof line === 'string' && line.toLowerCase().includes('title:'))?.split(/:(.*)/s)[1]?.trim() || "Job Title Placeholder";
+      const companyMatch = jdLines.find(line => typeof line === 'string' && line.toLowerCase().includes('company:'))?.split(/:(.*)/s)[1]?.trim() || "Company Placeholder";
 
       const detailedReportRes = await analyzeResumeAndJobDescription({ resumeText: currentResumeText, jobDescriptionText: jobDescription });
       
-      const overallScoreData : CalculateMatchScoreOutput = {
-        matchScore: detailedReportRes.overallQualityScore ?? detailedReportRes.hardSkillsScore ?? 0,
-        missingKeywords: detailedReportRes.missingSkills ?? [],
-        relevantKeywords: detailedReportRes.matchingSkills ?? [],
-      };
+      // The detailedReportRes itself is now the main source of all scores and details
+      setResults({
+        detailedReport: detailedReportRes,
+      });
 
+      // Create and add scan history item
       const newScanEntry: ResumeScanHistoryItem = {
         id: `scan-${Date.now()}`,
         tenantId: sampleUserProfile.tenantId,
@@ -126,24 +128,30 @@ export default function ResumeAnalyzerPage() {
         jobTitle: jobTitleMatch,
         companyName: companyMatch,
         resumeTextSnapshot: currentResumeText,
-        jobDescriptionText: jobDescription,
+        jobDescriptionText: jobDescription, // Store full JD for re-analysis
         scanDate: new Date().toISOString(),
-        matchScore: overallScoreData.matchScore, 
+        matchScore: detailedReportRes.overallQualityScore ?? detailedReportRes.hardSkillsScore ?? 0,
         bookmarked: false,
       };
       setScanHistory(prev => [newScanEntry, ...prev]);
+      // Optionally update the lastAnalyzed date for the selected resume profile
+      if (currentResumeProfile) {
+        setResumes(prevResumes => prevResumes.map(r => r.id === currentResumeProfile.id ? {...r, lastAnalyzed: new Date().toISOString().split('T')[0]} : r));
+        // Update global sample data for demo persistence
+        const globalResumeIndex = sampleResumeProfiles.findIndex(r => r.id === currentResumeProfile.id);
+        if (globalResumeIndex !== -1) {
+            sampleResumeProfiles[globalResumeIndex].lastAnalyzed = new Date().toISOString().split('T')[0];
+        }
+      }
 
-      setResults({
-        overallScoreData: overallScoreData,
-        detailedReport: detailedReportRes,
-        improvementsData: null,
-        skillSuggestions: null,
-      });
+
       toast({ title: "Analysis Complete", description: "Resume analysis results are ready." });
     } catch (error) {
       console.error("Analysis error:", error);
       const errorMessage = error instanceof Error ? error.message : String(error);
       toast({ title: "Analysis Failed", description: `An error occurred during analysis: ${errorMessage}`, variant: "destructive", duration: 7000 });
+      // Set results to a default error state if needed, which getDefaultOutput already provides
+      setResults({ detailedReport: (analyzeResumeAndJobDescription as any).getDefaultOutput(errorMessage) });
     } finally {
       setIsLoading(false);
       const reportSection = document.getElementById('analysis-report-section');
@@ -154,15 +162,15 @@ export default function ResumeAnalyzerPage() {
   };
 
   const handleDownloadReport = () => {
-    toast({ title: "Download Report", description: "PDF report generation is mocked. Printing the page to PDF can be an alternative."});
+    toast({ title: "Download Report (Mock)", description: "PDF report generation is mocked. Printing the page to PDF can be an alternative."});
   };
   
   const handleUploadAndRescan = () => {
     setResumeFile(null);
-    setResumeText('');
-    setSelectedResumeId(null);
+    // Do not clear resumeText if user might want to rescan pasted text
+    // Do not clear selectedResumeId if user wants to rescan a stored resume
     setResults(null); 
-    toast({ title: "Ready for Rescan", description: "Please upload or select a new resume to analyze against the current job description."});
+    toast({ title: "Ready for Rescan", description: "Modify resume/JD and click Analyze, or upload a new resume to analyze against the current job description."});
   };
 
   const handlePowerEdit = () => {
@@ -177,34 +185,25 @@ export default function ResumeAnalyzerPage() {
     setResumeText(item.resumeTextSnapshot);
     setJobDescription(item.jobDescriptionText);
     setResumeFile(null); 
-    setSelectedResumeId(null);
+    setSelectedResumeId(null); // Unset selected profile to ensure historical text is used
     
     toast({ title: "Loading Historical Scan...", description: "Re-generating analysis for the selected scan." });
     setIsLoading(true);
     try {
       const detailedReportRes = await analyzeResumeAndJobDescription({ resumeText: item.resumeTextSnapshot, jobDescriptionText: item.jobDescriptionText });
-      const overallScoreData : CalculateMatchScoreOutput = {
-        matchScore: detailedReportRes.overallQualityScore ?? detailedReportRes.hardSkillsScore ?? 0,
-        missingKeywords: detailedReportRes.missingSkills ?? [],
-        relevantKeywords: detailedReportRes.matchingSkills ?? [],
-      };
       setResults({
-        overallScoreData,
         detailedReport: detailedReportRes,
-        improvementsData: null, 
-        skillSuggestions: null, 
       });
       toast({ title: "Historical Report Loaded", description: "The analysis report for the selected scan has been re-generated." });
     } catch (error) {
       console.error("Historical analysis error:", error);
       const errorMessage = error instanceof Error ? error.message : String(error);
       toast({ title: "Report Load Failed", description: `An error occurred while re-generating the historical report: ${errorMessage}`, variant: "destructive", duration: 7000 });
+      setResults({ detailedReport: (analyzeResumeAndJobDescription as any).getDefaultOutput(errorMessage) });
     } finally {
       setIsLoading(false);
       const reportSection = document.getElementById('analysis-report-section');
-      if (reportSection) {
-          reportSection.scrollIntoView({ behavior: 'smooth' });
-      }
+      if (reportSection) reportSection.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
@@ -234,6 +233,7 @@ export default function ResumeAnalyzerPage() {
     } else if (historyFilter === 'starred') {
       filtered = filtered.filter(item => item.bookmarked);
     } else if (historyFilter === 'archived') {
+      // Assuming an 'archived' status might be added to ResumeScanHistoryItem type later
       filtered = filtered.filter(item => (item as any).archived === true); 
     }
     return filtered;
@@ -243,37 +243,30 @@ export default function ResumeAnalyzerPage() {
     const totalScans = scanHistory.length;
     const uniqueResumes = new Set(scanHistory.map(s => s.resumeId)).size;
     const maxScore = scanHistory.reduce((max, s) => Math.max(max, s.matchScore || 0), 0);
-    const improvement = scanHistory.filter(s => (s.matchScore || 0) >= 80).length;
-    return { totalScans, uniqueResumes, maxScore, improvement };
+    const highScoringCount = scanHistory.filter(s => (s.matchScore || 0) >= 80).length;
+    return { totalScans, uniqueResumes, maxScore, highScoringCount };
   }, [scanHistory]);
-
-  const handleAddSkillToProfile = (skill: string) => {
-    const currentProfileSkills = sampleUserProfile.skills || [];
-    if (!currentProfileSkills.includes(skill)) {
-        sampleUserProfile.skills = [...currentProfileSkills, skill];
-        toast({
-            title: "Skill Added to Profile (Mock)",
-            description: `"${skill}" has been added to your profile. Visit My Profile to see changes.`,
-        });
-    } else {
-        toast({
-            title: "Skill Already Exists (Mock)",
-            description: `"${skill}" is already in your profile skills.`,
-            variant: "default",
-        });
-    }
-  };
   
-  const getIssuesCount = (score: number | undefined, totalChecks?: number, falseChecks?: number): string => {
-    if (totalChecks !== undefined && falseChecks !== undefined) {
-        return `${falseChecks} issue${falseChecks !== 1 ? 's' : ''}`;
+  const getIssuesCountText = (score: number | undefined, itemsWithIssues?: any[]): string => {
+    if (itemsWithIssues && itemsWithIssues.length > 0) {
+      return `${itemsWithIssues.length} issue${itemsWithIssues.length !== 1 ? 's' : ''}`;
     }
     if (score === undefined) return 'N/A';
-    if (score >= 95) return '0 issues';
-    if (score >= 80) return '1-2 issues';
-    if (score >= 60) return '3-4 issues';
-    if (score >= 40) return '5+ issues';
-    return 'Many issues';
+    const issues = Math.max(0, Math.round((100 - score) / 20)); // Simple heuristic
+    return `${issues} issue${issues !== 1 ? 's' : ''}`;
+  };
+
+  const getSearchabilityIssuesCount = (details: AnalyzeResumeAndJobDescriptionOutput['searchabilityDetails']): string => {
+      if (!details) return 'N/A';
+      let issues = 0;
+      if (!details.hasPhoneNumber) issues++;
+      if (!details.hasEmail) issues++;
+      // if (!details.hasAddress) issues++; // Optional
+      if (!details.jobTitleMatchesJD) issues++;
+      if (!details.hasWorkExperienceSection) issues++;
+      if (!details.hasEducationSection) issues++;
+      if (!details.hasProfessionalSummary) issues++;
+      return `${issues} issue${issues !== 1 ? 's' : ''}`;
   };
 
 
@@ -295,7 +288,7 @@ export default function ResumeAnalyzerPage() {
                    <Label htmlFor="resume-select" className="text-lg font-medium">Select Existing Resume</Label>
                    <Tooltip>
                       <TooltipTrigger asChild>
-                        <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                        <Button variant="ghost" size="icon" type="button" className="h-5 w-5 p-0"><HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" /></Button>
                       </TooltipTrigger>
                       <TooltipContent>
                         <p>Choose a resume you've previously saved or analyzed.</p>
@@ -308,7 +301,7 @@ export default function ResumeAnalyzerPage() {
                     onChange={(e) => { setSelectedResumeId(e.target.value || null); if(e.target.value) setResumeFile(null); }}
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                  >
-                    <option value="">-- Select a Resume --</option>
+                    <option value="">-- Select or Paste/Upload Below --</option>
                     {resumes.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
                  </select>
 
@@ -350,12 +343,12 @@ export default function ResumeAnalyzerPage() {
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <Label htmlFor="job-description-area" className="text-lg font-medium">Job Description</Label>
-                  <Tooltip>
+                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                       <Button variant="ghost" size="icon" type="button" className="h-5 w-5 p-0"><HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" /></Button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p className="max-w-xs">Paste the full job description here. For best results, ensure the job title and company name are included. You can add them on separate lines like "Title: Software Engineer" and "Company: Tech Corp" if not present.</p>
+                      <p className="max-w-xs">Paste the full job description. For best results, include "Title: &lt;Job Title&gt;" and "Company: &lt;Company Name&gt;" on separate lines if not naturally present in the JD.</p>
                     </TooltipContent>
                   </Tooltip>
                 </div>
@@ -364,7 +357,7 @@ export default function ResumeAnalyzerPage() {
                   placeholder="Paste the job description here... For better results, include 'Title: <Job Title>' and 'Company: <Company Name>' on separate lines if possible."
                   value={jobDescription}
                   onChange={(e) => setJobDescription(e.target.value)}
-                  rows={resumes.length > 0 || resumeFile || resumeText ? 10 + 14 : 10} 
+                  rows={resumes.length > 0 || resumeFile || resumeText ? 10 + 14 : 10} // Dynamic rows based on if resume input is visible
                   className="border-input focus:ring-primary"
                 />
               </div>
@@ -421,21 +414,19 @@ export default function ResumeAnalyzerPage() {
                     </Button>
 
                     <div className="space-y-3 pt-4 border-t">
-                        {(
-                            [
-                                {label: "Searchability", score: results.detailedReport.searchabilityScore, details: results.detailedReport.searchabilityDetails ? Object.values(results.detailedReport.searchabilityDetails).filter(v => v === false || (typeof v === 'string' && v.toLowerCase().includes('n/a'))).length : undefined},
-                                {label: "Recruiter Tips", score: results.detailedReport.recruiterTipsScore, details: results.detailedReport.recruiterTips?.filter(tip => tip.status === 'negative').length},
-                                {label: "Formatting", score: results.detailedReport.formattingScore, details: results.detailedReport.formattingDetails?.length},
-                                {label: "Highlights", score: results.detailedReport.highlightsScore},
-                                {label: "Hard Skills", score: results.detailedReport.hardSkillsScore, details: results.detailedReport.missingSkills?.length},
-                                {label: "Soft Skills", score: results.detailedReport.softSkillsScore},
-                                {label: "ATS Format Compliance", score: results.detailedReport.atsStandardFormattingComplianceScore, details: results.detailedReport.standardFormattingIssues?.length},
-                            ] as {label: string; score?: number, details?: number}[]
-                        ).map(cat => cat.score !== undefined && (
+                        {[
+                            {label: "Searchability", score: results.detailedReport.searchabilityScore, issuesText: getSearchabilityIssuesCount(results.detailedReport.searchabilityDetails)},
+                            {label: "Recruiter Tips", score: results.detailedReport.recruiterTipsScore, issuesText: getIssuesCountText(results.detailedReport.recruiterTipsScore, undefined, results.detailedReport.recruiterTips?.filter(tip => tip.status === 'negative').length)},
+                            {label: "Formatting", score: results.detailedReport.formattingScore, issuesText: getIssuesCountText(results.detailedReport.formattingScore, undefined, results.detailedReport.formattingDetails?.length)},
+                            {label: "Highlights", score: results.detailedReport.highlightsScore, issuesText: getIssuesCountText(results.detailedReport.highlightsScore)},
+                            {label: "Hard Skills", score: results.detailedReport.hardSkillsScore, issuesText: getIssuesCountText(results.detailedReport.hardSkillsScore, undefined, results.detailedReport.missingSkills?.length)},
+                            {label: "Soft Skills", score: results.detailedReport.softSkillsScore, issuesText: getIssuesCountText(results.detailedReport.softSkillsScore)},
+                            {label: "ATS Compliance", score: results.detailedReport.atsStandardFormattingComplianceScore, issuesText: getIssuesCountText(results.detailedReport.atsStandardFormattingComplianceScore, undefined, results.detailedReport.standardFormattingIssues?.length)},
+                        ].map(cat => cat.score !== undefined && (
                             <div key={cat.label}>
                                 <div className="flex justify-between text-sm mb-0.5">
                                     <span className="font-medium text-muted-foreground">{cat.label}</span>
-                                    {cat.details !== undefined && <span className="text-xs text-red-500">{cat.details} issue{cat.details !== 1 ? 's' : ''}</span>}
+                                    <span className="text-xs text-red-500">{cat.issuesText}</span>
                                 </div>
                                 <Progress value={cat.score} className="h-2 [&>div]:bg-primary mb-1" />
                                 <p className="text-xs text-primary text-right font-semibold">{cat.score}%</p>
@@ -448,77 +439,68 @@ export default function ResumeAnalyzerPage() {
                 </div>
 
                 {/* Right Column - Detailed Breakdown */}
-                 <div className="md:col-span-2 space-y-6 p-4">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                        <Info className="h-5 w-5 text-blue-600 shrink-0"/>
+                <div className="md:col-span-2 space-y-6 p-4">
+                     <div className="flex items-start gap-2 text-sm text-muted-foreground mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                        <Info className="h-6 w-6 text-blue-600 shrink-0 mt-0.5"/>
                         <div>
-                            <strong>Quick Guide:</strong>
+                            <strong className="text-blue-700">Quick Guide:</strong>
                             <ol className="list-decimal list-inside text-xs">
-                                <li>Review suggestions below.</li>
-                                <li>Update your original resume document.</li>
-                                <li>Use "Upload & Rescan" to see improvements!</li>
+                                <li>Review suggestions in the tabs/accordions below.</li>
+                                <li>Update your original resume document (e.g., in Word or Google Docs).</li>
+                                <li>Use "Upload & Rescan" with your updated resume to see improvements!</li>
                             </ol>
                         </div>
                     </div>
                     
-                    <Tabs defaultValue="searchability" className="w-full">
+                    <Tabs defaultValue="searchability_tab" className="w-full">
                         <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 h-auto">
-                            <TabsTrigger value="searchability" className="text-xs sm:text-sm">Searchability</TabsTrigger>
-                            <TabsTrigger value="recruiter" className="text-xs sm:text-sm">Recruiter Tips</TabsTrigger>
-                            <TabsTrigger value="content_style" className="text-xs sm:text-sm">Content/Style</TabsTrigger>
-                            <TabsTrigger value="ats" className="text-xs sm:text-sm">ATS & Formatting</TabsTrigger>
+                            <TabsTrigger value="searchability_tab" className="text-xs sm:text-sm">Searchability</TabsTrigger>
+                            <TabsTrigger value="recruiter_tips_tab" className="text-xs sm:text-sm">Recruiter Tips</TabsTrigger>
+                            <TabsTrigger value="content_style_tab" className="text-xs sm:text-sm">Content/Style</TabsTrigger>
+                            <TabsTrigger value="ats_formatting_tab" className="text-xs sm:text-sm">ATS & Formatting</TabsTrigger>
                         </TabsList>
 
-                        <TabsContent value="searchability" className="mt-4">
-                            <Card className="border-border shadow-sm">
+                        <TabsContent value="searchability_tab" className="mt-4">
+                             <Card className="border-border shadow-sm">
                                 <CardHeader className="p-3 bg-secondary/20 rounded-t-md">
                                     <CardTitle className="text-md font-semibold flex items-center gap-2">
-                                        <Search className="h-5 w-5 text-primary"/>Searchability Details
+                                        <Search className="h-5 w-5 text-primary"/>Searchability Checklist
                                     </CardTitle>
                                 </CardHeader>
-                                <CardContent className="p-3 space-y-2">
-                                    <div className="space-y-1">
-                                        <h4 className="text-sm font-medium text-foreground mb-1 flex items-center gap-1.5">
-                                            <Info className="h-3.5 w-3.5 text-muted-foreground"/> Contact Info:
-                                        </h4>
-                                        <ul className="space-y-0.5 text-xs pl-2">
-                                            <li className="flex items-center gap-1.5">{(results.detailedReport.searchabilityDetails?.hasEmail ?? false) ? <CheckCircle className="h-3.5 w-3.5 text-green-500"/> : <XCircle className="h-3.5 w-3.5 text-red-500"/>} Email found</li>
-                                            <li className="flex items-center gap-1.5">{(results.detailedReport.searchabilityDetails?.hasPhoneNumber ?? false) ? <CheckCircle className="h-3.5 w-3.5 text-green-500"/> : <XCircle className="h-3.5 w-3.5 text-red-500"/>} Phone number found</li>
-                                            <li className="flex items-center gap-1.5">{(results.detailedReport.searchabilityDetails?.hasAddress ?? false) ? <CheckCircle className="h-3.5 w-3.5 text-green-500"/> : <XCircle className="h-3.5 w-3.5 text-red-500"/>} Address found (optional but can be useful)</li>
-                                        </ul>
-                                    </div>
-                                    <hr className="my-2"/>
-                                    <div className="space-y-1">
-                                        <h4 className="text-sm font-medium text-foreground mb-1 flex items-center gap-1.5">
-                                            <Info className="h-3.5 w-3.5 text-muted-foreground"/> Job Title Match:
-                                        </h4>
-                                        <p className={cn("text-xs flex items-center gap-1.5 pl-2", (results.detailedReport.searchabilityDetails?.jobTitleMatchesJD ?? false) ? "text-green-600" : "text-red-600")}>
-                                            {(results.detailedReport.searchabilityDetails?.jobTitleMatchesJD ?? false) ? <CheckCircle className="h-3.5 w-3.5"/> : <XCircle className="h-3.5 w-3.5"/>} 
-                                            The job title on your resume {(results.detailedReport.searchabilityDetails?.jobTitleMatchesJD ?? false) ? "matches or aligns with" : "does not match well with"} the one in the job description.
-                                        </p>
-                                    </div>
-                                     <hr className="my-2"/>
-                                    <div className="space-y-1">
-                                        <h4 className="text-sm font-medium text-foreground mb-1 flex items-center gap-1.5">
-                                            <Info className="h-3.5 w-3.5 text-muted-foreground"/> Section Headings:
-                                        </h4>
-                                        <ul className="space-y-0.5 text-xs pl-2">
-                                            <li className="flex items-center gap-1.5">{(results.detailedReport.searchabilityDetails?.hasProfessionalSummary ?? false) ? <CheckCircle className="h-3.5 w-3.5 text-green-500"/> : <XCircle className="h-3.5 w-3.5 text-red-500"/>} Professional Summary / Objective</li>
-                                            <li className="flex items-center gap-1.5">{(results.detailedReport.searchabilityDetails?.hasWorkExperienceSection ?? false) ? <CheckCircle className="h-3.5 w-3.5 text-green-500"/> : <XCircle className="h-3.5 w-3.5 text-red-500"/>} Work Experience Section</li>
-                                            <li className="flex items-center gap-1.5">{(results.detailedReport.searchabilityDetails?.hasEducationSection ?? false) ? <CheckCircle className="h-3.5 w-3.5 text-green-500"/> : <XCircle className="h-3.5 w-3.5 text-red-500"/>} Education Section</li>
-                                        </ul>
-                                    </div>
-                                    {results.detailedReport.searchabilityDetails?.keywordDensityFeedback && <p className="text-xs italic text-muted-foreground p-2 bg-background rounded-md mt-2">Keyword Feedback: {results.detailedReport.searchabilityDetails.keywordDensityFeedback}</p>}
+                                <CardContent className="p-3 space-y-3">
+                                    {[
+                                        {label: "Phone Number Found", checked: results.detailedReport.searchabilityDetails?.hasPhoneNumber ?? false, tip: "Ensure a clear phone number is present."},
+                                        {label: "Email Found", checked: results.detailedReport.searchabilityDetails?.hasEmail ?? false, tip: "Include a professional email address."},
+                                        {label: "Address Present (Optional)", checked: results.detailedReport.searchabilityDetails?.hasAddress ?? false, tip: "City, State is often sufficient."},
+                                        {label: "Job Title Aligns with JD", checked: results.detailedReport.searchabilityDetails?.jobTitleMatchesJD ?? false, tip: "Tailor your resume's job title or summary to the target role."},
+                                        {label: "Professional Summary/Objective Found", checked: results.detailedReport.searchabilityDetails?.hasProfessionalSummary ?? false, tip: "A concise summary helps recruiters quickly understand your profile."},
+                                        {label: "Work Experience Section Clear", checked: results.detailedReport.searchabilityDetails?.hasWorkExperienceSection ?? false, tip: "Use standard headings like 'Experience' or 'Work History'."},
+                                        {label: "Education Section Clear", checked: results.detailedReport.searchabilityDetails?.hasEducationSection ?? false, tip: "Use standard headings like 'Education'."},
+                                    ].map(item => (
+                                        <div key={item.label} className="flex items-start gap-2 text-sm p-2 border-b last:border-b-0">
+                                            {item.checked ? <CheckCircle className="h-5 w-5 text-green-500 shrink-0 mt-0.5"/> : <XCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5"/>}
+                                            <div className="flex-1">
+                                                <span className={cn(item.checked ? "text-foreground" : "text-red-600")}>{item.label}</span>
+                                                {!item.checked && <p className="text-xs text-muted-foreground italic">{item.tip}</p>}
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {results.detailedReport.searchabilityDetails?.keywordDensityFeedback && (
+                                        <div className="p-2 bg-muted rounded-md mt-2">
+                                            <p className="text-xs font-medium">Keyword Density Feedback:</p>
+                                            <p className="text-xs italic">{results.detailedReport.searchabilityDetails.keywordDensityFeedback}</p>
+                                        </div>
+                                    )}
                                 </CardContent>
                             </Card>
                         </TabsContent>
                         
-                        <TabsContent value="recruiter" className="mt-4">
+                        <TabsContent value="recruiter_tips_tab" className="mt-4">
                              {results.detailedReport.recruiterTips && results.detailedReport.recruiterTips.length > 0 && (
                                 <Card className="border-border shadow-sm">
                                     <CardHeader className="p-3 bg-secondary/20 rounded-t-md">
                                         <CardTitle className="text-md font-semibold flex items-center gap-2">
-                                            <Users className="h-5 w-5 text-primary"/>Recruiter Tips
+                                            <Users className="h-5 w-5 text-primary"/>Recruiter Tips ({results.detailedReport.recruiterTipsScore}%)
                                         </CardTitle>
                                     </CardHeader>
                                     <CardContent className="p-3 space-y-2">
@@ -533,123 +515,79 @@ export default function ResumeAnalyzerPage() {
                             )}
                         </TabsContent>
 
-                        <TabsContent value="content_style" className="mt-4">
-                             <Accordion type="multiple" className="w-full">
+                        <TabsContent value="content_style_tab" className="mt-4">
+                            <Accordion type="multiple" className="w-full space-y-3">
                                 {results.detailedReport.quantifiableAchievementDetails && (
-                                <AccordionItem value="item-quantifiable">
-                                    <AccordionTrigger className="text-md font-semibold hover:text-primary data-[state=open]:text-primary"><BarChart className="mr-2 h-5 w-5"/>Quantifiable Achievements</AccordionTrigger>
-                                    <AccordionContent className="space-y-2 p-1">
-                                        <Card>
-                                            <CardHeader className="p-3"><CardTitle className="text-sm font-medium flex items-center gap-1">Score: {results.detailedReport.quantifiableAchievementDetails.score}%</CardTitle></CardHeader>
-                                            <CardContent className="p-3 pt-0 text-xs space-y-1">
-                                                {results.detailedReport.quantifiableAchievementDetails.examplesFound && results.detailedReport.quantifiableAchievementDetails.examplesFound.length > 0 && <p><strong>Strong Examples:</strong> {results.detailedReport.quantifiableAchievementDetails.examplesFound.join('; ')}</p>}
-                                                {results.detailedReport.quantifiableAchievementDetails.areasLackingQuantification && results.detailedReport.quantifiableAchievementDetails.areasLackingQuantification.length > 0 && <p><strong>Needs Quantification:</strong> {results.detailedReport.quantifiableAchievementDetails.areasLackingQuantification.join('; ')}</p>}
-                                            </CardContent>
-                                        </Card>
+                                <AccordionItem value="quantifiable" className="border rounded-md shadow-sm bg-card">
+                                    <AccordionTrigger className="text-sm font-medium hover:text-primary data-[state=open]:text-primary p-3"><BarChart className="mr-2 h-4 w-4"/>Quantifiable Achievements ({results.detailedReport.quantifiableAchievementDetails.score ?? 0}%)</AccordionTrigger>
+                                    <AccordionContent className="p-3 border-t text-xs space-y-1">
+                                        {results.detailedReport.quantifiableAchievementDetails.examplesFound && results.detailedReport.quantifiableAchievementDetails.examplesFound.length > 0 && <p><strong>Strong Examples:</strong> {results.detailedReport.quantifiableAchievementDetails.examplesFound.join('; ')}</p>}
+                                        {results.detailedReport.quantifiableAchievementDetails.areasLackingQuantification && results.detailedReport.quantifiableAchievementDetails.areasLackingQuantification.length > 0 && <p className="text-red-600"><strong>Needs Quantification:</strong> {results.detailedReport.quantifiableAchievementDetails.areasLackingQuantification.join('; ')}</p>}
+                                        {(!results.detailedReport.quantifiableAchievementDetails.examplesFound || results.detailedReport.quantifiableAchievementDetails.examplesFound.length === 0) && (!results.detailedReport.quantifiableAchievementDetails.areasLackingQuantification || results.detailedReport.quantifiableAchievementDetails.areasLackingQuantification.length === 0) && <p>No specific details provided by AI.</p>}
                                     </AccordionContent>
                                 </AccordionItem>
                                 )}
                                 {results.detailedReport.actionVerbDetails && (
-                                <AccordionItem value="item-action-verbs">
-                                    <AccordionTrigger className="text-md font-semibold hover:text-primary data-[state=open]:text-primary"><ThumbsUp className="mr-2 h-5 w-5"/>Action Verbs</AccordionTrigger>
-                                    <AccordionContent className="space-y-2 p-1">
-                                        <Card>
-                                            <CardHeader className="p-3"><CardTitle className="text-sm font-medium flex items-center gap-1">Score: {results.detailedReport.actionVerbDetails.score}%</CardTitle></CardHeader>
-                                            <CardContent className="p-3 pt-0 text-xs space-y-1">
-                                                {results.detailedReport.actionVerbDetails.strongVerbsUsed && results.detailedReport.actionVerbDetails.strongVerbsUsed.length > 0 && <p><strong>Strong Verbs:</strong> {results.detailedReport.actionVerbDetails.strongVerbsUsed.join(', ')}</p>}
-                                                {results.detailedReport.actionVerbDetails.weakVerbsUsed && results.detailedReport.actionVerbDetails.weakVerbsUsed.length > 0 && <p><strong>Weak Verbs:</strong> {results.detailedReport.actionVerbDetails.weakVerbsUsed.join(', ')}</p>}
-                                                {results.detailedReport.actionVerbDetails.overusedVerbs && results.detailedReport.actionVerbDetails.overusedVerbs.length > 0 && <p><strong>Overused:</strong> {results.detailedReport.actionVerbDetails.overusedVerbs.join(', ')}</p>}
-                                                {results.detailedReport.actionVerbDetails.suggestedStrongerVerbs && results.detailedReport.actionVerbDetails.suggestedStrongerVerbs.length > 0 && <p><strong>Suggestions:</strong> {results.detailedReport.actionVerbDetails.suggestedStrongerVerbs.map(s => `${s.original} → ${s.suggestion}`).join('; ')}</p>}
-                                            </CardContent>
-                                        </Card>
+                                <AccordionItem value="action-verbs" className="border rounded-md shadow-sm bg-card">
+                                    <AccordionTrigger className="text-sm font-medium hover:text-primary data-[state=open]:text-primary p-3"><ThumbsUp className="mr-2 h-4 w-4"/>Action Verbs ({results.detailedReport.actionVerbDetails.score ?? 0}%)</AccordionTrigger>
+                                    <AccordionContent className="p-3 border-t text-xs space-y-1">
+                                        {results.detailedReport.actionVerbDetails.strongVerbsUsed && results.detailedReport.actionVerbDetails.strongVerbsUsed.length > 0 && <p><strong>Strong Verbs:</strong> {results.detailedReport.actionVerbDetails.strongVerbsUsed.join(', ')}</p>}
+                                        {results.detailedReport.actionVerbDetails.weakVerbsUsed && results.detailedReport.actionVerbDetails.weakVerbsUsed.length > 0 && <p className="text-yellow-600"><strong>Weak Verbs:</strong> {results.detailedReport.actionVerbDetails.weakVerbsUsed.join(', ')}</p>}
+                                        {results.detailedReport.actionVerbDetails.overusedVerbs && results.detailedReport.actionVerbDetails.overusedVerbs.length > 0 && <p className="text-yellow-600"><strong>Overused:</strong> {results.detailedReport.actionVerbDetails.overusedVerbs.join(', ')}</p>}
+                                        {results.detailedReport.actionVerbDetails.suggestedStrongerVerbs && results.detailedReport.actionVerbDetails.suggestedStrongerVerbs.length > 0 && <p><strong>Suggestions:</strong> {results.detailedReport.actionVerbDetails.suggestedStrongerVerbs.map(s => `${s.original} → ${s.suggestion}`).join('; ')}</p>}
                                     </AccordionContent>
                                 </AccordionItem>
                                 )}
                                 {results.detailedReport.impactStatementDetails && (
-                                <AccordionItem value="item-impact">
-                                    <AccordionTrigger className="text-md font-semibold hover:text-primary data-[state=open]:text-primary"><Zap className="mr-2 h-5 w-5"/>Impact Statements</AccordionTrigger>
-                                    <AccordionContent className="space-y-2 p-1">
-                                        <Card>
-                                            <CardHeader className="p-3"><CardTitle className="text-sm font-medium flex items-center gap-1">Clarity Score: {results.detailedReport.impactStatementDetails.clarityScore}%</CardTitle></CardHeader>
-                                            <CardContent className="p-3 pt-0 text-xs space-y-1">
-                                                {results.detailedReport.impactStatementDetails.exampleWellWrittenImpactStatements && results.detailedReport.impactStatementDetails.exampleWellWrittenImpactStatements.length > 0 && <p><strong>Good Examples:</strong> {results.detailedReport.impactStatementDetails.exampleWellWrittenImpactStatements.join('; ')}</p>}
-                                                {results.detailedReport.impactStatementDetails.unclearImpactStatements && results.detailedReport.impactStatementDetails.unclearImpactStatements.length > 0 && <p><strong>Could Improve:</strong> {results.detailedReport.impactStatementDetails.unclearImpactStatements.join('; ')}</p>}
-                                            </CardContent>
-                                        </Card>
+                                <AccordionItem value="item-impact" className="border rounded-md shadow-sm bg-card">
+                                    <AccordionTrigger className="text-sm font-medium hover:text-primary data-[state=open]:text-primary p-3"><Zap className="mr-2 h-4 w-4"/>Impact Statements ({results.detailedReport.impactStatementDetails.clarityScore ?? 0}%)</AccordionTrigger>
+                                    <AccordionContent className="p-3 border-t text-xs space-y-1">
+                                        {results.detailedReport.impactStatementDetails.exampleWellWrittenImpactStatements && results.detailedReport.impactStatementDetails.exampleWellWrittenImpactStatements.length > 0 && <p><strong>Good Examples:</strong> {results.detailedReport.impactStatementDetails.exampleWellWrittenImpactStatements.join('; ')}</p>}
+                                        {results.detailedReport.impactStatementDetails.unclearImpactStatements && results.detailedReport.impactStatementDetails.unclearImpactStatements.length > 0 && <p className="text-red-600"><strong>Could Improve:</strong> {results.detailedReport.impactStatementDetails.unclearImpactStatements.join('; ')}</p>}
                                     </AccordionContent>
                                 </AccordionItem>
                                 )}
                                 {results.detailedReport.readabilityDetails && (
-                                <AccordionItem value="item-readability">
-                                    <AccordionTrigger className="text-md font-semibold hover:text-primary data-[state=open]:text-primary"><MessageSquare className="mr-2 h-5 w-5"/>Readability</AccordionTrigger>
-                                    <AccordionContent className="space-y-2 p-1">
-                                        <Card>
-                                            <CardContent className="p-3 text-xs space-y-1">
-                                                {results.detailedReport.readabilityDetails.fleschReadingEase && <p><strong>Flesch Reading Ease:</strong> {results.detailedReport.readabilityDetails.fleschReadingEase.toFixed(1)}</p>}
-                                                {results.detailedReport.readabilityDetails.fleschKincaidGradeLevel && <p><strong>Flesch-Kincaid Grade Level:</strong> {results.detailedReport.readabilityDetails.fleschKincaidGradeLevel.toFixed(1)}</p>}
-                                                {results.detailedReport.readabilityDetails.readabilityFeedback && <p><strong>Feedback:</strong> {results.detailedReport.readabilityDetails.readabilityFeedback}</p>}
-                                            </CardContent>
-                                        </Card>
+                                <AccordionItem value="item-readability" className="border rounded-md shadow-sm bg-card">
+                                    <AccordionTrigger className="text-sm font-medium hover:text-primary data-[state=open]:text-primary p-3"><MessageSquare className="mr-2 h-4 w-4"/>Readability</AccordionTrigger>
+                                    <AccordionContent className="p-3 border-t text-xs space-y-1">
+                                        {results.detailedReport.readabilityDetails.fleschReadingEase !== undefined && <p><strong>Flesch Reading Ease:</strong> {results.detailedReport.readabilityDetails.fleschReadingEase.toFixed(1)}</p>}
+                                        {results.detailedReport.readabilityDetails.fleschKincaidGradeLevel !== undefined && <p><strong>Flesch-Kincaid Grade Level:</strong> {results.detailedReport.readabilityDetails.fleschKincaidGradeLevel.toFixed(1)}</p>}
+                                        {results.detailedReport.readabilityDetails.readabilityFeedback && <p><strong>Feedback:</strong> {results.detailedReport.readabilityDetails.readabilityFeedback}</p>}
                                     </AccordionContent>
                                 </AccordionItem>
                                 )}
                             </Accordion>
                         </TabsContent>
 
-                        <TabsContent value="ats" className="mt-4">
-                            <Accordion type="multiple" className="w-full">
+                        <TabsContent value="ats_formatting_tab" className="mt-4">
+                            <Accordion type="multiple" className="w-full space-y-3">
                                 {results.detailedReport.atsParsingConfidence && (
-                                    <AccordionItem value="item-ats-confidence">
-                                    <AccordionTrigger className="text-md font-semibold hover:text-primary data-[state=open]:text-primary"><SearchCheck className="mr-2 h-5 w-5"/>ATS Parsing Confidence</AccordionTrigger>
-                                    <AccordionContent className="space-y-2 p-1">
-                                        <Card>
-                                            <CardHeader className="p-3"><CardTitle className="text-sm font-medium flex items-center gap-1">Overall: {results.detailedReport.atsParsingConfidence.overall}%</CardTitle></CardHeader>
-                                             {results.detailedReport.atsParsingConfidence.warnings && results.detailedReport.atsParsingConfidence.warnings.length > 0 && (
-                                                <CardContent className="p-3 pt-0 text-xs space-y-1">
-                                                   <p><strong>Warnings:</strong> {results.detailedReport.atsParsingConfidence.warnings.join('; ')}</p>
-                                                </CardContent>
-                                            )}
-                                        </Card>
+                                    <AccordionItem value="ats-confidence" className="border rounded-md shadow-sm bg-card">
+                                    <AccordionTrigger className="text-sm font-medium hover:text-primary data-[state=open]:text-primary p-3"><SearchCheck className="mr-2 h-4 w-4"/>ATS Parsing Confidence ({results.detailedReport.atsParsingConfidence.overall ?? 0}%)</AccordionTrigger>
+                                    <AccordionContent className="p-3 border-t text-xs space-y-1">
+                                         {results.detailedReport.atsParsingConfidence.warnings && results.detailedReport.atsParsingConfidence.warnings.length > 0 && (
+                                            <p className="text-yellow-600"><strong>Warnings:</strong> {results.detailedReport.atsParsingConfidence.warnings.join('; ')}</p>
+                                        )}
+                                        {(!results.detailedReport.atsParsingConfidence.warnings || results.detailedReport.atsParsingConfidence.warnings.length === 0) && <p>No specific parsing warnings.</p>}
                                     </AccordionContent>
                                     </AccordionItem>
                                 )}
-                                {results.detailedReport.standardFormattingIssues && results.detailedReport.standardFormattingIssues.length > 0 && (
-                                    <AccordionItem value="item-standard-formatting">
-                                    <AccordionTrigger className="text-md font-semibold hover:text-primary data-[state=open]:text-primary"><Columns className="mr-2 h-5 w-5"/>Standard Formatting ({results.detailedReport.atsStandardFormattingComplianceScore}%)</AccordionTrigger>
-                                    <AccordionContent className="space-y-2 p-1">
-                                        <Card>
-                                            <CardContent className="p-3 text-xs space-y-1">
-                                                {results.detailedReport.standardFormattingIssues.map((item, idx) => (
-                                                    <p key={idx}><strong>Issue:</strong> {item.issue} → <strong>Recommendation:</strong> {item.recommendation}</p>
-                                                ))}
-                                            </CardContent>
-                                        </Card>
+                                {results.detailedReport.standardFormattingIssues && (
+                                    <AccordionItem value="standard-formatting" className="border rounded-md shadow-sm bg-card">
+                                    <AccordionTrigger className="text-sm font-medium hover:text-primary data-[state=open]:text-primary p-3"><Columns className="mr-2 h-4 w-4"/>Standard Formatting ({results.detailedReport.atsStandardFormattingComplianceScore ?? 0}%)</AccordionTrigger>
+                                    <AccordionContent className="p-3 border-t text-xs space-y-1">
+                                        {results.detailedReport.standardFormattingIssues.length > 0 ? results.detailedReport.standardFormattingIssues.map((item, idx) => (
+                                            <p key={idx}><strong className="text-red-600">Issue:</strong> {item.issue} <br/><span className="text-blue-600">→ Recommendation:</span> {item.recommendation}</p>
+                                        )) : <p>No specific standard formatting issues found.</p>}
                                     </AccordionContent>
-                                    </AccordionItem>
-                                )}
-                                {results.detailedReport.formattingDetails && results.detailedReport.formattingDetails.length > 0 && (
-                                    <AccordionItem value="item-general-formatting">
-                                        <AccordionTrigger className="text-md font-semibold hover:text-primary data-[state=open]:text-primary"><Palette className="mr-2 h-5 w-5"/>General Formatting</AccordionTrigger>
-                                        <AccordionContent className="space-y-2 p-1">
-                                        <Card>
-                                            <CardContent className="p-3 text-xs space-y-1">
-                                                {results.detailedReport.formattingDetails.map((item, idx) => (
-                                                    <p key={idx}><strong>Issue:</strong> {item.issue} → <strong>Recommendation:</strong> {item.recommendation}</p>
-                                                ))}
-                                            </CardContent>
-                                        </Card>
-                                        </AccordionContent>
                                     </AccordionItem>
                                 )}
                                 {results.detailedReport.undefinedAcronyms && results.detailedReport.undefinedAcronyms.length > 0 && (
-                                <AccordionItem value="item-acronyms">
-                                    <AccordionTrigger className="text-md font-semibold hover:text-primary data-[state=open]:text-primary"><EyeOff className="mr-2 h-5 w-5"/>Undefined Acronyms</AccordionTrigger>
-                                    <AccordionContent className="space-y-2 p-1">
-                                        <Card>
-                                            <CardContent className="p-3 text-xs">
-                                                <p>{results.detailedReport.undefinedAcronyms.join(', ')}</p>
-                                            </CardContent>
-                                        </Card>
+                                <AccordionItem value="acronyms" className="border rounded-md shadow-sm bg-card">
+                                    <AccordionTrigger className="text-sm font-medium hover:text-primary data-[state=open]:text-primary p-3"><EyeOff className="mr-2 h-4 w-4"/>Undefined Acronyms</AccordionTrigger>
+                                    <AccordionContent className="p-3 border-t text-xs">
+                                        <p className="text-yellow-600">Consider defining: {results.detailedReport.undefinedAcronyms.join(', ')}</p>
                                     </AccordionContent>
                                 </AccordionItem>
                                 )}
@@ -661,6 +599,7 @@ export default function ResumeAnalyzerPage() {
         </Card>
       )}
 
+      {/* Scan History Section */}
       <Card className="shadow-xl mt-12">
          <CardHeader>
           <CardTitle className="text-2xl font-bold tracking-tight flex items-center gap-2">
@@ -673,8 +612,8 @@ export default function ResumeAnalyzerPage() {
                 {[
                   { title: "Total Scans", value: summaryStats.totalScans },
                   { title: "Unique Resumes", value: summaryStats.uniqueResumes },
-                  { title: "Maximum Score", value: `${summaryStats.maxScore}%` },
-                  { title: "High Scoring (>80%)", value: summaryStats.improvement }, 
+                  { title: "Highest Score", value: `${summaryStats.maxScore}%` },
+                  { title: "High Scoring (>80%)", value: summaryStats.highScoringCount }, 
                 ].map(stat => (
                   <Card key={stat.title} className="border shadow-sm">
                       <CardContent className="p-4 text-center">
@@ -735,3 +674,4 @@ export default function ResumeAnalyzerPage() {
     </div>
   );
 }
+
