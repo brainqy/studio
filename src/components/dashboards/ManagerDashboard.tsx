@@ -2,7 +2,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { BarChart, Users, Briefcase, CheckSquare, MessageSquare, Zap, Activity, Edit3, CalendarCheck2, CustomizeIcon as SettingsIcon } from "lucide-react"; // Renamed Edit3 to CustomizeIcon
+import { BarChart, Users, Briefcase, CheckSquare, MessageSquare, Zap, Activity, Settings as SettingsIcon, CalendarCheck2 } from "lucide-react";
 import { useEffect, useState, useMemo } from "react";
 import WelcomeTourDialog from '@/components/features/WelcomeTourDialog';
 import {
@@ -67,7 +67,6 @@ export default function ManagerDashboard() {
       if (!tourSeen) {
         setShowManagerTour(true);
       }
-      // Optionally load saved widget preferences from localStorage here
     }
   }, []);
 
@@ -109,7 +108,6 @@ export default function ManagerDashboard() {
   const handleSaveCustomization = () => {
     setVisibleWidgetIds(tempVisibleWidgetIds);
     setIsCustomizeDialogOpen(false);
-    // Optionally save to localStorage here
     toast({ title: "Dashboard Updated", description: "Your dashboard widget preferences have been saved for this session." });
   };
 
@@ -229,7 +227,7 @@ export default function ManagerDashboard() {
               </Button>
                <Button asChild variant="outline">
                   <Link href="/admin/gallery-management">
-                      <Edit3 className="mr-2 h-4 w-4"/>Manage Event Gallery
+                      <Activity/*Using Activity as placeholder, consider Edit3 or GalleryVerticalEnd*/ className="mr-2 h-4 w-4"/>Manage Event Gallery
                   </Link>
               </Button>
                <Button asChild variant="outline">
@@ -239,7 +237,7 @@ export default function ManagerDashboard() {
               </Button>
               <Button asChild variant="outline">
                   <Link href="/admin/announcements">
-                      <Megaphone className="mr-2 h-4 w-4"/>Manage Announcements
+                      <MessageSquare/*Using MessageSquare as placeholder, consider Megaphone*/ className="mr-2 h-4 w-4"/>Manage Announcements
                   </Link>
               </Button>
             </CardContent>
