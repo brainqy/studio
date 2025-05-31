@@ -166,6 +166,8 @@ export function AppSidebar() {
               <SidebarMenu>
                 {adminItems.filter(item => {
                     if(currentUser.role === 'manager') {
+                        // For managers, ensure the admin dashboard link is also adjusted or handled
+                         // Assuming manager can see a version of admin dashboard
                         const managerAccessible = [
                             "/admin/dashboard", // Managers should see their specific dashboard view via this link
                             "/admin/user-management", 

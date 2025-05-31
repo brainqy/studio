@@ -196,6 +196,27 @@ export default function AppointmentsPage() {
       </div>
       <CardDescription>View and manage your scheduled meetings with alumni and community requests.</CardDescription>
 
+      {/* Assigned Posts Section */}
+      {assignedPosts.length > 0 && (
+        <div>
+          <h2 className="text-xl font-semibold mb-4 text-foreground">Assigned Posts</h2>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {assignedPosts.map(post => (
+              <Card key={post.id} className="shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <CardHeader>
+                  <CardTitle className="text-lg">{post.content}</CardTitle>
+                  <p className="text-sm text-muted-foreground">Assigned to: {post.assignedTo}</p>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">{post.tags?.join(', ') || 'No tags'}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Existing Appointments Section */}
       <Accordion type="single" collapsible className="w-full bg-card shadow-lg rounded-lg">
         <AccordionItem value="filters">
           <AccordionTrigger className="px-6 py-4 hover:no-underline">
