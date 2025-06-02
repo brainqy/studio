@@ -15,6 +15,7 @@ export let sampleJobApplications: JobApplication[] = [
   { id: '8', tenantId: 'Brainqy', userId: 'alumni1', companyName: 'Web Solutions Co.', jobTitle: 'Frontend Developer', status: 'Interviewing', dateApplied: '2024-07-18', notes: 'Technical interview next week.', location: 'Remote', applicationUrl: 'https://example.com/websolutions/apply' },
 ];
 
+
 export let sampleAlumni: AlumniProfile[] = [
   {
     id: 'alumni1',
@@ -196,6 +197,56 @@ export let sampleCommunityPosts: CommunityPost[] = [
     moderationStatus: 'removed', 
     flagCount: 0,
     comments: [] 
+  },
+  { 
+    id: 'post6', 
+    tenantId: 'Brainqy', 
+    userId: 'alumni1', 
+    userName: 'Alice Wonderland', 
+    userAvatar: 'https://picsum.photos/seed/alice/50/50', 
+    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(), 
+    content: 'Anyone have experience with tackling take-home assignments for Senior Eng roles? Tips appreciated!', 
+    type: 'text', 
+    tags: ['jobsearch', 'interviewtips'], 
+    moderationStatus: 'visible', 
+    flagCount: 0,
+    comments: [],
+    assignedTo: 'Bob The Builder', // Assigned to a user
+  },
+  { 
+    id: 'post7', 
+    tenantId: 'Brainqy', 
+    userId: 'alumni2', 
+    userName: 'Bob The Builder', 
+    userAvatar: 'https://picsum.photos/seed/bob/50/50', 
+    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(), 
+    content: 'Looking for a mentor in the Product Management space. Any alumni willing to connect?', 
+    type: 'request', 
+    tags: ['mentorship', 'productmanagement'], 
+    moderationStatus: 'visible', 
+    flagCount: 0,
+    comments: [],
+    assignedTo: 'Alice Wonderland', // Assigned to another user
+  },
+  { 
+    id: 'post', 
+    tenantId: 'Brainqy', 
+    userId: 'alumni3', 
+    userName: 'Charlie Brown', 
+    userAvatar: 'https://picsum.photos/seed/charlie/50/50', 
+    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 10).toISOString(), 
+    content: 'Join our upcoming workshop: Intro to Cloud Native! Learn the fundamentals and best practices from industry experts.', 
+    type: 'event', 
+    eventTitle: 'Intro to Cloud Native', 
+    eventDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString(), 
+    eventLocation: 'Online (Zoom)',
+    attendees: 55,
+    capacity: 100, 
+    tags: ['workshop', 'cloud', 'tech'],
+    moderationStatus: 'visible', 
+    flagCount: 0,
+    comments: [],
+    assignedTo: 'Diana Prince', // Assigned to another user
   },
 ];
 
@@ -436,7 +487,7 @@ Projects
     appointmentCoinCost: 0,
     resumeText: `Manager Mike
 Email: manager.mike@tenant2.com | LinkedIn: linkedin.com/in/managermike | Mobile: +15552223333
-
+side
 Summary:
 Results-oriented Engagement Lead with 15 years of experience in fostering alumni relations and driving community growth for Corporate Partner Inc. (Tenant-2). Expertise in strategic planning, team leadership, and project management. Passionate about creating impactful programs that connect alumni and enhance their professional development.
 
