@@ -2,7 +2,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { BarChart, Users, Settings, Activity, Building2, FileText, MessageSquare, Zap as ZapIcon, ShieldQuestion, UserPlus, Briefcase, Handshake, Mic, ListChecks, Clock, TrendingUp, Megaphone, CalendarDays, Edit3 as CustomizeIcon } from "lucide-react";
+import { BarChart, Users, Settings, Activity, Building2, FileText, MessageSquare, Zap as ZapIcon, ShieldQuestion, UserPlus, Briefcase, Handshake, Mic, ListChecks, Clock, TrendingUp, Megaphone, CalendarDays, Edit3 as CustomizeIcon, PieChartIcon, ShieldAlert } from "lucide-react";
 import { useEffect, useState, useMemo } from "react";
 import WelcomeTourDialog from '@/components/features/WelcomeTourDialog';
 import {
@@ -20,7 +20,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import type { Tenant, UserProfile } from "@/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ResponsiveContainer, BarChart as RechartsBarChart, XAxis, YAxis, Tooltip, Legend, Bar as RechartsBar, CartesianGrid, LineChart, Line } from 'recharts';
+import { ResponsiveContainer, BarChart as RechartsBarChart, XAxis, YAxis, Tooltip, Legend, Bar as RechartsBar, CartesianGrid, LineChart, Line, PieChart as RechartsPieChart, Pie, Cell } from 'recharts';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription as DialogUIDescription, DialogFooter } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -65,6 +65,24 @@ const mockTimeSpentData = {
   })).sort((a,b) => b.time - a.time),
 };
 
+const mockRegistrationData = Array.from({ length: 30 }, (_, i) => {
+  const date = new Date();
+  date.setDate(date.getDate() - (29 - i));
+  return {
+    date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    signups: Math.floor(Math.random() * 50) + 10, // Random signups between 10 and 60
+  };
+});
+
+const aiFeatureUsageData = [
+  { name: 'Resume Analyzer', count: 1250, fill: 'hsl(var(--chart-1))' },
+  { name: 'Mock Interviews', count: 780, fill: 'hsl(var(--chart-2))' },
+  { name: 'Cover Letter Gen', count: 950, fill: 'hsl(var(--chart-3))' },
+  { name: 'AI Resume Writer', count: 620, fill: 'hsl(var(--chart-4))' },
+  { name: 'Skill Suggestions', count: 1100, fill: 'hsl(var(--chart-5))' },
+];
+
+
 type AdminDashboardWidgetId =
   | 'promotionalSpotlight'
   | 'totalUsersStat'
@@ -77,6 +95,9 @@ type AdminDashboardWidgetId =
   | 'mockInterviewsStat'
   | 'timeSpentStats'
   | 'tenantActivityOverview'
+  | 'registrationTrendsChart'
+  | 'aiUsageBreakdownChart'
+  | 'contentModerationQueueSummary'
   | 'adminQuickActions';
 
 interface WidgetConfig {
@@ -97,6 +118,9 @@ const AVAILABLE_WIDGETS: WidgetConfig[] = [
   { id: 'mockInterviewsStat', title: 'Mock Interviews Stat', defaultVisible: true },
   { id: 'timeSpentStats', title: 'Time Spent Statistics', defaultVisible: true },
   { id: 'tenantActivityOverview', title: 'Tenant Activity Overview', defaultVisible: true },
+  { id: 'registrationTrendsChart', title: 'User Registration Trends', defaultVisible: true },
+  { id: 'aiUsageBreakdownChart', title: 'AI Feature Usage', defaultVisible: true },
+  { id: 'contentModerationQueueSummary', title: 'Content Moderation Queue', defaultVisible: true },
   { id: 'adminQuickActions', title: 'Admin Quick Actions', defaultVisible: true },
 ];
 
@@ -120,7 +144,6 @@ export default function AdminDashboard() {
       if (!tourSeen) {
         setShowAdminTour(true);
       }
-      // Optionally load saved widget preferences from localStorage here
     }
   }, []);
 
@@ -137,8 +160,10 @@ export default function AdminDashboard() {
     const totalResumesAnalyzedThisPeriod = sampleResumeScanHistory.filter(s => new Date(s.scanDate) >= startDate).length;
     const totalJobApplicationsThisPeriod = sampleJobApplications.filter(j => new Date(j.dateApplied) >= startDate).length;
     const totalCommunityPostsThisPeriod = sampleCommunityPosts.filter(p => new Date(p.timestamp) >= startDate).length;
-    const totalAlumniConnections = sampleAlumni.length * 5;
+    const totalAlumniConnections = sampleAlumni.length * 5; // Mock more dynamic calculation
     const totalMockInterviews = sampleMockInterviewSessions.length;
+    const flaggedPostsCount = sampleCommunityPosts.filter(p => p.moderationStatus === 'flagged').length;
+
 
     return {
       totalUsers,
@@ -149,6 +174,7 @@ export default function AdminDashboard() {
       totalCommunityPostsThisPeriod,
       totalAlumniConnections,
       totalMockInterviews,
+      flaggedPostsCount,
     };
   }, [usagePeriod]);
 
@@ -163,7 +189,7 @@ export default function AdminDashboard() {
       const newUsersInTenantThisPeriod = usersInTenant.filter(u => u.createdAt && new Date(u.createdAt) >= startDate).length;
       const resumesAnalyzedInTenantThisPeriod = sampleResumeScanHistory.filter(s => s.tenantId === tenant.id && new Date(s.scanDate) >= startDate).length;
       const communityPostsInTenantThisPeriod = sampleCommunityPosts.filter(p => p.tenantId === tenant.id && new Date(p.timestamp) >= startDate).length;
-      const jobApplicationsInTenant = sampleJobApplications.filter(j => j.tenantId === tenant.id); // Total for now
+      const jobApplicationsInTenant = sampleJobApplications.filter(j => j.tenantId === tenant.id);
       return {
         ...tenant,
         userCount: usersInTenant.length,
@@ -178,10 +204,10 @@ export default function AdminDashboard() {
 
   const chartData = currentTenantActivityData.map(tenant => ({
       name: tenant.name.substring(0,15) + (tenant.name.length > 15 ? "..." : ""),
-      Users: tenant.userCount, // Display total users
-      NewUsers: tenant.newUsersThisPeriod, // Display new users for the period
-      ResumesAnalyzed: tenant.resumesAnalyzedThisPeriod, // Display period-specific
-      CommunityPosts: tenant.communityPostsCountThisPeriod, // Display period-specific
+      Users: tenant.userCount,
+      NewUsers: tenant.newUsersThisPeriod,
+      ResumesAnalyzed: tenant.resumesAnalyzedThisPeriod,
+      CommunityPosts: tenant.communityPostsCountThisPeriod,
   }));
 
   const handleCustomizeToggle = (widgetId: AdminDashboardWidgetId, checked: boolean) => {
@@ -199,7 +225,6 @@ export default function AdminDashboard() {
   const handleSaveCustomization = () => {
     setVisibleWidgetIds(tempVisibleWidgetIds);
     setIsCustomizeDialogOpen(false);
-    // Optionally save to localStorage here
     toast({ title: "Dashboard Updated", description: "Your dashboard widget preferences have been saved for this session." });
   };
 
@@ -343,6 +368,66 @@ export default function AdminDashboard() {
             </Card>
           )}
         </div>
+        
+        {visibleWidgetIds.has('registrationTrendsChart') && (
+          <Card className="shadow-lg">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><TrendingUp className="h-5 w-5 text-primary"/>User Registration Trends</CardTitle>
+              <CardDescription>Daily new user sign-ups over the last 30 days.</CardDescription>
+            </CardHeader>
+            <CardContent className="h-[350px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={mockRegistrationData} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.5}/>
+                  <XAxis dataKey="date" tick={{fontSize: 10}}/>
+                  <YAxis allowDecimals={false} tick={{fontSize: 10}}/>
+                  <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', fontSize: '12px', padding: '4px 8px' }}/>
+                  <Legend wrapperStyle={{fontSize: "12px"}}/>
+                  <Line type="monotone" dataKey="signups" stroke="hsl(var(--primary))" strokeWidth={2} dot={{r:3}} name="New Signups"/>
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        )}
+
+        {visibleWidgetIds.has('aiUsageBreakdownChart') && (
+          <Card className="shadow-lg">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><PieChartIcon className="h-5 w-5 text-primary"/>AI Feature Usage Breakdown</CardTitle>
+              <CardDescription>Popularity of different AI-powered tools.</CardDescription>
+            </CardHeader>
+            <CardContent className="h-[350px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <RechartsPieChart>
+                  <Pie data={aiFeatureUsageData} dataKey="count" nameKey="name" cx="50%" cy="50%" outerRadius={100} labelLine={false} label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}>
+                    {aiFeatureUsageData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Pie>
+                  <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}/>
+                  <Legend wrapperStyle={{fontSize: "12px"}}/>
+                </RechartsPieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        )}
+        
+        {visibleWidgetIds.has('contentModerationQueueSummary') && (
+          <Card className="shadow-lg">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><ShieldAlert className="h-5 w-5 text-destructive"/>Content Moderation Queue</CardTitle>
+              <CardDescription>Items requiring review.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center justify-center text-center py-8">
+               <div className="text-4xl font-bold text-destructive">{platformStats.flaggedPostsCount}</div>
+               <p className="text-muted-foreground mt-1 mb-4">Flagged Community Posts</p>
+               <Button asChild>
+                   <Link href="/admin/content-moderation">Review Now</Link>
+               </Button>
+            </CardContent>
+          </Card>
+        )}
+
 
         {visibleWidgetIds.has('timeSpentStats') && (
           <Card className="shadow-lg">
@@ -489,3 +574,4 @@ export default function AdminDashboard() {
     </>
   );
 }
+
