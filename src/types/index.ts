@@ -1070,3 +1070,17 @@ export const localeDisplayNames: Record<Locale, string> = {
   hi: 'हिन्दी',
   mr: 'मराठी',
 };
+
+export type SystemAlertType = 'error' | 'warning' | 'info' | 'success';
+export interface SystemAlert {
+  id: string;
+  type: SystemAlertType;
+  title: string;
+  message: string;
+  timestamp: string; // ISO date string
+  linkTo?: string;
+  linkText?: string;
+  isRead?: boolean;
+}
+
+    

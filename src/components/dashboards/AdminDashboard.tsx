@@ -1,8 +1,8 @@
 
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { BarChart, Users, Settings, Activity, Building2, FileText, MessageSquare, Zap as ZapIcon, ShieldQuestion, UserPlus, Briefcase, Handshake, Mic, ListChecks, Clock, TrendingUp, Megaphone, CalendarDays, Edit3 as CustomizeIcon, PieChartIcon, ShieldAlert } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { BarChart, Users, Settings, Activity, Building2, FileText, MessageSquare, Zap as ZapIcon, ShieldQuestion, UserPlus, Briefcase, Handshake, Mic, ListChecks, Clock, TrendingUp, Megaphone, CalendarDays, Edit3 as CustomizeIcon, PieChartIcon, ShieldAlert, ServerIcon, Info, AlertTriangle, CheckCircle as CheckCircleIcon } from "lucide-react";
 import { useEffect, useState, useMemo } from "react";
 import WelcomeTourDialog from '@/components/features/WelcomeTourDialog';
 import {
@@ -14,11 +14,12 @@ import {
   sampleMockInterviewSessions,
   sampleUserProfile,
   sampleResumeScanHistory,
-  samplePlatformUsers
+  samplePlatformUsers,
+  sampleSystemAlerts, // Import sampleSystemAlerts
 } from "@/lib/sample-data";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import type { Tenant, UserProfile } from "@/types";
+import type { Tenant, UserProfile, SystemAlert, SystemAlertType } from "@/types"; // Import SystemAlert types
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ResponsiveContainer, BarChart as RechartsBarChart, XAxis, YAxis, Tooltip, Legend, Bar as RechartsBar, CartesianGrid, LineChart, Line, PieChart as RechartsPieChart, Pie, Cell } from 'recharts';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription as DialogUIDescription, DialogFooter } from "@/components/ui/dialog";
@@ -27,6 +28,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { formatDistanceToNow, parseISO } from "date-fns"; // For alert timestamps
 
 interface TenantActivityStats extends Tenant {
   userCount: number;
@@ -70,7 +72,7 @@ const mockRegistrationData = Array.from({ length: 30 }, (_, i) => {
   date.setDate(date.getDate() - (29 - i));
   return {
     date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    signups: Math.floor(Math.random() * 50) + 10, // Random signups between 10 and 60
+    signups: Math.floor(Math.random() * 50) + 10, 
   };
 });
 
@@ -98,6 +100,7 @@ type AdminDashboardWidgetId =
   | 'registrationTrendsChart'
   | 'aiUsageBreakdownChart'
   | 'contentModerationQueueSummary'
+  | 'systemAlerts' // New widget ID
   | 'adminQuickActions';
 
 interface WidgetConfig {
@@ -121,6 +124,7 @@ const AVAILABLE_WIDGETS: WidgetConfig[] = [
   { id: 'registrationTrendsChart', title: 'User Registration Trends', defaultVisible: true },
   { id: 'aiUsageBreakdownChart', title: 'AI Feature Usage', defaultVisible: true },
   { id: 'contentModerationQueueSummary', title: 'Content Moderation Queue', defaultVisible: true },
+  { id: 'systemAlerts', title: 'System Alerts', defaultVisible: true }, // Added new widget config
   { id: 'adminQuickActions', title: 'Admin Quick Actions', defaultVisible: true },
 ];
 
@@ -136,6 +140,8 @@ export default function AdminDashboard() {
   );
   const [isCustomizeDialogOpen, setIsCustomizeDialogOpen] = useState(false);
   const [tempVisibleWidgetIds, setTempVisibleWidgetIds] = useState<Set<AdminDashboardWidgetId>>(visibleWidgetIds);
+
+  const [alerts, setAlerts] = useState<SystemAlert[]>(sampleSystemAlerts.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
 
 
   useEffect(() => {
@@ -160,7 +166,7 @@ export default function AdminDashboard() {
     const totalResumesAnalyzedThisPeriod = sampleResumeScanHistory.filter(s => new Date(s.scanDate) >= startDate).length;
     const totalJobApplicationsThisPeriod = sampleJobApplications.filter(j => new Date(j.dateApplied) >= startDate).length;
     const totalCommunityPostsThisPeriod = sampleCommunityPosts.filter(p => new Date(p.timestamp) >= startDate).length;
-    const totalAlumniConnections = sampleAlumni.length * 5; // Mock more dynamic calculation
+    const totalAlumniConnections = sampleAlumni.length * 5; 
     const totalMockInterviews = sampleMockInterviewSessions.length;
     const flaggedPostsCount = sampleCommunityPosts.filter(p => p.moderationStatus === 'flagged').length;
 
@@ -232,6 +238,33 @@ export default function AdminDashboard() {
     setTempVisibleWidgetIds(new Set(visibleWidgetIds));
     setIsCustomizeDialogOpen(true);
   };
+
+  const handleMarkAlertAsRead = (alertId: string) => {
+    setAlerts(prevAlerts => prevAlerts.map(alert =>
+      alert.id === alertId ? { ...alert, isRead: true } : alert
+    ));
+    // In a real app, you'd also update the backend.
+    const alertToMark = alerts.find(a => a.id === alertId);
+    if(alertToMark) {
+        const globalIndex = sampleSystemAlerts.findIndex(sa => sa.id === alertId);
+        if (globalIndex !== -1) sampleSystemAlerts[globalIndex].isRead = true;
+    }
+    toast({title: "Alert Marked as Read", description: `Alert "${alertToMark?.title}" marked as read.`});
+  };
+
+  const getAlertIcon = (type: SystemAlertType) => {
+    switch (type) {
+      case 'error': return <AlertTriangle className="h-5 w-5 text-destructive" />;
+      case 'warning': return <AlertTriangle className="h-5 w-5 text-yellow-500" />;
+      case 'info': return <Info className="h-5 w-5 text-blue-500" />;
+      case 'success': return <CheckCircleIcon className="h-5 w-5 text-green-500" />;
+      default: return <Info className="h-5 w-5 text-muted-foreground" />;
+    }
+  };
+
+  const unreadAlertsCount = useMemo(() => alerts.filter(a => !a.isRead).length, [alerts]);
+  const recentUnreadAlerts = useMemo(() => alerts.filter(a => !a.isRead).slice(0, 3), [alerts]);
+
 
   return (
     <>
@@ -428,6 +461,62 @@ export default function AdminDashboard() {
           </Card>
         )}
 
+        {visibleWidgetIds.has('systemAlerts') && (
+          <Card className="shadow-lg">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ServerIcon className="h-5 w-5 text-primary"/>System Alerts
+                {unreadAlertsCount > 0 && (
+                    <span className="ml-2 inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full">
+                        {unreadAlertsCount} NEW
+                    </span>
+                )}
+              </CardTitle>
+              <CardDescription>Recent important system notifications.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {alerts.length === 0 ? (
+                <p className="text-muted-foreground text-center py-4">No system alerts at this time.</p>
+              ) : (
+                <ScrollArea className="h-[300px] pr-3">
+                  <ul className="space-y-3">
+                    {recentUnreadAlerts.map(alert => (
+                      <li key={alert.id} className={cn("p-3 border rounded-md flex items-start gap-3", alert.isRead && "opacity-60 bg-secondary/30", alert.type === 'error' ? "border-destructive/50" : alert.type === 'warning' ? "border-yellow-500/50" : "border-border")}>
+                        <div className="mt-0.5">{getAlertIcon(alert.type)}</div>
+                        <div className="flex-1">
+                          <p className={cn("font-medium text-sm", alert.type === 'error' ? "text-destructive" : alert.type === 'warning' ? "text-yellow-600" : "text-foreground")}>{alert.title}</p>
+                          <p className="text-xs text-muted-foreground">{alert.message}</p>
+                          <p className="text-xs text-muted-foreground/70 mt-1">{formatDistanceToNow(parseISO(alert.timestamp), { addSuffix: true })}</p>
+                           {alert.linkTo && <Button variant="link" size="xs" asChild className="p-0 h-auto mt-1"><Link href={alert.linkTo}>{alert.linkText || 'View Details'}</Link></Button>}
+                        </div>
+                        {!alert.isRead && (
+                          <Button variant="outline" size="xs" onClick={() => handleMarkAlertAsRead(alert.id)} className="text-xs h-6">Mark Read</Button>
+                        )}
+                      </li>
+                    ))}
+                    {alerts.filter(a => a.isRead).slice(0, Math.max(0, 3 - recentUnreadAlerts.length)).map(alert => (
+                       <li key={alert.id} className={cn("p-3 border rounded-md flex items-start gap-3 opacity-60 bg-secondary/30", alert.type === 'error' ? "border-destructive/50" : alert.type === 'warning' ? "border-yellow-500/50" : "border-border")}>
+                        <div className="mt-0.5">{getAlertIcon(alert.type)}</div>
+                        <div className="flex-1">
+                          <p className={cn("font-medium text-sm", alert.type === 'error' ? "text-destructive" : alert.type === 'warning' ? "text-yellow-600" : "text-foreground")}>{alert.title}</p>
+                          <p className="text-xs text-muted-foreground">{alert.message}</p>
+                          <p className="text-xs text-muted-foreground/70 mt-1">{formatDistanceToNow(parseISO(alert.timestamp), { addSuffix: true })}</p>
+                           {alert.linkTo && <Button variant="link" size="xs" asChild className="p-0 h-auto mt-1"><Link href={alert.linkTo}>{alert.linkText || 'View Details'}</Link></Button>}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </ScrollArea>
+              )}
+            </CardContent>
+             {alerts.length > 3 && (
+                 <CardFooter>
+                    <Button variant="link" size="sm" className="mx-auto">View All System Alerts</Button>
+                 </CardFooter>
+            )}
+          </Card>
+        )}
+
 
         {visibleWidgetIds.has('timeSpentStats') && (
           <Card className="shadow-lg">
@@ -574,3 +663,5 @@ export default function AdminDashboard() {
     </>
   );
 }
+
+    
