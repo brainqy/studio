@@ -1,12 +1,14 @@
 // src/app/[locale]/layout.tsx
 import type { ReactNode } from 'react';
-import { NextIntlClientProvider, AbstractIntlMessages } from 'next-intl';
-import { getMessages } from 'next-intl/server';
+import { AbstractIntlMessages, NextIntlClientProvider } from 'next-intl';
 import { notFound } from 'next/navigation';
-import { locales, defaultLocale } from '@/i18n-config'; // Ensure this path is correct
+import { i18nConfig } from '@/i18n-config'; // Ensure this path is correct
+import { defaultLocale } from '@/types';
+import TestTranslations from '@/components/TestTranslations';
 
 interface LocaleLayoutProps {
   children: ReactNode;
+  // Add any other props from the root layout if needed
   params: { locale: string };
 }
 
@@ -16,7 +18,7 @@ export default async function LocaleLayout({
 }: LocaleLayoutProps) {
   console.log(`[LocaleLayout V5] Rendering for locale: ${locale}`);
 
-  if (!locales.includes(locale as any)) {
+  if (!i18nConfig.locales.includes(locale as any)) {
     console.error(`[LocaleLayout V5] Invalid locale detected in params: "${locale}". Calling notFound().`);
     notFound();
   }
@@ -26,19 +28,19 @@ export default async function LocaleLayout({
 
   try {
     console.log(`[LocaleLayout V5] Attempting to get messages for locale: ${locale}`);
-    messages = await getMessages({ locale });
+    const { getMessages } = await import('next-intl/server');
     messageSource = `getMessages("${locale}")`;
 
     if (!messages || typeof messages !== 'object' || Object.keys(messages).length === 0) {
       console.warn(`[LocaleLayout V5] Messages from getMessages("${locale}") were invalid or empty. Type: ${typeof messages}, Keys: ${messages ? Object.keys(messages).length : 'N/A'}. Attempting fallback to defaultLocale: ${defaultLocale}`);
-      messages = await getMessages({ locale: defaultLocale });
-      messageSource = `getMessages("${defaultLocale}") after fallback`;
+      messages = await getMessages({ locale: i18nConfig.defaultLocale });
+      messageSource = `getMessages("${i18nConfig.defaultLocale}") after fallback`;
       if (!messages || typeof messages !== 'object' || Object.keys(messages).length === 0) {
-        console.error(`[LocaleLayout V5] CRITICAL: Fallback messages for default locale "${defaultLocale}" also invalid or empty. Using minimal hardcoded messages.`);
+        console.error(`[LocaleLayout V5] CRITICAL: Fallback messages for default locale "${i18nConfig.defaultLocale}" also invalid or empty. Using minimal hardcoded messages.`);
         messages = { AppHeader: { languageSwitcherLabel: `Lang (Emergency Fallback ${locale})` } };
         messageSource = "Emergency Hardcoded";
       } else {
-        console.log(`[LocaleLayout V5] Successfully fetched fallback messages for default locale "${defaultLocale}".`);
+        console.log(`[LocaleLayout V5] Successfully fetched fallback messages for default locale "${i18nConfig.defaultLocale}".`);
       }
     } else {
       console.log(`[LocaleLayout V5] Successfully fetched messages for locale: "${locale}".`);
@@ -58,17 +60,13 @@ export default async function LocaleLayout({
   }
 
   console.log(`[LocaleLayout V5] Passing to NextIntlClientProvider for locale "${locale}". Message source: "${messageSource}". Message keys: ${Object.keys(messages || {}).join(', ')}`);
-  // Log a sample message if available
-  if (messages && (messages as any).AppHeader) {
-    console.log(`[LocaleLayout V5] Sample message AppHeader.languageSwitcherLabel: ${JSON.stringify((messages as any).AppHeader.languageSwitcherLabel)}`);
-  } else {
-    console.log(`[LocaleLayout V5] AppHeader namespace not found in messages for locale "${locale}".`);
-  }
 
 
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
       {children}
+ <TestTranslations />
     </NextIntlClientProvider>
   );
 }
+

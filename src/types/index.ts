@@ -1,3 +1,17 @@
+export interface User {
+  id: string;
+  email: string;
+  name?: string;
+  role: 'user' | 'admin';
+}
+
+export type Translations = {
+  [key: string]: string | NestedTranslations;
+};
+
+export type NestedTranslations = {
+  [key: string]: string | NestedTranslations;
+};
 
 export type UserRole = 'admin' | 'manager' | 'user';
 export type UserStatus = 'active' | 'inactive' | 'pending' | 'suspended' | 'PENDING_DELETION';

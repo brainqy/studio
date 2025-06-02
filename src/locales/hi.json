@@ -1,0 +1,84 @@
+
+{
+    "appName": "भाषा सेतु",
+    "login": {
+      "title": "लॉगिन",
+      "emailLabel": "ईमेल",
+      "passwordLabel": "पासवर्ड",
+      "submitButton": "लॉगिन करें",
+      "signupPrompt": "खाता नहीं है?",
+      "signupLink": "साइन अप करें"
+    },
+    "signup": {
+      "title": "नया खाता बनाएँ",
+      "nameLabel": "नाम",
+      "emailLabel": "ईमेल",
+      "passwordLabel": "पासवर्ड",
+      "roleLabel": "भूमिका",
+      "roleUser": "उपयोगकर्ता",
+      "roleAdmin": "प्रशासक",
+      "submitButton": "साइन अप करें",
+      "loginPrompt": "पहले से ही खाता है?",
+      "loginLink": "लॉगिन करें"
+    },
+    "dashboard": {
+      "title": "डैशबोर्ड",
+      "welcome": "स्वागत है, {name}!",
+      "navigation": {
+        "overview": "अवलोकन",
+        "translate": "अनुवाद करें",
+        "settings": "सेटिंग्स"
+      },
+      "metrics": {
+        "totalWords": "कुल शब्द",
+        "englishWords": "अंग्रेजी शब्द",
+        "marathiWords": "मराठी शब्द",
+        "hindiWords": "हिन्दी शब्द"
+      },
+      "userMenu": {
+        "profile": "प्रोफ़ाइल",
+        "logout": "लॉगआउट"
+      }
+    },
+    "translateTool": {
+      "title": "अनुवाद उपकरण",
+      "enterTextLabel": "अनुवाद के लिए पाठ दर्ज करें",
+      "enterTextPlaceholder": "कोई शब्द या वाक्य टाइप करें...",
+      "submitButton": "अनुवाद सुझाएँ",
+      "originalText": "मूल पाठ",
+      "suggestedTranslations": "सुझाए गए अनुवाद",
+      "marathi": "मराठी",
+      "hindi": "हिन्दी",
+      "english": "अंग्रेजी",
+      "qualityScore": "गुणवत्ता स्कोर",
+      "errorTranslating": "अनुवाद सुझाने में त्रुटि हुई। कृपया पुनः प्रयास करें।"
+    },
+    "settings": {
+      "title": "सेटिंग्स",
+      "languageManagement": "भाषा प्रबंधन",
+      "comingSoon": "और सेटिंग्स जल्द ही आ रही हैं।"
+    },
+    "languages": {
+      "en": "अंग्रेजी",
+      "mr": "मराठी",
+      "hi": "हिन्दी"
+    },
+    "validation": {
+      "required": "यह फ़ील्ड आवश्यक है।",
+      "email": "अमान्य ईमेल पता।"
+    },
+    "landingPage": {
+      "subtitle": "बहुभाषी संचार के लिए आपका प्रवेश द्वार",
+      "description": "कई भाषाओं में सहज अनुवाद और सामग्री प्रबंधन का अनुभव करें। हमारे समुदाय में शामिल हों और भाषा की बाधाओं को दूर करें।",
+      "exploreDashboard": "डैशबोर्ड देखें",
+      "privacy": "गोपनीयता नीति",
+      "terms": "सेवा की शर्तें"
+    },
+    "localizedPage": {
+      "title": "स्थानीयकृत सामग्री क्षेत्र",
+      "greeting": "स्थान-भाषा के लिए पृष्ठ में आपका स्वागत है:",
+      "description": "यह पृष्ठ ऐसी सामग्री प्रदर्शित करता है जो चयनित भाषा पथ के लिए विशिष्ट हो सकती है। प्रदर्शित वास्तविक भाषा i18n संदर्भ पर निर्भर करती है, जिसे भाषा स्विचर के माध्यम से बदला जा सकता है।",
+      "backHome": "मुख्य मुखपृष्ठ पर वापस"
+    }
+  }
+  

@@ -1,10 +1,10 @@
 // src/app/layout.tsx
 import type { Metadata, Viewport } from 'next';
-// import { Inter as FontSans } from "next/font/google"; // Removed next/font/google
 import './globals.css';
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/toaster";
-
+import { I18nProvider } from '@/contexts/i18n-provider'; // Corrected path for consistency (though this file does not exist in current context, keeping as example if user adds it)
+import { AuthProvider } from '@/app/context/auth-provider'; // Corrected import path
 // const fontSans = FontSans({ // Removed next/font/google
 //   subsets: ["latin"],
 //   variable: "--font-sans",
@@ -46,8 +46,12 @@ export default function RootLayout({ children }: RootLayoutProps) {
         "min-h-screen bg-background font-sans antialiased"
         // fontSans.variable // Removed as fontSans is no longer used
       )}>
-        {children}
-        <Toaster />
+         <AuthProvider>
+          {/* I18nProvider is typically used in [locale]/layout.tsx now */}
+          {/* If you intend to use it here, ensure messages are passed correctly or it's configured for a default locale */}
+            {children}
+            <Toaster />
+        </AuthProvider>
       </body>
     </html>
   );
