@@ -1730,6 +1730,48 @@ export let sampleLiveInterviewSessions: LiveInterviewSession[] = [
   },
 ];
 
+export let sampleSystemAlerts: SystemAlert[] = [
+  {
+    id: 'alert1',
+    type: 'error',
+    title: 'Database Connection Issue',
+    message: 'Failed to connect to the primary database. Services might be affected. Attempting to reconnect...',
+    timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(), // 5 minutes ago
+    linkTo: '/admin/platform-settings#database', // Example link
+    linkText: 'Check DB Settings',
+  },
+  {
+    id: 'alert2',
+    type: 'warning',
+    title: 'High CPU Usage Detected',
+    message: 'CPU usage on server EU-WEST-1A has exceeded 85% for the last 10 minutes.',
+    timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 minutes ago
+  },
+  {
+    id: 'alert3',
+    type: 'info',
+    title: 'New Platform Update Deployed',
+    message: 'Version 2.5.1 has been successfully deployed to production. See release notes for details.',
+    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
+    linkTo: '/blog/platform-update-v2-5-1',
+    linkText: 'Release Notes',
+  },
+  {
+    id: 'alert4',
+    type: 'success',
+    title: 'Nightly Backup Completed',
+    message: 'Full system backup completed successfully without errors.',
+    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(), // 8 hours ago
+  },
+  {
+    id: 'alert5',
+    type: 'warning',
+    title: 'Low Disk Space',
+    message: 'The main application server disk space is below 10%. Please investigate.',
+    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
+    isRead: true, // Example of a read alert
+  },
+];
 // Utility function to ensure UserProfile has all fields, especially for sample data
 export function ensureFullUserProfile(partialProfile: Partial<UserProfile>): UserProfile {
   const defaultUser: UserProfile = {
