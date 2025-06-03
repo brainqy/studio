@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription as DialogUIDescription, DialogFooter as DialogUIFooter, DialogTrigger, DialogClose } from "@/components/ui/dialog";
-import { Settings, Palette, UploadCloud, Bell, Lock, WalletCards, Sun, Moon, Award, Gift, Paintbrush, KeyRound } from "lucide-react";
+import { Settings, Palette, UploadCloud, Bell, Lock, WalletCards, Sun, Moon, Award, Gift, Paintbrush, KeyRound, BellRing, BellOff, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, type FormEvent } from "react";
 import { sampleUserProfile, sampleTenants, samplePlatformSettings } from "@/lib/sample-data";
@@ -23,6 +23,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { usePushNotifications } from '@/hooks/usePushNotifications';
+import { cn } from "@/lib/utils";
+
 
 export default function SettingsPage() {
   const { toast } = useToast();
@@ -47,7 +50,19 @@ export default function SettingsPage() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [isChangePasswordDialogOpen, setIsChangePasswordDialogOpen] = useState(false);
-  const [deleteConfirmText, setDeleteConfirmText] = useState(""); // New state for delete confirmation
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+
+  const {
+    isLoading: isLoadingPush,
+    isSubscribed: isPushSubscribed,
+    subscribeUserToPush,
+    unsubscribeUserFromPush,
+    permissionStatus: pushPermissionStatus,
+    isPushSupported,
+    requestNotificationPermission,
+  } = usePushNotifications();
+  const [isSubscribing, setIsSubscribing] = useState(false);
+
 
   useEffect(() => {
     const storedTheme = localStorage.getItem('theme');
@@ -64,8 +79,8 @@ export default function SettingsPage() {
       if (currentTenant) {
         setTenantNameInput(currentTenant.name);
         setTenantLogoUrlInput(currentTenant.settings?.customLogoUrl || "");
-        setCurrentPrimaryColor(currentTenant.settings?.primaryColor || "hsl(180 100% 25%)"); // Default to theme if undefined
-        setCurrentAccentColor(currentTenant.settings?.accentColor || "hsl(180 100% 30%)");  // Default to theme if undefined
+        setCurrentPrimaryColor(currentTenant.settings?.primaryColor || "hsl(180 100% 25%)"); 
+        setCurrentAccentColor(currentTenant.settings?.accentColor || "hsl(180 100% 30%)");  
       }
     }
     setWalletEnabled(platformSettings.walletEnabled);
@@ -83,8 +98,6 @@ export default function SettingsPage() {
   const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
-      // Mock: In real app, upload file then set URL state.
-      // For now, we'll just use this to show a toast and let user paste URL.
       setTenantLogoUrlInput(`https://placehold.co/200x50?text=${file.name.substring(0,10)}`);
       toast({ title: "Logo Selected (Mock)", description: `${file.name} selected. URL field updated with placeholder. Click "Save All Settings" to apply for tenant.` });
     }
@@ -111,7 +124,7 @@ export default function SettingsPage() {
       if (tenantIndex !== -1) {
         const updatedTenant = { ...sampleTenants[tenantIndex] };
         updatedTenant.name = tenantNameInput;
-        if (!updatedTenant.settings) updatedTenant.settings = { allowPublicSignup: true }; // Ensure settings object exists
+        if (!updatedTenant.settings) updatedTenant.settings = { allowPublicSignup: true }; 
         updatedTenant.settings.customLogoUrl = tenantLogoUrlInput;
         updatedTenant.settings.primaryColor = currentPrimaryColor;
         updatedTenant.settings.accentColor = currentAccentColor;
@@ -143,10 +156,27 @@ export default function SettingsPage() {
   };
 
   const handleDataDeletionRequest = () => {
-    // Reset confirm text for next time
     setDeleteConfirmText("");
     toast({title: "Data Deletion Request (Mock)", description:"Your data deletion request has been initiated. This is a mock action."});
   };
+  
+  const handleTogglePushSubscription = async () => {
+    setIsSubscribing(true);
+    if (isPushSubscribed) {
+      await unsubscribeUserFromPush();
+    } else {
+      if (pushPermissionStatus !== 'granted') {
+        const permResult = await requestNotificationPermission();
+        if (permResult === 'granted') {
+          await subscribeUserToPush();
+        }
+      } else {
+        await subscribeUserToPush();
+      }
+    }
+    setIsSubscribing(false);
+  };
+
 
   const CONFIRMATION_PHRASE = "delete my account";
 
@@ -255,6 +285,28 @@ export default function SettingsPage() {
             </Label>
             <Switch id="referral-notifications" checked={referralNotificationsEnabled} onCheckedChange={setReferralNotificationsEnabled} />
           </div>
+
+          {/* Push Notification Section */}
+          <div className="p-3 rounded-md border hover:bg-secondary/30">
+            <div className="flex items-center justify-between">
+                <Label htmlFor="push-notifications-toggle" className="flex items-center gap-2 text-sm font-medium">
+                {isPushSubscribed ? <BellRing className="h-5 w-5 text-green-500"/> : <BellOff className="h-5 w-5"/>}
+                Web Push Notifications
+                </Label>
+                <Switch
+                    id="push-notifications-toggle"
+                    checked={isPushSubscribed}
+                    onCheckedChange={handleTogglePushSubscription}
+                    disabled={isLoadingPush || !isPushSupported || isSubscribing || pushPermissionStatus === 'denied'}
+                />
+            </div>
+            {!isPushSupported && <p className="text-xs text-destructive mt-1">Push notifications are not supported on your browser/device.</p>}
+            {isPushSupported && pushPermissionStatus === 'denied' && <p className="text-xs text-destructive mt-1">Permission denied. Enable in browser settings.</p>}
+            {isPushSupported && pushPermissionStatus === 'default' && <p className="text-xs text-muted-foreground mt-1">Click the toggle to enable push notifications.</p>}
+            {isLoadingPush && <p className="text-xs text-muted-foreground mt-1 flex items-center"><Loader2 className="mr-1 h-3 w-3 animate-spin"/>Checking status...</p>}
+             {isSubscribing && <p className="text-xs text-muted-foreground mt-1 flex items-center"><Loader2 className="mr-1 h-3 w-3 animate-spin"/>{isPushSubscribed ? 'Unsubscribing...' : 'Subscribing...'}</p>}
+          </div>
+
         </CardContent>
       </Card>
 
@@ -288,7 +340,7 @@ export default function SettingsPage() {
         <CardContent className="space-y-4">
           <Dialog open={isChangePasswordDialogOpen} onOpenChange={(isOpen) => {
             setIsChangePasswordDialogOpen(isOpen);
-            if (!isOpen) { // Reset fields when dialog closes
+            if (!isOpen) { 
               setCurrentPassword("");
               setNewPassword("");
               setConfirmNewPassword("");
